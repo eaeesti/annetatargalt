@@ -11,15 +11,15 @@
     },
     "type": {
       "type": "enumeration",
-      "enum": [
-        "primary",
-        "secondary",
-        "text"
-      ]
+      "enum": ["primary", "secondary", "text"]
     },
     "arrow": {
       "type": "boolean",
       "default": false
+    },
+    "link": {
+      "type": "component",
+      "component": "elements.anchor"
     }
   }
 }

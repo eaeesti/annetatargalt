@@ -1,5 +1,18 @@
 import type { Schema, Attribute } from '@strapi/strapi';
 
+export interface ElementsAnchor extends Schema.Component {
+  collectionName: 'components_elements_anchors';
+  info: {
+    displayName: 'Anchor';
+    icon: 'link';
+    description: '';
+  };
+  attributes: {
+    href: Attribute.String;
+    newTab: Attribute.Boolean & Attribute.DefaultTo<false>;
+  };
+}
+
 export interface ElementsButton extends Schema.Component {
   collectionName: 'components_elements_buttons';
   info: {
@@ -10,6 +23,7 @@ export interface ElementsButton extends Schema.Component {
     text: Attribute.String;
     type: Attribute.Enumeration<['primary', 'secondary', 'text']>;
     arrow: Attribute.Boolean & Attribute.DefaultTo<false>;
+    link: Attribute.Component<'elements.anchor'>;
   };
 }
 
@@ -53,6 +67,7 @@ export interface SectionsTextSection extends Schema.Component {
 declare module '@strapi/types' {
   export module Shared {
     export interface Components {
+      'elements.anchor': ElementsAnchor;
       'elements.button': ElementsButton;
       'meta.metadata': MetaMetadata;
       'sections.hero-section': SectionsHeroSection;

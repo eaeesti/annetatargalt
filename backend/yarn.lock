@@ -8330,6 +8330,11 @@ std-env@^3.0.1:
   resolved "https://registry.yarnpkg.com/std-env/-/std-env-3.4.3.tgz#326f11db518db751c83fd58574f449b7c3060910"
   integrity sha512-f9aPhy8fYBuMN+sNfakZV18U39PbalgjXG3lLB9WkaYTxijru61wb57V9wxxNthXM5Sd88ETBWi29qLAsHO52Q==
 
+strapi-plugin-populate-deep@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/strapi-plugin-populate-deep/-/strapi-plugin-populate-deep-3.0.0.tgz#bd2b7145c4d1d79381698be7995d4dc454416ffd"
+  integrity sha512-4xpg0JxdaIIeO3wQLIO6Lh5ppbN8kXVl9uopQbs2AhwEf1KwLMSSZjaNoN7shCrxt1cET/u2GTDKG+Nlq54ZKg==
+
 stream-chain@2.2.5, stream-chain@^2.2.5:
   version "2.2.5"
   resolved "https://registry.yarnpkg.com/stream-chain/-/stream-chain-2.2.5.tgz#b30967e8f14ee033c5b9a19bbe8a2cba90ba0d09"

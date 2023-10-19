@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_elements_anchors",
+  "info": {
+    "displayName": "Anchor",
+    "icon": "link",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "href": {
+      "type": "string"
+    },
+    "newTab": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}
