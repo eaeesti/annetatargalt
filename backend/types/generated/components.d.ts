@@ -13,10 +13,22 @@ export interface MetaMetadata extends Schema.Component {
   };
 }
 
+export interface SectionsTextSection extends Schema.Component {
+  collectionName: 'components_sections_text_sections';
+  info: {
+    displayName: 'TextSection';
+    icon: 'bulletList';
+  };
+  attributes: {
+    text: Attribute.RichText;
+  };
+}
+
 declare module '@strapi/types' {
   export module Shared {
     export interface Components {
       'meta.metadata': MetaMetadata;
+      'sections.text-section': SectionsTextSection;
     }
   }
 }

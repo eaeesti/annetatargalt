@@ -1,6 +1,6 @@
-import Page from "./components/Page";
-import { buildMetadata } from "./utils/seo";
-import { getGlobal, getPageBySlug } from "./utils/strapi";
+import Page from "../components/Page";
+import { buildMetadata } from "../utils/seo";
+import { getGlobal, getPageBySlug } from "../utils/strapi";
 
 export async function generateMetadata() {
   const page = await getPageBySlug("/");
@@ -9,7 +9,7 @@ export async function generateMetadata() {
   return buildMetadata(global.metadata, page.metadata);
 }
 
-export default async function PageRoute() {
+export default async function Home() {
   const page = await getPageBySlug("/");
   const global = await getGlobal();
 

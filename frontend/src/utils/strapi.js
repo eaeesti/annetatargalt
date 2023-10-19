@@ -39,7 +39,10 @@ export async function getPageBySlug(slug) {
   const token = process.env.NEXT_PUBLIC_STRAPI_API_TOKEN;
 
   const path = `/pages`;
-  const urlParamsObject = { filters: { slug }, populate: ["metadata"] };
+  const urlParamsObject = {
+    filters: { slug },
+    populate: ["metadata", "sections"],
+  };
   const options = { headers: { Authorization: `Bearer ${token}` } };
 
   const response = await fetchAPI(path, urlParamsObject, options);
@@ -60,4 +63,15 @@ export async function getGlobal() {
   const response = await fetchAPI(path, urlParamsObject, options);
 
   return response.data.attributes;
+}
+
+export function strapiSectionNameToReactComponentName(component) {
+  return snakeCaseToPascalCase(component.split(".")[1]);
+}
+
+export function snakeCaseToPascalCase(string) {
+  return string
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join("");
 }

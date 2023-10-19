@@ -1,0 +1,13 @@
+{
+  "collectionName": "components_sections_text_sections",
+  "info": {
+    "displayName": "TextSection",
+    "icon": "bulletList"
+  },
+  "options": {},
+  "attributes": {
+    "text": {
+      "type": "richtext"
+    }
+  }
+}

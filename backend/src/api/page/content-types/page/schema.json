@@ -22,6 +22,12 @@
       "type": "component",
       "repeatable": false,
       "component": "meta.metadata"
+    },
+    "sections": {
+      "type": "dynamiczone",
+      "components": [
+        "sections.text-section"
+      ]
     }
   }
 }
