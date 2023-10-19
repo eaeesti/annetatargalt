@@ -11,7 +11,7 @@ export default function CTASection({ data }) {
           <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-primary-200">
             {data.subtitle}
           </p>
-          <div className="flex gap-x-6 justify-center items-center mt-10">
+          <div className="flex flex-col gap-4 justify-center mt-10 sm:items-center sm:flex-row">
             {data.buttons.map((button) => (
               <Button key={button.id} {...button} />
             ))}

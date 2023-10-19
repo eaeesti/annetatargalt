@@ -28,6 +28,15 @@
     "newTab": {
       "type": "boolean",
       "default": false
+    },
+    "size": {
+      "type": "enumeration",
+      "enum": [
+        "sm",
+        "md",
+        "lg"
+      ],
+      "default": "md"
     }
   }
 }

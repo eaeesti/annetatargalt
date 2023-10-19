@@ -12,6 +12,21 @@ export interface ElementsButton extends Schema.Component {
     arrow: Attribute.Boolean & Attribute.DefaultTo<false>;
     href: Attribute.String;
     newTab: Attribute.Boolean & Attribute.DefaultTo<false>;
+    size: Attribute.Enumeration<['sm', 'md', 'lg']> & Attribute.DefaultTo<'md'>;
+  };
+}
+
+export interface ElementsLink extends Schema.Component {
+  collectionName: 'components_elements_links';
+  info: {
+    displayName: 'Link';
+    icon: 'link';
+    description: '';
+  };
+  attributes: {
+    text: Attribute.String;
+    href: Attribute.String;
+    newTab: Attribute.Boolean & Attribute.DefaultTo<false>;
   };
 }
 
@@ -25,6 +40,19 @@ export interface MetaMetadata extends Schema.Component {
     title: Attribute.String;
     description: Attribute.Text;
     shareImage: Attribute.Media;
+  };
+}
+
+export interface MetaNavbar extends Schema.Component {
+  collectionName: 'components_elements_navbars';
+  info: {
+    displayName: 'Navbar';
+    description: '';
+  };
+  attributes: {
+    logo: Attribute.Media;
+    ctaButton: Attribute.Component<'elements.button'>;
+    links: Attribute.Component<'elements.link', true>;
   };
 }
 
@@ -69,7 +97,9 @@ declare module '@strapi/types' {
   export module Shared {
     export interface Components {
       'elements.button': ElementsButton;
+      'elements.link': ElementsLink;
       'meta.metadata': MetaMetadata;
+      'meta.navbar': MetaNavbar;
       'sections.cta-section': SectionsCtaSection;
       'sections.hero-section': SectionsHeroSection;
       'sections.text-section': SectionsTextSection;

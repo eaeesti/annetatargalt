@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export default function Anchor({ className, href, newTab, children }) {
+export default function Anchor({ className, href, newTab = false, children }) {
   return (
     <Link
       href={href}

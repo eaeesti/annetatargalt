@@ -57,7 +57,7 @@ export async function getGlobal() {
   const options = { headers: { Authorization: `Bearer ${token}` } };
 
   const urlParamsObject = {
-    populate: ["metadata"],
+    populate: "deep",
   };
 
   const response = await fetchAPI(path, urlParamsObject, options);
