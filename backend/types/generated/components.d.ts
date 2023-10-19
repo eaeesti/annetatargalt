@@ -16,6 +16,17 @@ export interface ElementsButton extends Schema.Component {
   };
 }
 
+export interface ElementsFooterColumn extends Schema.Component {
+  collectionName: 'components_elements_footer_columns';
+  info: {
+    displayName: 'FooterColumn';
+  };
+  attributes: {
+    title: Attribute.String;
+    links: Attribute.Component<'elements.link', true>;
+  };
+}
+
 export interface ElementsLink extends Schema.Component {
   collectionName: 'components_elements_links';
   info: {
@@ -27,6 +38,41 @@ export interface ElementsLink extends Schema.Component {
     text: Attribute.String;
     href: Attribute.String;
     newTab: Attribute.Boolean & Attribute.DefaultTo<false>;
+  };
+}
+
+export interface ElementsSocialMediaLink extends Schema.Component {
+  collectionName: 'components_elements_social_media_links';
+  info: {
+    displayName: 'SocialMediaLink';
+  };
+  attributes: {
+    type: Attribute.Enumeration<
+      [
+        'facebook',
+        'instagram',
+        'twitter',
+        'youtube',
+        'tiktok',
+        'github',
+        'linkedin'
+      ]
+    >;
+    href: Attribute.String;
+  };
+}
+
+export interface MetaFooter extends Schema.Component {
+  collectionName: 'components_meta_footers';
+  info: {
+    displayName: 'Footer';
+    description: '';
+  };
+  attributes: {
+    logo: Attribute.Media;
+    text: Attribute.Text;
+    socialMediaLinks: Attribute.Component<'elements.social-media-link', true>;
+    columns: Attribute.Component<'elements.footer-column', true>;
   };
 }
 
@@ -77,7 +123,7 @@ export interface SectionsHeroSection extends Schema.Component {
   };
   attributes: {
     title: Attribute.String;
-    subtitle: Attribute.String;
+    subtitle: Attribute.Text;
     buttons: Attribute.Component<'elements.button', true>;
   };
 }
@@ -97,7 +143,10 @@ declare module '@strapi/types' {
   export module Shared {
     export interface Components {
       'elements.button': ElementsButton;
+      'elements.footer-column': ElementsFooterColumn;
       'elements.link': ElementsLink;
+      'elements.social-media-link': ElementsSocialMediaLink;
+      'meta.footer': MetaFooter;
       'meta.metadata': MetaMetadata;
       'meta.navbar': MetaNavbar;
       'sections.cta-section': SectionsCtaSection;

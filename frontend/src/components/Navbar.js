@@ -7,13 +7,6 @@ import Anchor from "./elements/Anchor";
 import Button from "./elements/Button";
 import Image from "./elements/Image";
 
-const navigation = [
-  { name: "Product", href: "#" },
-  { name: "Features", href: "#" },
-  { name: "Marketplace", href: "#" },
-  { name: "Company", href: "#" },
-];
-
 export default function Navbar({ global }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -21,12 +14,12 @@ export default function Navbar({ global }) {
 
   return (
     <>
-      <nav className="flex sticky top-0 z-10 justify-center w-full bg-white shadow-md shadow-primary-700/10">
+      <nav className="flex sticky top-0 z-10 justify-center w-full bg-white shadow-md shadow-primary-600/10">
         <div className="flex gap-x-6 justify-between items-center px-6 py-4 w-full max-w-7xl lg:px-8">
           <div className="flex flex-grow lg:flex-grow-0">
             <Anchor
               href="/"
-              className="p-1.5 -m-1.5 rounded-md hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+              className="p-1.5 -m-1.5 rounded-md hover:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
             >
               <span className="sr-only">{title}</span>
               <Image className="w-auto h-8" data={navbar.logo} />

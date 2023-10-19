@@ -692,6 +692,7 @@ export interface ApiGlobalGlobal extends Schema.SingleType {
     title: Attribute.String;
     metadata: Attribute.Component<'meta.metadata'>;
     navbar: Attribute.Component<'meta.navbar'>;
+    footer: Attribute.Component<'meta.footer'>;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;

@@ -24,6 +24,11 @@
       "type": "component",
       "repeatable": false,
       "component": "meta.navbar"
+    },
+    "footer": {
+      "type": "component",
+      "repeatable": false,
+      "component": "meta.footer"
     }
   }
 }

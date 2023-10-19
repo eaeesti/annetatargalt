@@ -1,3 +1,4 @@
+import Footer from "./Footer";
 import Navbar from "./Navbar";
 import Section from "./Section";
 
@@ -10,7 +11,7 @@ export default function Page({ page, global }) {
           <Section key={section.id} section={section} global={global} />
         ))}
       </main>
-      <footer></footer>
+      <Footer global={global} />
     </>
   );
 }
