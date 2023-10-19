@@ -25,9 +25,7 @@
     },
     "sections": {
       "type": "dynamiczone",
-      "components": [
-        "sections.text-section"
-      ]
+      "components": ["sections.hero-section", "sections.text-section"]
     }
   }
 }

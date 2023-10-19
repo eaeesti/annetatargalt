@@ -41,7 +41,12 @@ export async function getPageBySlug(slug) {
   const path = `/pages`;
   const urlParamsObject = {
     filters: { slug },
-    populate: ["metadata", "sections"],
+    populate: {
+      metadata: true,
+      sections: {
+        populate: "*",
+      },
+    },
   };
   const options = { headers: { Authorization: `Bearer ${token}` } };
 
