@@ -11,15 +11,23 @@
     },
     "type": {
       "type": "enumeration",
-      "enum": ["primary", "secondary", "text"]
+      "enum": [
+        "primary",
+        "secondary",
+        "white",
+        "text"
+      ]
     },
     "arrow": {
       "type": "boolean",
       "default": false
     },
-    "link": {
-      "type": "component",
-      "component": "elements.anchor"
+    "href": {
+      "type": "string"
+    },
+    "newTab": {
+      "type": "boolean",
+      "default": false
     }
   }
 }

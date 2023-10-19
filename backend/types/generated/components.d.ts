@@ -1,18 +1,5 @@
 import type { Schema, Attribute } from '@strapi/strapi';
 
-export interface ElementsAnchor extends Schema.Component {
-  collectionName: 'components_elements_anchors';
-  info: {
-    displayName: 'Anchor';
-    icon: 'link';
-    description: '';
-  };
-  attributes: {
-    href: Attribute.String;
-    newTab: Attribute.Boolean & Attribute.DefaultTo<false>;
-  };
-}
-
 export interface ElementsButton extends Schema.Component {
   collectionName: 'components_elements_buttons';
   info: {
@@ -21,9 +8,10 @@ export interface ElementsButton extends Schema.Component {
   };
   attributes: {
     text: Attribute.String;
-    type: Attribute.Enumeration<['primary', 'secondary', 'text']>;
+    type: Attribute.Enumeration<['primary', 'secondary', 'white', 'text']>;
     arrow: Attribute.Boolean & Attribute.DefaultTo<false>;
-    link: Attribute.Component<'elements.anchor'>;
+    href: Attribute.String;
+    newTab: Attribute.Boolean & Attribute.DefaultTo<false>;
   };
 }
 
@@ -37,6 +25,19 @@ export interface MetaMetadata extends Schema.Component {
     title: Attribute.String;
     description: Attribute.Text;
     shareImage: Attribute.Media;
+  };
+}
+
+export interface SectionsCtaSection extends Schema.Component {
+  collectionName: 'components_sections_cta_sections';
+  info: {
+    displayName: 'CtaSection';
+    description: '';
+  };
+  attributes: {
+    title: Attribute.String;
+    subtitle: Attribute.Text;
+    buttons: Attribute.Component<'elements.button', true>;
   };
 }
 
@@ -67,9 +68,9 @@ export interface SectionsTextSection extends Schema.Component {
 declare module '@strapi/types' {
   export module Shared {
     export interface Components {
-      'elements.anchor': ElementsAnchor;
       'elements.button': ElementsButton;
       'meta.metadata': MetaMetadata;
+      'sections.cta-section': SectionsCtaSection;
       'sections.hero-section': SectionsHeroSection;
       'sections.text-section': SectionsTextSection;
     }

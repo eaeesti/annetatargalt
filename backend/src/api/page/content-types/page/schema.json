@@ -25,7 +25,11 @@
     },
     "sections": {
       "type": "dynamiczone",
-      "components": ["sections.hero-section", "sections.text-section"]
+      "components": [
+        "sections.hero-section",
+        "sections.text-section",
+        "sections.cta-section"
+      ]
     }
   }
 }
