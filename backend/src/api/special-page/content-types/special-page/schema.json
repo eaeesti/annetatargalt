@@ -1,0 +1,32 @@
+{
+  "kind": "collectionType",
+  "collectionName": "special_pages",
+  "info": {
+    "singularName": "special-page",
+    "pluralName": "special-pages",
+    "displayName": "SpecialPage",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "slugPattern": {
+      "type": "string"
+    },
+    "collectionType": {
+      "type": "string"
+    },
+    "sections": {
+      "type": "dynamiczone",
+      "components": [
+        "sections.cta-section",
+        "sections.header-section",
+        "sections.hero-section",
+        "sections.text-section",
+        "special-sections.special-header-section"
+      ]
+    }
+  }
+}

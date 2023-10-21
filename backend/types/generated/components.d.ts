@@ -165,6 +165,16 @@ export interface SectionsTextSection extends Schema.Component {
   };
 }
 
+export interface SpecialSectionsSpecialHeaderSection extends Schema.Component {
+  collectionName: 'components_special_sections_special_header_sections';
+  info: {
+    displayName: 'SpecialHeaderSection';
+  };
+  attributes: {
+    display: Attribute.Boolean & Attribute.DefaultTo<true>;
+  };
+}
+
 declare module '@strapi/types' {
   export module Shared {
     export interface Components {
@@ -180,6 +190,7 @@ declare module '@strapi/types' {
       'sections.header-section': SectionsHeaderSection;
       'sections.hero-section': SectionsHeroSection;
       'sections.text-section': SectionsTextSection;
+      'special-sections.special-header-section': SpecialSectionsSpecialHeaderSection;
     }
   }
 }

@@ -1,15 +1,10 @@
 import Page from "../../components/Page";
 import { buildMetadata } from "../../utils/seo";
-import {
-  getGlobal,
-  getPageBySlug,
-  getSpecialPage,
-  getSpecialPages,
-} from "../../utils/strapi";
+import { getGlobal, getPageBySlug, findSpecialPage } from "../../utils/strapi";
 
 export async function generateMetadata({ params }) {
   const global = await getGlobal();
-  const specialPage = await getSpecialPage(params.slug);
+  const specialPage = await findSpecialPage(params.slug);
 
   if (specialPage) {
     return buildMetadata(global.metadata, {});
@@ -22,8 +17,7 @@ export async function generateMetadata({ params }) {
 
 export default async function SlugPage({ params }) {
   const global = await getGlobal();
-  const specialPage = await getSpecialPage(params.slug);
-  console.log("specialPage", specialPage);
+  const specialPage = await findSpecialPage(params.slug);
 
   if (specialPage) {
     return <h1>{JSON.stringify(specialPage)}</h1>;

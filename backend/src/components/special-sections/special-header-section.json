@@ -1,0 +1,13 @@
+{
+  "collectionName": "components_special_sections_special_header_sections",
+  "info": {
+    "displayName": "SpecialHeaderSection"
+  },
+  "options": {},
+  "attributes": {
+    "display": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

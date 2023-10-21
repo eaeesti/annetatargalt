@@ -44,7 +44,7 @@ export async function fetchAPI(path, urlParamsObject = {}, options = {}) {
 export async function getPageBySlug(slugArray) {
   const slug = slugArray ? slugArray.join("/") : "/";
 
-  const path = `/pages`;
+  const path = "/pages";
   const options = headersWithAuthToken();
   const urlParamsObject = {
     filters: { slug },
@@ -71,49 +71,32 @@ export async function getGlobal() {
 }
 
 export async function getSpecialPages() {
+  const path = "/special-pages";
   const options = headersWithAuthToken();
   const urlParamsObject = { populate: "deep" };
 
-  const pagesData = [
-    {
-      pageName: "CausePage",
-      path: "/cause-page",
-    },
-    {
-      pageName: "OrganizationPage",
-      path: "/organization-page",
-    },
-  ];
+  const response = await fetchAPI(path, urlParamsObject, options);
 
-  const fetches = pagesData.map(({ pageName, path }) => {
-    const promise = fetchAPI(path, urlParamsObject, options);
-    return { pageName, promise };
-  });
+  const specialPages = response.data.map(({ attributes }) => attributes);
 
-  const returns = await Promise.all(fetches.map(({ promise }) => promise));
-
-  const pages = pagesData.map(({ pageName }, i) => ({
-    pageName,
-    specialPage: returns[i].data.attributes,
-  }));
-
-  return pages;
+  return specialPages;
 }
 
-export async function getSpecialPage(slugArray) {
+export async function findSpecialPage(slugArray) {
+  const slug = slugArray ? slugArray.join("/") : "/";
   const specialPages = await getSpecialPages();
 
-  const slug = slugArray ? slugArray.join("/") : "/";
-
-  for (let { pageName, specialPage } of specialPages) {
-    console.log(pageName, specialPage);
+  const foundSpecialPage = specialPages.find((specialPage) => {
     const slugMatcher = new RegExp(specialPage.slugPattern);
-    const matches = slug.match(slugMatcher);
-    if (!matches) continue;
+    return slugMatcher.test(slug);
+  });
 
-    const endpoint = matches[1];
-    return { pageName, specialPage, endpoint };
-  }
+  if (!foundSpecialPage) return null;
+
+  const slugMatcher = new RegExp(foundSpecialPage.slugPattern);
+  const endpoint = slug.match(slugMatcher)[1];
+
+  return { page: foundSpecialPage, endpoint };
 }
 
 export function strapiSectionNameToReactComponentName(component) {
