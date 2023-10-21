@@ -1,5 +1,17 @@
 import type { Schema, Attribute } from '@strapi/strapi';
 
+export interface ElementsBreadcrumb extends Schema.Component {
+  collectionName: 'components_elements_breadcrumbs';
+  info: {
+    displayName: 'Breadcrumb';
+    description: '';
+  };
+  attributes: {
+    title: Attribute.String;
+    href: Attribute.String;
+  };
+}
+
 export interface ElementsButton extends Schema.Component {
   collectionName: 'components_elements_buttons';
   info: {
@@ -115,6 +127,19 @@ export interface SectionsCtaSection extends Schema.Component {
   };
 }
 
+export interface SectionsHeaderSection extends Schema.Component {
+  collectionName: 'components_sections_header_sections';
+  info: {
+    displayName: 'HeaderSection';
+    description: '';
+  };
+  attributes: {
+    title: Attribute.String;
+    subtitle: Attribute.RichText;
+    breadcrumbs: Attribute.Component<'elements.breadcrumb', true>;
+  };
+}
+
 export interface SectionsHeroSection extends Schema.Component {
   collectionName: 'components_sections_hero_sections';
   info: {
@@ -143,6 +168,7 @@ export interface SectionsTextSection extends Schema.Component {
 declare module '@strapi/types' {
   export module Shared {
     export interface Components {
+      'elements.breadcrumb': ElementsBreadcrumb;
       'elements.button': ElementsButton;
       'elements.footer-column': ElementsFooterColumn;
       'elements.link': ElementsLink;
@@ -151,6 +177,7 @@ declare module '@strapi/types' {
       'meta.metadata': MetaMetadata;
       'meta.navbar': MetaNavbar;
       'sections.cta-section': SectionsCtaSection;
+      'sections.header-section': SectionsHeaderSection;
       'sections.hero-section': SectionsHeroSection;
       'sections.text-section': SectionsTextSection;
     }

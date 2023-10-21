@@ -690,6 +690,7 @@ export interface ApiCauseCause extends Schema.CollectionType {
   };
   attributes: {
     title: Attribute.String;
+    slug: Attribute.String;
     introduction: Attribute.RichText;
     description: Attribute.RichText;
     learnMoreText: Attribute.String;
@@ -718,6 +719,36 @@ export interface ApiCauseCause extends Schema.CollectionType {
   };
 }
 
+export interface ApiCausePageCausePage extends Schema.SingleType {
+  collectionName: 'cause_pages';
+  info: {
+    singularName: 'cause-page';
+    pluralName: 'cause-pages';
+    displayName: 'CausePage';
+    description: '';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    slugPattern: Attribute.String;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::cause-page.cause-page',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::cause-page.cause-page',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
 export interface ApiGlobalGlobal extends Schema.SingleType {
   collectionName: 'globals';
   info: {
@@ -727,16 +758,16 @@ export interface ApiGlobalGlobal extends Schema.SingleType {
     description: '';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     title: Attribute.String;
     metadata: Attribute.Component<'meta.metadata'>;
     navbar: Attribute.Component<'meta.navbar'>;
     footer: Attribute.Component<'meta.footer'>;
+    backWord: Attribute.String;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
-    publishedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
       'api::global.global',
       'oneToOne',
@@ -758,12 +789,14 @@ export interface ApiOrganizationOrganization extends Schema.CollectionType {
     singularName: 'organization';
     pluralName: 'organizations';
     displayName: 'Organization';
+    description: '';
   };
   options: {
     draftAndPublish: true;
   };
   attributes: {
     name: Attribute.String;
+    slug: Attribute.String;
     description: Attribute.RichText;
     cause: Attribute.Relation<
       'api::organization.organization',
@@ -788,6 +821,36 @@ export interface ApiOrganizationOrganization extends Schema.CollectionType {
   };
 }
 
+export interface ApiOrganizationPageOrganizationPage extends Schema.SingleType {
+  collectionName: 'organization_pages';
+  info: {
+    singularName: 'organization-page';
+    pluralName: 'organization-pages';
+    displayName: 'OrganizationPage';
+    description: '';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    slugPattern: Attribute.String;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::organization-page.organization-page',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::organization-page.organization-page',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
 export interface ApiPagePage extends Schema.CollectionType {
   collectionName: 'pages';
   info: {
@@ -804,7 +867,12 @@ export interface ApiPagePage extends Schema.CollectionType {
     slug: Attribute.String;
     metadata: Attribute.Component<'meta.metadata'>;
     sections: Attribute.DynamicZone<
-      ['sections.hero-section', 'sections.text-section', 'sections.cta-section']
+      [
+        'sections.hero-section',
+        'sections.text-section',
+        'sections.cta-section',
+        'sections.header-section'
+      ]
     >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
@@ -833,8 +901,10 @@ declare module '@strapi/types' {
       'plugin::users-permissions.role': PluginUsersPermissionsRole;
       'plugin::users-permissions.user': PluginUsersPermissionsUser;
       'api::cause.cause': ApiCauseCause;
+      'api::cause-page.cause-page': ApiCausePageCausePage;
       'api::global.global': ApiGlobalGlobal;
       'api::organization.organization': ApiOrganizationOrganization;
+      'api::organization-page.organization-page': ApiOrganizationPageOrganizationPage;
       'api::page.page': ApiPagePage;
     }
   }

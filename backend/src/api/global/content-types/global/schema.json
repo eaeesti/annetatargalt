@@ -8,7 +8,7 @@
     "description": ""
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "pluginOptions": {},
   "attributes": {
@@ -29,6 +29,9 @@
       "type": "component",
       "repeatable": false,
       "component": "meta.footer"
+    },
+    "backWord": {
+      "type": "string"
     }
   }
 }

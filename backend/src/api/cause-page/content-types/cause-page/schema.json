@@ -1,0 +1,19 @@
+{
+  "kind": "singleType",
+  "collectionName": "cause_pages",
+  "info": {
+    "singularName": "cause-page",
+    "pluralName": "cause-pages",
+    "displayName": "CausePage",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "slugPattern": {
+      "type": "string"
+    }
+  }
+}

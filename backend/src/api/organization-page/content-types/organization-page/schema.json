@@ -1,0 +1,19 @@
+{
+  "kind": "singleType",
+  "collectionName": "organization_pages",
+  "info": {
+    "singularName": "organization-page",
+    "pluralName": "organization-pages",
+    "displayName": "OrganizationPage",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "slugPattern": {
+      "type": "string"
+    }
+  }
+}

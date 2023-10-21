@@ -2,7 +2,7 @@ import ReactMarkdown from "react-markdown";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
 
-function BackButton({ href }) {
+function BackButton({ href, backWord }) {
   return (
     <Link
       href={href}
@@ -12,8 +12,7 @@ function BackButton({ href }) {
         className="flex-shrink-0 mr-1 -ml-1 w-5 h-5 text-slate-500"
         aria-hidden="true"
       />
-      {/* TODO: Get from Strapi */}
-      Tagasi
+      {backWord}
     </Link>
   );
 }
@@ -42,7 +41,7 @@ function Breadcrumb({ index, title, href }) {
     </li>
   );
 }
-export default function HeaderSection({ data }) {
+export default function HeaderSection({ data, global }) {
   return (
     <div className="py-24 bg-white sm:py-32">
       <div className="px-6 mx-auto max-w-7xl lg:px-8">
@@ -52,6 +51,7 @@ export default function HeaderSection({ data }) {
               <nav className="sm:hidden" aria-label="Back">
                 <BackButton
                   href={data.breadcrumbs[data.breadcrumbs.length - 1].href}
+                  backWord={global.backWord}
                 />
               </nav>
               <nav className="hidden sm:flex" aria-label="Breadcrumbs">
