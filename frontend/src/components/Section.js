@@ -6,5 +6,5 @@ export default function Section({ section, global, entity }) {
   );
   const Component = require(`./sections/${componentName}`).default;
 
-  return <Component data={section} global={global} entity={entity} />;
+  return <Component {...section} global={global} entity={entity} />;
 }

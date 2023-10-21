@@ -41,23 +41,28 @@ function Breadcrumb({ index, title, href }) {
     </li>
   );
 }
-export default function HeaderSection({ data, global }) {
+export default function HeaderSection({
+  title,
+  subtitle,
+  breadcrumbs,
+  global,
+}) {
   return (
     <div className="py-24 bg-white sm:py-32">
       <div className="px-6 mx-auto max-w-7xl lg:px-8">
         <div className="flex flex-col gap-8 mx-auto max-w-2xl lg:mx-0">
-          {data.breadcrumbs.length > 1 && (
+          {breadcrumbs.length > 1 && (
             <div>
               <nav className="sm:hidden" aria-label="Back">
                 <BackButton
-                  href={data.breadcrumbs[data.breadcrumbs.length - 1].href}
+                  href={breadcrumbs[breadcrumbs.length - 1].href}
                   backWord={global.backWord}
                 />
               </nav>
               <nav className="hidden sm:flex" aria-label="Breadcrumbs">
                 <ol role="list" className="flex gap-4 items-center">
-                  {data.breadcrumbs
-                    .concat([{ title: data.title }])
+                  {breadcrumbs
+                    .concat([{ title: title }])
                     .map((breadcrumb, index) => (
                       <Breadcrumb key={index} index={index} {...breadcrumb} />
                     ))}
@@ -66,12 +71,12 @@ export default function HeaderSection({ data, global }) {
             </div>
           )}
           <h2 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl">
-            {data.title}
+            {title}
           </h2>
-          {data.subtitle && (
+          {subtitle && (
             <ReactMarkdown
               className="w-full max-w-2xl text-slate-600 prose-lg"
-              children={data.subtitle}
+              children={subtitle}
             />
           )}
         </div>
