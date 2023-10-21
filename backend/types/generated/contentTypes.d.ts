@@ -686,14 +686,14 @@ export interface ApiCauseCause extends Schema.CollectionType {
     description: '';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     title: Attribute.String;
-    slug: Attribute.String;
+    slug: Attribute.String & Attribute.Unique;
+    metadata: Attribute.Component<'meta.metadata'>;
     introduction: Attribute.RichText;
-    description: Attribute.RichText;
-    learnMoreText: Attribute.String;
+    content: Attribute.RichText;
     fundName: Attribute.String;
     fundLink: Attribute.String;
     organizations: Attribute.Relation<
@@ -703,7 +703,6 @@ export interface ApiCauseCause extends Schema.CollectionType {
     >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
-    publishedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
       'api::cause.cause',
       'oneToOne',
@@ -762,12 +761,16 @@ export interface ApiOrganizationOrganization extends Schema.CollectionType {
     description: '';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
-    name: Attribute.String;
-    slug: Attribute.String;
-    description: Attribute.RichText;
+    title: Attribute.String;
+    slug: Attribute.String & Attribute.Unique;
+    metadata: Attribute.Component<'meta.metadata'>;
+    fund: Attribute.Boolean & Attribute.DefaultTo<false>;
+    homepage: Attribute.String;
+    introduction: Attribute.RichText;
+    content: Attribute.RichText;
     cause: Attribute.Relation<
       'api::organization.organization',
       'manyToOne',
@@ -775,7 +778,6 @@ export interface ApiOrganizationOrganization extends Schema.CollectionType {
     >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
-    publishedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
       'api::organization.organization',
       'oneToOne',
@@ -800,11 +802,11 @@ export interface ApiPagePage extends Schema.CollectionType {
     description: '';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     name: Attribute.String;
-    slug: Attribute.String;
+    slug: Attribute.String & Attribute.Unique;
     metadata: Attribute.Component<'meta.metadata'>;
     sections: Attribute.DynamicZone<
       [
@@ -816,7 +818,6 @@ export interface ApiPagePage extends Schema.CollectionType {
     >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
-    publishedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<'api::page.page', 'oneToOne', 'admin::user'> &
       Attribute.Private;
     updatedBy: Attribute.Relation<'api::page.page', 'oneToOne', 'admin::user'> &
@@ -833,7 +834,7 @@ export interface ApiSpecialPageSpecialPage extends Schema.CollectionType {
     description: '';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     slugPattern: Attribute.String;
@@ -849,7 +850,6 @@ export interface ApiSpecialPageSpecialPage extends Schema.CollectionType {
     >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
-    publishedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
       'api::special-page.special-page',
       'oneToOne',

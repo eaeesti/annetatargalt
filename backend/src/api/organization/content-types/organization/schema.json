@@ -8,17 +8,34 @@
     "description": ""
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "pluginOptions": {},
   "attributes": {
-    "name": {
+    "title": {
       "type": "string"
     },
     "slug": {
+      "type": "string",
+      "unique": true,
+      "required": false
+    },
+    "metadata": {
+      "type": "component",
+      "repeatable": false,
+      "component": "meta.metadata"
+    },
+    "fund": {
+      "type": "boolean",
+      "default": false
+    },
+    "homepage": {
       "type": "string"
     },
-    "description": {
+    "introduction": {
+      "type": "richtext"
+    },
+    "content": {
       "type": "richtext"
     },
     "cause": {

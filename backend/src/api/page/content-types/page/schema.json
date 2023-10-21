@@ -8,7 +8,7 @@
     "description": ""
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "pluginOptions": {},
   "attributes": {
@@ -16,7 +16,8 @@
       "type": "string"
     },
     "slug": {
-      "type": "string"
+      "type": "string",
+      "unique": true
     },
     "metadata": {
       "type": "component",
