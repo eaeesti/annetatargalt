@@ -96,7 +96,29 @@ export async function findSpecialPage(slugArray) {
   const slugMatcher = new RegExp(foundSpecialPage.slugPattern);
   const endpoint = slug.match(slugMatcher)[1];
 
-  return { page: foundSpecialPage, endpoint };
+  const entity = await getEntityBySlug(
+    foundSpecialPage.collectionType,
+    endpoint
+  );
+
+  return { page: foundSpecialPage, entity };
+}
+
+export async function getEntityBySlug(type, slug) {
+  const path = `/${type}`;
+  const options = headersWithAuthToken();
+  const urlParamsObject = {
+    filters: { slug },
+    populate: "deep",
+  };
+
+  const response = await fetchAPI(path, urlParamsObject, options);
+
+  try {
+    return response.data[0].attributes;
+  } catch (error) {
+    throw new Error(`Entity with slug ${slug} not found`);
+  }
 }
 
 export function strapiSectionNameToReactComponentName(component) {
