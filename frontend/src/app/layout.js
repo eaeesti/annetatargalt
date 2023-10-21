@@ -13,7 +13,7 @@ export async function generateMetadata() {
 
 export default async function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="et">
       <body className={inter.className}>{children}</body>
     </html>
   );

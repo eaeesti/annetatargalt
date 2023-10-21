@@ -1,0 +1,40 @@
+{
+  "kind": "collectionType",
+  "collectionName": "causes",
+  "info": {
+    "singularName": "cause",
+    "pluralName": "causes",
+    "displayName": "Cause",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "introduction": {
+      "type": "richtext"
+    },
+    "description": {
+      "type": "richtext"
+    },
+    "learnMoreText": {
+      "type": "string"
+    },
+    "fundName": {
+      "type": "string"
+    },
+    "fundLink": {
+      "type": "string"
+    },
+    "organizations": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::organization.organization",
+      "mappedBy": "cause"
+    }
+  }
+}
