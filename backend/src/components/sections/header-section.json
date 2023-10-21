@@ -1,0 +1,21 @@
+{
+  "collectionName": "components_sections_header_sections",
+  "info": {
+    "displayName": "HeaderSection",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "subtitle": {
+      "type": "richtext"
+    },
+    "breadcrumbs": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.breadcrumb"
+    }
+  }
+}

@@ -47,7 +47,11 @@ export async function getPageBySlug(slug) {
 
   const response = await fetchAPI(path, urlParamsObject, options);
 
-  return response.data[0].attributes;
+  try {
+    return response.data[0].attributes;
+  } catch (error) {
+    throw new Error(`Page with slug ${slug} not found`);
+  }
 }
 
 export async function getGlobal() {

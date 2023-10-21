@@ -28,7 +28,8 @@
       "components": [
         "sections.hero-section",
         "sections.text-section",
-        "sections.cta-section"
+        "sections.cta-section",
+        "sections.header-section"
       ]
     }
   }
