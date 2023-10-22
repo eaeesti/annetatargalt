@@ -1,19 +1,17 @@
 import ReactMarkdown from "react-markdown";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
+import Button from "../elements/Button";
 
 function BackButton({ href, backWord }) {
   return (
-    <Link
-      href={href}
-      className="flex items-center font-medium text-slate-500 hover:text-slate-400"
-    >
+    <Button type="text" size="sm" href={href} className="font-medium">
       <ChevronLeftIcon
-        className="flex-shrink-0 mr-1 -ml-1 w-5 h-5 text-slate-500"
+        className="flex-shrink-0 mr-1 -ml-1 w-5 h-5"
         aria-hidden="true"
       />
       {backWord}
-    </Link>
+    </Button>
   );
 }
 
@@ -23,19 +21,20 @@ function Breadcrumb({ index, title, href }) {
       <div className="flex items-center">
         {index > 0 && (
           <ChevronRightIcon
-            className="flex-shrink-0 mr-4 w-5 h-5 text-slate-500"
+            className="flex-shrink-0 mr-4 w-5 h-5"
             aria-hidden="true"
           />
         )}
         {href ? (
-          <Link
+          <Button
+            text={title}
+            type="text"
+            size="sm"
             href={href}
-            className="font-medium text-slate-500 hover:text-slate-400"
-          >
-            {title}
-          </Link>
+            className="font-medium"
+          />
         ) : (
-          <span className="font-medium text-slate-500">{title}</span>
+          <span className="font-medium">{title}</span>
         )}
       </div>
     </li>
@@ -52,8 +51,8 @@ export default function HeaderSection({
       <div className="px-6 mx-auto max-w-7xl lg:px-8">
         <div className="flex flex-col gap-8 mx-auto max-w-2xl lg:mx-0">
           {breadcrumbs.length > 1 && (
-            <div>
-              <nav className="sm:hidden" aria-label="Back">
+            <div className="text-slate-500">
+              <nav className="flex sm:hidden" aria-label="Back">
                 <BackButton
                   href={breadcrumbs[breadcrumbs.length - 1].href}
                   backWord={global.backWord}

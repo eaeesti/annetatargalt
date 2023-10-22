@@ -16,7 +16,7 @@ export default function HeroSection({ title, subtitle, buttons, image }) {
             </h1>
             <div className="mt-6 max-w-xl lg:mt-0 xl:col-end-1 xl:row-start-1">
               <p className="text-lg leading-8 text-gray-600">{subtitle}</p>
-              <div className="flex flex-col gap-4 mt-10 sm:items-center sm:flex-row">
+              <div className="flex flex-col gap-4 mt-10 text-sm sm:items-center sm:flex-row">
                 {buttons.map((button) => (
                   <Button key={button.id} {...button} />
                 ))}

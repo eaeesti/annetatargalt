@@ -18,7 +18,7 @@ export default function Image({ data, className }) {
     <NextImage
       className={className}
       src={image.url}
-      alt={image.caption}
+      alt={image.alternativeText}
       width={image.width}
       height={image.height}
     />

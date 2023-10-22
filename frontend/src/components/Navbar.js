@@ -52,7 +52,7 @@ export default function Navbar({ global }) {
         onClose={setMobileMenuOpen}
       >
         <div className="fixed inset-0 z-10" />
-        <Dialog.Panel className="overflow-y-auto fixed inset-y-0 right-0 z-10 px-6 py-4 w-full bg-white sm:max-w-sm sm:ring-1 sm:ring-slate-900/10">
+        <Dialog.Panel className="overflow-y-auto fixed inset-y-0 right-0 z-20 px-6 py-4 w-full bg-white sm:max-w-sm sm:ring-1 sm:ring-slate-900/10">
           <div className="flex gap-x-6 items-center">
             <Anchor
               href="/"
