@@ -24,6 +24,7 @@ export default function Footer({ global }) {
                   size="sm"
                   type="text"
                   className="text-slate-500 !p-0"
+                  noIcon={true}
                 >
                   <SocialMediaIcon type={socialMediaLink.type} />
                 </Button>
@@ -46,7 +47,7 @@ export default function Footer({ global }) {
                         key={link.id}
                         type="text"
                         size="md"
-                        className="!justify-start !font-normal leading-6"
+                        className="!justify-start !font-normal leading-6 !gap-0"
                         {...link}
                       />
                     </li>

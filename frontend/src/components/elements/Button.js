@@ -11,6 +11,7 @@ export default function Button({
   newTab = false,
   className = "",
   children,
+  ...rest
 }) {
   const buttons = {
     primary:
@@ -36,7 +37,7 @@ export default function Button({
   );
 
   return (
-    <Anchor href={href} newTab={newTab} className={fullClassName}>
+    <Anchor href={href} newTab={newTab} className={fullClassName} {...rest}>
       {text}
       {children}
       {arrow && <ArrowLongRightIcon className="w-5 h-5" />}

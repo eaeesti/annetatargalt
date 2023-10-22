@@ -1,7 +1,6 @@
-import ReactMarkdown from "react-markdown";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
-import Link from "next/link";
 import Button from "../elements/Button";
+import Markdown from "../elements/Markdown";
 
 function BackButton({ href, backWord }) {
   return (
@@ -47,9 +46,9 @@ export default function HeaderSection({
   global,
 }) {
   return (
-    <div className="py-24 bg-white sm:py-32">
-      <div className="px-6 mx-auto max-w-7xl lg:px-8">
-        <div className="flex flex-col gap-8 mx-auto max-w-2xl lg:mx-0">
+    <div className="px-6 py-24 bg-white border-b lg:px-8 sm:py-32">
+      <div className="mx-auto max-w-3xl">
+        <div className="flex flex-col gap-8 mx-auto lg:mx-0">
           {breadcrumbs.length > 1 && (
             <div className="text-slate-500">
               <nav className="flex sm:hidden" aria-label="Back">
@@ -73,10 +72,7 @@ export default function HeaderSection({
             {title}
           </h2>
           {subtitle && (
-            <ReactMarkdown
-              className="w-full max-w-2xl text-slate-600 prose-lg"
-              children={subtitle}
-            />
+            <Markdown className="w-full prose prose-lg" text={subtitle} />
           )}
         </div>
       </div>
