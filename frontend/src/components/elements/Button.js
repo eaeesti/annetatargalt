@@ -15,15 +15,16 @@ export default function Button({
 }) {
   const buttons = {
     primary:
-      "text-white shadow-sm bg-primary-600 hover:bg-primary-500 focus-visible:outline-primary-600",
+      "text-white shadow-sm bg-primary-600 hover:bg-primary-500 focus-visible:outline-primary-600 text-center",
     secondary:
-      "text-primary-600 shadow-sm bg-primary-100 hover:bg-primary-200 focus-visible:outline-primary-600",
+      "text-primary-600 shadow-sm bg-primary-100 hover:bg-primary-200 focus-visible:outline-primary-600 text-center",
     white:
-      "text-primary-700 shadow-sm bg-white hover:bg-primary-100 focus-visible:outline-white",
+      "text-primary-700 shadow-sm bg-white hover:bg-primary-100 focus-visible:outline-white text-center",
     text: "hover:opacity-70 focus-visible:outline-primary-600",
   };
 
   const sizes = {
+    link: "px-0 py-0",
     sm: "px-1 py-0.5",
     md: "px-3 py-2",
     lg: "px-4 py-2.5",

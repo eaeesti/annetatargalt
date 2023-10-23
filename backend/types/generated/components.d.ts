@@ -114,6 +114,25 @@ export interface MetaNavbar extends Schema.Component {
   };
 }
 
+export interface SectionsCausesSection extends Schema.Component {
+  collectionName: 'components_sections_causes_sections';
+  info: {
+    displayName: 'CausesSection';
+    description: '';
+  };
+  attributes: {
+    title: Attribute.String;
+    description: Attribute.RichText;
+    readAboutOrganizationsText: Attribute.String;
+    donateText: Attribute.String;
+    causes: Attribute.Relation<
+      'sections.causes-section',
+      'oneToMany',
+      'api::cause.cause'
+    >;
+  };
+}
+
 export interface SectionsCtaSection extends Schema.Component {
   collectionName: 'components_sections_cta_sections';
   info: {
@@ -186,6 +205,7 @@ declare module '@strapi/types' {
       'meta.footer': MetaFooter;
       'meta.metadata': MetaMetadata;
       'meta.navbar': MetaNavbar;
+      'sections.causes-section': SectionsCausesSection;
       'sections.cta-section': SectionsCtaSection;
       'sections.header-section': SectionsHeaderSection;
       'sections.hero-section': SectionsHeroSection;

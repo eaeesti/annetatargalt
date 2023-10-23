@@ -29,7 +29,7 @@ module.exports = {
             "--tw-prose-body": theme("colors.slate[700]"),
             "--tw-prose-headings": theme("colors.slate[900]"),
             "--tw-prose-lead": theme("colors.slate[600]"),
-            "--tw-prose-bold": theme("colors.slate[900]"),
+            "--tw-prose-bold": theme("colors.slate[700]"),
             "--tw-prose-counters": theme("colors.slate[500]"),
             "--tw-prose-bullets": theme("colors.slate[300]"),
             "--tw-prose-hr": theme("colors.slate[200]"),

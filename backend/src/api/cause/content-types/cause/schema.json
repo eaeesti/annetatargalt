@@ -41,6 +41,13 @@
       "relation": "oneToMany",
       "target": "api::organization.organization",
       "mappedBy": "cause"
+    },
+    "image": {
+      "allowedTypes": [
+        "images"
+      ],
+      "type": "media",
+      "multiple": false
     }
   }
 }

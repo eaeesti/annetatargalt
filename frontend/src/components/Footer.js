@@ -21,9 +21,9 @@ export default function Footer({ global }) {
                   key={socialMediaLink.id}
                   href={socialMediaLink.href}
                   newTab={true}
-                  size="sm"
+                  size="link"
                   type="text"
-                  className="text-slate-500 !p-0"
+                  className="text-slate-500"
                   noIcon={true}
                 >
                   <SocialMediaIcon type={socialMediaLink.type} />

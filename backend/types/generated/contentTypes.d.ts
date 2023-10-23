@@ -701,6 +701,7 @@ export interface ApiCauseCause extends Schema.CollectionType {
       'oneToMany',
       'api::organization.organization'
     >;
+    image: Attribute.Media;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -813,7 +814,8 @@ export interface ApiPagePage extends Schema.CollectionType {
         'sections.hero-section',
         'sections.text-section',
         'sections.cta-section',
-        'sections.header-section'
+        'sections.header-section',
+        'sections.causes-section'
       ]
     >;
     createdAt: Attribute.DateTime;

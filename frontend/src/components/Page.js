@@ -8,7 +8,12 @@ export default function Page({ page, global }) {
       <Navbar global={global} />
       <main>
         {page.sections.map((section) => (
-          <Section key={section.id} section={section} global={global} />
+          <Section
+            key={section.id}
+            section={section}
+            global={global}
+            page={page}
+          />
         ))}
       </main>
       <Footer global={global} />

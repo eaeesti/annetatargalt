@@ -39,6 +39,7 @@ function Breadcrumb({ index, title, href }) {
     </li>
   );
 }
+
 export default function HeaderSection({
   title,
   subtitle,
@@ -46,7 +47,7 @@ export default function HeaderSection({
   global,
 }) {
   return (
-    <div className="px-6 py-24 bg-white border-b lg:px-8 sm:py-32">
+    <div className="px-6 py-24 bg-slate-100 lg:px-8 sm:py-32">
       <div className="mx-auto max-w-3xl">
         <div className="flex flex-col gap-8 mx-auto lg:mx-0">
           {breadcrumbs.length > 1 && (
@@ -68,11 +69,13 @@ export default function HeaderSection({
               </nav>
             </div>
           )}
-          <h2 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl">
+          <h2 className="text-4xl font-bold tracking-tight text-primary-700 sm:text-5xl">
             {title}
           </h2>
           {subtitle && (
-            <Markdown className="w-full prose prose-lg" text={subtitle} />
+            <Markdown className="w-full prose prose-md prose-primary">
+              {subtitle}
+            </Markdown>
           )}
         </div>
       </div>

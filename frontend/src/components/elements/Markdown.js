@@ -2,10 +2,10 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Anchor from "../elements/Anchor";
 
-export default function Markdown({ text, className }) {
+export default function Markdown({ children, className }) {
   return (
     <ReactMarkdown
-      children={text}
+      children={children}
       remarkPlugins={[remarkGfm]}
       className={className}
       components={{

@@ -30,7 +30,8 @@
         "sections.hero-section",
         "sections.text-section",
         "sections.cta-section",
-        "sections.header-section"
+        "sections.header-section",
+        "sections.causes-section"
       ]
     }
   }
