@@ -18,29 +18,29 @@ export default function TextWithImageSection({
   textOnRight = true,
 }) {
   return (
-    <div className="py-16 bg-white sm:py-24">
-      <div className="px-6 mx-auto max-w-7xl lg:px-8">
-        <div className="grid grid-cols-1 gap-x-8 gap-y-16 justify-center items-start mx-auto max-w-2xl sm:gap-y-24 lg:mx-0 lg:max-w-none lg:grid-cols-2">
-          <div
+    <div className="bg-white py-16 sm:py-24">
+      <div className="container mt-24 w-full max-w-full sm:mt-36 sm:w-auto md:px-8 lg:mt-0 xl:max-w-7xl">
+        <div
+          className={classes(
+            "flex flex-col items-center gap-y-8 bg-slate-50 md:rounded-[2rem]",
+            textOnRight
+              ? "lg:ml-48 lg:flex-row xl:ml-64"
+              : "lg:mr-48 lg:flex-row-reverse xl:mr-64",
+          )}
+        >
+          <Image
+            data={image}
             className={classes(
-              "lg:pr-4",
-              textOnRight ? "lg:order-1" : "lg:order-2"
+              "xl:w-128 mx-24 -mt-36 h-auto max-h-72 w-auto rounded-[2rem] bg-slate-200 shadow-2xl xs:-mt-48 xs:max-h-96 lg:mx-0 lg:my-16 lg:h-auto lg:max-h-none lg:w-96",
+              textOnRight ? "lg:-ml-48 xl:-ml-64" : "lg:-mr-48 xl:-mr-64",
             )}
-          >
-            <div className="overflow-hidden relative max-w-lg rounded-[2rem] shadow-2xl bg-slate-200">
-              <Image data={image} className="object-cover w-full h-full" />
-            </div>
-          </div>
-          <div className={textOnRight ? "lg:order-2" : "lg:order-1"}>
-            <div className="text-base leading-7 text-slate-700 lg:max-w-lg">
-              <h3 className="mb-6 text-xl font-bold tracking-tight text-primary-700 sm:text-2xl">
-                {textOnRight} {title}
-              </h3>
-              <Markdown className="max-w-xl prose prose-primary">
-                {text}
-              </Markdown>
-            </div>
-            <div className="flex flex-col flex-wrap gap-3 mt-10 xs:flex-row">
+          />
+          <div className="flex flex-col p-4 pb-12 xs:p-8 sm:p-16 xl:p-20">
+            <h3 className="mb-6 text-xl font-bold tracking-tight text-primary-700 sm:text-2xl">
+              {textOnRight} {title}
+            </h3>
+            <Markdown className="prose prose-primary">{text}</Markdown>
+            <div className="mt-10 flex flex-col flex-wrap gap-3 xs:flex-row">
               {buttons.map((button) => (
                 <Button key={button.href} {...button} />
               ))}

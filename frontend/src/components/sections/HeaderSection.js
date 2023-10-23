@@ -6,7 +6,7 @@ function BackButton({ href, backWord }) {
   return (
     <Button type="text" size="sm" href={href} className="font-medium">
       <ChevronLeftIcon
-        className="flex-shrink-0 mr-1 -ml-1 w-5 h-5"
+        className="-ml-1 mr-1 h-5 w-5 flex-shrink-0"
         aria-hidden="true"
       />
       {backWord}
@@ -20,7 +20,7 @@ function Breadcrumb({ index, title, href }) {
       <div className="flex items-center">
         {index > 0 && (
           <ChevronRightIcon
-            className="flex-shrink-0 mr-4 w-5 h-5"
+            className="mr-4 h-5 w-5 flex-shrink-0"
             aria-hidden="true"
           />
         )}
@@ -47,10 +47,10 @@ export default function HeaderSection({
   global,
 }) {
   return (
-    <div className="px-6 py-24 bg-slate-100 lg:px-8 sm:py-32">
+    <div className="bg-slate-100 px-4 py-24 sm:py-32 lg:px-8">
       <div className="mx-auto max-w-3xl">
-        <div className="flex flex-col gap-8 mx-auto lg:mx-0">
-          {breadcrumbs.length > 1 && (
+        <div className="mx-auto flex flex-col gap-8 lg:mx-0">
+          {breadcrumbs.length > 0 && (
             <div className="text-slate-500">
               <nav className="flex sm:hidden" aria-label="Back">
                 <BackButton
@@ -59,7 +59,7 @@ export default function HeaderSection({
                 />
               </nav>
               <nav className="hidden sm:flex" aria-label="Breadcrumbs">
-                <ol role="list" className="flex gap-4 items-center">
+                <ol role="list" className="flex items-center gap-4">
                   {breadcrumbs
                     .concat([{ title: title }])
                     .map((breadcrumb, index) => (
@@ -73,7 +73,7 @@ export default function HeaderSection({
             {title}
           </h2>
           {subtitle && (
-            <Markdown className="w-full prose prose-md prose-primary">
+            <Markdown className="prose-md prose prose-primary w-full max-w-3xl">
               {subtitle}
             </Markdown>
           )}

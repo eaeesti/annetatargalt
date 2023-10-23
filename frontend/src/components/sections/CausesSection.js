@@ -12,13 +12,13 @@ export default function CausesSection({
   console.log(causes);
   return (
     <>
-      <section className="flex flex-col gap-6 items-center px-4 pt-24 pb-12">
+      <section className="flex flex-col items-center gap-6 px-4 pb-12 pt-12 lg:pt-24">
         <div className="w-full max-w-3xl">
           <h2 className="text-2xl font-bold tracking-tight text-primary-700 sm:text-3xl">
             {title}
           </h2>
         </div>
-        <Markdown className="w-full max-w-3xl prose prose-primary">
+        <Markdown className="prose prose-primary w-full max-w-3xl">
           {description}
         </Markdown>
       </section>

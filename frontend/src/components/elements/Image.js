@@ -1,6 +1,6 @@
 import NextImage from "next/image";
 
-export default function Image({ data, className }) {
+export default function Image({ data, className, fill = false }) {
   const image = data.data?.attributes;
 
   if (!image) {
@@ -10,6 +10,17 @@ export default function Image({ data, className }) {
         alt="Not found"
         width={200}
         height={200}
+      />
+    );
+  }
+
+  if (fill) {
+    return (
+      <NextImage
+        className={className}
+        src={image.url}
+        alt={image.alternativeText}
+        fill={true}
       />
     );
   }

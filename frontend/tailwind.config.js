@@ -9,12 +9,18 @@ module.exports = {
       xs: "475px",
       ...defaultTheme.screens,
     },
+    container: {
+      center: true,
+    },
     extend: {
       fontFamily: {
         sans: ["Inter var", "Inter", ...defaultTheme.fontFamily.sans],
       },
       colors: {
         primary: colors.emerald,
+      },
+      spacing: {
+        128: "32rem",
       },
       typography: (theme) => ({
         DEFAULT: {
