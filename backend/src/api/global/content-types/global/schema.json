@@ -32,6 +32,9 @@
     },
     "backWord": {
       "type": "string"
+    },
+    "donateLink": {
+      "type": "string"
     }
   }
 }

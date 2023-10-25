@@ -12,6 +12,7 @@ export default function SpecialPage({ page, global, entity }) {
             key={section.id}
             section={section}
             global={global}
+            page={page}
             entity={entity}
           />
         ))}

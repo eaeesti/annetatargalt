@@ -15,11 +15,11 @@ export default function Button({
 }) {
   const buttons = {
     primary:
-      "text-white shadow-sm bg-primary-600 hover:bg-primary-500 focus-visible:outline-primary-600 text-center",
+      "text-white shadow-sm bg-primary-600 hover:bg-primary-500 focus-visible:outline-primary-600",
     secondary:
-      "text-primary-600 shadow-sm bg-primary-100 hover:bg-primary-200 focus-visible:outline-primary-600 text-center",
+      "text-primary-600 shadow-sm bg-primary-100 hover:bg-primary-200 focus-visible:outline-primary-600",
     white:
-      "text-primary-700 shadow-sm bg-white hover:bg-primary-100 focus-visible:outline-white text-center",
+      "text-primary-700 shadow-sm bg-white hover:bg-primary-100 focus-visible:outline-white",
     text: "hover:opacity-70 focus-visible:outline-primary-600",
   };
 
@@ -31,17 +31,17 @@ export default function Button({
   };
 
   const fullClassName = classes(
-    "flex gap-1.5 items-center justify-center font-semibold rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2",
+    "flex gap-1.5 items-center justify-center font-semibold rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 text-center",
     sizes[size],
     buttons[type],
-    className
+    className,
   );
 
   return (
     <Anchor href={href} newTab={newTab} className={fullClassName} {...rest}>
       {text}
       {children}
-      {arrow && <ArrowLongRightIcon className="w-5 h-5" />}
+      {arrow && <ArrowLongRightIcon className="h-5 w-5" />}
     </Anchor>
   );
 }

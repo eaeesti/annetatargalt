@@ -48,7 +48,7 @@ export default function HeaderSection({
 }) {
   return (
     <div className="bg-slate-100 px-4 py-24 sm:py-32 lg:px-8">
-      <div className="mx-auto max-w-3xl">
+      <div className="container">
         <div className="mx-auto flex flex-col gap-8 lg:mx-0">
           {breadcrumbs.length > 0 && (
             <div className="text-slate-500">

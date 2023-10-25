@@ -43,6 +43,16 @@
       "relation": "manyToOne",
       "target": "api::cause.cause",
       "inversedBy": "organizations"
+    },
+    "logo": {
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ],
+      "type": "media",
+      "multiple": false
     }
   }
 }

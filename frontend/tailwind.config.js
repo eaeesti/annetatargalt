@@ -2,6 +2,9 @@
 const colors = require("tailwindcss/colors");
 const defaultTheme = require("tailwindcss/defaultTheme");
 
+const containerScreens = Object.assign({}, defaultTheme.screens);
+delete containerScreens["2xl"];
+
 module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
@@ -11,6 +14,7 @@ module.exports = {
     },
     container: {
       center: true,
+      screens: containerScreens,
     },
     extend: {
       fontFamily: {

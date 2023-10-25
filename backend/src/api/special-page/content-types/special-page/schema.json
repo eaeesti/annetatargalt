@@ -12,6 +12,9 @@
   },
   "pluginOptions": {},
   "attributes": {
+    "name": {
+      "type": "string"
+    },
     "slugPattern": {
       "type": "string"
     },
@@ -25,7 +28,10 @@
         "sections.header-section",
         "sections.hero-section",
         "sections.text-section",
-        "special-sections.special-header-section"
+        "special-sections.special-header-section",
+        "sections.causes-section",
+        "special-sections.cause-organizations-section",
+        "special-sections.entity-text-section"
       ]
     }
   }

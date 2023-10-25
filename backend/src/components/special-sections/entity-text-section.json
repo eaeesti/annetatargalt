@@ -1,0 +1,12 @@
+{
+  "collectionName": "components_special_sections_entity_text_sections",
+  "info": {
+    "displayName": "EntityTextSection"
+  },
+  "options": {},
+  "attributes": {
+    "field": {
+      "type": "string"
+    }
+  }
+}

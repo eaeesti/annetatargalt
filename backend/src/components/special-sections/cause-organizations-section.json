@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_special_sections_cause_organizations_sections",
+  "info": {
+    "displayName": "CauseOrganizationsSection",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "donateButtonText": {
+      "type": "string"
+    },
+    "readMoreText": {
+      "type": "string"
+    },
+    "description": {
+      "type": "richtext"
+    }
+  }
+}

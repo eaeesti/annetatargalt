@@ -736,6 +736,7 @@ export interface ApiGlobalGlobal extends Schema.SingleType {
     navbar: Attribute.Component<'meta.navbar'>;
     footer: Attribute.Component<'meta.footer'>;
     backWord: Attribute.String;
+    donateLink: Attribute.String;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -777,6 +778,7 @@ export interface ApiOrganizationOrganization extends Schema.CollectionType {
       'manyToOne',
       'api::cause.cause'
     >;
+    logo: Attribute.Media;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -839,6 +841,7 @@ export interface ApiSpecialPageSpecialPage extends Schema.CollectionType {
     draftAndPublish: false;
   };
   attributes: {
+    name: Attribute.String;
     slugPattern: Attribute.String;
     collectionType: Attribute.String;
     sections: Attribute.DynamicZone<
@@ -847,7 +850,10 @@ export interface ApiSpecialPageSpecialPage extends Schema.CollectionType {
         'sections.header-section',
         'sections.hero-section',
         'sections.text-section',
-        'special-sections.special-header-section'
+        'special-sections.special-header-section',
+        'sections.causes-section',
+        'special-sections.cause-organizations-section',
+        'special-sections.entity-text-section'
       ]
     >;
     createdAt: Attribute.DateTime;

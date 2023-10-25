@@ -12,10 +12,10 @@
     "description": {
       "type": "richtext"
     },
-    "readAboutOrganizationsText": {
+    "anchor": {
       "type": "string"
     },
-    "donateText": {
+    "readAboutOrganizationsText": {
       "type": "string"
     },
     "causes": {

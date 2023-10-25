@@ -1,13 +1,18 @@
 {
   "collectionName": "components_special_sections_special_header_sections",
   "info": {
-    "displayName": "SpecialHeaderSection"
+    "displayName": "SpecialHeaderSection",
+    "description": ""
   },
   "options": {},
   "attributes": {
-    "display": {
-      "type": "boolean",
-      "default": true
+    "descriptionField": {
+      "type": "string"
+    },
+    "breadcrumbs": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.breadcrumb"
     }
   }
 }

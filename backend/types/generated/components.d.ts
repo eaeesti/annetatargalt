@@ -123,8 +123,8 @@ export interface SectionsCausesSection extends Schema.Component {
   attributes: {
     title: Attribute.String;
     description: Attribute.RichText;
+    anchor: Attribute.String;
     readAboutOrganizationsText: Attribute.String;
-    donateText: Attribute.String;
     causes: Attribute.Relation<
       'sections.causes-section',
       'oneToMany',
@@ -184,13 +184,40 @@ export interface SectionsTextSection extends Schema.Component {
   };
 }
 
+export interface SpecialSectionsCauseOrganizationsSection
+  extends Schema.Component {
+  collectionName: 'components_special_sections_cause_organizations_sections';
+  info: {
+    displayName: 'CauseOrganizationsSection';
+    description: '';
+  };
+  attributes: {
+    title: Attribute.String;
+    donateButtonText: Attribute.String;
+    readMoreText: Attribute.String;
+    description: Attribute.RichText;
+  };
+}
+
+export interface SpecialSectionsEntityTextSection extends Schema.Component {
+  collectionName: 'components_special_sections_entity_text_sections';
+  info: {
+    displayName: 'EntityTextSection';
+  };
+  attributes: {
+    field: Attribute.String;
+  };
+}
+
 export interface SpecialSectionsSpecialHeaderSection extends Schema.Component {
   collectionName: 'components_special_sections_special_header_sections';
   info: {
     displayName: 'SpecialHeaderSection';
+    description: '';
   };
   attributes: {
-    display: Attribute.Boolean & Attribute.DefaultTo<true>;
+    descriptionField: Attribute.String;
+    breadcrumbs: Attribute.Component<'elements.breadcrumb', true>;
   };
 }
 
@@ -210,6 +237,8 @@ declare module '@strapi/types' {
       'sections.header-section': SectionsHeaderSection;
       'sections.hero-section': SectionsHeroSection;
       'sections.text-section': SectionsTextSection;
+      'special-sections.cause-organizations-section': SpecialSectionsCauseOrganizationsSection;
+      'special-sections.entity-text-section': SpecialSectionsEntityTextSection;
       'special-sections.special-header-section': SpecialSectionsSpecialHeaderSection;
     }
   }
