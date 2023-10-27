@@ -1,0 +1,147 @@
+# Anneta Targalt
+
+This is a new WIP version of the Anneta Targalt donation platform that will run at https://annetatargalt.ee/.
+
+The backend runs on [Strapi 4](https://strapi.io/) in the `/backend` directory.
+
+The frontend runs on [Next.js 13](https://nextjs.org/), [HeadlessUI](https://headlessui.com/) and [TailwindCSS](https://tailwindcss.com/) in the `/frontend` directory.
+
+The old platform can be found at https://github.com/eaeesti/annetatargalt.
+
+## Setup
+
+### Getting started
+
+1\. Clone the repository:
+
+```
+git clone https://github.com/eaeesti/annetatargalt2.git
+cd annetatargalt2
+```
+
+2\. Run the setup command:
+
+```
+yarn setup
+```
+
+### Backend
+
+1\. Navgate to the backend directory:
+
+```
+cd backend
+```
+
+2\. Create an `.env` file for environment values. You can use the `.env.example` file as a reference:
+
+```
+HOST=0.0.0.0
+PORT=1337
+APP_KEYS="toBeModified1,toBeModified2"
+API_TOKEN_SALT=tobemodified
+ADMIN_JWT_SECRET=tobemodified
+TRANSFER_TOKEN_SALT=tobemodified
+JWT_SECRET=tobemodified
+CLOUDINARY_NAME=tobemodified
+CLOUDINARY_KEY=tobemodified
+CLOUDINARY_SECRET=tobemodified
+
+# Database
+DATABASE_CLIENT=postgres
+DATABASE_HOST=127.0.0.1
+DATABASE_PORT=5432
+DATABASE_NAME=annetatargalt
+DATABASE_USERNAME=tobemodified
+DATABASE_PASSWORD=tobemodified
+DATABASE_SSL=false
+```
+
+3\. Fill them in. Here are some pointers:
+
+#### Keys
+
+More info here: https://docs.strapi.io/dev-docs/configurations/server
+
+- `APP_KEYS`: generate four keys using `openssl rand -base64 16` and separate them with commas
+- `API_TOKEN_SALT`: generate using `openssl rand -base64 16`
+- `ADMIN_JWT_SECRET`: generate using `openssl rand -base64 16`
+- `TRANSFER_TOKEN_SALT`: generate using `openssl rand -base64 16`
+- `JWT_SECRET`: generate using `openssl rand -base64 16`
+- `API_TOKEN_SALT`: generate using `openssl rand -base64 16`
+
+#### Cloudinary
+
+Create an account at https://cloudinary.com/ and get the three keys from there.
+
+#### Database
+
+Strapi supports [multiple databases](https://docs.strapi.io/dev-docs/configurations/database), but this project has only been tested with Postgres, so using that is recommended.
+
+Fill in your Postgres details in `.env` and create a new database called `annetatargalt` or whatever you have under `DATABASE_NAME`:
+
+```
+sudo -u postgres createdb annetatargalt
+```
+
+4\. Build and run Strapi:
+
+```
+yarn build
+yarn develop
+```
+
+5\. Open `127.0.0.1:1337` and create your admin user.
+
+6\. Close Strapi and seed the data if you have it:
+
+```
+yarn strapi import -f data.tar.gz
+```
+
+Read more about data importing and exporting: https://docs.strapi.io/dev-docs/data-management/import
+
+### Frontend
+
+1\. Navgate to the frontend directory. From `/backend`:
+
+```
+cd ../frontend
+```
+
+2\. Create the `.env` file from `.env.example`:
+
+```
+NEXT_PUBLIC_STRAPI_API_TOKEN=your-api-token
+NEXT_PUBLIC_STRAPI_API_URL=http://127.0.0.1:1337
+```
+
+3\. To get the API token, run Strapi and generate it:
+
+Settings (left sidebar) → API Tokens (second sidebar) → Create new API Token (top right)
+
+- Name: Public API Token
+- Token duration: Unlimited
+- Type: Custom
+
+Under Permissions, give the token access `find` and `findOne` access for the following:
+
+- `Cause`
+- `Global` (does not have `findOne`)
+- `Organization`
+- `Page`
+- `Special-page`
+
+Click Save and place the token you are given to `.env` under `NEXT_PUBLIC_STRAPI_API_TOKEN`.
+
+4\. Close Strapi and go the repository root directory:
+
+```
+cd ..
+```
+
+5\. Run both the frontend and backend at the same time:
+
+```
+yarn develop
+```
