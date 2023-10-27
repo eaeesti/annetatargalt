@@ -853,7 +853,8 @@ export interface ApiSpecialPageSpecialPage extends Schema.CollectionType {
         'special-sections.special-header-section',
         'sections.causes-section',
         'special-sections.cause-organizations-section',
-        'special-sections.entity-text-section'
+        'special-sections.entity-text-section',
+        'special-sections.org-header-section'
       ]
     >;
     createdAt: Attribute.DateTime;

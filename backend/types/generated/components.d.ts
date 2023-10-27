@@ -209,6 +209,28 @@ export interface SpecialSectionsEntityTextSection extends Schema.Component {
   };
 }
 
+export interface SpecialSectionsOrgHeaderSection extends Schema.Component {
+  collectionName: 'components_special_sections_org_header_sections';
+  info: {
+    displayName: 'OrgHeaderSection';
+  };
+  attributes: {
+    breadcrumbs: Attribute.Component<'elements.breadcrumb', true>;
+  };
+}
+
+export interface SpecialSectionsOrganizationHeaderSection
+  extends Schema.Component {
+  collectionName: 'components_special_sections_organization_header_sections';
+  info: {
+    displayName: 'OrganizationHeaderSection';
+    description: '';
+  };
+  attributes: {
+    hehe: Attribute.Boolean;
+  };
+}
+
 export interface SpecialSectionsSpecialHeaderSection extends Schema.Component {
   collectionName: 'components_special_sections_special_header_sections';
   info: {
@@ -239,6 +261,8 @@ declare module '@strapi/types' {
       'sections.text-section': SectionsTextSection;
       'special-sections.cause-organizations-section': SpecialSectionsCauseOrganizationsSection;
       'special-sections.entity-text-section': SpecialSectionsEntityTextSection;
+      'special-sections.org-header-section': SpecialSectionsOrgHeaderSection;
+      'special-sections.organization-header-section': SpecialSectionsOrganizationHeaderSection;
       'special-sections.special-header-section': SpecialSectionsSpecialHeaderSection;
     }
   }

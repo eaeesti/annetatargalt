@@ -9,7 +9,6 @@ export default function CausesSection({
   anchor,
   readAboutOrganizationsText,
 }) {
-  console.log(causes);
   return (
     <>
       <section

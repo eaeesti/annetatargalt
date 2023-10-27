@@ -1,0 +1,13 @@
+{
+  "collectionName": "components_special_sections_organization_header_sections",
+  "info": {
+    "displayName": "OrganizationHeaderSection",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "hehe": {
+      "type": "boolean"
+    }
+  }
+}

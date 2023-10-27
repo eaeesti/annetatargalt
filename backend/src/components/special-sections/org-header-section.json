@@ -1,0 +1,14 @@
+{
+  "collectionName": "components_special_sections_org_header_sections",
+  "info": {
+    "displayName": "OrgHeaderSection"
+  },
+  "options": {},
+  "attributes": {
+    "breadcrumbs": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.breadcrumb"
+    }
+  }
+}

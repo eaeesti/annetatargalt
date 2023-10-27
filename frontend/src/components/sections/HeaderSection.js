@@ -33,7 +33,7 @@ function Breadcrumb({ index, title, href }) {
             className="font-medium"
           />
         ) : (
-          <span className="font-medium">{title}</span>
+          <span className="font-semibold">{title}</span>
         )}
       </div>
     </li>
