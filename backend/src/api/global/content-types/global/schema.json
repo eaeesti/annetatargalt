@@ -30,6 +30,11 @@
       "repeatable": false,
       "component": "meta.footer"
     },
+    "notFoundPage": {
+      "type": "component",
+      "repeatable": false,
+      "component": "meta.not-found-page"
+    },
     "backWord": {
       "type": "string"
     },

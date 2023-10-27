@@ -1,4 +1,5 @@
 import qs from "qs";
+import { notFound } from "next/navigation";
 
 function headersWithAuthToken() {
   const token = process.env.NEXT_PUBLIC_STRAPI_API_TOKEN;
@@ -26,7 +27,7 @@ export async function fetchAPI(path, urlParamsObject = {}, options = {}) {
     // Build request URL
     const queryString = qs.stringify(urlParamsObject);
     const requestUrl = `${getStrapiURL(
-      `/api${path}${queryString ? `?${queryString}` : ""}`
+      `/api${path}${queryString ? `?${queryString}` : ""}`,
     )}`;
 
     // Trigger API call
@@ -36,7 +37,7 @@ export async function fetchAPI(path, urlParamsObject = {}, options = {}) {
   } catch (error) {
     console.error(error);
     throw new Error(
-      `Please check if your server is running and you set all the required tokens.`
+      "Please check if your server is running and you set all the required tokens.",
     );
   }
 }
@@ -56,7 +57,7 @@ export async function getPageBySlug(slugArray) {
   try {
     return response.data[0].attributes;
   } catch (error) {
-    throw new Error(`Page with slug ${slug} not found`);
+    notFound();
   }
 }
 
@@ -98,7 +99,7 @@ export async function findSpecialPage(slugArray) {
 
   const entity = await getEntityBySlug(
     foundSpecialPage.collectionType,
-    endpoint
+    endpoint,
   );
 
   return { page: foundSpecialPage, entity };
@@ -117,7 +118,7 @@ export async function getEntityBySlug(type, slug) {
   try {
     return response.data[0].attributes;
   } catch (error) {
-    throw new Error(`Entity with slug ${slug} not found`);
+    notFound();
   }
 }
 

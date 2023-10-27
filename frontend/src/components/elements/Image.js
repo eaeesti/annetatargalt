@@ -7,9 +7,10 @@ export default function Image({ data, className, fill = false }) {
     return (
       <NextImage
         className={className}
-        alt="Not found"
-        width={200}
-        height={200}
+        src="https://placekitten.com/320/320"
+        alt="Placeholder kitten"
+        width={320}
+        height={320}
       />
     );
   }

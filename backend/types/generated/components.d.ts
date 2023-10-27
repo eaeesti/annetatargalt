@@ -114,6 +114,18 @@ export interface MetaNavbar extends Schema.Component {
   };
 }
 
+export interface MetaNotFoundPage extends Schema.Component {
+  collectionName: 'components_meta_not_found_pages';
+  info: {
+    displayName: 'NotFoundPage';
+  };
+  attributes: {
+    title: Attribute.String;
+    description: Attribute.RichText;
+    buttons: Attribute.Component<'elements.button', true>;
+  };
+}
+
 export interface SectionsCausesSection extends Schema.Component {
   collectionName: 'components_sections_causes_sections';
   info: {
@@ -254,6 +266,7 @@ declare module '@strapi/types' {
       'meta.footer': MetaFooter;
       'meta.metadata': MetaMetadata;
       'meta.navbar': MetaNavbar;
+      'meta.not-found-page': MetaNotFoundPage;
       'sections.causes-section': SectionsCausesSection;
       'sections.cta-section': SectionsCtaSection;
       'sections.header-section': SectionsHeaderSection;
