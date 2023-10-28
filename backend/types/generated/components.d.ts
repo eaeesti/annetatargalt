@@ -53,6 +53,17 @@ export interface ElementsLink extends Schema.Component {
   };
 }
 
+export interface ElementsQuestion extends Schema.Component {
+  collectionName: 'components_elements_questions';
+  info: {
+    displayName: 'Question';
+  };
+  attributes: {
+    question: Attribute.String;
+    answer: Attribute.RichText;
+  };
+}
+
 export interface ElementsSocialMediaLink extends Schema.Component {
   collectionName: 'components_elements_social_media_links';
   info: {
@@ -155,6 +166,16 @@ export interface SectionsCtaSection extends Schema.Component {
     title: Attribute.String;
     subtitle: Attribute.Text;
     buttons: Attribute.Component<'elements.button', true>;
+  };
+}
+
+export interface SectionsFaqSection extends Schema.Component {
+  collectionName: 'components_sections_faq_sections';
+  info: {
+    displayName: 'FAQSection';
+  };
+  attributes: {
+    questions: Attribute.Component<'elements.question', true>;
   };
 }
 
@@ -262,6 +283,7 @@ declare module '@strapi/types' {
       'elements.button': ElementsButton;
       'elements.footer-column': ElementsFooterColumn;
       'elements.link': ElementsLink;
+      'elements.question': ElementsQuestion;
       'elements.social-media-link': ElementsSocialMediaLink;
       'meta.footer': MetaFooter;
       'meta.metadata': MetaMetadata;
@@ -269,6 +291,7 @@ declare module '@strapi/types' {
       'meta.not-found-page': MetaNotFoundPage;
       'sections.causes-section': SectionsCausesSection;
       'sections.cta-section': SectionsCtaSection;
+      'sections.faq-section': SectionsFaqSection;
       'sections.header-section': SectionsHeaderSection;
       'sections.hero-section': SectionsHeroSection;
       'sections.text-section': SectionsTextSection;

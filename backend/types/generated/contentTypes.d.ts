@@ -818,7 +818,8 @@ export interface ApiPagePage extends Schema.CollectionType {
         'sections.text-section',
         'sections.cta-section',
         'sections.header-section',
-        'sections.causes-section'
+        'sections.causes-section',
+        'sections.faq-section'
       ]
     >;
     createdAt: Attribute.DateTime;
