@@ -204,10 +204,10 @@ export interface SpecialSectionsCauseOrganizationsSection
     description: '';
   };
   attributes: {
-    title: Attribute.String;
+    recommendedFundTitle: Attribute.String;
+    recommendedOrganizationsTitle: Attribute.String;
     donateButtonText: Attribute.String;
     readMoreText: Attribute.String;
-    description: Attribute.RichText;
   };
 }
 

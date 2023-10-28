@@ -6,7 +6,10 @@
   },
   "options": {},
   "attributes": {
-    "title": {
+    "recommendedFundTitle": {
+      "type": "string"
+    },
+    "recommendedOrganizationsTitle": {
       "type": "string"
     },
     "donateButtonText": {
@@ -14,9 +17,6 @@
     },
     "readMoreText": {
       "type": "string"
-    },
-    "description": {
-      "type": "richtext"
     }
   }
 }
