@@ -22,7 +22,7 @@ export default function TextWithImageSection({
       <div className="container mt-24 w-full max-w-full sm:mt-36 sm:w-auto md:px-8 lg:mt-0 xl:max-w-7xl">
         <div
           className={classes(
-            "flex flex-col items-center gap-y-8 bg-slate-50 md:rounded-[2rem]",
+            "flex flex-col items-center gap-y-8 bg-slate-100 md:rounded-[2rem]",
             textOnRight
               ? "lg:ml-48 lg:flex-row xl:ml-64"
               : "lg:mr-48 lg:flex-row-reverse xl:mr-64",

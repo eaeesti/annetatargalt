@@ -38,14 +38,16 @@ export default function OrgHeaderSection({ breadcrumbs, entity, global }) {
               {entity.title}
             </h2>
             <div className="flex flex-col-reverse justify-center gap-6 xs:flex-row-reverse xs:items-center md:justify-end lg:flex-row">
-              <Button
-                text="Koduleht"
-                href={entity.homepage}
-                type="text"
-                size="sm"
-                className="!gap-0.5 text-slate-600"
-                newTab
-              />
+              {entity.homepage && (
+                <Button
+                  text="Koduleht"
+                  href={entity.homepage}
+                  type="text"
+                  size="sm"
+                  className="!gap-0.5 text-slate-600"
+                  newTab
+                />
+              )}
               <Button
                 text="Anneta"
                 href={global.donateLink}

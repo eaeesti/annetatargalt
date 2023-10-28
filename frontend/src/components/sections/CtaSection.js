@@ -1,17 +1,18 @@
 import Button from "../elements/Button";
+import Markdown from "../elements/Markdown";
 
-export default function CTASection({ title, subtitle, buttons }) {
+export default function CtaSection({ title, description, buttons }) {
   return (
-    <div className="text-white bg-primary-700">
-      <div className="px-6 py-24 sm:px-6 sm:py-32 lg:px-8">
-        <div className="mx-auto max-w-2xl text-center">
+    <div className="bg-primary-700 text-white">
+      <div className="px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
+        <div className="mx-auto flex max-w-3xl flex-col gap-8">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
             {title}
           </h2>
-          <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-primary-200">
-            {subtitle}
-          </p>
-          <div className="flex flex-col gap-4 justify-center mt-10 sm:items-center sm:flex-row">
+          <Markdown className="prose w-full max-w-3xl text-primary-100">
+            {description}
+          </Markdown>
+          <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
             {buttons.map((button) => (
               <Button key={button.id} {...button} />
             ))}

@@ -153,7 +153,7 @@ export interface SectionsCtaSection extends Schema.Component {
   };
   attributes: {
     title: Attribute.String;
-    subtitle: Attribute.Text;
+    description: Attribute.RichText;
     buttons: Attribute.Component<'elements.button', true>;
   };
 }
@@ -234,6 +234,19 @@ export interface SpecialSectionsOrgHeaderSection extends Schema.Component {
   };
 }
 
+export interface SpecialSectionsOrganizationCtaSection
+  extends Schema.Component {
+  collectionName: 'components_special_sections_organization_cta_sections';
+  info: {
+    displayName: 'OrganizationCtaSection';
+  };
+  attributes: {
+    title: Attribute.String;
+    description: Attribute.RichText;
+    donateText: Attribute.String;
+  };
+}
+
 export interface SpecialSectionsSpecialHeaderSection extends Schema.Component {
   collectionName: 'components_special_sections_special_header_sections';
   info: {
@@ -266,6 +279,7 @@ declare module '@strapi/types' {
       'special-sections.cause-organizations-section': SpecialSectionsCauseOrganizationsSection;
       'special-sections.entity-text-section': SpecialSectionsEntityTextSection;
       'special-sections.org-header-section': SpecialSectionsOrgHeaderSection;
+      'special-sections.organization-cta-section': SpecialSectionsOrganizationCtaSection;
       'special-sections.special-header-section': SpecialSectionsSpecialHeaderSection;
     }
   }

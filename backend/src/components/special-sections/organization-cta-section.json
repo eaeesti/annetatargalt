@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_special_sections_organization_cta_sections",
+  "info": {
+    "displayName": "OrganizationCtaSection"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "richtext"
+    },
+    "donateText": {
+      "type": "string"
+    }
+  }
+}

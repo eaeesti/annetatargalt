@@ -9,8 +9,8 @@
     "title": {
       "type": "string"
     },
-    "subtitle": {
-      "type": "text"
+    "description": {
+      "type": "richtext"
     },
     "buttons": {
       "type": "component",
