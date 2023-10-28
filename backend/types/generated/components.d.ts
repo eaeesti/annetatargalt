@@ -225,21 +225,12 @@ export interface SpecialSectionsOrgHeaderSection extends Schema.Component {
   collectionName: 'components_special_sections_org_header_sections';
   info: {
     displayName: 'OrgHeaderSection';
-  };
-  attributes: {
-    breadcrumbs: Attribute.Component<'elements.breadcrumb', true>;
-  };
-}
-
-export interface SpecialSectionsOrganizationHeaderSection
-  extends Schema.Component {
-  collectionName: 'components_special_sections_organization_header_sections';
-  info: {
-    displayName: 'OrganizationHeaderSection';
     description: '';
   };
   attributes: {
-    hehe: Attribute.Boolean;
+    breadcrumbs: Attribute.Component<'elements.breadcrumb', true>;
+    donateText: Attribute.String;
+    websiteText: Attribute.String;
   };
 }
 
@@ -275,7 +266,6 @@ declare module '@strapi/types' {
       'special-sections.cause-organizations-section': SpecialSectionsCauseOrganizationsSection;
       'special-sections.entity-text-section': SpecialSectionsEntityTextSection;
       'special-sections.org-header-section': SpecialSectionsOrgHeaderSection;
-      'special-sections.organization-header-section': SpecialSectionsOrganizationHeaderSection;
       'special-sections.special-header-section': SpecialSectionsSpecialHeaderSection;
     }
   }

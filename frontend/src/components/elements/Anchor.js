@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ArrowTopRightOnSquareIcon } from "@heroicons/react/20/solid";
 import ExternalLinkIcon from "../icons/ExternalLinkIcon";
 
 export default function Anchor({
@@ -20,7 +19,10 @@ export default function Anchor({
     >
       {children}
       {newTab && !noIcon && (
-        <ExternalLinkIcon className="inline ml-1 w-4 h-4" />
+        <>
+          <span className="sr-only">(opens in new tab)</span>
+          <ExternalLinkIcon className="ml-1 inline h-4 w-4" />
+        </>
       )}
     </Link>
   );
