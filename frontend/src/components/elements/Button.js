@@ -7,6 +7,7 @@ export default function Button({
   type,
   size = "md",
   href,
+  onClick,
   arrow = false,
   newTab = false,
   className = "",
@@ -31,17 +32,27 @@ export default function Button({
   };
 
   const fullClassName = classes(
-    "flex gap-1.5 items-center justify-center font-semibold rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 text-center",
+    "flex gap-1.5 items-center justify-center font-semibold rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 text-center disabled:opacity-50 disabled:cursor-not-allowed",
     sizes[size],
     buttons[type],
     className,
   );
 
+  if (href) {
+    return (
+      <Anchor href={href} newTab={newTab} className={fullClassName} {...rest}>
+        {text}
+        {children}
+        {arrow && <ArrowLongRightIcon className="h-5 w-5" />}
+      </Anchor>
+    );
+  }
+
   return (
-    <Anchor href={href} newTab={newTab} className={fullClassName} {...rest}>
+    <button type="button" onClick={onClick} className={fullClassName} {...rest}>
       {text}
       {children}
       {arrow && <ArrowLongRightIcon className="h-5 w-5" />}
-    </Anchor>
+    </button>
   );
 }

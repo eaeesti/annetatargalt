@@ -62,6 +62,12 @@
     },
     "donationTypeText": {
       "type": "string"
+    },
+    "stepText": {
+      "type": "string"
+    },
+    "backButtonText": {
+      "type": "string"
     }
   }
 }

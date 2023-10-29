@@ -184,6 +184,8 @@ export interface SectionsDonationSection extends Schema.Component {
     chooseAmountText: Attribute.String;
     otherAmountOptionText: Attribute.String;
     donationTypeText: Attribute.String;
+    stepText: Attribute.String;
+    backButtonText: Attribute.String;
   };
 }
 
