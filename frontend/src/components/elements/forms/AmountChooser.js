@@ -4,15 +4,15 @@ import { useEffect, useState } from "react";
 import { validatePrice } from "@/utils/string";
 
 function PriceInput({ price, setPrice, currency, label }) {
-  const [localValue, setLocalValue] = useState(price);
+  const [localValue, setLocalValue] = useState(`${price}`);
 
   const isValidPrice = validatePrice(localValue);
 
   useEffect(() => {
     if (isValidPrice) {
-      setPrice(localValue);
+      setPrice(Number(localValue.replace(",", ".")));
     }
-  }, [isValidPrice, localValue, setPrice]);
+  }, [localValue]);
 
   return (
     <div>
@@ -30,6 +30,7 @@ function PriceInput({ price, setPrice, currency, label }) {
               : "ring-red-500 focus:ring-red-500",
             "block w-full rounded-md border-0 py-2 pl-3 pr-8 text-xl text-slate-900 ring-1 ring-inset placeholder:text-slate-400 focus:ring-2 focus:ring-inset sm:leading-6",
           )}
+          maxLength={10}
           aria-describedby="price-currency"
           value={localValue}
           placeholder={label}
@@ -59,7 +60,7 @@ function AmountChooserOption({ value, label }) {
         )
       }
     >
-      <RadioGroup.Label>{label}</RadioGroup.Label>
+      <RadioGroup.Label className="cursor-pointer">{label}</RadioGroup.Label>
     </RadioGroup.Option>
   );
 }
@@ -80,16 +81,13 @@ export default function AmountChooser({
   useEffect(() => {
     if (otherAmountSelected) return;
     setAmount(selectedAmount);
-  }, [otherAmountSelected, setAmount, selectedAmount]);
+  }, [selectedAmount]);
 
   return (
     <div className="flex flex-col gap-4">
       <RadioGroup value={selectedAmount} onChange={setSelectedAmount}>
-        <RadioGroup.Label className="text-base font-semibold leading-6 text-slate-900">
-          {amountText}
-        </RadioGroup.Label>
-
-        <div className="mt-4 grid grid-cols-4 gap-3 xs:gap-4">
+        <RadioGroup.Label className="sr-only">{amountText}</RadioGroup.Label>
+        <div className="grid grid-cols-4 gap-3 xs:gap-4">
           {amountOptions.map((amountOption) => (
             <AmountChooserOption
               key={amountOption.value}

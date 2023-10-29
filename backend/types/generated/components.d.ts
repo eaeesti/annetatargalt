@@ -183,6 +183,7 @@ export interface SectionsDonationSection extends Schema.Component {
     termsText: Attribute.RichText;
     chooseAmountText: Attribute.String;
     otherAmountOptionText: Attribute.String;
+    donationTypeText: Attribute.String;
   };
 }
 

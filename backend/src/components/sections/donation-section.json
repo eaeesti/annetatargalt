@@ -59,6 +59,9 @@
     },
     "otherAmountOptionText": {
       "type": "string"
+    },
+    "donationTypeText": {
+      "type": "string"
     }
   }
 }
