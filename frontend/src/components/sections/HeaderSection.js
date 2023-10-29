@@ -16,9 +16,9 @@ export default function HeaderSection({
             title={title}
             backWord={global.backWord}
           />
-          <h2 className="text-4xl font-bold tracking-tight text-primary-700 sm:text-5xl">
+          <h1 className="text-4xl font-bold tracking-tight text-primary-700 sm:text-5xl">
             {title}
-          </h2>
+          </h1>
           {subtitle && (
             <Markdown className="prose-md prose prose-primary w-full max-w-3xl">
               {subtitle}

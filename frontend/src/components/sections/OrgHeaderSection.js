@@ -34,9 +34,9 @@ export default function OrgHeaderSection({ breadcrumbs, entity, global }) {
             className="h-40 w-40 rounded-2xl shadow-lg"
           />
           <div className="flex w-full flex-col gap-8 text-center md:text-left lg:flex-row lg:justify-between">
-            <h2 className="text-3xl font-bold tracking-tight text-primary-700 md:text-4xl">
+            <h1 className="text-3xl font-bold tracking-tight text-primary-700 md:text-4xl">
               {entity.title}
-            </h2>
+            </h1>
             <div className="flex flex-col-reverse justify-center gap-6 xs:flex-row-reverse xs:items-center md:justify-end lg:flex-row">
               {entity.homepage && (
                 <Button
