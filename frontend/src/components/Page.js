@@ -6,16 +6,14 @@ export default function Page({ page, global }) {
   return (
     <>
       <Navbar global={global} />
-      <main>
-        {page.sections.map((section) => (
-          <Section
-            key={section.id}
-            section={section}
-            global={global}
-            page={page}
-          />
-        ))}
-      </main>
+      {page.sections.map((section) => (
+        <Section
+          key={section.id}
+          section={section}
+          global={global}
+          page={page}
+        />
+      ))}
       <Footer global={global} />
     </>
   );

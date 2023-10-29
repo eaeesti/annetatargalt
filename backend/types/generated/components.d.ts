@@ -158,6 +158,34 @@ export interface SectionsCtaSection extends Schema.Component {
   };
 }
 
+export interface SectionsDonationSection extends Schema.Component {
+  collectionName: 'components_sections_donation_sections';
+  info: {
+    displayName: 'DonationSection';
+    description: '';
+  };
+  attributes: {
+    title: Attribute.String;
+    firstNameText: Attribute.String;
+    lastNameText: Attribute.String;
+    emailText: Attribute.String;
+    idCodeText: Attribute.String;
+    otherAmountText: Attribute.String;
+    amount1: Attribute.Integer;
+    amount2: Attribute.Integer;
+    amount3: Attribute.Integer;
+    singleDonationText: Attribute.String;
+    recurringDonationText: Attribute.String;
+    currency: Attribute.String;
+    amountText: Attribute.String;
+    nextButtonText: Attribute.String;
+    donateButtonText: Attribute.String;
+    termsText: Attribute.RichText;
+    chooseAmountText: Attribute.String;
+    otherAmountOptionText: Attribute.String;
+  };
+}
+
 export interface SectionsHeaderSection extends Schema.Component {
   collectionName: 'components_sections_header_sections';
   info: {
@@ -273,6 +301,7 @@ declare module '@strapi/types' {
       'meta.not-found-page': MetaNotFoundPage;
       'sections.causes-section': SectionsCausesSection;
       'sections.cta-section': SectionsCtaSection;
+      'sections.donation-section': SectionsDonationSection;
       'sections.header-section': SectionsHeaderSection;
       'sections.hero-section': SectionsHeroSection;
       'sections.text-section': SectionsTextSection;

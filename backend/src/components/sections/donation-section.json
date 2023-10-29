@@ -1,0 +1,64 @@
+{
+  "collectionName": "components_sections_donation_sections",
+  "info": {
+    "displayName": "DonationSection",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "firstNameText": {
+      "type": "string"
+    },
+    "lastNameText": {
+      "type": "string"
+    },
+    "emailText": {
+      "type": "string"
+    },
+    "idCodeText": {
+      "type": "string"
+    },
+    "otherAmountText": {
+      "type": "string"
+    },
+    "amount1": {
+      "type": "integer"
+    },
+    "amount2": {
+      "type": "integer"
+    },
+    "amount3": {
+      "type": "integer"
+    },
+    "singleDonationText": {
+      "type": "string"
+    },
+    "recurringDonationText": {
+      "type": "string"
+    },
+    "currency": {
+      "type": "string"
+    },
+    "amountText": {
+      "type": "string"
+    },
+    "nextButtonText": {
+      "type": "string"
+    },
+    "donateButtonText": {
+      "type": "string"
+    },
+    "termsText": {
+      "type": "richtext"
+    },
+    "chooseAmountText": {
+      "type": "string"
+    },
+    "otherAmountOptionText": {
+      "type": "string"
+    }
+  }
+}
