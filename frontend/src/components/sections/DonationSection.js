@@ -6,6 +6,7 @@ import AmountChooser from "../elements/forms/AmountChooser";
 import DonationTypeChooser from "../elements/forms/DonationTypeChooser";
 import Button from "../elements/Button";
 import Steps from "../elements/forms/Steps";
+import NameInput from "../elements/forms/NameInput";
 
 export default function DonationSection(props) {
   const amounts = pick(props, ["amount1", "amount2", "amount3"]);
@@ -15,17 +16,27 @@ export default function DonationSection(props) {
   }));
 
   const [donation, setDonation] = useState({
-    amount: amountOptions[1].value,
+    amount: amountOptions[2].value,
     type: "recurring",
+    firstName: "",
+    lastName: "",
+    email: "",
+    idCode: "",
   });
 
-  const [errors, setErrors] = useState({});
-  const hasErrors = Object.values(errors).some((error) => error);
+  const [validity, setValidity] = useState({});
+  const stageValidity = {
+    0: pick(validity, ["amount"]).every(Boolean),
+    1: pick(validity, ["firstName", "lastName", "email", "idCode"]).every(
+      Boolean,
+    ),
+  };
 
   const [stage, setStage] = useState(0);
 
   return (
     <section className="flex h-full flex-grow items-start justify-center bg-slate-200 xs:px-4 xs:py-16 sm:px-8 sm:py-32">
+      <h1 className="sr-only">{props.page.metadata.title}</h1>
       <div className="flex w-full max-w-lg flex-col gap-4 bg-white px-4 py-24 xs:rounded-2xl xs:px-12 xs:py-12">
         <Steps
           currentStep={stage}
@@ -53,14 +64,14 @@ export default function DonationSection(props) {
               otherAmountText={props.otherAmountText}
               otherAmountOptionText={props.otherAmountOptionText}
               currency={props.currency}
-              setErrors={setErrors}
+              setValidity={setValidity}
             />
             <Button
               text={props.nextButtonText}
               type="primary"
-              size="lg"
+              size="md"
               onClick={() => setStage(1)}
-              disabled={hasErrors}
+              disabled={!stageValidity[0]}
             />
           </>
         )}
@@ -69,11 +80,23 @@ export default function DonationSection(props) {
             <h2 className="mb-4 text-2xl font-bold tracking-tight text-primary-700 sm:text-3xl">
               {props.stepText} 2
             </h2>
+            <NameInput
+              firstNameText={props.firstNameText}
+              lastNameText={props.lastNameText}
+              firstName={donation.firstName}
+              lastName={donation.lastName}
+              setFirstName={(firstName) =>
+                setDonation({ ...donation, firstName })
+              }
+              setLastName={(lastName) => setDonation({ ...donation, lastName })}
+              setValidity={setValidity}
+            />
             <Button
               text={props.nextButtonText}
               type="primary"
               size="lg"
               onClick={() => setStage(2)}
+              disabled={!stageValidity[1]}
             />
             <Button
               text={props.backButtonText}

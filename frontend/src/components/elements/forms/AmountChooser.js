@@ -3,7 +3,7 @@ import { RadioGroup } from "@headlessui/react";
 import { useEffect, useState } from "react";
 import { validatePrice } from "@/utils/string";
 
-function AmountInput({ amount, setAmount, currency, label, setErrors }) {
+function AmountInput({ amount, setAmount, currency, label, setValidity }) {
   const [localValue, setLocalValue] = useState(`${amount}`);
 
   const isValidAmount = validatePrice(localValue);
@@ -11,9 +11,9 @@ function AmountInput({ amount, setAmount, currency, label, setErrors }) {
   useEffect(() => {
     if (isValidAmount) {
       setAmount(Number(localValue.replace(",", ".")));
-      setErrors((errors) => ({ ...errors, amount: false }));
+      setValidity((ready) => ({ ...ready, amount: true }));
     } else {
-      setErrors((errors) => ({ ...errors, amount: true }));
+      setValidity((ready) => ({ ...ready, amount: false }));
     }
   }, [localValue]);
 
@@ -31,7 +31,7 @@ function AmountInput({ amount, setAmount, currency, label, setErrors }) {
             isValidAmount
               ? "ring-slate-300 focus:ring-primary-600"
               : "ring-red-500 focus:ring-red-500",
-            "block w-full rounded-md border-0 py-2 pl-3 pr-8 text-slate-900 ring-1 ring-inset placeholder:text-slate-400 focus:ring-2 focus:ring-inset sm:leading-6",
+            "block w-full rounded-md border-0 py-4 pl-5 pr-10 text-slate-900 ring-1 ring-inset placeholder:text-slate-400 focus:ring-2 focus:ring-inset sm:leading-6",
           )}
           maxLength={10}
           aria-describedby="amount-currency"
@@ -39,7 +39,7 @@ function AmountInput({ amount, setAmount, currency, label, setErrors }) {
           placeholder={label}
           onInput={(event) => setLocalValue(event.target.value)}
         />
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-5">
           <span className="text-slate-500" id="amount-currency">
             {currency}
           </span>
@@ -76,7 +76,7 @@ export default function AmountChooser({
   otherAmountText,
   otherAmountOptionText,
   currency,
-  setErrors,
+  setValidity,
 }) {
   const amountIsOption = amountOptions.find(
     (amountOption) => amountOption.value === amount,
@@ -88,7 +88,7 @@ export default function AmountChooser({
   useEffect(() => {
     if (otherAmountSelected) return;
     setAmount(selectedAmount);
-    setErrors((errors) => ({ ...errors, amount: false }));
+    setValidity((ready) => ({ ...ready, amount: true }));
   }, [selectedAmount]);
 
   return (
@@ -112,7 +112,7 @@ export default function AmountChooser({
           setAmount={setAmount}
           currency={currency}
           label={otherAmountText}
-          setErrors={setErrors}
+          setValidity={setValidity}
         />
       )}
     </div>
