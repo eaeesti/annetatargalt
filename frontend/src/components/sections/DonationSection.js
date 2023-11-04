@@ -8,6 +8,7 @@ import Button from "../elements/Button";
 import Steps from "../elements/forms/Steps";
 import NameInput from "../elements/forms/NameInput";
 import EmailInput from "../elements/forms/EmailInput";
+import IdCodeInput from "../elements/forms/IdCodeInput";
 
 export default function DonationSection(props) {
   const amounts = pick(props, ["amount1", "amount2", "amount3"]);
@@ -79,7 +80,7 @@ export default function DonationSection(props) {
         {stage === 1 && (
           <>
             <h2 className="mb-4 text-2xl font-bold tracking-tight text-primary-700 sm:text-3xl">
-              {props.stepText} 2
+              {props.detailsText}
             </h2>
             <NameInput
               firstNameText={props.firstNameText}
@@ -96,6 +97,12 @@ export default function DonationSection(props) {
               emailText={props.emailText}
               email={donation.email}
               setEmail={(email) => setDonation({ ...donation, email })}
+              setValidity={setValidity}
+            />
+            <IdCodeInput
+              idCodeText={props.idCodeText}
+              idCode={donation.idCode}
+              setIdCode={(idCode) => setDonation({ ...donation, idCode })}
               setValidity={setValidity}
             />
             <Button

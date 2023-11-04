@@ -68,6 +68,9 @@
     },
     "backButtonText": {
       "type": "string"
+    },
+    "detailsText": {
+      "type": "string"
     }
   }
 }
