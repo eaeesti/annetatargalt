@@ -30,3 +30,22 @@ export function validatePrice(string) {
   const priceRegex = new RegExp(/^[1-9](\d+)?([.,]\d{1,2})?$/);
   return priceRegex.test(string);
 }
+
+/**
+ * Validate an email string.
+ * @param {string} string - The string to validate.
+ * @return {boolean} - Whether the string is a valid email.
+ * @example
+ * validateEmail("a@b.c"); // true
+ * validateEmail("a@b"); // true
+ * validateEmail("a@"); // false
+ * validateEmail("@b.c"); // false
+ * validateEmail("a@b@c"); // false
+ * validateEmail("hehe"); // false
+ * validateEmail(""); // false
+ * validateEmail("a b@c"); // false
+ */
+export function validateEmail(string) {
+  const emailRegex = new RegExp(/^[^@\s]+@[^@\s]+$/);
+  return emailRegex.test(string);
+}

@@ -7,6 +7,7 @@ import DonationTypeChooser from "../elements/forms/DonationTypeChooser";
 import Button from "../elements/Button";
 import Steps from "../elements/forms/Steps";
 import NameInput from "../elements/forms/NameInput";
+import EmailInput from "../elements/forms/EmailInput";
 
 export default function DonationSection(props) {
   const amounts = pick(props, ["amount1", "amount2", "amount3"]);
@@ -89,6 +90,12 @@ export default function DonationSection(props) {
                 setDonation({ ...donation, firstName })
               }
               setLastName={(lastName) => setDonation({ ...donation, lastName })}
+              setValidity={setValidity}
+            />
+            <EmailInput
+              emailText={props.emailText}
+              email={donation.email}
+              setEmail={(email) => setDonation({ ...donation, email })}
               setValidity={setValidity}
             />
             <Button
