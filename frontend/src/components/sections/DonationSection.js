@@ -9,6 +9,8 @@ import Steps from "../elements/forms/Steps";
 import NameInput from "../elements/forms/NameInput";
 import EmailInput from "../elements/forms/EmailInput";
 import IdCodeInput from "../elements/forms/IdCodeInput";
+import { formatEstonianAmount } from "@/utils/estonia";
+import CheckboxInput from "../elements/forms/CheckboxInput";
 
 export default function DonationSection(props) {
   const amounts = pick(props, ["amount1", "amount2", "amount3"]);
@@ -18,12 +20,13 @@ export default function DonationSection(props) {
   }));
 
   const [donation, setDonation] = useState({
-    amount: amountOptions[2].value,
+    amount: amountOptions[1].value,
     type: "recurring",
     firstName: "",
     lastName: "",
     email: "",
     idCode: "",
+    acceptTerms: false,
   });
 
   const [validity, setValidity] = useState({});
@@ -32,6 +35,7 @@ export default function DonationSection(props) {
     1: pick(validity, ["firstName", "lastName", "email", "idCode"]).every(
       Boolean,
     ),
+    2: donation.acceptTerms,
   };
 
   const [stage, setStage] = useState(0);
@@ -44,7 +48,7 @@ export default function DonationSection(props) {
           currentStep={stage}
           setStep={setStage}
           stepText={props.stepText}
-          stepCount={4}
+          stepCount={3}
           backWord={props.global.backWord}
         />
         {stage === 0 && (
@@ -126,34 +130,42 @@ export default function DonationSection(props) {
           </form>
         )}
         {stage === 2 && (
-          <>
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={(event) => event.preventDefault()}
+          >
             <h2 className="text-2xl font-bold tracking-tight text-primary-700 sm:text-3xl">
-              {props.stepText} 3
+              {props.confirmText}
             </h2>
-            <Button
-              text={props.nextButtonText}
-              type="primary"
-              size="lg"
-              onClick={() => setStage(3)}
-              buttonType="submit"
-              className="mt-4"
+            <pre className="text-lg text-slate-700">
+              {JSON.stringify(donation, null, 2)}
+            </pre>
+            <p className="text-slate-700">
+              Annetad{" "}
+              <span className="font-semibold text-primary-700">
+                {formatEstonianAmount(donation.amount)}
+                {props.currency}
+              </span>{" "}
+              efektiivsetele heategevustele.
+            </p>
+            <CheckboxInput
+              name="terms"
+              label={props.termsText}
+              value={donation.acceptTerms}
+              setValue={(acceptTerms) =>
+                setDonation({ ...donation, acceptTerms })
+              }
             />
-          </>
-        )}
-        {stage === 3 && (
-          <>
-            <h2 className="text-2xl font-bold tracking-tight text-primary-700 sm:text-3xl">
-              {props.stepText} 4
-            </h2>
             <Button
               text={props.donateButtonText}
               type="primary"
               size="lg"
               onClick={() => console.log(donation)}
+              disabled={!stageValidity[2]}
               buttonType="submit"
               className="mt-4"
             />
-          </>
+          </form>
         )}
       </div>
     </section>

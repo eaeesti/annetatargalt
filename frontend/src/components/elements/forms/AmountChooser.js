@@ -38,6 +38,7 @@ function AmountInput({ amount, setAmount, currency, label, setValidity }) {
           value={localValue}
           placeholder={label}
           onInput={(event) => setLocalValue(event.target.value)}
+          autoFocus
         />
         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-5">
           <span className="text-slate-500" id="amount-currency">

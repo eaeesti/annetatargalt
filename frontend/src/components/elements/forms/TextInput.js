@@ -10,6 +10,7 @@ export default function TextInput({
   label,
   placeholder,
   autoComplete,
+  autoFocus = false,
   maxLength = 128,
 }) {
   const [error, setError] = useState(false);
@@ -36,6 +37,7 @@ export default function TextInput({
           name={name}
           id={name}
           autoComplete={autoComplete}
+          autoFocus={autoFocus}
           maxLength={maxLength}
           className={classes(
             error

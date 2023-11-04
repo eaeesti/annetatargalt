@@ -1,4 +1,4 @@
-import { validateIdCode } from "@/utils/string";
+import { validateIdCode } from "@/utils/estonia";
 import TextInput from "./TextInput";
 
 export default function IdCodeInput({

@@ -20,6 +20,7 @@ export default function NameInput({
         label={firstNameText}
         autoComplete="given-name"
         maxLength={128}
+        autoFocus
       />
       <TextInput
         name="lastName"

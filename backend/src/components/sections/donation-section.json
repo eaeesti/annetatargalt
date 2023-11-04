@@ -71,6 +71,9 @@
     },
     "detailsText": {
       "type": "string"
+    },
+    "confirmText": {
+      "type": "string"
     }
   }
 }
