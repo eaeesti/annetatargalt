@@ -45,10 +45,11 @@ export default function DonationSection(props) {
           setStep={setStage}
           stepText={props.stepText}
           stepCount={4}
+          backWord={props.global.backWord}
         />
         {stage === 0 && (
           <>
-            <h2 className="mb-4 text-2xl font-bold tracking-tight text-primary-700 sm:text-3xl">
+            <h2 className="text-2xl font-bold tracking-tight text-primary-700 sm:text-3xl">
               {props.title}
             </h2>
             <DonationTypeChooser
@@ -74,12 +75,13 @@ export default function DonationSection(props) {
               size="md"
               onClick={() => setStage(1)}
               disabled={!stageValidity[0]}
+              className="mt-4"
             />
           </>
         )}
         {stage === 1 && (
           <>
-            <h2 className="mb-4 text-2xl font-bold tracking-tight text-primary-700 sm:text-3xl">
+            <h2 className="text-2xl font-bold tracking-tight text-primary-700 sm:text-3xl">
               {props.detailsText}
             </h2>
             <NameInput
@@ -111,18 +113,13 @@ export default function DonationSection(props) {
               size="lg"
               onClick={() => setStage(2)}
               disabled={!stageValidity[1]}
-            />
-            <Button
-              text={props.backButtonText}
-              type="secondary"
-              size="lg"
-              onClick={() => setStage(0)}
+              className="mt-4"
             />
           </>
         )}
         {stage === 2 && (
           <>
-            <h2 className="mb-4 text-2xl font-bold tracking-tight text-primary-700 sm:text-3xl">
+            <h2 className="text-2xl font-bold tracking-tight text-primary-700 sm:text-3xl">
               {props.stepText} 3
             </h2>
             <Button
@@ -130,18 +127,13 @@ export default function DonationSection(props) {
               type="primary"
               size="lg"
               onClick={() => setStage(3)}
-            />
-            <Button
-              text={props.backButtonText}
-              type="secondary"
-              size="lg"
-              onClick={() => setStage(1)}
+              className="mt-4"
             />
           </>
         )}
         {stage === 3 && (
           <>
-            <h2 className="mb-4 text-2xl font-bold tracking-tight text-primary-700 sm:text-3xl">
+            <h2 className="text-2xl font-bold tracking-tight text-primary-700 sm:text-3xl">
               {props.stepText} 4
             </h2>
             <Button
@@ -149,12 +141,7 @@ export default function DonationSection(props) {
               type="primary"
               size="lg"
               onClick={() => console.log(donation)}
-            />
-            <Button
-              text={props.backButtonText}
-              type="secondary"
-              size="lg"
-              onClick={() => setStage(2)}
+              className="mt-4"
             />
           </>
         )}
