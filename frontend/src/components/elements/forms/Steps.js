@@ -1,5 +1,5 @@
 import { range } from "@/utils/array";
-import { ArrowLeftIcon } from "@heroicons/react/20/solid";
+import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import Button from "../Button";
 
 export default function Steps({

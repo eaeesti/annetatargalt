@@ -48,7 +48,10 @@ export default function DonationSection(props) {
           backWord={props.global.backWord}
         />
         {stage === 0 && (
-          <>
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={(event) => event.preventDefault()}
+          >
             <h2 className="text-2xl font-bold tracking-tight text-primary-700 sm:text-3xl">
               {props.title}
             </h2>
@@ -75,12 +78,16 @@ export default function DonationSection(props) {
               size="md"
               onClick={() => setStage(1)}
               disabled={!stageValidity[0]}
+              buttonType="submit"
               className="mt-4"
             />
-          </>
+          </form>
         )}
         {stage === 1 && (
-          <>
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={(event) => event.preventDefault()}
+          >
             <h2 className="text-2xl font-bold tracking-tight text-primary-700 sm:text-3xl">
               {props.detailsText}
             </h2>
@@ -113,9 +120,10 @@ export default function DonationSection(props) {
               size="lg"
               onClick={() => setStage(2)}
               disabled={!stageValidity[1]}
+              buttonType="submit"
               className="mt-4"
             />
-          </>
+          </form>
         )}
         {stage === 2 && (
           <>
@@ -127,6 +135,7 @@ export default function DonationSection(props) {
               type="primary"
               size="lg"
               onClick={() => setStage(3)}
+              buttonType="submit"
               className="mt-4"
             />
           </>
@@ -141,6 +150,7 @@ export default function DonationSection(props) {
               type="primary"
               size="lg"
               onClick={() => console.log(donation)}
+              buttonType="submit"
               className="mt-4"
             />
           </>

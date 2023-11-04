@@ -12,6 +12,7 @@ export default function Button({
   newTab = false,
   className = "",
   children,
+  buttonType = "button",
   ...rest
 }) {
   const buttons = {
@@ -49,7 +50,12 @@ export default function Button({
   }
 
   return (
-    <button type="button" onClick={onClick} className={fullClassName} {...rest}>
+    <button
+      type={buttonType}
+      onClick={onClick}
+      className={fullClassName}
+      {...rest}
+    >
       {text}
       {children}
       {arrow && <ArrowLongRightIcon className="h-5 w-5" />}
