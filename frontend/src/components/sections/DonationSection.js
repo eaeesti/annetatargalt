@@ -11,8 +11,12 @@ import EmailInput from "../elements/forms/EmailInput";
 import IdCodeInput from "../elements/forms/IdCodeInput";
 import { formatEstonianAmount } from "@/utils/estonia";
 import CheckboxInput from "../elements/forms/CheckboxInput";
+import { makeDonationRequest } from "@/utils/donation";
+import { useRouter } from "next/navigation";
 
 export default function DonationSection(props) {
+  const router = useRouter();
+
   const amounts = pick(props, ["amount1", "amount2", "amount3"]);
   const amountOptions = amounts.map((amount) => ({
     value: amount,
@@ -39,6 +43,16 @@ export default function DonationSection(props) {
   };
 
   const [stage, setStage] = useState(0);
+
+  const donate = async () => {
+    const response = await makeDonationRequest(donation);
+    const { redirectURL } = await response.json();
+    if (redirectURL) {
+      router.push(redirectURL);
+    } else {
+      console.error(response);
+    }
+  };
 
   return (
     <section className="flex h-full flex-grow items-start justify-center bg-slate-200 xs:px-4 xs:py-16 sm:px-8 sm:py-32">
@@ -160,7 +174,7 @@ export default function DonationSection(props) {
               text={props.donateButtonText}
               type="primary"
               size="lg"
-              onClick={() => console.log(donation)}
+              onClick={donate}
               disabled={!stageValidity[2]}
               buttonType="submit"
               className="mt-4"
