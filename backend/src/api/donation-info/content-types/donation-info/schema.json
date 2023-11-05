@@ -1,0 +1,24 @@
+{
+  "kind": "singleType",
+  "collectionName": "donation_infos",
+  "info": {
+    "singularName": "donation-info",
+    "pluralName": "donation-infos",
+    "displayName": "DonationInfo",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "returnPath": {
+      "type": "string",
+      "default": "annetatud"
+    },
+    "transactionComment": {
+      "type": "string",
+      "default": "Anneta Targalt annetus"
+    }
+  }
+}

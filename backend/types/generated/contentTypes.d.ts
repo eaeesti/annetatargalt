@@ -771,6 +771,38 @@ export interface ApiDonationDonation extends Schema.CollectionType {
   };
 }
 
+export interface ApiDonationInfoDonationInfo extends Schema.SingleType {
+  collectionName: 'donation_infos';
+  info: {
+    singularName: 'donation-info';
+    pluralName: 'donation-infos';
+    displayName: 'DonationInfo';
+    description: '';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    returnPath: Attribute.String & Attribute.DefaultTo<'annetatud'>;
+    transactionComment: Attribute.String &
+      Attribute.DefaultTo<'Anneta Targalt annetus'>;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::donation-info.donation-info',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::donation-info.donation-info',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
 export interface ApiGlobalGlobal extends Schema.SingleType {
   collectionName: 'globals';
   info: {
@@ -947,6 +979,7 @@ declare module '@strapi/types' {
       'plugin::users-permissions.user': PluginUsersPermissionsUser;
       'api::cause.cause': ApiCauseCause;
       'api::donation.donation': ApiDonationDonation;
+      'api::donation-info.donation-info': ApiDonationInfoDonationInfo;
       'api::global.global': ApiGlobalGlobal;
       'api::organization.organization': ApiOrganizationOrganization;
       'api::page.page': ApiPagePage;

@@ -5,11 +5,7 @@
  */
 
 const { createCoreController } = require("@strapi/strapi").factories;
-const {
-  amountToCents,
-  validateDonation,
-  createMontonioPayload,
-} = require("../../../utils/donation");
+const { amountToCents, validateDonation } = require("../../../utils/donation");
 const {
   createPaymentURL,
   decodePaymentToken,
@@ -26,7 +22,7 @@ module.exports = createCoreController(
         return ctx.badRequest(validation.reason);
       }
 
-      const entry = await strapi.entityService.create(
+      const donationEntry = await strapi.entityService.create(
         "api::donation.donation",
         {
           data: {
@@ -43,7 +39,9 @@ module.exports = createCoreController(
         return ctx.send({ redirectURL: "/annetatud" });
       }
 
-      const payload = createMontonioPayload(entry);
+      const payload = await strapi
+        .service("api::donation.donation")
+        .createMontonioPayload(donationEntry);
       const paymentURL = createPaymentURL(payload);
       return ctx.send({ redirectURL: paymentURL });
     },
