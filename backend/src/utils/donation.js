@@ -94,7 +94,26 @@ function validateDonation(donation) {
   return { valid: true };
 }
 
+function createMontonioPayload(donation, { currency = "EUR" } = {}) {
+  const payload = {
+    amount: donation.amount / 100,
+    currency: currency,
+    merchant_reference: `donation ${donation.id}`,
+    // TODO: make configurable
+    merchant_return_url: `${process.env.FRONTEND_URL}/annetatud`,
+    merchant_notification_url: `${process.env.MONTONIO_RETURN_URL}/confirm`,
+    // TODO: make configurable
+    payment_information_unstructured: "Anneta Targalt annetus",
+    checkout_email: donation.email,
+    checkout_first_name: donation.firstName,
+    checkout_last_name: donation.lastName,
+  };
+
+  return payload;
+}
+
 module.exports = {
   validateDonation,
   amountToCents,
+  createMontonioPayload,
 };
