@@ -1,0 +1,55 @@
+{
+  "kind": "collectionType",
+  "collectionName": "donations",
+  "info": {
+    "singularName": "donation",
+    "pluralName": "donations",
+    "displayName": "Donation"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "amount": {
+      "type": "integer"
+    },
+    "firstName": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "lastName": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "email": {
+      "type": "email",
+      "maxLength": 128
+    },
+    "idCode": {
+      "type": "string",
+      "maxLength": 11,
+      "required": true
+    },
+    "finalized": {
+      "type": "boolean",
+      "default": false,
+      "required": false
+    },
+    "paymentMethod": {
+      "type": "string"
+    },
+    "iban": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "text"
+    },
+    "companyName": {
+      "type": "string"
+    },
+    "companyCode": {
+      "type": "string"
+    }
+  }
+}

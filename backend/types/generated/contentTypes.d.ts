@@ -719,6 +719,58 @@ export interface ApiCauseCause extends Schema.CollectionType {
   };
 }
 
+export interface ApiDonationDonation extends Schema.CollectionType {
+  collectionName: 'donations';
+  info: {
+    singularName: 'donation';
+    pluralName: 'donations';
+    displayName: 'Donation';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    amount: Attribute.Integer;
+    firstName: Attribute.String &
+      Attribute.SetMinMaxLength<{
+        maxLength: 128;
+      }>;
+    lastName: Attribute.String &
+      Attribute.SetMinMaxLength<{
+        maxLength: 128;
+      }>;
+    email: Attribute.Email &
+      Attribute.SetMinMaxLength<{
+        maxLength: 128;
+      }>;
+    idCode: Attribute.String &
+      Attribute.Required &
+      Attribute.SetMinMaxLength<{
+        maxLength: 11;
+      }>;
+    finalized: Attribute.Boolean & Attribute.DefaultTo<false>;
+    paymentMethod: Attribute.String;
+    iban: Attribute.String;
+    comment: Attribute.Text;
+    companyName: Attribute.String;
+    companyCode: Attribute.String;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::donation.donation',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::donation.donation',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
 export interface ApiGlobalGlobal extends Schema.SingleType {
   collectionName: 'globals';
   info: {
@@ -894,6 +946,7 @@ declare module '@strapi/types' {
       'plugin::users-permissions.role': PluginUsersPermissionsRole;
       'plugin::users-permissions.user': PluginUsersPermissionsUser;
       'api::cause.cause': ApiCauseCause;
+      'api::donation.donation': ApiDonationDonation;
       'api::global.global': ApiGlobalGlobal;
       'api::organization.organization': ApiOrganizationOrganization;
       'api::page.page': ApiPagePage;
