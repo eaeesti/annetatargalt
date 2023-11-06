@@ -1,0 +1,21 @@
+{
+  "collectionName": "components_sections_thank_you_sections",
+  "info": {
+    "displayName": "ThankYouSection"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "text1": {
+      "type": "richtext"
+    },
+    "text2": {
+      "type": "richtext"
+    },
+    "text3": {
+      "type": "richtext"
+    }
+  }
+}

@@ -229,6 +229,19 @@ export interface SectionsTextSection extends Schema.Component {
   };
 }
 
+export interface SectionsThankYouSection extends Schema.Component {
+  collectionName: 'components_sections_thank_you_sections';
+  info: {
+    displayName: 'ThankYouSection';
+  };
+  attributes: {
+    title: Attribute.String;
+    text1: Attribute.RichText;
+    text2: Attribute.RichText;
+    text3: Attribute.RichText;
+  };
+}
+
 export interface SpecialSectionsCauseOrganizationsSection
   extends Schema.Component {
   collectionName: 'components_special_sections_cause_organizations_sections';
@@ -310,6 +323,7 @@ declare module '@strapi/types' {
       'sections.header-section': SectionsHeaderSection;
       'sections.hero-section': SectionsHeroSection;
       'sections.text-section': SectionsTextSection;
+      'sections.thank-you-section': SectionsThankYouSection;
       'special-sections.cause-organizations-section': SpecialSectionsCauseOrganizationsSection;
       'special-sections.entity-text-section': SpecialSectionsEntityTextSection;
       'special-sections.org-header-section': SpecialSectionsOrgHeaderSection;

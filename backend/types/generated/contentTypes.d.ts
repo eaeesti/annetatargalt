@@ -903,7 +903,8 @@ export interface ApiPagePage extends Schema.CollectionType {
         'sections.cta-section',
         'sections.header-section',
         'sections.causes-section',
-        'sections.donation-section'
+        'sections.donation-section',
+        'sections.thank-you-section'
       ]
     >;
     createdAt: Attribute.DateTime;
