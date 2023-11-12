@@ -725,35 +725,24 @@ export interface ApiDonationDonation extends Schema.CollectionType {
     singularName: 'donation';
     pluralName: 'donations';
     displayName: 'Donation';
+    description: '';
   };
   options: {
     draftAndPublish: false;
   };
   attributes: {
     amount: Attribute.Integer;
-    firstName: Attribute.String &
-      Attribute.SetMinMaxLength<{
-        maxLength: 128;
-      }>;
-    lastName: Attribute.String &
-      Attribute.SetMinMaxLength<{
-        maxLength: 128;
-      }>;
-    email: Attribute.Email &
-      Attribute.SetMinMaxLength<{
-        maxLength: 128;
-      }>;
-    idCode: Attribute.String &
-      Attribute.Required &
-      Attribute.SetMinMaxLength<{
-        maxLength: 11;
-      }>;
     finalized: Attribute.Boolean & Attribute.DefaultTo<false>;
     paymentMethod: Attribute.String;
     iban: Attribute.String;
     comment: Attribute.Text;
     companyName: Attribute.String;
     companyCode: Attribute.String;
+    donor: Attribute.Relation<
+      'api::donation.donation',
+      'manyToOne',
+      'api::donor.donor'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -796,6 +785,58 @@ export interface ApiDonationInfoDonationInfo extends Schema.SingleType {
       Attribute.Private;
     updatedBy: Attribute.Relation<
       'api::donation-info.donation-info',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
+export interface ApiDonorDonor extends Schema.CollectionType {
+  collectionName: 'donors';
+  info: {
+    singularName: 'donor';
+    pluralName: 'donors';
+    displayName: 'Donor';
+    description: '';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    idCode: Attribute.String &
+      Attribute.Required &
+      Attribute.SetMinMaxLength<{
+        minLength: 11;
+        maxLength: 11;
+      }>;
+    firstName: Attribute.String &
+      Attribute.SetMinMaxLength<{
+        maxLength: 128;
+      }>;
+    lastName: Attribute.String &
+      Attribute.SetMinMaxLength<{
+        maxLength: 128;
+      }>;
+    email: Attribute.Email &
+      Attribute.SetMinMaxLength<{
+        maxLength: 256;
+      }>;
+    donations: Attribute.Relation<
+      'api::donor.donor',
+      'oneToMany',
+      'api::donation.donation'
+    >;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::donor.donor',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::donor.donor',
       'oneToOne',
       'admin::user'
     > &
@@ -981,6 +1022,7 @@ declare module '@strapi/types' {
       'api::cause.cause': ApiCauseCause;
       'api::donation.donation': ApiDonationDonation;
       'api::donation-info.donation-info': ApiDonationInfoDonationInfo;
+      'api::donor.donor': ApiDonorDonor;
       'api::global.global': ApiGlobalGlobal;
       'api::organization.organization': ApiOrganizationOrganization;
       'api::page.page': ApiPagePage;

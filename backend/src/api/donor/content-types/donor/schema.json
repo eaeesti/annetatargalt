@@ -1,0 +1,41 @@
+{
+  "kind": "collectionType",
+  "collectionName": "donors",
+  "info": {
+    "singularName": "donor",
+    "pluralName": "donors",
+    "displayName": "Donor",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "idCode": {
+      "type": "string",
+      "maxLength": 11,
+      "minLength": 11,
+      "required": true,
+      "regex": "[1-6]\\d{2}[0-1]\\d[0-3]\\d{5}"
+    },
+    "firstName": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "lastName": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "email": {
+      "type": "email",
+      "maxLength": 256
+    },
+    "donations": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::donation.donation",
+      "mappedBy": "donor"
+    }
+  }
+}

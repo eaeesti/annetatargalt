@@ -4,7 +4,8 @@
   "info": {
     "singularName": "donation",
     "pluralName": "donations",
-    "displayName": "Donation"
+    "displayName": "Donation",
+    "description": ""
   },
   "options": {
     "draftAndPublish": false
@@ -13,23 +14,6 @@
   "attributes": {
     "amount": {
       "type": "integer"
-    },
-    "firstName": {
-      "type": "string",
-      "maxLength": 128
-    },
-    "lastName": {
-      "type": "string",
-      "maxLength": 128
-    },
-    "email": {
-      "type": "email",
-      "maxLength": 128
-    },
-    "idCode": {
-      "type": "string",
-      "maxLength": 11,
-      "required": true
     },
     "finalized": {
       "type": "boolean",
@@ -50,6 +34,12 @@
     },
     "companyCode": {
       "type": "string"
+    },
+    "donor": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::donor.donor",
+      "inversedBy": "donations"
     }
   }
 }

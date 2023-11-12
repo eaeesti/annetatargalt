@@ -22,15 +22,19 @@ module.exports = createCoreController(
         return ctx.badRequest(validation.reason);
       }
 
+      const donor = await strapi.service("api::donor.donor").findOrCreateDonor({
+        firstName: donation.firstName,
+        lastName: donation.lastName,
+        email: donation.email,
+        idCode: donation.idCode,
+      });
+
       const donationEntry = await strapi.entityService.create(
         "api::donation.donation",
         {
           data: {
-            firstName: donation.firstName,
-            lastName: donation.lastName,
-            idCode: donation.idCode,
             amount: amountToCents(donation.amount),
-            email: donation.email,
+            donor: donor.id,
           },
         }
       );
@@ -122,7 +126,7 @@ module.exports = createCoreController(
       const donation = await strapi.entityService.findOne(
         "api::donation.donation",
         id,
-        { fields: ["id", "firstName", "lastName", "amount"] }
+        { fields: ["amount"], populate: ["donor"] }
       );
 
       if (!donation) {

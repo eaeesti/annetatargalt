@@ -33,7 +33,7 @@ export default function ThankYouSection({ title, text1, text2, text3 }) {
   if (error) return <p>Error</p>;
 
   const donation = {
-    ...data.donation,
+    ...data.donation.donor,
     amount: formatEstonianAmount(data.donation.amount / 100),
   };
 
