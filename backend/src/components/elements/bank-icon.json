@@ -1,0 +1,21 @@
+{
+  "collectionName": "components_elements_bank_icons",
+  "info": {
+    "displayName": "BankIcon",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "bank": {
+      "type": "string"
+    },
+    "icon": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    }
+  }
+}

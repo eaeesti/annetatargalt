@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "recurring_donations",
+  "info": {
+    "singularName": "recurring-donation",
+    "pluralName": "recurring-donations",
+    "displayName": "RecurringDonation",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "donor": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::donor.donor",
+      "inversedBy": "recurring_donations"
+    },
+    "donations": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::donation.donation",
+      "mappedBy": "recurring_donation"
+    },
+    "active": {
+      "type": "boolean"
+    },
+    "companyName": {
+      "type": "string"
+    },
+    "companyCode": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "text"
+    },
+    "bank": {
+      "type": "string"
+    }
+  }
+}

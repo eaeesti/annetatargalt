@@ -19,6 +19,15 @@
     "transactionComment": {
       "type": "string",
       "default": "Anneta Targalt annetus"
+    },
+    "iban": {
+      "type": "string"
+    },
+    "recipient": {
+      "type": "string"
+    },
+    "recurringPaymentComment": {
+      "type": "string"
     }
   }
 }

@@ -74,6 +74,26 @@
     },
     "confirmText": {
       "type": "string"
+    },
+    "banks": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.bank-icon"
+    },
+    "bankText": {
+      "type": "string"
+    },
+    "otherBankText": {
+      "type": "string"
+    },
+    "oneTimeDonationSummary": {
+      "type": "richtext"
+    },
+    "recurringDonationSummary": {
+      "type": "richtext"
+    },
+    "recurringDonationGuide": {
+      "type": "richtext"
     }
   }
 }

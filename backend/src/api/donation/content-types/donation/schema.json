@@ -12,6 +12,21 @@
   },
   "pluginOptions": {},
   "attributes": {
+    "donor": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::donor.donor",
+      "inversedBy": "donations"
+    },
+    "recurring_donation": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::recurring-donation.recurring-donation",
+      "inversedBy": "donations"
+    },
+    "datetime": {
+      "type": "datetime"
+    },
     "amount": {
       "type": "integer"
     },
@@ -34,12 +49,6 @@
     },
     "companyCode": {
       "type": "string"
-    },
-    "donor": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::donor.donor",
-      "inversedBy": "donations"
     }
   }
 }

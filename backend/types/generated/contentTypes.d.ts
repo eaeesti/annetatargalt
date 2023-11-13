@@ -731,6 +731,17 @@ export interface ApiDonationDonation extends Schema.CollectionType {
     draftAndPublish: false;
   };
   attributes: {
+    donor: Attribute.Relation<
+      'api::donation.donation',
+      'manyToOne',
+      'api::donor.donor'
+    >;
+    recurring_donation: Attribute.Relation<
+      'api::donation.donation',
+      'manyToOne',
+      'api::recurring-donation.recurring-donation'
+    >;
+    datetime: Attribute.DateTime;
     amount: Attribute.Integer;
     finalized: Attribute.Boolean & Attribute.DefaultTo<false>;
     paymentMethod: Attribute.String;
@@ -738,11 +749,6 @@ export interface ApiDonationDonation extends Schema.CollectionType {
     comment: Attribute.Text;
     companyName: Attribute.String;
     companyCode: Attribute.String;
-    donor: Attribute.Relation<
-      'api::donation.donation',
-      'manyToOne',
-      'api::donor.donor'
-    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -775,6 +781,9 @@ export interface ApiDonationInfoDonationInfo extends Schema.SingleType {
     returnPath: Attribute.String & Attribute.DefaultTo<'annetatud'>;
     transactionComment: Attribute.String &
       Attribute.DefaultTo<'Anneta Targalt annetus'>;
+    iban: Attribute.String;
+    recipient: Attribute.String;
+    recurringPaymentComment: Attribute.String;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -826,6 +835,11 @@ export interface ApiDonorDonor extends Schema.CollectionType {
       'api::donor.donor',
       'oneToMany',
       'api::donation.donation'
+    >;
+    recurring_donations: Attribute.Relation<
+      'api::donor.donor',
+      'oneToMany',
+      'api::recurring-donation.recurring-donation'
     >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
@@ -957,6 +971,51 @@ export interface ApiPagePage extends Schema.CollectionType {
   };
 }
 
+export interface ApiRecurringDonationRecurringDonation
+  extends Schema.CollectionType {
+  collectionName: 'recurring_donations';
+  info: {
+    singularName: 'recurring-donation';
+    pluralName: 'recurring-donations';
+    displayName: 'RecurringDonation';
+    description: '';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    donor: Attribute.Relation<
+      'api::recurring-donation.recurring-donation',
+      'manyToOne',
+      'api::donor.donor'
+    >;
+    donations: Attribute.Relation<
+      'api::recurring-donation.recurring-donation',
+      'oneToMany',
+      'api::donation.donation'
+    >;
+    active: Attribute.Boolean;
+    companyName: Attribute.String;
+    companyCode: Attribute.String;
+    comment: Attribute.Text;
+    bank: Attribute.String;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::recurring-donation.recurring-donation',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::recurring-donation.recurring-donation',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
 export interface ApiSpecialPageSpecialPage extends Schema.CollectionType {
   collectionName: 'special_pages';
   info: {
@@ -1026,6 +1085,7 @@ declare module '@strapi/types' {
       'api::global.global': ApiGlobalGlobal;
       'api::organization.organization': ApiOrganizationOrganization;
       'api::page.page': ApiPagePage;
+      'api::recurring-donation.recurring-donation': ApiRecurringDonationRecurringDonation;
       'api::special-page.special-page': ApiSpecialPageSpecialPage;
     }
   }

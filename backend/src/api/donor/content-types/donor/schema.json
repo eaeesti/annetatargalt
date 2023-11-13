@@ -36,6 +36,12 @@
       "relation": "oneToMany",
       "target": "api::donation.donation",
       "mappedBy": "donor"
+    },
+    "recurring_donations": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::recurring-donation.recurring-donation",
+      "mappedBy": "donor"
     }
   }
 }

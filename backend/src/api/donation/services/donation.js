@@ -1,10 +1,9 @@
 "use strict";
 
-/**
- * donation service
- */
-
 const { createCoreService } = require("@strapi/strapi").factories;
+const { amountToCents } = require("../../../utils/donation");
+const { createRecurringPaymentLink } = require("../../../utils/banks");
+const { createPaymentURL } = require("../../../utils/montonio");
 
 module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   async createMontonioPayload(donation, { currency = "EUR" } = {}) {
@@ -25,5 +24,55 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     };
 
     return payload;
+  },
+
+  async createSingleDonation({ donation, donor }) {
+    const donationEntry = await strapi.entityService.create(
+      "api::donation.donation",
+      {
+        data: {
+          amount: amountToCents(donation.amount),
+          donor: donor.id,
+        },
+      }
+    );
+
+    const payload = await strapi
+      .service("api::donation.donation")
+      .createMontonioPayload(donationEntry);
+    const redirectURL = createPaymentURL(payload);
+    return { redirectURL };
+  },
+
+  async createRecurringDonation({ donation, donor }) {
+    await strapi.entityService.create(
+      "api::recurring-donation.recurring-donation",
+      {
+        data: {
+          amount: amountToCents(donation.amount),
+          donor: donor.id,
+          bank: donation.bank,
+        },
+      }
+    );
+
+    const donationInfo = await strapi.db
+      .query("api::donation-info.donation-info")
+      .findOne();
+
+    try {
+      const recurringPaymentLink = createRecurringPaymentLink(
+        donation.bank,
+        {
+          iban: donationInfo.iban,
+          recipient: donationInfo.recipient,
+          description: donationInfo.recurringPaymentComment,
+        },
+        donation.amount
+      );
+      return { redirectURL: recurringPaymentLink };
+    } catch (error) {
+      return { redirectURL: "" };
+    }
   },
 }));

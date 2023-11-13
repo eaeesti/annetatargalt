@@ -1,15 +1,8 @@
 "use strict";
 
-/**
- * donation controller
- */
-
 const { createCoreController } = require("@strapi/strapi").factories;
-const { amountToCents, validateDonation } = require("../../../utils/donation");
-const {
-  createPaymentURL,
-  decodePaymentToken,
-} = require("../../../utils/montonio");
+const { validateDonation } = require("../../../utils/donation");
+const { decodePaymentToken } = require("../../../utils/montonio");
 
 module.exports = createCoreController(
   "api::donation.donation",
@@ -22,32 +15,31 @@ module.exports = createCoreController(
         return ctx.badRequest(validation.reason);
       }
 
-      const donor = await strapi.service("api::donor.donor").findOrCreateDonor({
-        firstName: donation.firstName,
-        lastName: donation.lastName,
-        email: donation.email,
-        idCode: donation.idCode,
-      });
-
-      const donationEntry = await strapi.entityService.create(
-        "api::donation.donation",
-        {
-          data: {
-            amount: amountToCents(donation.amount),
-            donor: donor.id,
-          },
-        }
-      );
+      const donor = await strapi
+        .service("api::donor.donor")
+        .findOrCreateDonor(donation);
 
       if (donation.type === "recurring") {
-        return ctx.send({ redirectURL: "/annetatud" });
+        try {
+          const { redirectURL } = await strapi
+            .service("api::donation.donation")
+            .createRecurringDonation({ donation, donor });
+          return ctx.send({ redirectURL });
+        } catch (error) {
+          console.error(error);
+          return ctx.badRequest("Failed to create recurring donation");
+        }
       }
 
-      const payload = await strapi
-        .service("api::donation.donation")
-        .createMontonioPayload(donationEntry);
-      const paymentURL = createPaymentURL(payload);
-      return ctx.send({ redirectURL: paymentURL });
+      try {
+        const { redirectURL } = await strapi
+          .service("api::donation.donation")
+          .createSingleDonation({ donation, donor });
+        return ctx.send({ redirectURL });
+      } catch (error) {
+        console.error(error);
+        return ctx.badRequest("Failed to create single donation");
+      }
     },
 
     async confirm(ctx) {

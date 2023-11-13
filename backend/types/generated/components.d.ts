@@ -1,5 +1,17 @@
 import type { Schema, Attribute } from '@strapi/strapi';
 
+export interface ElementsBankIcon extends Schema.Component {
+  collectionName: 'components_elements_bank_icons';
+  info: {
+    displayName: 'BankIcon';
+    description: '';
+  };
+  attributes: {
+    bank: Attribute.String;
+    icon: Attribute.Media;
+  };
+}
+
 export interface ElementsBreadcrumb extends Schema.Component {
   collectionName: 'components_elements_breadcrumbs';
   info: {
@@ -188,6 +200,12 @@ export interface SectionsDonationSection extends Schema.Component {
     backButtonText: Attribute.String;
     detailsText: Attribute.String;
     confirmText: Attribute.String;
+    banks: Attribute.Component<'elements.bank-icon', true>;
+    bankText: Attribute.String;
+    otherBankText: Attribute.String;
+    oneTimeDonationSummary: Attribute.RichText;
+    recurringDonationSummary: Attribute.RichText;
+    recurringDonationGuide: Attribute.RichText;
   };
 }
 
@@ -308,6 +326,7 @@ export interface SpecialSectionsSpecialHeaderSection extends Schema.Component {
 declare module '@strapi/types' {
   export module Shared {
     export interface Components {
+      'elements.bank-icon': ElementsBankIcon;
       'elements.breadcrumb': ElementsBreadcrumb;
       'elements.button': ElementsButton;
       'elements.footer-column': ElementsFooterColumn;
