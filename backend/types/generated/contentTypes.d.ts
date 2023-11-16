@@ -750,6 +750,11 @@ export interface ApiDonationDonation extends Schema.CollectionType {
     comment: Attribute.Text;
     companyName: Attribute.String;
     companyCode: Attribute.String;
+    organizationDonations: Attribute.Relation<
+      'api::donation.donation',
+      'oneToMany',
+      'api::organization-donation.organization-donation'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -923,6 +928,11 @@ export interface ApiOrganizationOrganization extends Schema.CollectionType {
     >;
     logo: Attribute.Media;
     active: Attribute.Boolean & Attribute.DefaultTo<true>;
+    organizationDonations: Attribute.Relation<
+      'api::organization.organization',
+      'oneToMany',
+      'api::organization-donation.organization-donation'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -933,6 +943,48 @@ export interface ApiOrganizationOrganization extends Schema.CollectionType {
       Attribute.Private;
     updatedBy: Attribute.Relation<
       'api::organization.organization',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
+export interface ApiOrganizationDonationOrganizationDonation
+  extends Schema.CollectionType {
+  collectionName: 'organization_donations';
+  info: {
+    singularName: 'organization-donation';
+    pluralName: 'organization-donations';
+    displayName: 'OrganizationDonation';
+    description: '';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    donation: Attribute.Relation<
+      'api::organization-donation.organization-donation',
+      'manyToOne',
+      'api::donation.donation'
+    >;
+    organization: Attribute.Relation<
+      'api::organization-donation.organization-donation',
+      'manyToOne',
+      'api::organization.organization'
+    >;
+    proportion: Attribute.Decimal;
+    amount: Attribute.Integer;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::organization-donation.organization-donation',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::organization-donation.organization-donation',
       'oneToOne',
       'admin::user'
     > &
@@ -1003,6 +1055,7 @@ export interface ApiRecurringDonationRecurringDonation
     companyCode: Attribute.String;
     comment: Attribute.Text;
     bank: Attribute.String;
+    amount: Attribute.Integer;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -1088,6 +1141,7 @@ declare module '@strapi/types' {
       'api::donor.donor': ApiDonorDonor;
       'api::global.global': ApiGlobalGlobal;
       'api::organization.organization': ApiOrganizationOrganization;
+      'api::organization-donation.organization-donation': ApiOrganizationDonationOrganizationDonation;
       'api::page.page': ApiPagePage;
       'api::recurring-donation.recurring-donation': ApiRecurringDonationRecurringDonation;
       'api::special-page.special-page': ApiSpecialPageSpecialPage;

@@ -1,0 +1,34 @@
+{
+  "kind": "collectionType",
+  "collectionName": "organization_donations",
+  "info": {
+    "singularName": "organization-donation",
+    "pluralName": "organization-donations",
+    "displayName": "OrganizationDonation",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "donation": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::donation.donation",
+      "inversedBy": "organizationDonations"
+    },
+    "organization": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::organization.organization",
+      "inversedBy": "organizationDonations"
+    },
+    "proportion": {
+      "type": "decimal"
+    },
+    "amount": {
+      "type": "integer"
+    }
+  }
+}

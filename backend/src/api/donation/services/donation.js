@@ -155,9 +155,14 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
         data: {
           amount: amountToCents(donation.amount),
           donor: donor.id,
+          datetime: new Date(),
         },
       }
     );
+
+    await strapi
+      .service("api::organization-donation.organization-donation")
+      .createFromProportions(donationEntry, donation.proportions);
 
     const payload = await strapi
       .service("api::donation.donation")

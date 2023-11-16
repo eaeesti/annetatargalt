@@ -38,6 +38,9 @@
     },
     "bank": {
       "type": "string"
+    },
+    "amount": {
+      "type": "integer"
     }
   }
 }

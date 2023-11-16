@@ -49,6 +49,12 @@
     },
     "companyCode": {
       "type": "string"
+    },
+    "organizationDonations": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::organization-donation.organization-donation",
+      "mappedBy": "donation"
     }
   }
 }

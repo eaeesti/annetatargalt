@@ -58,6 +58,12 @@
     "active": {
       "type": "boolean",
       "default": true
+    },
+    "organizationDonations": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::organization-donation.organization-donation",
+      "mappedBy": "organization"
     }
   }
 }
