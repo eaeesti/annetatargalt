@@ -933,6 +933,11 @@ export interface ApiOrganizationOrganization extends Schema.CollectionType {
       'oneToMany',
       'api::organization-donation.organization-donation'
     >;
+    organizationRecurringDonations: Attribute.Relation<
+      'api::organization.organization',
+      'oneToMany',
+      'api::organization-recurring-donation.organization-recurring-donation'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -973,7 +978,7 @@ export interface ApiOrganizationDonationOrganizationDonation
       'manyToOne',
       'api::organization.organization'
     >;
-    proportion: Attribute.Decimal;
+    proportion: Attribute.Float;
     amount: Attribute.Integer;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
@@ -985,6 +990,48 @@ export interface ApiOrganizationDonationOrganizationDonation
       Attribute.Private;
     updatedBy: Attribute.Relation<
       'api::organization-donation.organization-donation',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
+export interface ApiOrganizationRecurringDonationOrganizationRecurringDonation
+  extends Schema.CollectionType {
+  collectionName: 'organization_recurring_donations';
+  info: {
+    singularName: 'organization-recurring-donation';
+    pluralName: 'organization-recurring-donations';
+    displayName: 'OrganizationRecurringDonation';
+    description: '';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    recurringDonation: Attribute.Relation<
+      'api::organization-recurring-donation.organization-recurring-donation',
+      'manyToOne',
+      'api::recurring-donation.recurring-donation'
+    >;
+    organization: Attribute.Relation<
+      'api::organization-recurring-donation.organization-recurring-donation',
+      'manyToOne',
+      'api::organization.organization'
+    >;
+    proportion: Attribute.Float;
+    amount: Attribute.Integer;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::organization-recurring-donation.organization-recurring-donation',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::organization-recurring-donation.organization-recurring-donation',
       'oneToOne',
       'admin::user'
     > &
@@ -1056,6 +1103,11 @@ export interface ApiRecurringDonationRecurringDonation
     comment: Attribute.Text;
     bank: Attribute.String;
     amount: Attribute.Integer;
+    organizationRecurringDonations: Attribute.Relation<
+      'api::recurring-donation.recurring-donation',
+      'oneToMany',
+      'api::organization-recurring-donation.organization-recurring-donation'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -1142,6 +1194,7 @@ declare module '@strapi/types' {
       'api::global.global': ApiGlobalGlobal;
       'api::organization.organization': ApiOrganizationOrganization;
       'api::organization-donation.organization-donation': ApiOrganizationDonationOrganizationDonation;
+      'api::organization-recurring-donation.organization-recurring-donation': ApiOrganizationRecurringDonationOrganizationRecurringDonation;
       'api::page.page': ApiPagePage;
       'api::recurring-donation.recurring-donation': ApiRecurringDonationRecurringDonation;
       'api::special-page.special-page': ApiSpecialPageSpecialPage;

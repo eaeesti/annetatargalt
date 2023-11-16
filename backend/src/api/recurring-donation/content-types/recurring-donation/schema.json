@@ -41,6 +41,12 @@
     },
     "amount": {
       "type": "integer"
+    },
+    "organizationRecurringDonations": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::organization-recurring-donation.organization-recurring-donation",
+      "mappedBy": "recurringDonation"
     }
   }
 }

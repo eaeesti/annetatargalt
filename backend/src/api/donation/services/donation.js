@@ -12,7 +12,6 @@ const { createPaymentURL } = require("../../../utils/montonio");
 
 module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   async validateDonation(donation) {
-    console.log("Validating donation", donation);
     if (!donation) {
       return { valid: false, reason: "No donation provided" };
     }
@@ -172,7 +171,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   },
 
   async createRecurringDonation({ donation, donor }) {
-    await strapi.entityService.create(
+    const recurringDonationEntry = await strapi.entityService.create(
       "api::recurring-donation.recurring-donation",
       {
         data: {
@@ -182,6 +181,12 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
         },
       }
     );
+
+    await strapi
+      .service(
+        "api::organization-recurring-donation.organization-recurring-donation"
+      )
+      .createFromProportions(recurringDonationEntry, donation.proportions);
 
     const donationInfo = await strapi.db
       .query("api::donation-info.donation-info")
