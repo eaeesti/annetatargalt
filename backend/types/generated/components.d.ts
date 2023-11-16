@@ -206,6 +206,20 @@ export interface SectionsDonationSection extends Schema.Component {
     oneTimeDonationSummary: Attribute.RichText;
     recurringDonationSummary: Attribute.RichText;
     recurringDonationGuide: Attribute.RichText;
+    causes: Attribute.Relation<
+      'sections.donation-section',
+      'oneToMany',
+      'api::cause.cause'
+    >;
+    organizations: Attribute.Relation<
+      'sections.donation-section',
+      'oneToMany',
+      'api::organization.organization'
+    >;
+    chooseOrganizationsText: Attribute.String;
+    informationText: Attribute.String;
+    lockText: Attribute.String;
+    totalText: Attribute.String;
   };
 }
 

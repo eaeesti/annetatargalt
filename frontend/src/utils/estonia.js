@@ -31,10 +31,15 @@ export function validateIdCode(idCode) {
  * formatEstonianAmount(1234.5); // "1 234,5"
  */
 export function formatEstonianAmount(number) {
+  const withCents = formatEstonianAmountWithCents(number);
+  return withCents.replace(/,00$/, "");
+}
+
+export function formatEstonianAmountWithCents(number) {
   const asString = String(number);
   const [integerPart, decimalPart] = asString.split(".");
   const integerWithSpaces = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  const decimal = decimalPart ? "," + decimalPart.padEnd(2, "0") : "";
+  const decimal = decimalPart ? "," + decimalPart.padEnd(2, "0") : ",00";
 
   const estonianAmount = integerWithSpaces + decimal;
   return estonianAmount;

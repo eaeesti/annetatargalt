@@ -38,7 +38,7 @@ export default function BankChooser({
       </RadioGroup.Label>
       <div className="grid grid-cols-3 gap-2 xs:gap-3">
         {banks.map(({ bank, icon }) => (
-          <BankChooserOption value={bank} label={bank} icon={icon} />
+          <BankChooserOption key={bank} value={bank} label={bank} icon={icon} />
         ))}
         <BankChooserOption value="other" label={otherBankText} />
       </div>

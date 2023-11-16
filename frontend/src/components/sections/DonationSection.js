@@ -16,6 +16,9 @@ import { useRouter } from "next/navigation";
 import BankChooser from "../elements/forms/BankChooser";
 import Markdown from "../elements/Markdown";
 import { format } from "@/utils/string";
+import OrganizationChooser from "../elements/forms/OrganizationChooser";
+import Proportions from "@/utils/proportions";
+import DonationSummary from "../elements/forms/DonationSummary";
 
 export default function DonationSection(props) {
   const router = useRouter();
@@ -34,6 +37,7 @@ export default function DonationSection(props) {
     email: "",
     idCode: "",
     bank: "",
+    proportions: Proportions.fromStrapiData(props.causes.data),
     acceptTerms: false,
   });
 
@@ -103,6 +107,16 @@ export default function DonationSection(props) {
                 currency={props.currency}
                 setValidity={setValidity}
               />
+              <OrganizationChooser
+                chooseOrganizationsText={props.chooseOrganizationsText}
+                informationText={props.informationText}
+                lockText={props.lockText}
+                causes={props.causes}
+                proportions={donation.proportions}
+                setProportions={(proportions) =>
+                  setDonation({ ...donation, proportions })
+                }
+              />
               <Button
                 text={props.nextButtonText}
                 type="primary"
@@ -160,21 +174,21 @@ export default function DonationSection(props) {
           )}
           {stage === 2 && (
             <form
-              className="flex flex-col gap-4"
+              className="flex flex-col gap-6"
               onSubmit={(event) => event.preventDefault()}
             >
               <h2 className="text-2xl font-bold tracking-tight text-primary-700 sm:text-3xl">
                 {props.confirmText}
               </h2>
               <Markdown className="prose prose-primary w-full [&>p>strong]:text-primary-700">
-                {format(summaryText, {
-                  amount:
-                    formatEstonianAmount(donation.amount) + props.currency,
-                })}
+                {summaryText}
               </Markdown>
-              <pre className="text-lg text-slate-700">
-                {JSON.stringify(donation, null, 2)}
-              </pre>
+              <DonationSummary
+                donation={donation}
+                currency={props.currency}
+                causes={props.causes}
+                totalText={props.totalText}
+              />
               {donation.type === "recurring" && (
                 <BankChooser
                   bankText={props.bankText}
@@ -206,7 +220,7 @@ export default function DonationSection(props) {
         </div>
       )}
       {donated && (
-        <div className="flex flex-col gap-4 bg-white px-4 py-24 xs:rounded-2xl xs:px-12 xs:py-12">
+        <div className="flex max-w-lg flex-col gap-4 bg-white px-4 py-24 xs:rounded-2xl xs:px-12 xs:py-12 ">
           <Markdown className="prose prose-primary w-full">
             {format(props.recurringDonationGuide, {
               amount: formatEstonianAmount(donation.amount) + props.currency,

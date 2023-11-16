@@ -94,6 +94,28 @@
     },
     "recurringDonationGuide": {
       "type": "richtext"
+    },
+    "causes": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::cause.cause"
+    },
+    "organizations": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::organization.organization"
+    },
+    "chooseOrganizationsText": {
+      "type": "string"
+    },
+    "informationText": {
+      "type": "string"
+    },
+    "lockText": {
+      "type": "string"
+    },
+    "totalText": {
+      "type": "string"
     }
   }
 }

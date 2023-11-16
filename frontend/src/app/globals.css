@@ -25,3 +25,49 @@ body {
     )
     rgb(var(--background-start-rgb));
 } */
+
+.form-range {
+  @apply h-2.5 w-full bg-transparent;
+  -webkit-appearance: none;
+  outline: none;
+  cursor: grab;
+}
+
+.form-range:disabled {
+  cursor: default;
+}
+
+.form-range:disabled::-webkit-slider-thumb {
+  cursor: default;
+}
+
+.form-range:disabled::-moz-range-thumb {
+  cursor: default;
+}
+
+.form-range::-webkit-slider-thumb,
+.form-range::-moz-range-thumb {
+  @apply h-5 w-5 rounded-full border-none bg-primary-600;
+}
+
+.form-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: grab;
+}
+
+.form-range::-moz-range-thumb {
+  cursor: grab;
+}
+
+.form-range:active:not(:disabled) {
+  cursor: grabbing;
+}
+
+.form-range::-moz-range-thumb:active {
+  cursor: grabbing;
+}
+
+.form-range::-webkit-slider-thumb:active {
+  cursor: grabbing;
+}
