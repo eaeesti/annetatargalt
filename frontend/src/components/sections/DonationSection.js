@@ -19,9 +19,18 @@ import { format } from "@/utils/string";
 import OrganizationChooser from "../elements/forms/OrganizationChooser";
 import Proportions from "@/utils/proportions";
 import DonationSummary from "../elements/forms/DonationSummary";
+import Modal from "../Modal";
 
 export default function DonationSection(props) {
   const router = useRouter();
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalData, setModalData] = useState({});
+
+  function showModal(data) {
+    setModalData(data);
+    setModalOpen(true);
+  }
 
   const amounts = pick(props, ["amount1", "amount2", "amount3"]);
   const amountOptions = amounts.map((amount) => ({
@@ -57,11 +66,20 @@ export default function DonationSection(props) {
 
   const donate = async () => {
     const response = await makeDonationRequest(donation);
-    const { redirectURL } = await response.json();
-    if (redirectURL) {
-      router.push(redirectURL);
+    const data = await response.json();
+
+    if (response.ok) {
+      if (data.redirectURL) {
+        router.push(data.redirectURL);
+      } else {
+        setDonated(true);
+      }
     } else {
-      setDonated(true);
+      showModal({
+        icon: "error",
+        title: props.global.errorText,
+        description: `${data.error.name}: ${data.error.message}`,
+      });
     }
   };
 
@@ -228,6 +246,12 @@ export default function DonationSection(props) {
           </Markdown>
         </div>
       )}
+      <Modal
+        open={modalOpen}
+        data={modalData}
+        setOpen={setModalOpen}
+        closeText={props.global.closeText}
+      />
     </section>
   );
 }

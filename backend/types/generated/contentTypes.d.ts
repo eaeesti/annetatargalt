@@ -702,6 +702,7 @@ export interface ApiCauseCause extends Schema.CollectionType {
       'api::organization.organization'
     >;
     image: Attribute.Media;
+    active: Attribute.Boolean & Attribute.DefaultTo<true>;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -877,6 +878,8 @@ export interface ApiGlobalGlobal extends Schema.SingleType {
     notFoundPage: Attribute.Component<'meta.not-found-page'>;
     backWord: Attribute.String;
     donateLink: Attribute.String;
+    closeText: Attribute.String;
+    errorText: Attribute.String;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -919,6 +922,7 @@ export interface ApiOrganizationOrganization extends Schema.CollectionType {
       'api::cause.cause'
     >;
     logo: Attribute.Media;
+    active: Attribute.Boolean & Attribute.DefaultTo<true>;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<

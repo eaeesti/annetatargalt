@@ -37,7 +37,7 @@ export default function DonationSummary({
                   {organization.attributes.title}
                 </Anchor>
               </dt>
-              <dd className="font-medium text-slate-900">
+              <dd className="whitespace-nowrap font-medium text-slate-900">
                 {formatEstonianAmountWithCents(
                   organizationAmounts[organization.id],
                 )}
@@ -48,7 +48,7 @@ export default function DonationSummary({
       )}
       <div className="flex items-center justify-between gap-3 py-2">
         <dt className="font-medium text-slate-900">{totalText}</dt>
-        <dd className="font-medium text-primary-700">
+        <dd className="whitespace-nowrap font-medium text-primary-700">
           {formatEstonianAmountWithCents(donation.amount)}
           {currency}
         </dd>

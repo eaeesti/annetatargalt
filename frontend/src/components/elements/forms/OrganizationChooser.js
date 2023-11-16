@@ -4,7 +4,6 @@ import UnlockedIcon from "@/components/icons/UnlockedIcon";
 import { classes } from "@/utils/react";
 import { Disclosure } from "@headlessui/react";
 import { ChevronUpIcon } from "@heroicons/react/24/solid";
-import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import Button from "../Button";
 import InfoIcon from "@/components/icons/InfoIcon";
 
@@ -54,7 +53,7 @@ export default function OrganizationChooser({
 }) {
   return (
     <fieldset>
-      <legend className="my-4 block text-xl font-bold leading-6 tracking-tight text-primary-700 ">
+      <legend className="my-6 block text-xl font-semibold leading-6 tracking-tight text-primary-700 ">
         {chooseOrganizationsText}
       </legend>
       <div className="flex flex-col gap-10">

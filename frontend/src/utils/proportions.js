@@ -183,10 +183,9 @@ export default class Proportions {
 
   toJSON() {
     return Object.fromEntries(
-      this.entries().map(([key, value]) => [
-        key,
-        { ...value, locked: undefined },
-      ]),
+      this.entries()
+        .map(([key, value]) => [key, { ...value, locked: undefined }])
+        .filter(([_, value]) => value.proportion > 0),
     );
   }
 

@@ -45,14 +45,19 @@
       "inversedBy": "organizations"
     },
     "logo": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
       "allowedTypes": [
         "images",
         "files",
         "videos",
         "audios"
-      ],
-      "type": "media",
-      "multiple": false
+      ]
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
     }
   }
 }

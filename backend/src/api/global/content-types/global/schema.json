@@ -40,6 +40,12 @@
     },
     "donateLink": {
       "type": "string"
+    },
+    "closeText": {
+      "type": "string"
+    },
+    "errorText": {
+      "type": "string"
     }
   }
 }

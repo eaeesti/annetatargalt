@@ -32,6 +32,11 @@ export default function ThankYouSection({ title, text1, text2, text3 }) {
   // TODO: Make error section
   if (error) return <p>Error</p>;
 
+  if (!data.donation) {
+    router.push("/");
+    return <LoadingSection />;
+  }
+
   const donation = {
     ...data.donation.donor,
     amount: formatEstonianAmount(data.donation.amount / 100),

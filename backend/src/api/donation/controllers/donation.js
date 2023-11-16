@@ -1,7 +1,6 @@
 "use strict";
 
 const { createCoreController } = require("@strapi/strapi").factories;
-const { validateDonation } = require("../../../utils/donation");
 const { decodePaymentToken } = require("../../../utils/montonio");
 
 module.exports = createCoreController(
@@ -9,7 +8,9 @@ module.exports = createCoreController(
   ({ strapi }) => ({
     async donate(ctx) {
       const donation = ctx.request.body;
-      const validation = validateDonation(donation);
+      const validation = await strapi
+        .service("api::donation.donation")
+        .validateDonation(donation);
 
       if (!validation.valid) {
         return ctx.badRequest(validation.reason);

@@ -43,62 +43,9 @@ function validateEmail(string) {
   return emailRegex.test(string);
 }
 
-function validateDonation(donation) {
-  if (!donation) {
-    return { valid: false, reason: "No donation provided" };
-  }
-
-  if (!donation.firstName) {
-    return { valid: false, reason: "No first name provided" };
-  }
-
-  if (!donation.lastName) {
-    return { valid: false, reason: "No last name provided" };
-  }
-
-  if (!donation.idCode) {
-    return { valid: false, reason: "No ID code provided" };
-  }
-
-  if (!validateIdCode(donation.idCode)) {
-    return { valid: false, reason: `Invalid ID code: ${donation.idCode}` };
-  }
-
-  if (!donation.email) {
-    return { valid: false, reason: "No email provided" };
-  }
-
-  if (!validateEmail(donation.email)) {
-    return { valid: false, reason: `Invalid email: ${donation.email}` };
-  }
-
-  if (!donation.amount) {
-    return { valid: false, reason: "No amount provided" };
-  }
-
-  if (!validateAmount(donation.amount)) {
-    return { valid: false, reason: `Invalid amount: ${donation.amount}` };
-  }
-
-  if (donation.amount >= 15000) {
-    return { valid: false, reason: "Amount must be smaller than 15000€" };
-  }
-
-  if (!donation.type) {
-    return { valid: false, reason: "No donation type provided" };
-  }
-
-  if (!["recurring", "onetime"].includes(donation.type)) {
-    return {
-      valid: false,
-      reason: `Invalid donation type: ${donation.type}`,
-    };
-  }
-
-  return { valid: true };
-}
-
 module.exports = {
-  validateDonation,
   amountToCents,
+  validateAmount,
+  validateIdCode,
+  validateEmail,
 };
