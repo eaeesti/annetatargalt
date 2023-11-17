@@ -119,7 +119,15 @@ module.exports = createCoreController(
       const donation = await strapi.entityService.findOne(
         "api::donation.donation",
         id,
-        { fields: ["amount"], populate: ["donor"] }
+        {
+          fields: ["amount"],
+          populate: [
+            "donor",
+            "organizationDonations",
+            "organizationDonations.organization",
+            "organizationDonations.organization.cause",
+          ],
+        }
       );
 
       if (!donation) {

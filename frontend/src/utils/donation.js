@@ -24,7 +24,7 @@ export function amountsFromProportions({ proportions, causes, totalAmount }) {
       const proportion = (causeProportion * organizationProportion) / 10000;
       const amount = totalAmount * proportion;
       const roundedAmount = Math.round(amount * 100) / 100;
-      if (amount > 0) {
+      if (roundedAmount > 0) {
         amounts[organization.id] = roundedAmount;
       }
     });

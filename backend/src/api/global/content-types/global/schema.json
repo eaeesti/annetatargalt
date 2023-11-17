@@ -46,6 +46,13 @@
     },
     "errorText": {
       "type": "string"
+    },
+    "totalText": {
+      "type": "string"
+    },
+    "currency": {
+      "type": "string",
+      "default": "€"
     }
   }
 }

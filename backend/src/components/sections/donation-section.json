@@ -39,9 +39,6 @@
     "recurringDonationText": {
       "type": "string"
     },
-    "currency": {
-      "type": "string"
-    },
     "amountText": {
       "type": "string"
     },
@@ -112,9 +109,6 @@
       "type": "string"
     },
     "lockText": {
-      "type": "string"
-    },
-    "totalText": {
       "type": "string"
     }
   }

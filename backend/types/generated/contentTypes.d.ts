@@ -885,6 +885,8 @@ export interface ApiGlobalGlobal extends Schema.SingleType {
     donateLink: Attribute.String;
     closeText: Attribute.String;
     errorText: Attribute.String;
+    totalText: Attribute.String;
+    currency: Attribute.String & Attribute.DefaultTo<'\u20AC'>;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<

@@ -18,7 +18,7 @@ import Markdown from "../elements/Markdown";
 import { format } from "@/utils/string";
 import OrganizationChooser from "../elements/forms/OrganizationChooser";
 import Proportions from "@/utils/proportions";
-import DonationSummary from "../elements/forms/DonationSummary";
+import PaymentSummary from "../elements/forms/PaymentSummary";
 import Modal from "../Modal";
 
 export default function DonationSection(props) {
@@ -35,7 +35,7 @@ export default function DonationSection(props) {
   const amounts = pick(props, ["amount1", "amount2", "amount3"]);
   const amountOptions = amounts.map((amount) => ({
     value: amount,
-    label: `${amount}${props.currency}`,
+    label: `${amount}${props.global.currency}`,
   }));
 
   const [donation, setDonation] = useState({
@@ -122,7 +122,7 @@ export default function DonationSection(props) {
                 amountOptions={amountOptions}
                 otherAmountText={props.otherAmountText}
                 otherAmountOptionText={props.otherAmountOptionText}
-                currency={props.currency}
+                currency={props.global.currency}
                 setValidity={setValidity}
               />
               <OrganizationChooser
@@ -201,11 +201,11 @@ export default function DonationSection(props) {
               <Markdown className="prose prose-primary w-full [&>p>strong]:text-primary-700">
                 {summaryText}
               </Markdown>
-              <DonationSummary
+              <PaymentSummary
                 donation={donation}
-                currency={props.currency}
                 causes={props.causes}
-                totalText={props.totalText}
+                currency={props.global.currency}
+                totalText={props.global.totalText}
               />
               {donation.type === "recurring" && (
                 <BankChooser
@@ -241,7 +241,8 @@ export default function DonationSection(props) {
         <div className="flex max-w-lg flex-col gap-4 bg-white px-4 py-24 xs:rounded-2xl xs:px-12 xs:py-12 ">
           <Markdown className="prose prose-primary w-full">
             {format(props.recurringDonationGuide, {
-              amount: formatEstonianAmount(donation.amount) + props.currency,
+              amount:
+                formatEstonianAmount(donation.amount) + props.global.currency,
             })}
           </Markdown>
         </div>

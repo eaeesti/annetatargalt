@@ -188,7 +188,6 @@ export interface SectionsDonationSection extends Schema.Component {
     amount3: Attribute.Integer;
     singleDonationText: Attribute.String;
     recurringDonationText: Attribute.String;
-    currency: Attribute.String;
     amountText: Attribute.String;
     nextButtonText: Attribute.String;
     donateButtonText: Attribute.String;
@@ -219,7 +218,6 @@ export interface SectionsDonationSection extends Schema.Component {
     chooseOrganizationsText: Attribute.String;
     informationText: Attribute.String;
     lockText: Attribute.String;
-    totalText: Attribute.String;
   };
 }
 

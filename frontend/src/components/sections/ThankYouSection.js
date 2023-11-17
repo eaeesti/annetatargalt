@@ -9,8 +9,15 @@ import { format } from "@/utils/string";
 import { formatEstonianAmount } from "@/utils/estonia";
 import { useRouter } from "next/navigation";
 import LoadingSection from "./LoadingSection";
+import DonationSummary from "../elements/DonationSummary";
 
-export default function ThankYouSection({ title, text1, text2, text3 }) {
+export default function ThankYouSection({
+  title,
+  text1,
+  text2,
+  text3,
+  global,
+}) {
   const router = useRouter();
 
   const searchParams = useSearchParams();
@@ -43,7 +50,7 @@ export default function ThankYouSection({ title, text1, text2, text3 }) {
   };
 
   // Remove payment_token from URL
-  window.history.replaceState({}, document.title, window.location.pathname);
+  // window.history.replaceState({}, document.title, window.location.pathname);
 
   return (
     <section className="flex h-full flex-grow bg-white px-4 py-24 sm:py-32 lg:px-8">
@@ -66,6 +73,13 @@ export default function ThankYouSection({ title, text1, text2, text3 }) {
           <Markdown className="prose-md prose prose-primary w-full max-w-3xl [&>p>strong]:text-primary-700">
             {format(text1, donation)}
           </Markdown>
+          <div className="w-full max-w-3xl rounded-xl bg-slate-50 px-8 py-6">
+            <DonationSummary
+              donation={data.donation}
+              currency={global.currency}
+              totalText={global.totalText}
+            />
+          </div>
           <Markdown className="prose-md prose prose-primary w-full max-w-3xl">
             {format(text2, donation)}
           </Markdown>
