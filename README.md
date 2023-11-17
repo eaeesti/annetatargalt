@@ -33,31 +33,7 @@ yarn setup
 cd backend
 ```
 
-2\. Create an `.env` file for environment values. You can use the `.env.example` file as a reference:
-
-```
-HOST=0.0.0.0
-PORT=1337
-APP_KEYS="toBeModified1,toBeModified2"
-API_TOKEN_SALT=tobemodified
-ADMIN_JWT_SECRET=tobemodified
-TRANSFER_TOKEN_SALT=tobemodified
-JWT_SECRET=tobemodified
-
-# Cloudinary
-CLOUDINARY_NAME=tobemodified
-CLOUDINARY_KEY=tobemodified
-CLOUDINARY_SECRET=tobemodified
-
-# Database
-DATABASE_CLIENT=postgres
-DATABASE_HOST=127.0.0.1
-DATABASE_PORT=5432
-DATABASE_NAME=annetatargalt
-DATABASE_USERNAME=tobemodified
-DATABASE_PASSWORD=tobemodified
-DATABASE_SSL=false
-```
+2\. Create an `.env` file for environment values. You can use the `.env.example` file as a reference.
 
 3\. Fill them in. Here are some pointers:
 

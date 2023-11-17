@@ -9,6 +9,7 @@ const {
 } = require("../../../utils/donation");
 const { createRecurringPaymentLink } = require("../../../utils/banks");
 const { createPaymentURL } = require("../../../utils/montonio");
+const { formatEstonianAmount } = require("../../../utils/estonia");
 
 module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   async validateDonation(donation) {
@@ -206,5 +207,56 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     } catch (error) {
       return { redirectURL: "" };
     }
+  },
+
+  async sendConfirmationEmail(donationId) {
+    const emailConfig = await strapi.db
+      .query("api::email-config.email-config")
+      .findOne();
+
+    const global = await strapi.db.query("api::global.global").findOne();
+
+    const donation = await strapi.entityService.findOne(
+      "api::donation.donation",
+      donationId,
+      {
+        fields: ["amount"],
+        populate: [
+          "donor",
+          "organizationDonations",
+          "organizationDonations.organization",
+        ],
+      }
+    );
+
+    const template = {
+      subject: emailConfig.confirmationSubject,
+      text: emailConfig.confirmationText,
+      html: emailConfig.confirmationHtml,
+    };
+
+    const data = {
+      firstName: donation.donor.firstName,
+      lastName: donation.donor.lastName,
+      amount: formatEstonianAmount(donation.amount / 100),
+      currency: global.currency,
+    };
+
+    data.summary = donation.organizationDonations
+      .map((organizationDonation) => {
+        const organization = organizationDonation.organization;
+        const amount = formatEstonianAmount(organizationDonation.amount / 100);
+        return `${organization.title}: ${amount}${global.currency}`;
+      })
+      .join("\n");
+
+    await strapi.plugins["email"].services.email.sendTemplatedEmail(
+      {
+        to: donation.donor.email,
+        replyTo: emailConfig.confirmationReplyTo,
+      },
+      template,
+      data
+    );
   },
 }));

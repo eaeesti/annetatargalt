@@ -8,11 +8,13 @@ const { createCoreService } = require("@strapi/strapi").factories;
 
 module.exports = createCoreService("api::donor.donor", ({ strapi }) => ({
   async findOrCreateDonor(donor) {
-    const existingDonor = await strapi.db
-      .query("api::donor.donor")
-      .findOne({ idCode: donor.idCode });
+    const existingDonorEntries = await strapi.entityService.findMany(
+      "api::donor.donor",
+      { filters: { idCode: donor.idCode } }
+    );
 
-    if (existingDonor) {
+    if (existingDonorEntries.length > 0) {
+      const existingDonor = existingDonorEntries[0];
       const updatedDonor = await strapi.entityService.update(
         "api::donor.donor",
         existingDonor.id,

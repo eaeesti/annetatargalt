@@ -97,11 +97,6 @@
       "relation": "oneToMany",
       "target": "api::cause.cause"
     },
-    "organizations": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::organization.organization"
-    },
     "chooseOrganizationsText": {
       "type": "string"
     },

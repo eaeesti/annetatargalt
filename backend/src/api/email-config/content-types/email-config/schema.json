@@ -1,0 +1,28 @@
+{
+  "kind": "singleType",
+  "collectionName": "email_configs",
+  "info": {
+    "singularName": "email-config",
+    "pluralName": "email-configs",
+    "displayName": "EmailConfig",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "confirmationSubject": {
+      "type": "string"
+    },
+    "confirmationText": {
+      "type": "text"
+    },
+    "confirmationHtml": {
+      "type": "text"
+    },
+    "confirmationReplyTo": {
+      "type": "email"
+    }
+  }
+}

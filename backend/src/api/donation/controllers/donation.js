@@ -90,7 +90,7 @@ module.exports = createCoreController(
         return ctx.badRequest("Failed to update donation");
       }
 
-      // TODO: Send confirmation email
+      await strapi.service("api::donation.donation").sendConfirmationEmail(id);
 
       return ctx.send();
     },

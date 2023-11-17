@@ -1878,11 +1878,11 @@
     sendmail "^1.6.1"
 
 "@strapi/provider-upload-cloudinary@^4.14.5":
-  version "4.14.5"
-  resolved "https://registry.yarnpkg.com/@strapi/provider-upload-cloudinary/-/provider-upload-cloudinary-4.14.5.tgz#968055368e0fc1c43ec1e7ce6e391688506adf36"
-  integrity sha512-6u+k9KGmC394ELRCY5PCLfFrj5f8d4hbfU63GtNZFjzGEjkdky4Ri+lQmq5FAGezOwrG8wgmCXl+jVmAtseOQA==
+  version "4.15.4"
+  resolved "https://registry.yarnpkg.com/@strapi/provider-upload-cloudinary/-/provider-upload-cloudinary-4.15.4.tgz#f89056f10d1bdc70151697dc94eb2a2fedfd0898"
+  integrity sha512-iWvtPChuczVl79feJ1NIU8beQFzqAQjuUQXAB7oc7mQotmHA1AvI8T2W853xXyh3HhtDwEmATBVvrb8gYrSk1Q==
   dependencies:
-    "@strapi/utils" "4.14.5"
+    "@strapi/utils" "4.15.4"
     cloudinary "^1.41.0"
     into-stream "^5.1.0"
 
@@ -2023,6 +2023,18 @@
   version "4.14.5"
   resolved "https://registry.yarnpkg.com/@strapi/utils/-/utils-4.14.5.tgz#6fce660d6b31a6ad3644ec126b880033f02658c4"
   integrity sha512-0/lC5C2FyaCO+TDBb/jk3CQxtmEbxBZzt0NSb0M6tgAYB6o9eiC2IHZT11Ni98p+GgBlT3AhGQJ5idUa/j/hWA==
+  dependencies:
+    "@sindresorhus/slugify" "1.1.0"
+    date-fns "2.30.0"
+    http-errors "1.8.1"
+    lodash "4.17.21"
+    p-map "4.0.0"
+    yup "0.32.9"
+
+"@strapi/utils@4.15.4":
+  version "4.15.4"
+  resolved "https://registry.yarnpkg.com/@strapi/utils/-/utils-4.15.4.tgz#4f8b0f064f866bc2175cff63ea4a16d221b351d2"
+  integrity sha512-w6dURdVraSoVkfZiU4enkJlrAJ0XxW/ma+SSsQJQuYjvyqg2wCndqhkjOnCu9mHZ701IbkYqRhF5jpm8gVEoDg==
   dependencies:
     "@sindresorhus/slugify" "1.1.0"
     date-fns "2.30.0"
@@ -2255,10 +2267,15 @@
     "@types/interpret" "*"
     "@types/node" "*"
 
-"@types/lodash@^4.14.149", "@types/lodash@^4.14.165":
+"@types/lodash@^4.14.149":
   version "4.14.200"
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.200.tgz#435b6035c7eba9cdf1e039af8212c9e9281e7149"
   integrity sha512-YI/M/4HRImtNf3pJgbF+W6FrXovqj+T+/HpENLTooK9PnkacBsDpeP3IpHab40CClUfhNmdM2WTNP2sa2dni5Q==
+
+"@types/lodash@^4.14.165":
+  version "4.14.201"
+  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.201.tgz#76f47cb63124e806824b6c18463daf3e1d480239"
+  integrity sha512-y9euML0cim1JrykNxADLfaG0FgD1g/yTHwUs/Jg9ZIU7WKj2/4IW9Lbb1WZbvck78W/lfGXFfe+u2EGfIJXdLQ==
 
 "@types/mime@*":
   version "3.0.2"
@@ -2841,6 +2858,15 @@ axios@1.5.0:
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/axios/-/axios-1.5.0.tgz#f02e4af823e2e46a9768cfc74691fdd0517ea267"
   integrity sha512-D4DdjDo5CY50Qms0qGQTTw6Q44jl7zRwY7bthds06pUGfChBCTcQs+N743eFWGEd6pRTMd6A+I87aWyFV5wiZQ==
+  dependencies:
+    follow-redirects "^1.15.0"
+    form-data "^4.0.0"
+    proxy-from-env "^1.1.0"
+
+axios@^1.4.0:
+  version "1.6.2"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-1.6.2.tgz#de67d42c755b571d3e698df1b6504cde9b0ee9f2"
+  integrity sha512-7i24Ri4pmDRfJTR7LDBhsOTtcm+9kjX5WiY1X3wIisx6G9So3pfMkEiU7emUBe46oceVImccTEM3k6C5dbVW8A==
   dependencies:
     follow-redirects "^1.15.0"
     form-data "^4.0.0"
@@ -3686,9 +3712,9 @@ core-js-pure@^3.23.3, core-js-pure@^3.30.2:
   integrity sha512-FKSIDtJnds/YFIEaZ4HszRX7hkxGpNKM7FC9aJ9WLJbSd3lD4vOltFuVIBLR8asSx9frkTSqL0dw90SKQxgKrg==
 
 core-js@^3.30.1:
-  version "3.33.0"
-  resolved "https://registry.yarnpkg.com/core-js/-/core-js-3.33.0.tgz#70366dbf737134761edb017990cf5ce6c6369c40"
-  integrity sha512-HoZr92+ZjFEKar5HS6MC776gYslNOKHt75mEBKWKnPeFDpZ6nH5OeF3S6HFT1mUAUZKrzkez05VboaX8myjSuw==
+  version "3.33.2"
+  resolved "https://registry.yarnpkg.com/core-js/-/core-js-3.33.2.tgz#312bbf6996a3a517c04c99b9909cdd27138d1ceb"
+  integrity sha512-XeBzWI6QL3nJQiHmdzbAOiMYqjrb7hwU7A39Qhvd/POSa/t9E1AeZyEZx3fNvp/vtM8zXwhoL0FsiS0hD0pruQ==
 
 core-util-is@^1.0.2, core-util-is@~1.0.0:
   version "1.0.3"
@@ -9014,9 +9040,16 @@ std-env@^3.0.1:
   integrity sha512-f9aPhy8fYBuMN+sNfakZV18U39PbalgjXG3lLB9WkaYTxijru61wb57V9wxxNthXM5Sd88ETBWi29qLAsHO52Q==
 
 strapi-plugin-populate-deep@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/strapi-plugin-populate-deep/-/strapi-plugin-populate-deep-3.0.0.tgz#bd2b7145c4d1d79381698be7995d4dc454416ffd"
-  integrity sha512-4xpg0JxdaIIeO3wQLIO6Lh5ppbN8kXVl9uopQbs2AhwEf1KwLMSSZjaNoN7shCrxt1cET/u2GTDKG+Nlq54ZKg==
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/strapi-plugin-populate-deep/-/strapi-plugin-populate-deep-3.0.1.tgz#cd8f9853dc6e9a1859bdcc0176323a29bd2b8509"
+  integrity sha512-7t1bPPBN1AGKZlFT/6qsqmwgd7SzTA9CNzEBSzeYEjL/e0GKD2lf4wF11C2vMkfsQW2GhRAXZQRCGlLnV2XHFQ==
+
+strapi-provider-email-brevo@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/strapi-provider-email-brevo/-/strapi-provider-email-brevo-1.0.4.tgz#fe1e4d1f52fa34397c9a929e42c746327092ef19"
+  integrity sha512-eVRaWg6fD5NcoGifh4ZGYTgGk24VbJjrJ7dIAh9wzunURyzsYeD5mcHJknICRSMwUfKHEWGt2CoUuMG2tXXzpg==
+  dependencies:
+    axios "^1.4.0"
 
 stream-chain@2.2.5, stream-chain@^2.2.5:
   version "2.2.5"

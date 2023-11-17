@@ -864,6 +864,39 @@ export interface ApiDonorDonor extends Schema.CollectionType {
   };
 }
 
+export interface ApiEmailConfigEmailConfig extends Schema.SingleType {
+  collectionName: 'email_configs';
+  info: {
+    singularName: 'email-config';
+    pluralName: 'email-configs';
+    displayName: 'EmailConfig';
+    description: '';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    confirmationSubject: Attribute.String;
+    confirmationText: Attribute.Text;
+    confirmationHtml: Attribute.Text;
+    confirmationReplyTo: Attribute.Email;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::email-config.email-config',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::email-config.email-config',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
 export interface ApiGlobalGlobal extends Schema.SingleType {
   collectionName: 'globals';
   info: {
@@ -1193,6 +1226,7 @@ declare module '@strapi/types' {
       'api::donation.donation': ApiDonationDonation;
       'api::donation-info.donation-info': ApiDonationInfoDonationInfo;
       'api::donor.donor': ApiDonorDonor;
+      'api::email-config.email-config': ApiEmailConfigEmailConfig;
       'api::global.global': ApiGlobalGlobal;
       'api::organization.organization': ApiOrganizationOrganization;
       'api::organization-donation.organization-donation': ApiOrganizationDonationOrganizationDonation;
