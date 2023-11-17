@@ -35,6 +35,29 @@ export default class Proportions {
     return this.getSub(id, subId).proportion;
   }
 
+  goesToFund(id) {
+    return this.proportions.get(id).toFund;
+  }
+
+  toggleToFund(id) {
+    let newProportions = this;
+
+    if (!this.goesToFund(id)) {
+      const fundId = this.subKeys(id).find(
+        (subId) => this.getSub(id, subId).fund,
+      );
+      newProportions = newProportions
+        .unlockSubProportions(id)
+        .updateSubProportion(id, fundId, 100)
+        .unlockSubProportions(id);
+    }
+
+    return newProportions.mapEntries((key, value) => [
+      key,
+      key === id ? { ...value, toFund: !value.toFund } : value,
+    ]);
+  }
+
   isLocked(id) {
     return this.proportions.get(id).locked;
   }
@@ -45,6 +68,10 @@ export default class Proportions {
 
   keys() {
     return Array.from(this.proportions.keys());
+  }
+
+  subKeys(id) {
+    return Array.from(this.get(id).proportions.keys());
   }
 
   entries() {
@@ -98,6 +125,19 @@ export default class Proportions {
             ...value,
             proportions: value.proportions.toggleProportionLock(subId),
           }
+        : value,
+    ]);
+  }
+
+  unlockProportions() {
+    return this.mapEntries((key, value) => [key, { ...value, locked: false }]);
+  }
+
+  unlockSubProportions(id) {
+    return this.mapEntries((key, value) => [
+      key,
+      key === id
+        ? { ...value, proportions: value.proportions.unlockProportions() }
         : value,
     ]);
   }
@@ -184,7 +224,10 @@ export default class Proportions {
   toJSON() {
     return Object.fromEntries(
       this.entries()
-        .map(([key, value]) => [key, { ...value, locked: undefined }])
+        .map(([key, value]) => [
+          key,
+          { proportion: value.proportion, proportions: value.proportions },
+        ])
         .filter(([_, value]) => value.proportion > 0),
     );
   }
@@ -200,16 +243,16 @@ export default class Proportions {
         {
           proportion: equalProportions[causeIndex],
           locked: false,
+          toFund: true,
           proportions: new Proportions(
-            cause.attributes.organizations.data.map(
-              (organization, orgIndex) => [
-                organization.id,
-                {
-                  proportion: orgIndex === 0 ? 100 : 0,
-                  locked: false,
-                },
-              ],
-            ),
+            cause.attributes.organizations.data.map((organization) => [
+              organization.id,
+              {
+                proportion: organization.attributes.fund ? 100 : 0,
+                fund: organization.attributes.fund,
+                locked: false,
+              },
+            ]),
           ),
         },
       ]),

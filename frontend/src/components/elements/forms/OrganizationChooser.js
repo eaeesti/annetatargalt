@@ -6,6 +6,7 @@ import { Disclosure } from "@headlessui/react";
 import { ChevronUpIcon } from "@heroicons/react/24/solid";
 import Button from "../Button";
 import InfoIcon from "@/components/icons/InfoIcon";
+import CheckboxInput from "./CheckboxInput";
 
 function ProportionSlider({
   lockText,
@@ -47,6 +48,7 @@ export default function OrganizationChooser({
   lockText,
   chooseOrganizationsText,
   informationText,
+  letExpertsChooseText,
   causes,
   proportions,
   setProportions,
@@ -107,72 +109,91 @@ export default function OrganizationChooser({
                   aria-labelledby={`cause${cause.id}`}
                 />
                 <Disclosure.Panel className="flex w-full flex-col gap-6  rounded-xl bg-slate-50 px-6 py-8 shadow-lg shadow-slate-200">
-                  {cause.attributes.organizations.data.map(
-                    (organization, organizationIndex) => (
-                      <div
-                        key={organizationIndex}
-                        className="flex flex-col gap-4"
-                      >
-                        <div className="flex flex-row items-center gap-3">
-                          <label
-                            id={`organization${organization.id}`}
-                            className="cursor-text text-sm font-medium"
-                          >
-                            {organization.attributes.title}
-                          </label>
-                          <Button
-                            href={`/${cause.attributes.slug}/${organization.attributes.slug}`}
-                            newTab={true}
-                            size="link"
-                            type="text"
-                            noIcon={true}
-                            className="text-primary-700"
-                            title={informationText}
-                          >
-                            <span className="sr-only">{informationText}</span>
-                            <InfoIcon />
-                          </Button>
+                  <CheckboxInput
+                    name={`cause${cause.id}fund`}
+                    value={proportions.goesToFund(cause.id)}
+                    setValue={() =>
+                      setProportions(proportions.toggleToFund(cause.id))
+                    }
+                    label={letExpertsChooseText}
+                    labelSize="sm"
+                  />
+                  <div
+                    className={classes(
+                      proportions.goesToFund(cause.id)
+                        ? "pointer-events-none cursor-default select-none opacity-20"
+                        : "",
+                      "flex flex-col gap-6",
+                    )}
+                  >
+                    {cause.attributes.organizations.data.map(
+                      (organization, organizationIndex) => (
+                        <div
+                          key={organizationIndex}
+                          className="flex flex-col gap-4"
+                        >
+                          <div className="flex flex-row items-center gap-3">
+                            <label
+                              id={`organization${organization.id}`}
+                              className="cursor-text text-sm font-medium"
+                            >
+                              {organization.attributes.title}
+                            </label>
+                            <Button
+                              href={`/${cause.attributes.slug}/${organization.attributes.slug}`}
+                              newTab={true}
+                              size="link"
+                              type="text"
+                              noIcon={true}
+                              className="text-primary-700"
+                              title={informationText}
+                            >
+                              <span className="sr-only">{informationText}</span>
+                              <InfoIcon />
+                            </Button>
+                          </div>
+                          <ProportionSlider
+                            lockText={lockText}
+                            proportion={proportions.getSubProportion(
+                              cause.id,
+                              organization.id,
+                            )}
+                            setProportion={(value) =>
+                              setProportions(
+                                proportions.updateSubProportion(
+                                  cause.id,
+                                  organization.id,
+                                  value,
+                                ),
+                              )
+                            }
+                            isLocked={proportions.isSubLocked(
+                              cause.id,
+                              organization.id,
+                            )}
+                            lock={() =>
+                              setProportions(
+                                proportions.lockSubProportion(
+                                  cause.id,
+                                  organization.id,
+                                ),
+                              )
+                            }
+                            toggleLock={() =>
+                              setProportions(
+                                proportions.toggleSubProportionLock(
+                                  cause.id,
+                                  organization.id,
+                                ),
+                              )
+                            }
+                            aria-labelledby={`organization${organization.id}`}
+                            disabled={proportions.goesToFund(cause.id)}
+                          />
                         </div>
-                        <ProportionSlider
-                          lockText={lockText}
-                          proportion={proportions.getSubProportion(
-                            cause.id,
-                            organization.id,
-                          )}
-                          setProportion={(value) =>
-                            setProportions(
-                              proportions.updateSubProportion(
-                                cause.id,
-                                organization.id,
-                                value,
-                              ),
-                            )
-                          }
-                          isLocked={proportions.isSubLocked(
-                            cause.id,
-                            organization.id,
-                          )}
-                          lock={() =>
-                            setProportions(
-                              proportions.lockSubProportion(
-                                cause.id,
-                                organization.id,
-                              ),
-                            )
-                          }
-                          toggleLock={() =>
-                            setProportions(
-                              proportions.toggleSubProportionLock(
-                                cause.id,
-                                organization.id,
-                              ),
-                            )
-                          }
-                          aria-labelledby={`organization${organization.id}`}
-                        />
-                      </div>
-                    ),
-                  )}
+                      ),
+                    )}
+                  </div>
                 </Disclosure.Panel>
               </div>
             )}

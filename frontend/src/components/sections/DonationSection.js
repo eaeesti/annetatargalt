@@ -129,6 +129,7 @@ export default function DonationSection(props) {
                 chooseOrganizationsText={props.chooseOrganizationsText}
                 informationText={props.informationText}
                 lockText={props.lockText}
+                letExpertsChooseText={props.letExpertsChooseText}
                 causes={props.causes}
                 proportions={donation.proportions}
                 setProportions={(proportions) =>

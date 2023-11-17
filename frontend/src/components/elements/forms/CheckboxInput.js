@@ -1,8 +1,20 @@
+import { classes } from "@/utils/react";
 import Markdown from "../Markdown";
 
-export default function CheckboxInput({ name, value, setValue, label }) {
+export default function CheckboxInput({
+  name,
+  value,
+  setValue,
+  label,
+  labelSize = "base",
+}) {
+  const proseClass = {
+    base: "prose-base",
+    sm: "prose-sm",
+  }[labelSize];
+
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2">
       <input
         id={name}
         aria-describedby={`${name}-description`}
@@ -18,7 +30,10 @@ export default function CheckboxInput({ name, value, setValue, label }) {
         htmlFor={name}
         className="cursor-pointer"
       >
-        <Markdown className="prose prose-primary" newTabs="all">
+        <Markdown
+          className={classes("prose prose-primary", proseClass)}
+          newTabs="all"
+        >
           {label}
         </Markdown>
       </label>
