@@ -53,6 +53,9 @@
     "currency": {
       "type": "string",
       "default": "€"
+    },
+    "tipOrganization": {
+      "type": "string"
     }
   }
 }

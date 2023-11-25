@@ -1,5 +1,5 @@
 function amountToCents(amount) {
-  return Math.floor(amount * 100);
+  return Math.round(amount * 100);
 }
 
 function validateAmount(amount) {

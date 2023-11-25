@@ -6,12 +6,21 @@ export default function PaymentSummary({
   currency,
   causes,
   totalText,
+  tipOrganization,
+  tipAmount,
+  totalAmount,
 }) {
   const organizationAmounts = amountsFromProportions({
     proportions: donation.proportions,
     causes: causes,
     totalAmount: donation.amount,
   });
+
+  const tip = {
+    title: tipOrganization,
+    href: "",
+    amount: tipAmount,
+  };
 
   const summary = causes.data
     .map((cause) =>
@@ -25,14 +34,15 @@ export default function PaymentSummary({
           amount: organizationAmounts[organization.id],
         })),
     )
-    .flat();
+    .flat()
+    .concat(tipAmount > 0 ? [tip] : []);
 
   return (
     <Summary
       summary={summary}
       currency={currency}
       totalText={totalText}
-      totalAmount={donation.amount}
+      totalAmount={totalAmount}
     />
   );
 }

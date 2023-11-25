@@ -78,6 +78,7 @@ export default function ThankYouSection({
               donation={data.donation}
               currency={global.currency}
               totalText={global.totalText}
+              tipOrganization={global.tipOrganization}
             />
           </div>
           <Markdown className="prose-md prose prose-primary w-full max-w-3xl">

@@ -55,6 +55,12 @@
       "relation": "oneToMany",
       "target": "api::organization-donation.organization-donation",
       "mappedBy": "donation"
+    },
+    "tipSize": {
+      "type": "float"
+    },
+    "tipAmount": {
+      "type": "integer"
     }
   }
 }

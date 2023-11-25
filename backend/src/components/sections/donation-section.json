@@ -108,6 +108,15 @@
     },
     "letExpertsChooseText": {
       "type": "string"
+    },
+    "tipTitle": {
+      "type": "string"
+    },
+    "tipText": {
+      "type": "richtext"
+    },
+    "tipCheckboxText": {
+      "type": "string"
     }
   }
 }

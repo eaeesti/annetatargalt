@@ -6,10 +6,14 @@ const { amountsFromProportions } = require("../../../utils/donation");
 module.exports = createCoreService(
   "api::organization-recurring-donation.organization-recurring-donation",
   ({ strapi }) => ({
-    async createFromProportions(recurringDonation, proportions) {
+    async createFromProportions({
+      recurringDonationId,
+      recurringDonationAmount,
+      proportions,
+    }) {
       const amountsAndProportions = amountsFromProportions(
         proportions,
-        recurringDonation.amount
+        recurringDonationAmount
       );
 
       Promise.all(
@@ -19,7 +23,7 @@ module.exports = createCoreService(
               "api::organization-recurring-donation.organization-recurring-donation",
               {
                 data: {
-                  recurringDonation: recurringDonation.id,
+                  recurringDonation: recurringDonationId,
                   organization: organizationId,
                   amount: amountAndProportion.amount,
                   proportion: amountAndProportion.proportion,

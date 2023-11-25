@@ -6,10 +6,10 @@ const { amountsFromProportions } = require("../../../utils/donation");
 module.exports = createCoreService(
   "api::organization-donation.organization-donation",
   ({ strapi }) => ({
-    async createFromProportions(donation, proportions) {
+    async createFromProportions({ donationId, donationAmount, proportions }) {
       const amountsAndProportions = amountsFromProportions(
         proportions,
-        donation.amount
+        donationAmount
       );
 
       Promise.all(
@@ -19,7 +19,7 @@ module.exports = createCoreService(
               "api::organization-donation.organization-donation",
               {
                 data: {
-                  donation: donation.id,
+                  donation: donationId,
                   organization: organizationId,
                   amount: amountAndProportion.amount,
                   proportion: amountAndProportion.proportion,

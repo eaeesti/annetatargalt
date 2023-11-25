@@ -47,6 +47,7 @@ export default function DonationSection(props) {
     idCode: "",
     bank: "",
     proportions: Proportions.fromStrapiData(props.causes.data),
+    addTip: false,
     acceptTerms: false,
   });
 
@@ -63,6 +64,11 @@ export default function DonationSection(props) {
 
   const [stage, setStage] = useState(0);
   const [donated, setDonated] = useState(false);
+
+  const tipAmount = donation.addTip
+    ? Math.round(0.05 * donation.amount * 100) / 100
+    : 0;
+  const totalAmount = Math.round((donation.amount + tipAmount) * 100) / 100;
 
   const donate = async () => {
     const response = await makeDonationRequest(donation);
@@ -97,7 +103,7 @@ export default function DonationSection(props) {
             currentStep={stage}
             setStep={setStage}
             stepText={props.stepText}
-            stepCount={3}
+            stepCount={4}
             backWord={props.global.backWord}
           />
           {stage === 0 && (
@@ -197,6 +203,33 @@ export default function DonationSection(props) {
               onSubmit={(event) => event.preventDefault()}
             >
               <h2 className="text-2xl font-bold tracking-tight text-primary-700 sm:text-3xl">
+                {props.tipTitle}
+              </h2>
+              <Markdown className="prose prose-primary w-full">
+                {props.tipText}
+              </Markdown>
+              <CheckboxInput
+                name="tip"
+                label={props.tipCheckboxText}
+                value={donation.addTip}
+                setValue={(addTip) => setDonation({ ...donation, addTip })}
+              />
+              <Button
+                text={props.nextButtonText}
+                type="primary"
+                size="lg"
+                onClick={() => setStage(3)}
+                buttonType="submit"
+                className=""
+              />
+            </form>
+          )}
+          {stage === 3 && (
+            <form
+              className="flex flex-col gap-6"
+              onSubmit={(event) => event.preventDefault()}
+            >
+              <h2 className="text-2xl font-bold tracking-tight text-primary-700 sm:text-3xl">
                 {props.confirmText}
               </h2>
               <Markdown className="prose prose-primary w-full [&>p>strong]:text-primary-700">
@@ -207,6 +240,9 @@ export default function DonationSection(props) {
                 causes={props.causes}
                 currency={props.global.currency}
                 totalText={props.global.totalText}
+                tipOrganization={props.global.tipOrganization}
+                tipAmount={tipAmount}
+                totalAmount={totalAmount}
               />
               {donation.type === "recurring" && (
                 <BankChooser
@@ -242,8 +278,7 @@ export default function DonationSection(props) {
         <div className="flex max-w-lg flex-col gap-4 bg-white px-4 py-24 xs:rounded-2xl xs:px-12 xs:py-12 ">
           <Markdown className="prose prose-primary w-full">
             {format(props.recurringDonationGuide, {
-              amount:
-                formatEstonianAmount(donation.amount) + props.global.currency,
+              amount: formatEstonianAmount(totalAmount) + props.global.currency,
             })}
           </Markdown>
         </div>

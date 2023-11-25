@@ -755,6 +755,8 @@ export interface ApiDonationDonation extends Schema.CollectionType {
       'oneToMany',
       'api::organization-donation.organization-donation'
     >;
+    tipSize: Attribute.Float;
+    tipAmount: Attribute.Integer;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -920,6 +922,7 @@ export interface ApiGlobalGlobal extends Schema.SingleType {
     errorText: Attribute.String;
     totalText: Attribute.String;
     currency: Attribute.String & Attribute.DefaultTo<'\u20AC'>;
+    tipOrganization: Attribute.String;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -1143,6 +1146,8 @@ export interface ApiRecurringDonationRecurringDonation
       'oneToMany',
       'api::organization-recurring-donation.organization-recurring-donation'
     >;
+    tipSize: Attribute.Float;
+    tipAmount: Attribute.Integer;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<

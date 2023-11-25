@@ -20,11 +20,16 @@ module.exports = createCoreController(
         .service("api::donor.donor")
         .findOrCreateDonor(donation);
 
+      const tipSize = donation.addTip ? 0.05 : 0;
+      const tipAmount = Math.round(donation.amount * tipSize * 100) / 100;
+      const totalAmount = Math.round((donation.amount + tipAmount) * 100) / 100;
+      const calculations = { tipSize, tipAmount, totalAmount };
+
       if (donation.type === "recurring") {
         try {
           const { redirectURL } = await strapi
             .service("api::donation.donation")
-            .createRecurringDonation({ donation, donor });
+            .createRecurringDonation({ donation, donor, calculations });
           return ctx.send({ redirectURL });
         } catch (error) {
           console.error(error);
@@ -35,7 +40,7 @@ module.exports = createCoreController(
       try {
         const { redirectURL } = await strapi
           .service("api::donation.donation")
-          .createSingleDonation({ donation, donor });
+          .createSingleDonation({ donation, donor, calculations });
         return ctx.send({ redirectURL });
       } catch (error) {
         console.error(error);
@@ -120,7 +125,7 @@ module.exports = createCoreController(
         "api::donation.donation",
         id,
         {
-          fields: ["amount"],
+          fields: ["amount", "tipAmount"],
           populate: [
             "donor",
             "organizationDonations",

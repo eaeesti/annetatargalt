@@ -10,14 +10,18 @@ export default function Summary({ summary, currency, totalText, totalAmount }) {
           className="flex items-center justify-between gap-3 py-2"
         >
           <dt>
-            <Anchor
-              href={row.href}
-              newTab={true}
-              noIcon={true}
-              className="text-slate-600 hover:opacity-70"
-            >
-              {row.title}
-            </Anchor>
+            {row.href ? (
+              <Anchor
+                href={row.href}
+                newTab={true}
+                noIcon={true}
+                className="text-slate-600 hover:opacity-70"
+              >
+                {row.title}
+              </Anchor>
+            ) : (
+              <span className="text-slate-600">{row.title}</span>
+            )}
           </dt>
           <dd className="whitespace-nowrap font-medium text-slate-900">
             {formatEstonianAmountWithCents(row.amount)}

@@ -214,6 +214,9 @@ export interface SectionsDonationSection extends Schema.Component {
     informationText: Attribute.String;
     lockText: Attribute.String;
     letExpertsChooseText: Attribute.String;
+    tipTitle: Attribute.String;
+    tipText: Attribute.RichText;
+    tipCheckboxText: Attribute.String;
   };
 }
 
