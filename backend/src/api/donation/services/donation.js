@@ -158,6 +158,8 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
           tipAmount: amountToCents(calculations.tipAmount),
           donor: donor.id,
           datetime: new Date(),
+          companyName: donation.companyName,
+          companyCode: donation.companyCode,
         },
       }
     );
@@ -187,6 +189,8 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
           tipAmount: amountToCents(calculations.tipAmount),
           donor: donor.id,
           bank: donation.bank,
+          companyName: donation.companyName,
+          companyCode: donation.companyCode,
         },
       }
     );

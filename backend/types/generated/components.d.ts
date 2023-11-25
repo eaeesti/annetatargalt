@@ -217,6 +217,9 @@ export interface SectionsDonationSection extends Schema.Component {
     tipTitle: Attribute.String;
     tipText: Attribute.RichText;
     tipCheckboxText: Attribute.String;
+    donateAsCompanyText: Attribute.String;
+    companyNameText: Attribute.String;
+    companyCodeText: Attribute.String;
   };
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { pick } from "@/utils/object";
+import { at, pick } from "@/utils/object";
 import AmountChooser from "../elements/forms/AmountChooser";
 import DonationTypeChooser from "../elements/forms/DonationTypeChooser";
 import Button from "../elements/Button";
@@ -20,6 +20,7 @@ import OrganizationChooser from "../elements/forms/OrganizationChooser";
 import Proportions from "@/utils/proportions";
 import PaymentSummary from "../elements/forms/PaymentSummary";
 import Modal from "../Modal";
+import CompanyInput from "../elements/forms/CompanyInput";
 
 export default function DonationSection(props) {
   const router = useRouter();
@@ -32,7 +33,7 @@ export default function DonationSection(props) {
     setModalOpen(true);
   }
 
-  const amounts = pick(props, ["amount1", "amount2", "amount3"]);
+  const amounts = at(props, ["amount1", "amount2", "amount3"]);
   const amountOptions = amounts.map((amount) => ({
     value: amount,
     label: `${amount}${props.global.currency}`,
@@ -46,6 +47,9 @@ export default function DonationSection(props) {
     email: "",
     idCode: "",
     bank: "",
+    companyDonation: false,
+    companyName: "",
+    companyCode: "",
     proportions: Proportions.fromStrapiData(props.causes.data),
     addTip: false,
     acceptTerms: false,
@@ -53,10 +57,14 @@ export default function DonationSection(props) {
 
   const [validity, setValidity] = useState({});
   const stageValidity = {
-    0: pick(validity, ["amount"]).every(Boolean),
-    1: pick(validity, ["firstName", "lastName", "email", "idCode"]).every(
-      Boolean,
-    ),
+    0: at(validity, ["amount"]).every(Boolean),
+    1: at(validity, [
+      "firstName",
+      "lastName",
+      "email",
+      "idCode",
+      "company",
+    ]).every(Boolean),
     2:
       donation.acceptTerms &&
       (donation.type === "recurring" ? donation.bank : true),
@@ -71,6 +79,21 @@ export default function DonationSection(props) {
   const totalAmount = Math.round((donation.amount + tipAmount) * 100) / 100;
 
   const donate = async () => {
+    const donationData = pick(donation, [
+      "amount",
+      "type",
+      "firstName",
+      "lastName",
+      "email",
+      "idCode",
+      "bank",
+      "proportions",
+    ]);
+    if (donation.companyDonation) {
+      donationData.companyName = donation.companyName;
+      donationData.companyCode = donation.companyCode;
+    }
+
     const response = await makeDonationRequest(donation);
     const data = await response.json();
 
@@ -184,6 +207,24 @@ export default function DonationSection(props) {
                 idCodeText={props.idCodeText}
                 idCode={donation.idCode}
                 setIdCode={(idCode) => setDonation({ ...donation, idCode })}
+                setValidity={setValidity}
+              />
+              <CompanyInput
+                donateAsCompanyText={props.donateAsCompanyText}
+                companyDonation={donation.companyDonation}
+                setCompanyDonation={(companyDonation) =>
+                  setDonation({ ...donation, companyDonation })
+                }
+                companyNameText={props.companyNameText}
+                companyName={donation.companyName}
+                setCompanyName={(companyName) =>
+                  setDonation({ ...donation, companyName })
+                }
+                companyCodeText={props.companyCodeText}
+                companyCode={donation.companyCode}
+                setCompanyCode={(companyCode) =>
+                  setDonation({ ...donation, companyCode })
+                }
                 setValidity={setValidity}
               />
               <Button
