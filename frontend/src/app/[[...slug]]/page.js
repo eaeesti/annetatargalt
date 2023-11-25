@@ -8,7 +8,7 @@ export async function generateMetadata({ params }) {
   const specialPage = await findSpecialPage(params.slug);
 
   if (specialPage) {
-    return buildMetadata(global.metadata, {});
+    return buildMetadata(global.metadata, specialPage.entity.metadata);
   }
 
   const page = await getPageBySlug(params.slug);
