@@ -1,5 +1,6 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 import Anchor from "../elements/Anchor";
 
 export default function Markdown({
@@ -17,6 +18,7 @@ export default function Markdown({
     <ReactMarkdown
       children={children}
       remarkPlugins={[remarkGfm]}
+      rehypePlugins={[rehypeRaw]}
       className={className}
       components={{
         a(props) {
