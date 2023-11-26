@@ -1,0 +1,26 @@
+{
+  "collectionName": "components_sections_power_sections",
+  "info": {
+    "displayName": "PowerSection",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "bottomText": {
+      "type": "string"
+    },
+    "column1": {
+      "type": "component",
+      "repeatable": false,
+      "component": "elements.power-column"
+    },
+    "column2": {
+      "type": "component",
+      "repeatable": false,
+      "component": "elements.power-column"
+    }
+  }
+}

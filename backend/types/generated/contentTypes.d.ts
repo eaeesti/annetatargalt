@@ -1100,7 +1100,8 @@ export interface ApiPagePage extends Schema.CollectionType {
         'sections.header-section',
         'sections.causes-section',
         'sections.donation-section',
-        'sections.thank-you-section'
+        'sections.thank-you-section',
+        'sections.power-section'
       ]
     >;
     createdAt: Attribute.DateTime;

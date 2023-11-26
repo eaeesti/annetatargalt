@@ -1,0 +1,27 @@
+{
+  "collectionName": "components_elements_power_columns",
+  "info": {
+    "displayName": "PowerColumn"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "image": {
+      "allowedTypes": [
+        "images"
+      ],
+      "type": "media",
+      "multiple": false
+    },
+    "description": {
+      "type": "richtext"
+    },
+    "button": {
+      "type": "component",
+      "repeatable": false,
+      "component": "elements.button"
+    }
+  }
+}

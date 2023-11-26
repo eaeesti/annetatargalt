@@ -36,7 +36,8 @@ export interface ElementsButton extends Schema.Component {
     arrow: Attribute.Boolean & Attribute.DefaultTo<false>;
     href: Attribute.String;
     newTab: Attribute.Boolean & Attribute.DefaultTo<false>;
-    size: Attribute.Enumeration<['sm', 'md', 'lg']> & Attribute.DefaultTo<'md'>;
+    size: Attribute.Enumeration<['text', 'sm', 'md', 'lg']> &
+      Attribute.DefaultTo<'md'>;
   };
 }
 
@@ -62,6 +63,19 @@ export interface ElementsLink extends Schema.Component {
     text: Attribute.String;
     href: Attribute.String;
     newTab: Attribute.Boolean & Attribute.DefaultTo<false>;
+  };
+}
+
+export interface ElementsPowerColumn extends Schema.Component {
+  collectionName: 'components_elements_power_columns';
+  info: {
+    displayName: 'PowerColumn';
+  };
+  attributes: {
+    title: Attribute.String;
+    image: Attribute.Media;
+    description: Attribute.RichText;
+    button: Attribute.Component<'elements.button'>;
   };
 }
 
@@ -251,6 +265,20 @@ export interface SectionsHeroSection extends Schema.Component {
   };
 }
 
+export interface SectionsPowerSection extends Schema.Component {
+  collectionName: 'components_sections_power_sections';
+  info: {
+    displayName: 'PowerSection';
+    description: '';
+  };
+  attributes: {
+    title: Attribute.String;
+    bottomText: Attribute.String;
+    column1: Attribute.Component<'elements.power-column'>;
+    column2: Attribute.Component<'elements.power-column'>;
+  };
+}
+
 export interface SectionsTextSection extends Schema.Component {
   collectionName: 'components_sections_text_sections';
   info: {
@@ -346,6 +374,7 @@ declare module '@strapi/types' {
       'elements.button': ElementsButton;
       'elements.footer-column': ElementsFooterColumn;
       'elements.link': ElementsLink;
+      'elements.power-column': ElementsPowerColumn;
       'elements.social-media-link': ElementsSocialMediaLink;
       'meta.footer': MetaFooter;
       'meta.metadata': MetaMetadata;
@@ -356,6 +385,7 @@ declare module '@strapi/types' {
       'sections.donation-section': SectionsDonationSection;
       'sections.header-section': SectionsHeaderSection;
       'sections.hero-section': SectionsHeroSection;
+      'sections.power-section': SectionsPowerSection;
       'sections.text-section': SectionsTextSection;
       'sections.thank-you-section': SectionsThankYouSection;
       'special-sections.cause-organizations-section': SpecialSectionsCauseOrganizationsSection;
