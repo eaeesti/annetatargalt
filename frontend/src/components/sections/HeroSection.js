@@ -1,35 +1,41 @@
 import Button from "../elements/Button";
 import Image from "../elements/Image";
 
-export default function HeroSection({ title, subtitle, buttons, image }) {
+export default function HeroSection({
+  title,
+  subtitle,
+  buttons,
+  image,
+  mobileImage,
+}) {
   return (
-    <div className="bg-white">
-      <div className="isolate overflow-hidden relative pt-14 bg-gradient-to-b from-primary-100/20">
-        <div
-          className="absolute inset-y-0 right-1/2 -z-10 -mr-96 w-[200%] origin-top-right skew-x-[-30deg] bg-white shadow-xl shadow-primary-600/10 ring-1 ring-primary-50 sm:-mr-80 lg:-mr-96"
-          aria-hidden="true"
-        />
-        <div className="px-6 py-32 mx-auto max-w-7xl sm:py-40 lg:px-8">
-          <div className="mx-auto max-w-2xl lg:mx-0 lg:grid lg:max-w-none lg:grid-cols-2 lg:gap-x-16 lg:gap-y-6 xl:grid-cols-1 xl:grid-rows-1 xl:gap-x-8">
-            <h1 className="max-w-2xl text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl lg:col-span-2 xl:col-auto">
+    <header class="relative h-[56rem] max-h-[90vh] min-h-[40rem] xl:h-[90vh] xl:max-h-[96rem] xl:min-h-[44rem]">
+      <Image
+        data={image}
+        className="absolute inset-0 -z-10 hidden h-full w-full object-cover object-[center_75%] xl:block"
+      />
+      <Image
+        data={mobileImage}
+        className="absolute inset-0 -z-10 h-full w-full object-cover object-[center_80%] xl:hidden"
+      />
+      <div class="absolute inset-0 -z-10 h-full bg-primary-900/70 xl:bg-transparent xl:bg-gradient-to-r xl:xl:from-primary-700/50 xl:from-25% xl:to-transparent"></div>
+      <div class="mx-auto flex h-full max-w-6xl flex-col items-center  justify-center xl:items-start">
+        <div class="min-h-full max-w-2xl px-4 xl:w-1/2 xl:px-0">
+          <div class="flex min-h-full flex-col items-center justify-center text-center xl:items-start xl:text-left">
+            <h1 class="text-4xl font-bold tracking-tight text-white [text-wrap:balance] sm:text-6xl">
               {title}
             </h1>
-            <div className="mt-6 max-w-xl lg:mt-0 xl:col-end-1 xl:row-start-1">
-              <p className="text-lg leading-8 text-gray-600">{subtitle}</p>
-              <div className="flex flex-col gap-4 mt-10 text-sm sm:items-center sm:flex-row">
-                {buttons.map((button) => (
-                  <Button key={button.id} {...button} />
-                ))}
-              </div>
+            <p class="mt-6 text-slate-200 [text-wrap:balance] sm:text-lg sm:leading-8">
+              {subtitle}
+            </p>
+            <div class="mt-10 flex w-full max-w-sm flex-col items-stretch justify-center gap-4 text-white sm:max-w-none sm:flex-row sm:items-center xl:justify-start">
+              {buttons.map((button) => (
+                <Button key={button.id} {...button} />
+              ))}
             </div>
-            <Image
-              data={image}
-              className="mt-10 aspect-[6/5] w-full max-w-lg rounded-2xl object-cover sm:mt-16 lg:mt-0 lg:max-w-none xl:row-span-2 xl:row-end-2 xl:mt-36"
-            />
           </div>
         </div>
-        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white -z-10 sm:h-32" />
       </div>
-    </div>
+    </header>
   );
 }

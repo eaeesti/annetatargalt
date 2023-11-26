@@ -21,7 +21,7 @@ export default function Button({
     secondary:
       "text-primary-600 shadow-sm bg-primary-100 hover:bg-primary-200 focus-visible:outline-primary-600 disabled:hover:bg-primary-100",
     white:
-      "text-primary-700 shadow-sm bg-white hover:bg-primary-100 focus-visible:outline-white disabled:hover:bg-white",
+      "text-primary-800 shadow-sm bg-white hover:bg-primary-100 focus-visible:outline-white disabled:hover:bg-white",
     text: "hover:opacity-70 focus-visible:outline-primary-600 disabled:hover:opacity-70",
   };
 

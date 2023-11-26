@@ -246,6 +246,7 @@ export interface SectionsHeroSection extends Schema.Component {
     title: Attribute.String;
     subtitle: Attribute.Text;
     image: Attribute.Media;
+    mobileImage: Attribute.Media;
     buttons: Attribute.Component<'elements.button', true>;
   };
 }
