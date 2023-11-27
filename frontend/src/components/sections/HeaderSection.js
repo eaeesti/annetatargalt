@@ -9,7 +9,7 @@ export default function HeaderSection({
 }) {
   return (
     <div className="bg-slate-100 px-4 py-24 sm:py-32 lg:px-8">
-      <div className="container xl:max-w-5xl">
+      <div className="container lg:max-w-3xl">
         <div className="mx-auto flex flex-col gap-8 lg:mx-0">
           <Breadcrumbs
             breadcrumbs={breadcrumbs}

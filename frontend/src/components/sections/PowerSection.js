@@ -32,7 +32,7 @@ export default function PowerSection({ title, column1, column2, bottomText }) {
         </div>
         <div className="flex flex-wrap justify-center gap-2 text-center text-base text-slate-600 sm:text-xl">
           <div>{bottomText.split("**")[0]}</div>
-          <strong className="text-md font-semibold text-primary-800">
+          <strong className="text-md font-bold">
             {bottomText.split("**")[1]}
           </strong>
         </div>

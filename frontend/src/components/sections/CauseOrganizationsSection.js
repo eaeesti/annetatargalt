@@ -1,6 +1,7 @@
 import Anchor from "../elements/Anchor";
 import Button from "../elements/Button";
 import Image from "../elements/Image";
+import Markdown from "../elements/Markdown";
 
 function Organization({
   organization,
@@ -20,9 +21,9 @@ function Organization({
           {organization.title}
         </h3>
       </Anchor>
-      <div className="w-full flex-grow text-slate-600">
+      <Markdown className="prose prose-primary w-full flex-grow">
         {organization.introduction}
-      </div>
+      </Markdown>
       <div className="mt-4 flex w-full flex-col flex-wrap items-stretch gap-4 xs:flex-row xs:items-center">
         <Button
           text={donateButtonText}

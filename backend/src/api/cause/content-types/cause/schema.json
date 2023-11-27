@@ -30,12 +30,6 @@
     "content": {
       "type": "richtext"
     },
-    "fundName": {
-      "type": "string"
-    },
-    "fundLink": {
-      "type": "string"
-    },
     "organizations": {
       "type": "relation",
       "relation": "oneToMany",
@@ -46,9 +40,7 @@
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": [
-        "images"
-      ]
+      "allowedTypes": ["images"]
     },
     "active": {
       "type": "boolean",

@@ -694,8 +694,6 @@ export interface ApiCauseCause extends Schema.CollectionType {
     metadata: Attribute.Component<'meta.metadata'>;
     introduction: Attribute.RichText;
     content: Attribute.RichText;
-    fundName: Attribute.String;
-    fundLink: Attribute.String;
     organizations: Attribute.Relation<
       'api::cause.cause',
       'oneToMany',
