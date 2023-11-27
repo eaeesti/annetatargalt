@@ -4,9 +4,9 @@ import Markdown from "../elements/Markdown";
 
 export default function PowerSection({ title, column1, column2, bottomText }) {
   return (
-    <section class="bg-slate-100 py-16 sm:py-32">
-      <div class="container flex w-full max-w-full flex-col items-center gap-16 px-4 sm:w-auto sm:gap-32 md:px-8 xl:max-w-6xl">
-        <h2 class="max-w-sm text-center text-2xl font-bold tracking-tight text-primary-700 [text-wrap:balance] sm:max-w-xl sm:text-4xl lg:max-w-none">
+    <section className="bg-slate-100 py-16 sm:py-32">
+      <div className="container flex w-full max-w-full flex-col items-center gap-16 px-4 sm:w-auto sm:gap-32 md:px-8 xl:max-w-6xl">
+        <h2 className="max-w-sm text-center text-2xl font-bold tracking-tight text-primary-700 [text-wrap:balance] sm:max-w-xl sm:text-4xl lg:max-w-none">
           {title}
         </h2>
         <div className="grid justify-center gap-24 lg:grid-cols-2">

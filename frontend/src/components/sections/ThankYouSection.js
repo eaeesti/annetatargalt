@@ -23,23 +23,21 @@ export default function ThankYouSection({
   const searchParams = useSearchParams();
   const paymentToken = searchParams.get("payment_token");
 
-  if (!paymentToken) {
-    router.push("/");
-    return <LoadingSection />;
-  }
-
   const decodeURL = getStrapiURL(
     "/api/decode?" + new URLSearchParams({ payment_token: paymentToken }),
   );
 
-  const { data, error, isLoading } = useSWR(decodeURL, fetcher);
+  const { data, error, isLoading } = useSWR(
+    () => (paymentToken ? decodeURL : null),
+    fetcher,
+  );
 
   if (isLoading) return <LoadingSection />;
 
   // TODO: Make error section
   if (error) return <p>Error</p>;
 
-  if (!data.donation) {
+  if (!data || !data.donation) {
     router.push("/");
     return <LoadingSection />;
   }

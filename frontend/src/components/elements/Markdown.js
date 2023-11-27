@@ -16,7 +16,6 @@ export default function Markdown({
 
   return (
     <ReactMarkdown
-      children={children}
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[rehypeRaw]}
       className={className}
@@ -30,6 +29,8 @@ export default function Markdown({
           );
         },
       }}
-    />
+    >
+      {children}
+    </ReactMarkdown>
   );
 }
