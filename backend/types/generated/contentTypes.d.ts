@@ -790,6 +790,7 @@ export interface ApiDonationInfoDonationInfo extends Schema.SingleType {
     iban: Attribute.String;
     recipient: Attribute.String;
     recurringPaymentComment: Attribute.String;
+    merchantReferencePrefix: Attribute.String;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<

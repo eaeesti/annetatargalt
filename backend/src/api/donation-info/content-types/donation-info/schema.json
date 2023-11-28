@@ -28,6 +28,9 @@
     },
     "recurringPaymentComment": {
       "type": "string"
+    },
+    "merchantReferencePrefix": {
+      "type": "string"
     }
   }
 }
