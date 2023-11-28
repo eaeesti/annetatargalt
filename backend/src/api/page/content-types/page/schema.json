@@ -34,7 +34,8 @@
         "sections.causes-section",
         "sections.donation-section",
         "sections.thank-you-section",
-        "sections.power-section"
+        "sections.power-section",
+        "sections.team-section"
       ]
     }
   }

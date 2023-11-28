@@ -8,7 +8,7 @@ export default function HeaderSection({
   global,
 }) {
   return (
-    <div className="bg-slate-100 px-4 py-24 sm:py-32 lg:px-8">
+    <header className="bg-slate-100 px-4 py-24 sm:py-32 lg:px-8">
       <div className="container lg:max-w-3xl">
         <div className="mx-auto flex flex-col gap-8 lg:mx-0">
           <Breadcrumbs
@@ -26,6 +26,6 @@ export default function HeaderSection({
           )}
         </div>
       </div>
-    </div>
+    </header>
   );
 }

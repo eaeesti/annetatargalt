@@ -100,6 +100,20 @@ export interface ElementsSocialMediaLink extends Schema.Component {
   };
 }
 
+export interface ElementsTeamMember extends Schema.Component {
+  collectionName: 'components_elements_team_members';
+  info: {
+    displayName: 'TeamMember';
+    description: '';
+  };
+  attributes: {
+    name: Attribute.String;
+    role: Attribute.String;
+    image: Attribute.Media;
+    bio: Attribute.RichText;
+  };
+}
+
 export interface MetaFooter extends Schema.Component {
   collectionName: 'components_meta_footers';
   info: {
@@ -279,6 +293,18 @@ export interface SectionsPowerSection extends Schema.Component {
   };
 }
 
+export interface SectionsTeamSection extends Schema.Component {
+  collectionName: 'components_sections_team_sections';
+  info: {
+    displayName: 'TeamSection';
+    description: '';
+  };
+  attributes: {
+    title: Attribute.String;
+    teamMembers: Attribute.Component<'elements.team-member', true>;
+  };
+}
+
 export interface SectionsTextSection extends Schema.Component {
   collectionName: 'components_sections_text_sections';
   info: {
@@ -376,6 +402,7 @@ declare module '@strapi/types' {
       'elements.link': ElementsLink;
       'elements.power-column': ElementsPowerColumn;
       'elements.social-media-link': ElementsSocialMediaLink;
+      'elements.team-member': ElementsTeamMember;
       'meta.footer': MetaFooter;
       'meta.metadata': MetaMetadata;
       'meta.navbar': MetaNavbar;
@@ -386,6 +413,7 @@ declare module '@strapi/types' {
       'sections.header-section': SectionsHeaderSection;
       'sections.hero-section': SectionsHeroSection;
       'sections.power-section': SectionsPowerSection;
+      'sections.team-section': SectionsTeamSection;
       'sections.text-section': SectionsTextSection;
       'sections.thank-you-section': SectionsThankYouSection;
       'special-sections.cause-organizations-section': SpecialSectionsCauseOrganizationsSection;

@@ -1,0 +1,27 @@
+{
+  "collectionName": "components_elements_team_members",
+  "info": {
+    "displayName": "TeamMember",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string"
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "bio": {
+      "type": "richtext"
+    }
+  }
+}
