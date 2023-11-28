@@ -45,9 +45,16 @@ body {
   cursor: default;
 }
 
-.form-range::-webkit-slider-thumb,
+.form-range::-webkit-slider-thumb {
+  @apply h-5 w-5 rounded-full border-none bg-primary-600;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: grab;
+}
+
 .form-range::-moz-range-thumb {
   @apply h-5 w-5 rounded-full border-none bg-primary-600;
+  cursor: grab;
 }
 
 .form-range::-webkit-slider-thumb {

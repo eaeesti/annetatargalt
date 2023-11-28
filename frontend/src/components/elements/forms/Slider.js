@@ -24,6 +24,7 @@ export default function Slider({
         aria-valuemax={max}
         onInput={(event) => setValue(Number(event.target.value))}
         onMouseUp={onMouseUp}
+        onTouchEnd={onMouseUp}
         aria-valuenow={value}
         value={value}
         {...props}
