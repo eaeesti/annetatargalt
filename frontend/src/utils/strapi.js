@@ -42,9 +42,7 @@ export async function fetchAPI(path, urlParamsObject = {}, options = {}) {
   }
 }
 
-export async function getPageBySlug(slugArray) {
-  const slug = slugArray ? slugArray.join("/") : "/";
-
+export async function getPageBySlug(slug) {
   const path = "/pages";
   const options = headersWithAuthToken();
   const urlParamsObject = {
@@ -83,8 +81,7 @@ export async function getSpecialPages() {
   return specialPages;
 }
 
-export async function findSpecialPage(slugArray) {
-  const slug = slugArray ? slugArray.join("/") : "/";
+export async function findSpecialPage(slug) {
   const specialPages = await getSpecialPages();
 
   const foundSpecialPage = specialPages.find((specialPage) => {
