@@ -24,9 +24,9 @@ export default function CausesSection({
           {description}
         </Markdown>
       </section>
-      {causes.data.map(({ attributes: cause }, i) => (
+      {causes.data.map(({ attributes: cause, id }, i) => (
         <TextWithImageSection
-          key={cause.id}
+          key={id}
           title={cause.title}
           image={cause.image}
           text={cause.introduction}

@@ -3,13 +3,6 @@ import Button from "../elements/Button";
 import Image from "../elements/Image";
 import Markdown from "../elements/Markdown";
 
-const stats = [
-  { label: "Founded", value: "2021" },
-  { label: "Employees", value: "37" },
-  { label: "Countries", value: "12" },
-  { label: "Raised", value: "$25M" },
-];
-
 export default function TextWithImageSection({
   title,
   text,
