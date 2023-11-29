@@ -35,7 +35,8 @@
         "sections.donation-section",
         "sections.thank-you-section",
         "sections.power-section",
-        "sections.team-section"
+        "sections.team-section",
+        "sections.testimonials-section"
       ]
     }
   }

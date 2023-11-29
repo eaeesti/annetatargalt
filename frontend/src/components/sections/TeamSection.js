@@ -26,7 +26,7 @@ export default function TeamSection({ title, teamMembers }) {
                   {teamMember.role}
                 </p>
                 <Markdown className="prose prose-primary mt-6 w-full">
-                  {teamMember.bio}
+                  {teamMember.text}
                 </Markdown>
               </div>
             </li>

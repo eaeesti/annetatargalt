@@ -66,6 +66,19 @@ export interface ElementsLink extends Schema.Component {
   };
 }
 
+export interface ElementsPerson extends Schema.Component {
+  collectionName: 'components_elements_people';
+  info: {
+    displayName: 'Person';
+  };
+  attributes: {
+    name: Attribute.String;
+    role: Attribute.String;
+    text: Attribute.RichText;
+    image: Attribute.Media;
+  };
+}
+
 export interface ElementsPowerColumn extends Schema.Component {
   collectionName: 'components_elements_power_columns';
   info: {
@@ -301,7 +314,19 @@ export interface SectionsTeamSection extends Schema.Component {
   };
   attributes: {
     title: Attribute.String;
-    teamMembers: Attribute.Component<'elements.team-member', true>;
+    teamMembers: Attribute.Component<'elements.person', true>;
+  };
+}
+
+export interface SectionsTestimonialsSection extends Schema.Component {
+  collectionName: 'components_sections_testimonials_sections';
+  info: {
+    displayName: 'TestimonialsSection';
+    description: '';
+  };
+  attributes: {
+    title: Attribute.String;
+    testimonials: Attribute.Component<'elements.person', true>;
   };
 }
 
@@ -400,6 +425,7 @@ declare module '@strapi/types' {
       'elements.button': ElementsButton;
       'elements.footer-column': ElementsFooterColumn;
       'elements.link': ElementsLink;
+      'elements.person': ElementsPerson;
       'elements.power-column': ElementsPowerColumn;
       'elements.social-media-link': ElementsSocialMediaLink;
       'elements.team-member': ElementsTeamMember;
@@ -414,6 +440,7 @@ declare module '@strapi/types' {
       'sections.hero-section': SectionsHeroSection;
       'sections.power-section': SectionsPowerSection;
       'sections.team-section': SectionsTeamSection;
+      'sections.testimonials-section': SectionsTestimonialsSection;
       'sections.text-section': SectionsTextSection;
       'sections.thank-you-section': SectionsThankYouSection;
       'special-sections.cause-organizations-section': SpecialSectionsCauseOrganizationsSection;

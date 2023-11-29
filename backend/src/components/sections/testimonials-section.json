@@ -1,7 +1,7 @@
 {
-  "collectionName": "components_sections_team_sections",
+  "collectionName": "components_sections_testimonials_sections",
   "info": {
-    "displayName": "TeamSection",
+    "displayName": "TestimonialsSection",
     "description": ""
   },
   "options": {},
@@ -9,7 +9,7 @@
     "title": {
       "type": "string"
     },
-    "teamMembers": {
+    "testimonials": {
       "type": "component",
       "repeatable": true,
       "component": "elements.person"
