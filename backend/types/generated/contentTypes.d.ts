@@ -718,6 +718,43 @@ export interface ApiCauseCause extends Schema.CollectionType {
   };
 }
 
+export interface ApiContactSubmissionContactSubmission
+  extends Schema.CollectionType {
+  collectionName: 'contact_submissions';
+  info: {
+    singularName: 'contact-submission';
+    pluralName: 'contact-submissions';
+    displayName: 'ContactSubmission';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    name: Attribute.String;
+    email: Attribute.Email;
+    message: Attribute.Text &
+      Attribute.Required &
+      Attribute.SetMinMaxLength<{
+        maxLength: 1024;
+      }>;
+    responded: Attribute.Boolean & Attribute.DefaultTo<false>;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::contact-submission.contact-submission',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::contact-submission.contact-submission',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
 export interface ApiDonationDonation extends Schema.CollectionType {
   collectionName: 'donations';
   info: {
@@ -881,6 +918,10 @@ export interface ApiEmailConfigEmailConfig extends Schema.SingleType {
     confirmationText: Attribute.Text;
     confirmationHtml: Attribute.Text;
     confirmationReplyTo: Attribute.Email;
+    contactFormSubmissionText: Attribute.Text;
+    contactFormSubmissionHtml: Attribute.Text;
+    contactFormSubmissionRecipients: Attribute.Text;
+    contactFormSubmissionSubject: Attribute.String;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -1102,7 +1143,8 @@ export interface ApiPagePage extends Schema.CollectionType {
         'sections.thank-you-section',
         'sections.power-section',
         'sections.team-section',
-        'sections.testimonials-section'
+        'sections.testimonials-section',
+        'sections.contact-section'
       ]
     >;
     createdAt: Attribute.DateTime;
@@ -1230,6 +1272,7 @@ declare module '@strapi/types' {
       'plugin::users-permissions.role': PluginUsersPermissionsRole;
       'plugin::users-permissions.user': PluginUsersPermissionsUser;
       'api::cause.cause': ApiCauseCause;
+      'api::contact-submission.contact-submission': ApiContactSubmissionContactSubmission;
       'api::donation.donation': ApiDonationDonation;
       'api::donation-info.donation-info': ApiDonationInfoDonationInfo;
       'api::donor.donor': ApiDonorDonor;

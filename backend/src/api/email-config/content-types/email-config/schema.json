@@ -23,6 +23,18 @@
     },
     "confirmationReplyTo": {
       "type": "email"
+    },
+    "contactFormSubmissionText": {
+      "type": "text"
+    },
+    "contactFormSubmissionHtml": {
+      "type": "text"
+    },
+    "contactFormSubmissionRecipients": {
+      "type": "text"
+    },
+    "contactFormSubmissionSubject": {
+      "type": "string"
     }
   }
 }

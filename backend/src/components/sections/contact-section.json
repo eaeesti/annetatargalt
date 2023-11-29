@@ -1,0 +1,36 @@
+{
+  "collectionName": "components_sections_contact_sections",
+  "info": {
+    "displayName": "ContactSection"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "richtext"
+    },
+    "contactEmail": {
+      "type": "string"
+    },
+    "nameLabel": {
+      "type": "string"
+    },
+    "emailLabel": {
+      "type": "string"
+    },
+    "messageLabel": {
+      "type": "string"
+    },
+    "sendLabel": {
+      "type": "string"
+    },
+    "successTitle": {
+      "type": "string"
+    },
+    "successDescription": {
+      "type": "richtext"
+    }
+  }
+}

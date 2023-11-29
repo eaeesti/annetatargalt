@@ -198,6 +198,24 @@ export interface SectionsCausesSection extends Schema.Component {
   };
 }
 
+export interface SectionsContactSection extends Schema.Component {
+  collectionName: 'components_sections_contact_sections';
+  info: {
+    displayName: 'ContactSection';
+  };
+  attributes: {
+    title: Attribute.String;
+    description: Attribute.RichText;
+    contactEmail: Attribute.String;
+    nameLabel: Attribute.String;
+    emailLabel: Attribute.String;
+    messageLabel: Attribute.String;
+    sendLabel: Attribute.String;
+    successTitle: Attribute.String;
+    successDescription: Attribute.RichText;
+  };
+}
+
 export interface SectionsCtaSection extends Schema.Component {
   collectionName: 'components_sections_cta_sections';
   info: {
@@ -434,6 +452,7 @@ declare module '@strapi/types' {
       'meta.navbar': MetaNavbar;
       'meta.not-found-page': MetaNotFoundPage;
       'sections.causes-section': SectionsCausesSection;
+      'sections.contact-section': SectionsContactSection;
       'sections.cta-section': SectionsCtaSection;
       'sections.donation-section': SectionsDonationSection;
       'sections.header-section': SectionsHeaderSection;
