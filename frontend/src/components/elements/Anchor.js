@@ -14,6 +14,7 @@ export default function Anchor({
       href={href}
       target={newTab ? "_blank" : "_self"}
       rel={newTab ? "noopener noreferrer" : ""}
+      prefetch={newTab ? false : true}
       className={className}
       {...rest}
     >
