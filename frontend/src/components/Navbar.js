@@ -14,15 +14,15 @@ export default function Navbar({ global }) {
 
   return (
     <>
-      <nav className="flex sticky top-0 z-10 justify-center w-full bg-white shadow-md shadow-primary-600/10">
-        <div className="flex gap-x-6 justify-between items-center px-6 py-4 w-full max-w-7xl lg:px-8">
+      <nav className="sticky top-0 z-10 flex w-full justify-center bg-white shadow-md shadow-primary-600/10">
+        <div className="flex w-full max-w-7xl items-center justify-between gap-x-6 px-6 py-4 lg:px-8">
           <div className="flex flex-grow lg:flex-grow-0">
             <Anchor
               href="/"
-              className="p-1.5 -m-1.5 rounded-md hover:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+              className="-m-1.5 rounded-md p-1.5 hover:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
             >
               <span className="sr-only">{title}</span>
-              <Image className="w-auto h-8" data={navbar.logo} />
+              <Image className="h-8 w-auto" data={navbar.logo} />
             </Anchor>
           </div>
           <div className="hidden gap-x-4 lg:flex">
@@ -36,11 +36,11 @@ export default function Navbar({ global }) {
           <div className="flex items-center lg:hidden">
             <button
               type="button"
-              className="inline-flex justify-center items-center p-2.5 -m-2.5 rounded-md text-slate-700"
+              className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-slate-700"
               onClick={() => setMobileMenuOpen(true)}
             >
               <span className="sr-only">Open main menu</span>
-              <Bars3Icon className="w-6 h-6" aria-hidden="true" />
+              <Bars3Icon className="h-6 w-6" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -52,35 +52,35 @@ export default function Navbar({ global }) {
         onClose={setMobileMenuOpen}
       >
         <div className="fixed inset-0 z-10" />
-        <Dialog.Panel className="overflow-y-auto fixed inset-y-0 right-0 z-20 px-6 py-4 w-full bg-white sm:max-w-sm sm:ring-1 sm:ring-slate-900/10">
-          <div className="flex gap-x-6 items-center">
+        <Dialog.Panel className="fixed inset-y-0 right-0 z-20 w-full overflow-y-auto bg-white px-6 py-4 sm:max-w-sm sm:ring-1 sm:ring-slate-900/10">
+          <div className="flex items-center gap-x-6">
             <Anchor
               href="/"
-              className="flex-grow p-1.5 -m-1.5 hover:opacity-80"
+              className="-m-1.5 flex-grow p-1.5 hover:opacity-80"
             >
               <span className="sr-only">{title}</span>
-              <Image className="w-auto h-8 sm:hidden" data={navbar.logo} />
+              <Image className="h-8 w-auto sm:hidden" data={navbar.logo} />
             </Anchor>
             <Button {...navbar.ctaButton} />
             <button
               type="button"
-              className="p-2.5 -m-2.5 rounded-md text-slate-700"
+              className="-m-2.5 rounded-md p-2.5 text-slate-700"
               onClick={() => setMobileMenuOpen(false)}
             >
               <span className="sr-only">Close menu</span>
-              <XMarkIcon className="w-6 h-6" aria-hidden="true" />
+              <XMarkIcon className="h-6 w-6" aria-hidden="true" />
             </button>
           </div>
-          <div className="flow-root mt-6">
-            <div className="py-6 space-y-2">
+          <div className="mt-6 flow-root">
+            <div className="space-y-2 py-6">
               {navbar.links.map((link) => (
-                <a
+                <Anchor
                   key={link.id}
                   href={link.href}
-                  className="block px-3 py-2 -mx-3 text-base font-semibold leading-7 rounded-lg text-slate-900 hover:bg-primary-100"
+                  className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-slate-900 hover:bg-primary-100"
                 >
                   {link.text}
-                </a>
+                </Anchor>
               ))}
             </div>
           </div>
