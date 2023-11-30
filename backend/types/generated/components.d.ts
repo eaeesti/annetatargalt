@@ -92,6 +92,17 @@ export interface ElementsPowerColumn extends Schema.Component {
   };
 }
 
+export interface ElementsQuestion extends Schema.Component {
+  collectionName: 'components_elements_questions';
+  info: {
+    displayName: 'Question';
+  };
+  attributes: {
+    question: Attribute.String;
+    answer: Attribute.RichText;
+  };
+}
+
 export interface ElementsSocialMediaLink extends Schema.Component {
   collectionName: 'components_elements_social_media_links';
   info: {
@@ -282,6 +293,16 @@ export interface SectionsDonationSection extends Schema.Component {
   };
 }
 
+export interface SectionsFaqSection extends Schema.Component {
+  collectionName: 'components_sections_faq_sections';
+  info: {
+    displayName: 'FAQSection';
+  };
+  attributes: {
+    questions: Attribute.Component<'elements.question', true>;
+  };
+}
+
 export interface SectionsHeaderSection extends Schema.Component {
   collectionName: 'components_sections_header_sections';
   info: {
@@ -445,6 +466,7 @@ declare module '@strapi/types' {
       'elements.link': ElementsLink;
       'elements.person': ElementsPerson;
       'elements.power-column': ElementsPowerColumn;
+      'elements.question': ElementsQuestion;
       'elements.social-media-link': ElementsSocialMediaLink;
       'elements.team-member': ElementsTeamMember;
       'meta.footer': MetaFooter;
@@ -455,6 +477,7 @@ declare module '@strapi/types' {
       'sections.contact-section': SectionsContactSection;
       'sections.cta-section': SectionsCtaSection;
       'sections.donation-section': SectionsDonationSection;
+      'sections.faq-section': SectionsFaqSection;
       'sections.header-section': SectionsHeaderSection;
       'sections.hero-section': SectionsHeroSection;
       'sections.power-section': SectionsPowerSection;

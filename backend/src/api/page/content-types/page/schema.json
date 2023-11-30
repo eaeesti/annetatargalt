@@ -37,7 +37,8 @@
         "sections.power-section",
         "sections.team-section",
         "sections.testimonials-section",
-        "sections.contact-section"
+        "sections.contact-section",
+        "sections.faq-section"
       ]
     }
   }

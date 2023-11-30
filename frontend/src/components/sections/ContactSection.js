@@ -54,12 +54,12 @@ export default function ContactSection(props) {
   };
 
   return (
-    <section className="grid w-full grid-cols-1 justify-center lg:grid-cols-2">
+    <section className="grid w-full flex-grow grid-cols-1 justify-center lg:grid-cols-2">
       <div className="bg-slate-100 px-6 pb-20 pt-24 sm:pt-32 lg:px-8 lg:py-48">
         <div className="mx-auto max-w-lg lg:mr-0">
-          <h2 className="text-3xl font-bold tracking-tight text-primary-700">
+          <h1 className="text-3xl font-bold tracking-tight text-primary-700">
             {props.title}
-          </h2>
+          </h1>
           <Markdown className="prose prose-lg prose-primary mt-6 w-full text-slate-600">
             {props.description}
           </Markdown>
