@@ -339,7 +339,6 @@ export interface SectionsPowerSection extends Schema.Component {
   };
   attributes: {
     title: Attribute.String;
-    bottomText: Attribute.String;
     column1: Attribute.Component<'elements.power-column'>;
     column2: Attribute.Component<'elements.power-column'>;
   };

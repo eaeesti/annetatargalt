@@ -37,7 +37,7 @@
       "target": "api::donation.donation",
       "mappedBy": "donor"
     },
-    "recurring_donations": {
+    "recurringDonations": {
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::recurring-donation.recurring-donation",

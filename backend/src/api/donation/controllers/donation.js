@@ -18,7 +18,7 @@ module.exports = createCoreController(
 
       const donor = await strapi
         .service("api::donor.donor")
-        .findOrCreateDonor(donation);
+        .updateOrCreateDonor(donation);
 
       const tipSize = donation.addTip ? 0.05 : 0;
       const tipAmount = Math.round(donation.amount * tipSize * 100) / 100;
@@ -140,6 +140,36 @@ module.exports = createCoreController(
       }
 
       return ctx.send({ donation });
+    },
+
+    async import(ctx) {
+      const fullData = ctx.request.body;
+
+      await strapi.service("api::donation.donation").import(fullData);
+
+      return ctx.send();
+    },
+
+    async export(ctx) {
+      const fullData = await strapi.service("api::donation.donation").export();
+
+      return ctx.send(fullData);
+    },
+
+    async deleteAll(ctx) {
+      const confirmation = ctx.request.body.confirmation;
+
+      const currentDateTime = new Date().toISOString().slice(0, 16);
+
+      if (confirmation !== currentDateTime) {
+        return ctx.badRequest(
+          `Confirmation must be the current date and time in the format 'YYYY-MM-DDTHH:MM' (${currentDateTime}). Instead got: '${confirmation}'`
+        );
+      }
+
+      await strapi.service("api::donation.donation").deleteAll();
+
+      return ctx.send();
     },
   })
 );

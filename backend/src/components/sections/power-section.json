@@ -9,9 +9,6 @@
     "title": {
       "type": "string"
     },
-    "bottomText": {
-      "type": "string"
-    },
     "column1": {
       "type": "component",
       "repeatable": false,

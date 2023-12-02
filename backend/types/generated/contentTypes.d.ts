@@ -772,7 +772,7 @@ export interface ApiDonationDonation extends Schema.CollectionType {
       'manyToOne',
       'api::donor.donor'
     >;
-    recurring_donation: Attribute.Relation<
+    recurringDonation: Attribute.Relation<
       'api::donation.donation',
       'manyToOne',
       'api::recurring-donation.recurring-donation'
@@ -792,6 +792,7 @@ export interface ApiDonationDonation extends Schema.CollectionType {
     >;
     tipSize: Attribute.Float;
     tipAmount: Attribute.Integer;
+    sentToOrganization: Attribute.Boolean & Attribute.DefaultTo<false>;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -880,7 +881,7 @@ export interface ApiDonorDonor extends Schema.CollectionType {
       'oneToMany',
       'api::donation.donation'
     >;
-    recurring_donations: Attribute.Relation<
+    recurringDonations: Attribute.Relation<
       'api::donor.donor',
       'oneToMany',
       'api::recurring-donation.recurring-donation'
@@ -1170,16 +1171,6 @@ export interface ApiRecurringDonationRecurringDonation
     draftAndPublish: false;
   };
   attributes: {
-    donor: Attribute.Relation<
-      'api::recurring-donation.recurring-donation',
-      'manyToOne',
-      'api::donor.donor'
-    >;
-    donations: Attribute.Relation<
-      'api::recurring-donation.recurring-donation',
-      'oneToMany',
-      'api::donation.donation'
-    >;
     active: Attribute.Boolean;
     companyName: Attribute.String;
     companyCode: Attribute.String;
@@ -1193,6 +1184,17 @@ export interface ApiRecurringDonationRecurringDonation
     >;
     tipSize: Attribute.Float;
     tipAmount: Attribute.Integer;
+    datetime: Attribute.DateTime;
+    donations: Attribute.Relation<
+      'api::recurring-donation.recurring-donation',
+      'oneToMany',
+      'api::donation.donation'
+    >;
+    donor: Attribute.Relation<
+      'api::recurring-donation.recurring-donation',
+      'manyToOne',
+      'api::donor.donor'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<

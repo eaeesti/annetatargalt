@@ -12,18 +12,6 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "donor": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::donor.donor",
-      "inversedBy": "recurring_donations"
-    },
-    "donations": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::donation.donation",
-      "mappedBy": "recurring_donation"
-    },
     "active": {
       "type": "boolean"
     },
@@ -53,6 +41,21 @@
     },
     "tipAmount": {
       "type": "integer"
+    },
+    "datetime": {
+      "type": "datetime"
+    },
+    "donations": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::donation.donation",
+      "mappedBy": "recurringDonation"
+    },
+    "donor": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::donor.donor",
+      "inversedBy": "recurringDonations"
     }
   }
 }

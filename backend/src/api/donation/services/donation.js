@@ -189,6 +189,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
           tipAmount: amountToCents(calculations.tipAmount),
           donor: donor.id,
           bank: donation.bank,
+          datetime: new Date(),
           companyName: donation.companyName,
           companyCode: donation.companyCode,
         },
@@ -280,5 +281,219 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       template,
       data
     );
+  },
+
+  async import({
+    causes,
+    organizations,
+    donors,
+    recurringDonations,
+    organizationRecurringDonations,
+    donations,
+    organizationDonations,
+  }) {
+    const causeMap = {};
+    for (let cause of causes) {
+      const causeEntry = await strapi
+        .service("api::cause.cause")
+        .findOrCreateCause(cause);
+      causeMap[cause.id] = causeEntry.id;
+    }
+
+    const organizationMap = {};
+    for (let organization of organizations) {
+      const organizationEntry = await strapi
+        .service("api::organization.organization")
+        .findOrCreateOrganization({
+          ...organization,
+          cause: organization.cause ? causeMap[organization.cause] : null,
+        });
+      organizationMap[organization.id] = organizationEntry.id;
+    }
+
+    const donorMap = {};
+    for (let donor of donors) {
+      const donorEntry = await strapi
+        .service("api::donor.donor")
+        .findOrCreateDonor(donor);
+      donorMap[donor.id] = donorEntry.id;
+    }
+
+    const recurringDonationMap = {};
+    for (let recurringDonation of recurringDonations) {
+      const recurringDonationEntry = await strapi.entityService.create(
+        "api::recurring-donation.recurring-donation",
+        {
+          data: {
+            amount: recurringDonation.amount,
+            tipSize: recurringDonation.tipSize,
+            tipAmount: recurringDonation.tipAmount,
+            donor: donorMap[recurringDonation.donor],
+            bank: recurringDonation.bank,
+            datetime: recurringDonation.datetime,
+            companyName: recurringDonation.companyName,
+            companyCode: recurringDonation.companyCode,
+          },
+        }
+      );
+      recurringDonationMap[recurringDonation.id] = recurringDonationEntry.id;
+    }
+
+    for (let organizationRecurringDonation of organizationRecurringDonations) {
+      await strapi.entityService.create(
+        "api::organization-recurring-donation.organization-recurring-donation",
+        {
+          data: {
+            recurringDonation:
+              recurringDonationMap[
+                organizationRecurringDonation.recurringDonation
+              ],
+            organization:
+              organizationMap[organizationRecurringDonation.organization],
+            amount: organizationRecurringDonation.amount,
+            proportion: organizationRecurringDonation.proportion,
+          },
+        }
+      );
+    }
+
+    const donationMap = {};
+    for (let donation of donations) {
+      const donationEntry = await strapi.entityService.create(
+        "api::donation.donation",
+        {
+          data: {
+            amount: donation.amount,
+            tipSize: donation.tipSize,
+            tipAmount: donation.tipAmount,
+            donor: donorMap[donation.donor],
+            datetime: donation.datetime,
+            companyName: donation.companyName,
+            companyCode: donation.companyCode,
+            paymentMethod: donation.paymentMethod,
+            iban: donation.iban,
+            recurringDonation: donation.recurringDonation
+              ? recurringDonationMap[donation.recurringDonation]
+              : null,
+          },
+        }
+      );
+
+      donationMap[donation.id] = donationEntry.id;
+    }
+
+    for (let organizationDonation of organizationDonations) {
+      await strapi.entityService.create(
+        "api::organization-donation.organization-donation",
+        {
+          data: {
+            donation: donationMap[organizationDonation.donation],
+            organization: organizationMap[organizationDonation.organization],
+            amount: organizationDonation.amount,
+            proportion: organizationDonation.proportion,
+          },
+        }
+      );
+    }
+  },
+
+  async export() {
+    const causes = await strapi.entityService.findMany("api::cause.cause", {
+      sort: "id",
+    });
+
+    const organizations = (
+      await strapi.entityService.findMany("api::organization.organization", {
+        sort: "id",
+        populate: ["cause"],
+      })
+    ).map((organization) => ({
+      ...organization,
+      cause: organization.cause ? organization.cause.id : null,
+    }));
+
+    const donors = await strapi.entityService.findMany("api::donor.donor", {
+      sort: "id",
+    });
+
+    const recurringDonations = (
+      await strapi.entityService.findMany(
+        "api::recurring-donation.recurring-donation",
+        {
+          sort: "id",
+          populate: ["donor"],
+        }
+      )
+    ).map((recurringDonation) => ({
+      ...recurringDonation,
+      donor: recurringDonation.donor.id,
+    }));
+
+    const organizationRecurringDonations = (
+      await strapi.entityService.findMany(
+        "api::organization-recurring-donation.organization-recurring-donation",
+        {
+          sort: "id",
+          populate: ["recurringDonation", "organization"],
+        }
+      )
+    ).map((organizationRecurringDonation) => ({
+      ...organizationRecurringDonation,
+      recurringDonation: organizationRecurringDonation.recurringDonation.id,
+      organization: organizationRecurringDonation.organization.id,
+    }));
+
+    const donations = (
+      await strapi.entityService.findMany("api::donation.donation", {
+        sort: "id",
+        populate: ["donor", "recurringDonation"],
+      })
+    ).map((donation) => ({
+      ...donation,
+      donor: donation.donor.id,
+      recurringDonation: donation.recurringDonation
+        ? donation.recurringDonation.id
+        : null,
+    }));
+
+    const organizationDonations = (
+      await strapi.entityService.findMany(
+        "api::organization-donation.organization-donation",
+        {
+          sort: "id",
+          populate: ["donation", "organization"],
+        }
+      )
+    ).map((organizationDonation) => ({
+      ...organizationDonation,
+      donation: organizationDonation.donation.id,
+      organization: organizationDonation.organization.id,
+    }));
+
+    return {
+      causes,
+      organizations,
+      donors,
+      recurringDonations,
+      organizationRecurringDonations,
+      donations,
+      organizationDonations,
+    };
+  },
+
+  async deleteAll() {
+    await strapi.db
+      .query("api::organization-donation.organization-donation")
+      .deleteMany({});
+    await strapi.db.query("api::donation.donation").deleteMany({});
+    await strapi.db
+      .query(
+        "api::organization-recurring-donation.organization-recurring-donation"
+      )
+      .deleteMany({});
+    await strapi.db
+      .query("api::recurring-donation.recurring-donation")
+      .deleteMany({});
+    await strapi.db.query("api::donor.donor").deleteMany({});
   },
 }));

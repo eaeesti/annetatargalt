@@ -18,7 +18,7 @@
       "target": "api::donor.donor",
       "inversedBy": "donations"
     },
-    "recurring_donation": {
+    "recurringDonation": {
       "type": "relation",
       "relation": "manyToOne",
       "target": "api::recurring-donation.recurring-donation",
@@ -61,6 +61,10 @@
     },
     "tipAmount": {
       "type": "integer"
+    },
+    "sentToOrganization": {
+      "type": "boolean",
+      "default": false
     }
   }
 }
