@@ -954,6 +954,7 @@ export interface ApiGlobalGlobal extends Schema.SingleType {
   attributes: {
     title: Attribute.String;
     metadata: Attribute.Component<'meta.metadata'>;
+    favicon: Attribute.Media;
     navbar: Attribute.Component<'meta.navbar'>;
     footer: Attribute.Component<'meta.footer'>;
     notFoundPage: Attribute.Component<'meta.not-found-page'>;

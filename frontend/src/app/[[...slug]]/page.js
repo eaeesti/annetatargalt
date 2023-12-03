@@ -1,4 +1,3 @@
-import SpecialPage from "@/components/SpecialPage";
 import Page from "../../components/Page";
 import { buildMetadata } from "../../utils/seo";
 import { getGlobal, getPageBySlug, findSpecialPage } from "../../utils/strapi";
@@ -31,7 +30,7 @@ export default async function SlugPage({ params }) {
   const specialPage = await findSpecialPage(slug);
   if (specialPage) {
     return (
-      <SpecialPage
+      <Page
         page={specialPage.page}
         entity={specialPage.entity}
         global={global}

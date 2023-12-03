@@ -20,6 +20,11 @@
       "repeatable": false,
       "component": "meta.metadata"
     },
+    "favicon": {
+      "allowedTypes": ["images"],
+      "type": "media",
+      "multiple": false
+    },
     "navbar": {
       "type": "component",
       "repeatable": false,
