@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ["latin"] });
 export async function generateMetadata() {
   const global = await getGlobal();
 
-  return buildMetadata(global.metadata, {});
+  return buildMetadata(global, {});
 }
 
 export default async function RootLayout({ children }) {

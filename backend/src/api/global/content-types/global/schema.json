@@ -20,10 +20,23 @@
       "repeatable": false,
       "component": "meta.metadata"
     },
-    "favicon": {
-      "allowedTypes": ["images"],
+    "favicon16": {
       "type": "media",
-      "multiple": false
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "favicon32": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "appleTouchIcon": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
     },
     "navbar": {
       "type": "component",

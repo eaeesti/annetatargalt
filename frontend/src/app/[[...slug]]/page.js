@@ -15,12 +15,12 @@ export async function generateMetadata({ params }) {
   const specialPage = await findSpecialPage(slug);
 
   if (specialPage) {
-    return buildMetadata(global.metadata, specialPage.entity.metadata);
+    return buildMetadata(global, specialPage.entity.metadata);
   }
 
   const page = await getPageBySlug(slug);
 
-  return buildMetadata(global.metadata, page.metadata);
+  return buildMetadata(global, page.metadata);
 }
 
 export default async function SlugPage({ params }) {
