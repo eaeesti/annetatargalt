@@ -1,6 +1,8 @@
+"use client";
 import { classes } from "@/utils/react";
 import { ArrowLongRightIcon } from "@heroicons/react/20/solid";
 import Anchor from "./Anchor";
+import { usePlausible } from "next-plausible";
 
 export default function Button({
   text,
@@ -13,8 +15,11 @@ export default function Button({
   className = "",
   children,
   buttonType = "button",
+  plausibleEvent,
   ...rest
 }) {
+  const plausible = usePlausible();
+
   const buttons = {
     primary:
       "text-white shadow-sm bg-primary-600 hover:bg-primary-500 focus-visible:outline-primary-600 disabled:hover:bg-primary-600",
@@ -41,7 +46,17 @@ export default function Button({
 
   if (href) {
     return (
-      <Anchor href={href} newTab={newTab} className={fullClassName} {...rest}>
+      <Anchor
+        href={href}
+        newTab={newTab}
+        className={fullClassName}
+        onClick={() => {
+          if (plausibleEvent) {
+            plausible(plausibleEvent);
+          }
+        }}
+        {...rest}
+      >
         {text}
         {children}
         {arrow && <ArrowLongRightIcon className="h-5 w-5" />}
@@ -52,7 +67,10 @@ export default function Button({
   return (
     <button
       type={buttonType}
-      onClick={onClick}
+      onClick={(event) => {
+        if (plausibleEvent) plausible(plausibleEvent);
+        onClick(event);
+      }}
       className={fullClassName}
       {...rest}
     >

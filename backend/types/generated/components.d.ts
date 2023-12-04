@@ -38,6 +38,7 @@ export interface ElementsButton extends Schema.Component {
     newTab: Attribute.Boolean & Attribute.DefaultTo<false>;
     size: Attribute.Enumeration<['text', 'sm', 'md', 'lg']> &
       Attribute.DefaultTo<'md'>;
+    plausibleEvent: Attribute.String;
   };
 }
 
@@ -96,10 +97,12 @@ export interface ElementsQuestion extends Schema.Component {
   collectionName: 'components_elements_questions';
   info: {
     displayName: 'Question';
+    description: '';
   };
   attributes: {
     question: Attribute.String;
     answer: Attribute.RichText;
+    plausibleEvent: Attribute.String;
   };
 }
 

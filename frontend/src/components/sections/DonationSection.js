@@ -21,9 +21,11 @@ import Proportions from "@/utils/proportions";
 import PaymentSummary from "../elements/forms/PaymentSummary";
 import Modal from "../Modal";
 import CompanyInput from "../elements/forms/CompanyInput";
+import { usePlausible } from "next-plausible";
 
 export default function DonationSection(props) {
   const router = useRouter();
+  const plausible = usePlausible();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState({});
@@ -169,7 +171,10 @@ export default function DonationSection(props) {
                 text={props.nextButtonText}
                 type="primary"
                 size="md"
-                onClick={() => setStage(1)}
+                onClick={() => {
+                  plausible("donation-info-stage");
+                  setStage(1);
+                }}
                 disabled={!stageValidity[0]}
                 buttonType="submit"
                 className="mt-4"
@@ -232,7 +237,10 @@ export default function DonationSection(props) {
                 text={props.nextButtonText}
                 type="primary"
                 size="lg"
-                onClick={() => setStage(2)}
+                onClick={() => {
+                  plausible("donation-support-stage");
+                  setStage(2);
+                }}
                 disabled={!stageValidity[1]}
                 buttonType="submit"
                 className="mt-4"
@@ -260,7 +268,10 @@ export default function DonationSection(props) {
                 text={props.nextButtonText}
                 type="primary"
                 size="lg"
-                onClick={() => setStage(3)}
+                onClick={() => {
+                  plausible("donation-summary-stage");
+                  setStage(3);
+                }}
                 buttonType="submit"
                 className=""
               />
@@ -307,7 +318,10 @@ export default function DonationSection(props) {
                 text={props.donateButtonText}
                 type="primary"
                 size="lg"
-                onClick={donate}
+                onClick={() => {
+                  plausible("donation-clicked");
+                  donate();
+                }}
                 disabled={!stageValidity[2]}
                 buttonType="submit"
                 className="mt-4"

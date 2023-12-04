@@ -38,6 +38,9 @@
         "lg"
       ],
       "default": "md"
+    },
+    "plausibleEvent": {
+      "type": "string"
     }
   }
 }
