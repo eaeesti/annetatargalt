@@ -252,6 +252,7 @@ export interface SectionsDonationSection extends Schema.Component {
     lastNameText: Attribute.String;
     emailText: Attribute.String;
     idCodeText: Attribute.String;
+    idCodeDescription: Attribute.String;
     otherAmountText: Attribute.String;
     amount1: Attribute.Integer;
     amount2: Attribute.Integer;

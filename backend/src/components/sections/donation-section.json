@@ -21,6 +21,9 @@
     "idCodeText": {
       "type": "string"
     },
+    "idCodeDescription": {
+      "type": "string"
+    },
     "otherAmountText": {
       "type": "string"
     },

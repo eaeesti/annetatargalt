@@ -12,6 +12,7 @@ export default function TextInput({
   autoComplete,
   autoFocus = false,
   maxLength = 128,
+  description,
 }) {
   const [error, setError] = useState(false);
 
@@ -54,6 +55,9 @@ export default function TextInput({
           placeholder={placeholder}
         />
       </div>
+      {description && (
+        <p className="mt-2 text-xs text-slate-500">{description}</p>
+      )}
     </div>
   );
 }

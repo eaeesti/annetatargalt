@@ -205,6 +205,7 @@ export default function DonationSection(props) {
               />
               <IdCodeInput
                 idCodeText={props.idCodeText}
+                idCodeDescription={props.idCodeDescription}
                 idCode={donation.idCode}
                 setIdCode={(idCode) => setDonation({ ...donation, idCode })}
                 setValidity={setValidity}

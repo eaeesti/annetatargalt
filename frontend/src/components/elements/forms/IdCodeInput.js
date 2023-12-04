@@ -3,6 +3,7 @@ import TextInput from "./TextInput";
 
 export default function IdCodeInput({
   idCodeText,
+  idCodeDescription,
   idCode,
   setIdCode,
   setValidity,
@@ -17,6 +18,7 @@ export default function IdCodeInput({
       label={idCodeText}
       autoComplete="isikukood"
       maxLength={11}
+      description={idCodeDescription}
     />
   );
 }
