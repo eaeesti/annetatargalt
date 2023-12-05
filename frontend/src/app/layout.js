@@ -14,13 +14,19 @@ export async function generateMetadata() {
 }
 
 export default async function RootLayout({ children }) {
-  const plausible_domain = process.env.PLAUSIBLE_DOMAIN;
+  const plausibleDomain = process.env.PLAUSIBLE_DOMAIN;
 
   return (
     <html lang="et" className="h-full">
-      {plausible_domain && (
+      {plausibleDomain && (
         <head>
-          <PlausibleProvider domain={plausible_domain} />
+          <PlausibleProvider
+            domain={plausibleDomain}
+            scriptProps={{
+              src: "/js/script.js",
+              "data-api": "/api/event",
+            }}
+          />
         </head>
       )}
       <body className={classes("flex min-h-full flex-col", inter.className)}>
