@@ -21,10 +21,10 @@ function Stat({ term, value, unit }) {
 
 export default function StatsSection({
   title,
+  operatingSinceText,
+  operatingSinceValue,
   donationAmountText,
   donationAmountCurrency,
-  donorCountText,
-  donorCountUnit,
   transactionFeeText,
   transactionFeeValue,
 }) {
@@ -37,7 +37,7 @@ export default function StatsSection({
 
   if (error) return;
 
-  const { donorCount, donationSum } = data;
+  const { donationSum } = data;
 
   const donationAmount = Math.floor(donationSum / 100);
 
@@ -46,11 +46,7 @@ export default function StatsSection({
       <h2 className="sr-only">{title}</h2>
       <div className="mx-auto max-w-7xl px-6">
         <dl className="grid grid-cols-1 gap-x-6 gap-y-24 text-center lg:grid-cols-3">
-          <Stat
-            term={donorCountText}
-            value={donorCount}
-            unit={donorCountUnit}
-          />
+          <Stat term={operatingSinceText} value={operatingSinceValue} />
           <Stat
             term={donationAmountText}
             value={formatEstonianAmount(donationAmount)}

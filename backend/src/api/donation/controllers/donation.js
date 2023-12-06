@@ -173,15 +173,15 @@ module.exports = createCoreController(
     },
 
     async stats(ctx) {
-      let donorCount;
-      try {
-        donorCount = await strapi
-          .service("api::donor.donor")
-          .donorsWithFinalizedDonationCount();
-      } catch (error) {
-        console.error(error);
-        return ctx.badRequest("Failed to get donor count");
-      }
+      // let donorCount;
+      // try {
+      //   donorCount = await strapi
+      //     .service("api::donor.donor")
+      //     .donorsWithFinalizedDonationCount();
+      // } catch (error) {
+      //   console.error(error);
+      //   return ctx.badRequest("Failed to get donor count");
+      // }
 
       let donationSum;
       try {
@@ -194,7 +194,7 @@ module.exports = createCoreController(
       }
 
       return ctx.send({
-        donorCount,
+        // donorCount,
         donationSum,
       });
     },

@@ -12,7 +12,7 @@
     "donationAmountText": {
       "type": "string"
     },
-    "donorCountText": {
+    "donationAmountCurrency": {
       "type": "string"
     },
     "transactionFeeText": {
@@ -21,10 +21,10 @@
     "transactionFeeValue": {
       "type": "string"
     },
-    "donationAmountCurrency": {
+    "operatingSinceText": {
       "type": "string"
     },
-    "donorCountUnit": {
+    "operatingSinceValue": {
       "type": "string"
     }
   }

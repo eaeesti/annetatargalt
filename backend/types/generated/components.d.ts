@@ -357,11 +357,11 @@ export interface SectionsStatsSection extends Schema.Component {
   attributes: {
     title: Attribute.String;
     donationAmountText: Attribute.String;
-    donorCountText: Attribute.String;
+    donationAmountCurrency: Attribute.String;
     transactionFeeText: Attribute.String;
     transactionFeeValue: Attribute.String;
-    donationAmountCurrency: Attribute.String;
-    donorCountUnit: Attribute.String;
+    operatingSinceText: Attribute.String;
+    operatingSinceValue: Attribute.String;
   };
 }
 
