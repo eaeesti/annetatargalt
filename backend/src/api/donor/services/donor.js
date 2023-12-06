@@ -59,4 +59,16 @@ module.exports = createCoreService("api::donor.donor", ({ strapi }) => ({
 
     return updatedDonor;
   },
+
+  async donorsWithFinalizedDonationCount() {
+    const result = await strapi.db.connection.raw(
+      `SELECT COUNT(DISTINCT donations_donor_links.donor_id) 
+       FROM donations 
+       JOIN donations_donor_links ON donations.id = donations_donor_links.donation_id 
+       JOIN donors ON donations_donor_links.donor_id = donors.id 
+       WHERE donations.finalized = true`
+    );
+    const count = Number(result.rows[0].count);
+    return count;
+  },
 }));

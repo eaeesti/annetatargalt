@@ -1,0 +1,31 @@
+{
+  "collectionName": "components_sections_stats_sections",
+  "info": {
+    "displayName": "StatsSection",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "donationAmountText": {
+      "type": "string"
+    },
+    "donorCountText": {
+      "type": "string"
+    },
+    "transactionFeeText": {
+      "type": "string"
+    },
+    "transactionFeeValue": {
+      "type": "string"
+    },
+    "donationAmountCurrency": {
+      "type": "string"
+    },
+    "donorCountUnit": {
+      "type": "string"
+    }
+  }
+}

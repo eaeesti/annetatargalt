@@ -171,5 +171,32 @@ module.exports = createCoreController(
 
       return ctx.send();
     },
+
+    async stats(ctx) {
+      let donorCount;
+      try {
+        donorCount = await strapi
+          .service("api::donor.donor")
+          .donorsWithFinalizedDonationCount();
+      } catch (error) {
+        console.error(error);
+        return ctx.badRequest("Failed to get donor count");
+      }
+
+      let donationSum;
+      try {
+        donationSum = await strapi
+          .service("api::donation.donation")
+          .sumOfFinalizedDonations();
+      } catch (error) {
+        console.error(error);
+        return ctx.badRequest("Failed to get donation count");
+      }
+
+      return ctx.send({
+        donorCount,
+        donationSum,
+      });
+    },
   })
 );

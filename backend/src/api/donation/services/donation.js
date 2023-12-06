@@ -496,4 +496,14 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       .deleteMany({});
     await strapi.db.query("api::donor.donor").deleteMany({});
   },
+
+  async sumOfFinalizedDonations() {
+    const result = await strapi.db.connection.raw(
+      `SELECT SUM(donations.amount) AS total_amount
+       FROM donations
+       WHERE donations.finalized = true`
+    );
+    const totalAmount = Number(result.rows[0].total_amount);
+    return totalAmount;
+  },
 }));

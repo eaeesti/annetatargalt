@@ -38,7 +38,8 @@
         "sections.team-section",
         "sections.testimonials-section",
         "sections.contact-section",
-        "sections.faq-section"
+        "sections.faq-section",
+        "sections.stats-section"
       ]
     }
   }

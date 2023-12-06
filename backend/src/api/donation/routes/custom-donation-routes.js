@@ -30,5 +30,10 @@ module.exports = {
       path: "/donations/deleteAll",
       handler: "donation.deleteAll",
     },
+    {
+      method: "GET",
+      path: "/stats",
+      handler: "donation.stats",
+    },
   ],
 };

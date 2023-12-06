@@ -348,6 +348,23 @@ export interface SectionsPowerSection extends Schema.Component {
   };
 }
 
+export interface SectionsStatsSection extends Schema.Component {
+  collectionName: 'components_sections_stats_sections';
+  info: {
+    displayName: 'StatsSection';
+    description: '';
+  };
+  attributes: {
+    title: Attribute.String;
+    donationAmountText: Attribute.String;
+    donorCountText: Attribute.String;
+    transactionFeeText: Attribute.String;
+    transactionFeeValue: Attribute.String;
+    donationAmountCurrency: Attribute.String;
+    donorCountUnit: Attribute.String;
+  };
+}
+
 export interface SectionsTeamSection extends Schema.Component {
   collectionName: 'components_sections_team_sections';
   info: {
@@ -484,6 +501,7 @@ declare module '@strapi/types' {
       'sections.header-section': SectionsHeaderSection;
       'sections.hero-section': SectionsHeroSection;
       'sections.power-section': SectionsPowerSection;
+      'sections.stats-section': SectionsStatsSection;
       'sections.team-section': SectionsTeamSection;
       'sections.testimonials-section': SectionsTestimonialsSection;
       'sections.text-section': SectionsTextSection;
