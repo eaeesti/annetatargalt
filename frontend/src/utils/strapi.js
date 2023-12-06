@@ -119,6 +119,32 @@ export async function getEntityBySlug(type, slug) {
   }
 }
 
+export async function getAllSlugs() {
+  const pagesPath = "/pages";
+  const options = headersWithAuthToken();
+  const urlParamsObject = { populate: "deep" };
+
+  const response = await fetchAPI(pagesPath, urlParamsObject, options);
+  const pageSlugs = response.data.map(({ attributes }) => attributes.slug);
+
+  const causesPath = "/causes";
+  const causesResponse = await fetchAPI(causesPath, urlParamsObject, options);
+  const causes = causesResponse.data.map(({ attributes }) => attributes);
+  const causeSlugs = causes.map((cause) => cause.slug);
+
+  const organizationSlugs = causes
+    .map((cause) =>
+      cause.organizations.data.map(
+        (organization) => `${cause.slug}/${organization.attributes.slug}`,
+      ),
+    )
+    .flat();
+
+  const allSlugs = [...pageSlugs, ...causeSlugs, ...organizationSlugs];
+
+  return allSlugs;
+}
+
 export function strapiSectionNameToReactComponentName(component) {
   return snakeCaseToPascalCase(component.split(".")[1]);
 }
