@@ -372,6 +372,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
             companyCode: donation.companyCode,
             paymentMethod: donation.paymentMethod,
             iban: donation.iban,
+            finalized: donation.finalized,
             recurringDonation: donation.recurringDonation
               ? recurringDonationMap[donation.recurringDonation]
               : null,
