@@ -67,7 +67,7 @@ module.exports = createCoreController(
         return ctx.badRequest("Payment not finalized");
       }
 
-      const id = Number(decoded.merchant_reference.split(" ")[1]);
+      const id = Number(decoded.merchant_reference.split(" ").at(-1));
 
       const donation = await strapi.entityService.findOne(
         "api::donation.donation",

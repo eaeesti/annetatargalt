@@ -128,7 +128,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     return { valid: true };
   },
 
-  async createMontonioPayload(donation, { currency = "EUR" } = {}) {
+  async createMontonioPayload(donation, donor, { currency = "EUR" } = {}) {
     const donationInfo = await strapi.db
       .query("api::donation-info.donation-info")
       .findOne();
@@ -140,9 +140,9 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       merchant_return_url: `${process.env.FRONTEND_URL}/${donationInfo.returnPath}`,
       merchant_notification_url: `${process.env.MONTONIO_RETURN_URL}/confirm`,
       payment_information_unstructured: donationInfo.transactionComment,
-      checkout_email: donation.email,
-      checkout_first_name: donation.firstName,
-      checkout_last_name: donation.lastName,
+      checkout_email: donor.email,
+      checkout_first_name: donor.firstName,
+      checkout_last_name: donor.lastName,
     };
 
     return payload;
@@ -172,9 +172,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
         proportions: donation.proportions,
       });
 
-    const payload = await strapi
-      .service("api::donation.donation")
-      .createMontonioPayload(donationEntry);
+    const payload = await this.createMontonioPayload(donationEntry, donor);
     const redirectURL = createPaymentURL(payload);
     return { redirectURL };
   },
