@@ -1,12 +1,12 @@
 # Anneta Targalt
 
-This is a new WIP version of the Anneta Targalt donation platform that will run at https://annetatargalt.ee/.
+This is the code for the Anneta Targalt donation platform that runs at https://annetatargalt.ee/.
 
 The backend runs on [Strapi 4](https://strapi.io/) in the `/backend` directory.
 
 The frontend runs on [Next.js 13](https://nextjs.org/), [HeadlessUI](https://headlessui.com/) and [TailwindCSS](https://tailwindcss.com/) in the `/frontend` directory.
 
-The old platform can be found at https://github.com/eaeesti/annetatargalt.
+The old platform can be found at https://github.com/eaeesti/annetatargalt-old.
 
 ## Setup
 
@@ -15,8 +15,8 @@ The old platform can be found at https://github.com/eaeesti/annetatargalt.
 1\. Clone the repository:
 
 ```
-git clone https://github.com/eaeesti/annetatargalt2.git
-cd annetatargalt2
+git clone https://github.com/eaeesti/annetatargalt.git
+cd annetatargalt
 ```
 
 2\. Run the setup command:
