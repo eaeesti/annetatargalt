@@ -2,6 +2,10 @@
   "name": "annetatargalt",
   "version": "2.0.0",
   "description": "Anneta Targalt donation platform",
+  "license": "AGPL-3.0-or-later",
+  "author": {
+    "name": "Andri Soone"
+  },
   "scripts": {
     "clear": "cd frontend && rm -rf .next && rm -rf cache",
     "develop": "yarn clear && concurrently \"cd frontend && yarn develop\" \"cd backend && yarn develop\"",

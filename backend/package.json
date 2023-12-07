@@ -1,11 +1,11 @@
 {
-  "name": "backend",
-  "version": "0.1.0",
+  "name": "annetatargalt-backend",
+  "version": "2.0.0",
   "private": true,
   "description": "A Strapi application",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "author": {
-    "name": "A Strapi developer"
+    "name": "Andri Soone"
   },
   "scripts": {
     "build": "strapi build",
