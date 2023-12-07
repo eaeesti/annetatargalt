@@ -13,10 +13,12 @@ export default function HeroSection({
       <Image
         data={image}
         className="absolute inset-0 -z-10 hidden h-full w-full object-cover object-[center_75%] xl:block"
+        priority
       />
       <Image
         data={mobileImage}
         className="absolute inset-0 -z-10 h-full w-full object-cover object-[center_80%] xl:hidden"
+        priority
       />
       <div className="absolute inset-0 -z-10 h-full bg-primary-900/70 xl:bg-transparent xl:bg-gradient-to-br xl:from-primary-700/50 xl:from-20% xl:to-transparent"></div>
       <div className="mx-auto flex h-full max-w-6xl flex-col items-center  justify-center xl:items-start">

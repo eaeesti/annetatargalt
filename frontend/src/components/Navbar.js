@@ -22,7 +22,7 @@ export default function Navbar({ global }) {
               className="-m-1.5 rounded-md p-1.5 hover:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
             >
               <span className="sr-only">{title}</span>
-              <Image className="h-8 w-auto" data={navbar.logo} />
+              <Image className="h-8 w-auto" data={navbar.logo} priority />
             </Anchor>
           </div>
           <div className="hidden gap-x-4 lg:flex">
@@ -59,7 +59,11 @@ export default function Navbar({ global }) {
               className="-m-1.5 flex-grow p-1.5 hover:opacity-80"
             >
               <span className="sr-only">{title}</span>
-              <Image className="h-8 w-auto sm:hidden" data={navbar.logo} />
+              <Image
+                className="h-8 w-auto sm:hidden"
+                data={navbar.logo}
+                priority
+              />
             </Anchor>
             <Button {...navbar.ctaButton} />
             <button

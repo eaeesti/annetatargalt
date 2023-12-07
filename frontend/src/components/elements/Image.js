@@ -1,6 +1,11 @@
 import NextImage from "next/image";
 
-export default function Image({ data, className, fill = false }) {
+export default function Image({
+  data,
+  className,
+  fill = false,
+  priority = false,
+}) {
   const image = data.data?.attributes;
 
   if (!image) {
@@ -22,6 +27,7 @@ export default function Image({ data, className, fill = false }) {
         src={image.url}
         alt={image.alternativeText}
         fill={true}
+        priority={priority}
       />
     );
   }
@@ -33,6 +39,7 @@ export default function Image({ data, className, fill = false }) {
       alt={image.alternativeText}
       width={image.width}
       height={image.height}
+      priority={priority}
     />
   );
 }
