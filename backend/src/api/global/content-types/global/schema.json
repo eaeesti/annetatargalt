@@ -32,6 +32,18 @@
       "required": false,
       "allowedTypes": ["images"]
     },
+    "chromeIcon192": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "chromeIcon512": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
     "appleTouchIcon": {
       "type": "media",
       "multiple": false,

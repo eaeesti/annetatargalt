@@ -956,6 +956,8 @@ export interface ApiGlobalGlobal extends Schema.SingleType {
     metadata: Attribute.Component<'meta.metadata'>;
     favicon16: Attribute.Media;
     favicon32: Attribute.Media;
+    chromeIcon192: Attribute.Media;
+    chromeIcon512: Attribute.Media;
     appleTouchIcon: Attribute.Media;
     navbar: Attribute.Component<'meta.navbar'>;
     footer: Attribute.Component<'meta.footer'>;
