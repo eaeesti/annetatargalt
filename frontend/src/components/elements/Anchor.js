@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import ExternalLinkIcon from "../icons/ExternalLinkIcon";
+import { v4 as uuidv4 } from "uuid";
+import { useEffect, useRef } from "react";
 
 export default function Anchor({
   className,
@@ -11,8 +13,15 @@ export default function Anchor({
   children,
   ...rest
 }) {
+  // Overwrite the default id that Next.js generates for the <a> tag
+  const ref = useRef(null);
+  useEffect(() => {
+    if (ref.current) ref.current.id = uuidv4();
+  }, []);
+
   return (
     <Link
+      ref={ref}
       href={href}
       target={newTab ? "_blank" : "_self"}
       rel={newTab ? "noopener noreferrer" : ""}

@@ -22,7 +22,7 @@ export default function Button({
 
   const buttons = {
     primary:
-      "text-white shadow-sm bg-primary-600 hover:bg-primary-500 focus-visible:outline-primary-600 disabled:hover:bg-primary-600",
+      "text-white shadow-sm bg-primary-700 hover:bg-primary-600 focus-visible:outline-primary-700 disabled:hover:bg-primary-600",
     secondary:
       "text-primary-600 shadow-sm bg-primary-100 hover:bg-primary-200 focus-visible:outline-primary-600 disabled:hover:bg-primary-100",
     white:
