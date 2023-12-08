@@ -107,7 +107,7 @@ export async function getEntityBySlug(type, slug) {
   const options = headersWithAuthToken();
   const urlParamsObject = {
     filters: { slug },
-    populate: "deep",
+    populate: "deep,3",
   };
 
   const response = await fetchAPI(path, urlParamsObject, options);
