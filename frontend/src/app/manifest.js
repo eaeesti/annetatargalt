@@ -2,7 +2,6 @@ import { getGlobal } from "@/utils/strapi";
 
 export default async function manifest() {
   const global = await getGlobal();
-  console.log("global", global);
 
   const icons = [];
 

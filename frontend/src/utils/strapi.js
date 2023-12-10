@@ -72,7 +72,7 @@ export async function getGlobal() {
 export async function getSpecialPages() {
   const path = "/special-pages";
   const options = headersWithAuthToken();
-  const urlParamsObject = { populate: "deep" };
+  const urlParamsObject = { populate: "deep,3" };
 
   const response = await fetchAPI(path, urlParamsObject, options);
 
@@ -122,7 +122,7 @@ export async function getEntityBySlug(type, slug) {
 export async function getAllSlugs() {
   const pagesPath = "/pages";
   const options = headersWithAuthToken();
-  const urlParamsObject = { populate: "deep" };
+  const urlParamsObject = { populate: "deep,2" };
 
   const response = await fetchAPI(pagesPath, urlParamsObject, options);
   const pageSlugs = response.data.map(({ attributes }) => attributes.slug);
