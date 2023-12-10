@@ -104,6 +104,8 @@ Settings (left sidebar) → API Tokens (second sidebar) → Create new API Token
 
 Under Permissions, give the token access `find` and `findOne` access for the following:
 
+- `Blog-author`
+- `Blog-post`
 - `Cause`
 - `Global` (does not have `findOne`)
 - `Organization`
