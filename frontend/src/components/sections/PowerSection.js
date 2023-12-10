@@ -21,6 +21,9 @@ export default function PowerSection({ title, column1, column2, bottomText }) {
               <div className="overflow-hidden rounded-3xl bg-white shadow-lg">
                 <Image data={column.image} className="h-full w-full" />
               </div>
+              <Markdown className="prose prose-sm prose-primary -mt-5 mb-3 max-w-full text-right text-xs [&>p>a>svg]:-mt-1">
+                {column.source}
+              </Markdown>
               <Markdown className="prose prose-primary">
                 {column.description}
               </Markdown>

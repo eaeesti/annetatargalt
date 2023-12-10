@@ -84,12 +84,14 @@ export interface ElementsPowerColumn extends Schema.Component {
   collectionName: 'components_elements_power_columns';
   info: {
     displayName: 'PowerColumn';
+    description: '';
   };
   attributes: {
     title: Attribute.String;
     image: Attribute.Media;
     description: Attribute.RichText;
     button: Attribute.Component<'elements.button'>;
+    source: Attribute.String;
   };
 }
 
