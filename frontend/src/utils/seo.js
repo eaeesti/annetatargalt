@@ -1,5 +1,8 @@
 export function buildMetadata(global, pageMetadata) {
   const globalMetadata = global.metadata;
+
+  if (!pageMetadata) return globalMetadata;
+
   let title = globalMetadata.title;
   if (pageMetadata.title) title = `${pageMetadata.title} • ${title}`;
 

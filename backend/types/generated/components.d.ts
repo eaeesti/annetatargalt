@@ -365,6 +365,16 @@ export interface SectionsPowerSection extends Schema.Component {
   };
 }
 
+export interface SectionsRedirectSection extends Schema.Component {
+  collectionName: 'components_sections_redirect_sections';
+  info: {
+    displayName: 'RedirectSection';
+  };
+  attributes: {
+    destination: Attribute.String;
+  };
+}
+
 export interface SectionsStatsSection extends Schema.Component {
   collectionName: 'components_sections_stats_sections';
   info: {
@@ -519,6 +529,7 @@ declare module '@strapi/types' {
       'sections.header-section': SectionsHeaderSection;
       'sections.hero-section': SectionsHeroSection;
       'sections.power-section': SectionsPowerSection;
+      'sections.redirect-section': SectionsRedirectSection;
       'sections.stats-section': SectionsStatsSection;
       'sections.team-section': SectionsTeamSection;
       'sections.testimonials-section': SectionsTestimonialsSection;

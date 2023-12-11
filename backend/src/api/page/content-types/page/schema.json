@@ -40,7 +40,8 @@
         "sections.contact-section",
         "sections.faq-section",
         "sections.stats-section",
-        "sections.campaign-section"
+        "sections.campaign-section",
+        "sections.redirect-section"
       ]
     }
   }

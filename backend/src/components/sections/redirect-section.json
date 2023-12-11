@@ -1,0 +1,12 @@
+{
+  "collectionName": "components_sections_redirect_sections",
+  "info": {
+    "displayName": "RedirectSection"
+  },
+  "options": {},
+  "attributes": {
+    "destination": {
+      "type": "string"
+    }
+  }
+}
