@@ -1,0 +1,29 @@
+{
+  "collectionName": "components_sections_campaign_sections",
+  "info": {
+    "displayName": "CampaignSection",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "topText": {
+      "type": "richtext"
+    },
+    "bottomText": {
+      "type": "richtext"
+    },
+    "goals": {
+      "type": "json"
+    },
+    "decoration": {
+      "allowedTypes": [
+        "images"
+      ],
+      "type": "media",
+      "multiple": false
+    }
+  }
+}

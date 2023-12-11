@@ -195,6 +195,21 @@ export interface MetaNotFoundPage extends Schema.Component {
   };
 }
 
+export interface SectionsCampaignSection extends Schema.Component {
+  collectionName: 'components_sections_campaign_sections';
+  info: {
+    displayName: 'CampaignSection';
+    description: '';
+  };
+  attributes: {
+    title: Attribute.String;
+    topText: Attribute.RichText;
+    bottomText: Attribute.RichText;
+    goals: Attribute.JSON;
+    decoration: Attribute.Media;
+  };
+}
+
 export interface SectionsCausesSection extends Schema.Component {
   collectionName: 'components_sections_causes_sections';
   info: {
@@ -495,6 +510,7 @@ declare module '@strapi/types' {
       'meta.metadata': MetaMetadata;
       'meta.navbar': MetaNavbar;
       'meta.not-found-page': MetaNotFoundPage;
+      'sections.campaign-section': SectionsCampaignSection;
       'sections.causes-section': SectionsCausesSection;
       'sections.contact-section': SectionsContactSection;
       'sections.cta-section': SectionsCtaSection;

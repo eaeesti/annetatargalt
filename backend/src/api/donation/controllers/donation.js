@@ -193,9 +193,20 @@ module.exports = createCoreController(
         return ctx.badRequest("Failed to get donation count");
       }
 
+      let campaignSum;
+      try {
+        campaignSum = await strapi
+          .service("api::donation.donation")
+          .sumOfFinalizedCampaignDonations();
+      } catch (error) {
+        console.error(error);
+        return ctx.badRequest("Failed to get campaign donation count");
+      }
+
       return ctx.send({
         // donorCount,
         donationSum,
+        campaignSum,
       });
     },
   })

@@ -505,4 +505,16 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     const totalAmount = Number(result.rows[0].total_amount);
     return totalAmount;
   },
+
+  async sumOfFinalizedCampaignDonations() {
+    const result = await strapi.db.connection.raw(
+      `SELECT SUM(donations.amount) AS total_amount
+       FROM donations
+       WHERE donations.finalized = true
+       AND donations.datetime >= '2023-12-01 00:00:00'
+       AND donations.datetime <= '2023-12-31 23:59:59'`
+    );
+    const totalAmount = Number(result.rows[0].total_amount);
+    return totalAmount;
+  },
 }));

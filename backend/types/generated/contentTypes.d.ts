@@ -1229,7 +1229,8 @@ export interface ApiPagePage extends Schema.CollectionType {
         'sections.testimonials-section',
         'sections.contact-section',
         'sections.faq-section',
-        'sections.stats-section'
+        'sections.stats-section',
+        'sections.campaign-section'
       ]
     >;
     createdAt: Attribute.DateTime;
