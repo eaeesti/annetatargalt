@@ -45,10 +45,12 @@
       "type": "text"
     },
     "companyName": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 128
     },
     "companyCode": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 128
     },
     "organizationDonations": {
       "type": "relation",
@@ -65,6 +67,18 @@
     "sentToOrganization": {
       "type": "boolean",
       "default": false
+    },
+    "dedicationName": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "dedicationEmail": {
+      "type": "string",
+      "maxLength": 256
+    },
+    "dedicationMessage": {
+      "type": "text",
+      "maxLength": 1024
     }
   }
 }

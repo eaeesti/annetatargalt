@@ -860,8 +860,14 @@ export interface ApiDonationDonation extends Schema.CollectionType {
     paymentMethod: Attribute.String;
     iban: Attribute.String;
     comment: Attribute.Text;
-    companyName: Attribute.String;
-    companyCode: Attribute.String;
+    companyName: Attribute.String &
+      Attribute.SetMinMaxLength<{
+        maxLength: 128;
+      }>;
+    companyCode: Attribute.String &
+      Attribute.SetMinMaxLength<{
+        maxLength: 128;
+      }>;
     organizationDonations: Attribute.Relation<
       'api::donation.donation',
       'oneToMany',
@@ -870,6 +876,18 @@ export interface ApiDonationDonation extends Schema.CollectionType {
     tipSize: Attribute.Float;
     tipAmount: Attribute.Integer;
     sentToOrganization: Attribute.Boolean & Attribute.DefaultTo<false>;
+    dedicationName: Attribute.String &
+      Attribute.SetMinMaxLength<{
+        maxLength: 128;
+      }>;
+    dedicationEmail: Attribute.String &
+      Attribute.SetMinMaxLength<{
+        maxLength: 256;
+      }>;
+    dedicationMessage: Attribute.Text &
+      Attribute.SetMinMaxLength<{
+        maxLength: 1024;
+      }>;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -1000,6 +1018,11 @@ export interface ApiEmailConfigEmailConfig extends Schema.SingleType {
     contactFormSubmissionHtml: Attribute.Text;
     contactFormSubmissionRecipients: Attribute.Text;
     contactFormSubmissionSubject: Attribute.String;
+    dedicationSubject: Attribute.String;
+    dedicationText: Attribute.Text;
+    dedicationHtml: Attribute.Text;
+    dedicationMessageText: Attribute.Text;
+    dedicationMessageHtml: Attribute.Text;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<

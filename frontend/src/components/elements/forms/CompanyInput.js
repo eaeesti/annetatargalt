@@ -46,7 +46,6 @@ export default function CompanyInput({
             label={companyNameText}
             autoComplete="company-name"
             maxLength={128}
-            autoFocus
           />
           <TextInput
             name="companyCode"

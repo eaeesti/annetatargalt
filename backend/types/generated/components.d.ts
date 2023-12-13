@@ -311,6 +311,10 @@ export interface SectionsDonationSection extends Schema.Component {
     donateAsCompanyText: Attribute.String;
     companyNameText: Attribute.String;
     companyCodeText: Attribute.String;
+    dedicateDonationText: Attribute.String;
+    dedicationNameText: Attribute.String;
+    dedicationEmailText: Attribute.String;
+    dedicationMessageText: Attribute.String;
   };
 }
 

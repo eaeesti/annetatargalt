@@ -129,6 +129,18 @@
     },
     "companyCodeText": {
       "type": "string"
+    },
+    "dedicateDonationText": {
+      "type": "string"
+    },
+    "dedicationNameText": {
+      "type": "string"
+    },
+    "dedicationEmailText": {
+      "type": "string"
+    },
+    "dedicationMessageText": {
+      "type": "string"
     }
   }
 }

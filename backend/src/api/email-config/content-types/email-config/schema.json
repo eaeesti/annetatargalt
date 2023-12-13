@@ -35,6 +35,21 @@
     },
     "contactFormSubmissionSubject": {
       "type": "string"
+    },
+    "dedicationSubject": {
+      "type": "string"
+    },
+    "dedicationText": {
+      "type": "text"
+    },
+    "dedicationHtml": {
+      "type": "text"
+    },
+    "dedicationMessageText": {
+      "type": "text"
+    },
+    "dedicationMessageHtml": {
+      "type": "text"
     }
   }
 }

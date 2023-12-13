@@ -1,7 +1,7 @@
 import { classes } from "@/utils/react";
 import { useEffect, useState } from "react";
 
-export default function TextInput({
+export default function TextareaInput({
   name,
   value,
   setValue,
@@ -9,9 +9,9 @@ export default function TextInput({
   isValid,
   label,
   placeholder,
-  autoComplete,
   autoFocus = false,
   maxLength,
+  rows = 4,
   description,
 }) {
   const [error, setError] = useState(false);
@@ -33,13 +33,13 @@ export default function TextInput({
         {label}
       </label>
       <div className="mt-2">
-        <input
-          type="text"
+        <textarea
           name={name}
           id={name}
-          autoComplete={autoComplete}
           autoFocus={autoFocus}
           maxLength={maxLength}
+          rows={rows}
+          placeholder={placeholder}
           className={classes(
             error
               ? "ring-red-500 focus:ring-red-500"
@@ -52,8 +52,7 @@ export default function TextInput({
             setError(!isValid(event.target.value));
           }}
           onBlur={() => setError(!isValid(value))}
-          placeholder={placeholder}
-        />
+        ></textarea>
       </div>
       {description && (
         <p className="mt-2 text-xs text-slate-500">{description}</p>

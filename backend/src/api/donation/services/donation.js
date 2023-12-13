@@ -10,6 +10,11 @@ const {
 const { createRecurringPaymentLink } = require("../../../utils/banks");
 const { createPaymentURL } = require("../../../utils/montonio");
 const { formatEstonianAmount } = require("../../../utils/estonia");
+const {
+  format,
+  textIntoParagraphs,
+  sanitize,
+} = require("../../../utils/string");
 
 module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   async validateDonation(donation) {
@@ -62,6 +67,33 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
         valid: false,
         reason: `Invalid donation type: ${donation.type}`,
       };
+    }
+
+    if (donation.companyName || donation.companyCode) {
+      if (!donation.companyName) {
+        return { valid: false, reason: "No company name provided" };
+      }
+
+      if (!donation.companyCode) {
+        return { valid: false, reason: "No company code provided" };
+      }
+    }
+
+    if (donation.dedicationName || donation.dedicationEmail) {
+      if (!donation.dedicationName) {
+        return { valid: false, reason: "No dedication name provided" };
+      }
+
+      if (!donation.dedicationEmail) {
+        return { valid: false, reason: "No dedication email provided" };
+      }
+
+      if (!validateEmail(donation.dedicationEmail)) {
+        return {
+          valid: false,
+          reason: `Invalid dedication email: ${donation.email}`,
+        };
+      }
     }
 
     const allProportions = [Object.values(donation.proportions)].concat(
@@ -160,6 +192,9 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
           datetime: new Date(),
           companyName: donation.companyName,
           companyCode: donation.companyCode,
+          dedicationName: donation.dedicationName,
+          dedicationEmail: donation.dedicationEmail,
+          dedicationMessage: donation.dedicationMessage,
         },
       }
     );
@@ -252,7 +287,9 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
 
     const data = {
       firstName: donation.donor.firstName,
+      firstNameHtml: sanitize(donation.donor.firstName),
       lastName: donation.donor.lastName,
+      lastNameHtml: sanitize(donation.donor.lastName),
       amount: formatEstonianAmount(donation.amount / 100),
       currency: global.currency,
     };
@@ -275,6 +312,66 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       {
         to: donation.donor.email,
         replyTo: emailConfig.confirmationReplyTo,
+      },
+      template,
+      data
+    );
+  },
+
+  async sendDedicationEmail(donationId) {
+    const emailConfig = await strapi.db
+      .query("api::email-config.email-config")
+      .findOne();
+
+    const global = await strapi.db.query("api::global.global").findOne();
+
+    const donation = await strapi.entityService.findOne(
+      "api::donation.donation",
+      donationId,
+      {
+        fields: [
+          "amount",
+          "dedicationEmail",
+          "dedicationMessage",
+          "dedicationName",
+        ],
+        populate: ["donor"],
+      }
+    );
+
+    const template = {
+      subject: emailConfig.dedicationSubject,
+    };
+
+    template.text = format(emailConfig.dedicationText, {
+      message: donation.dedicationMessage
+        ? emailConfig.dedicationMessageText
+        : "",
+    });
+    template.html = format(emailConfig.dedicationHtml, {
+      messageHtml: donation.dedicationMessage
+        ? emailConfig.dedicationMessageHtml
+        : "",
+    });
+
+    const data = {
+      dedicationName: donation.dedicationName,
+      donorName: `${donation.donor.firstName} ${donation.donor.lastName}`,
+      amount: formatEstonianAmount(donation.amount / 100),
+      currency: global.currency,
+      dedicationMessage: `"${donation.dedicationMessage}"`,
+    };
+
+    data.dedicationNameHtml = sanitize(data.dedicationName);
+    data.donorNameHtml = sanitize(data.donorName);
+    data.dedicationMessageHtml = textIntoParagraphs(
+      sanitize(data.dedicationMessage)
+    );
+
+    await strapi.plugins["email"].services.email.sendTemplatedEmail(
+      {
+        to: donation.dedicationEmail,
+        replyTo: donation.donor.email,
       },
       template,
       data

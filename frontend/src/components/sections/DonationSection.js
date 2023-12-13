@@ -22,6 +22,7 @@ import PaymentSummary from "../elements/forms/PaymentSummary";
 import Modal from "../Modal";
 import CompanyInput from "../elements/forms/CompanyInput";
 import { usePlausible } from "next-plausible";
+import DedicationInput from "../elements/forms/DedicationInput";
 
 export default function DonationSection(props) {
   const router = useRouter();
@@ -52,6 +53,10 @@ export default function DonationSection(props) {
     companyDonation: false,
     companyName: "",
     companyCode: "",
+    dedicateDonation: false,
+    dedicationName: "",
+    dedicationEmail: "",
+    dedicationMessage: "",
     proportions: Proportions.fromStrapiData(props.causes.data),
     addTip: false,
     acceptTerms: false,
@@ -66,6 +71,7 @@ export default function DonationSection(props) {
       "email",
       "idCode",
       "company",
+      "dedication",
     ]).every(Boolean),
     2:
       donation.acceptTerms &&
@@ -94,6 +100,11 @@ export default function DonationSection(props) {
     if (donation.companyDonation) {
       donationData.companyName = donation.companyName;
       donationData.companyCode = donation.companyCode;
+    }
+    if (donation.dedicateDonation && donation.type === "onetime") {
+      donationData.dedicationName = donation.dedicationName;
+      donationData.dedicationEmail = donation.dedicationEmail;
+      donationData.dedicationMessage = donation.dedicationMessage;
     }
 
     const response = await makeDonationRequest(donation);
@@ -233,6 +244,31 @@ export default function DonationSection(props) {
                 }
                 setValidity={setValidity}
               />
+              {donation.type === "onetime" && (
+                <DedicationInput
+                  dedicateDonationText={props.dedicateDonationText}
+                  dedicateDonation={donation.dedicateDonation}
+                  setDedicateDonation={(dedicateDonation) =>
+                    setDonation({ ...donation, dedicateDonation })
+                  }
+                  dedicationNameText={props.dedicationNameText}
+                  dedicationName={donation.dedicationName}
+                  setDedicationName={(dedicationName) =>
+                    setDonation({ ...donation, dedicationName })
+                  }
+                  dedicationEmailText={props.dedicationEmailText}
+                  dedicationEmail={donation.dedicationEmail}
+                  setDedicationEmail={(dedicationEmail) =>
+                    setDonation({ ...donation, dedicationEmail })
+                  }
+                  dedicationMessageText={props.dedicationMessageText}
+                  dedicationMessage={donation.dedicationMessage}
+                  setDedicationMessage={(dedicationMessage) =>
+                    setDonation({ ...donation, dedicationMessage })
+                  }
+                  setValidity={setValidity}
+                />
+              )}
               <Button
                 text={props.nextButtonText}
                 type="primary"

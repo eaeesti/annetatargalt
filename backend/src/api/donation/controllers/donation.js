@@ -97,6 +97,10 @@ module.exports = createCoreController(
 
       await strapi.service("api::donation.donation").sendConfirmationEmail(id);
 
+      if (donation.dedicationEmail) {
+        await strapi.service("api::donation.donation").sendDedicationEmail(id);
+      }
+
       return ctx.send();
     },
 
