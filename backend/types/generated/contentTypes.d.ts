@@ -1070,6 +1070,7 @@ export interface ApiGlobalGlobal extends Schema.SingleType {
     currency: Attribute.String & Attribute.DefaultTo<'\u20AC'>;
     tipOrganization: Attribute.String;
     dateLocale: Attribute.Enumeration<['et-EE']>;
+    blogSlug: Attribute.String;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<

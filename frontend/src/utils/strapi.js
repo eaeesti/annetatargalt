@@ -124,8 +124,8 @@ export async function getAllSlugs() {
   const options = headersWithAuthToken();
   const urlParamsObject = { populate: "deep,2" };
 
-  const response = await fetchAPI(pagesPath, urlParamsObject, options);
-  const pageSlugs = response.data.map(({ attributes }) => attributes.slug);
+  const pagesResponse = await fetchAPI(pagesPath, urlParamsObject, options);
+  const pageSlugs = pagesResponse.data.map(({ attributes }) => attributes.slug);
 
   const causesPath = "/causes";
   const causesResponse = await fetchAPI(causesPath, urlParamsObject, options);
@@ -140,7 +140,19 @@ export async function getAllSlugs() {
     )
     .flat();
 
-  const allSlugs = [...pageSlugs, ...causeSlugs, ...organizationSlugs];
+  const blogPosts = await getBlogPosts();
+  const global = await getGlobal();
+  const blogPostSlugs = blogPosts.map(
+    (blogPost) => `${global.blogSlug}/${blogPost.slug}`,
+  );
+
+  const allSlugs = [
+    ...pageSlugs,
+    ...causeSlugs,
+    ...organizationSlugs,
+    ...blogPostSlugs,
+  ];
+  console.log(allSlugs);
 
   return allSlugs;
 }

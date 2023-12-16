@@ -24,41 +24,31 @@
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": [
-        "images"
-      ]
+      "allowedTypes": ["images"]
     },
     "favicon32": {
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": [
-        "images"
-      ]
+      "allowedTypes": ["images"]
     },
     "chromeIcon192": {
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": [
-        "images"
-      ]
+      "allowedTypes": ["images"]
     },
     "chromeIcon512": {
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": [
-        "images"
-      ]
+      "allowedTypes": ["images"]
     },
     "appleTouchIcon": {
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": [
-        "images"
-      ]
+      "allowedTypes": ["images"]
     },
     "navbar": {
       "type": "component",
@@ -99,9 +89,10 @@
     },
     "dateLocale": {
       "type": "enumeration",
-      "enum": [
-        "et-EE"
-      ]
+      "enum": ["et-EE"]
+    },
+    "blogSlug": {
+      "type": "string"
     }
   }
 }
