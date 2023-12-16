@@ -33,7 +33,8 @@
         "special-sections.cause-organizations-section",
         "special-sections.entity-text-section",
         "special-sections.org-header-section",
-        "special-sections.organization-cta-section"
+        "special-sections.organization-cta-section",
+        "special-sections.blog-header-section"
       ]
     }
   }

@@ -1,0 +1,15 @@
+{
+  "collectionName": "components_special_sections_blog_header_sections",
+  "info": {
+    "displayName": "BlogHeaderSection",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "backButton": {
+      "type": "component",
+      "repeatable": false,
+      "component": "elements.button"
+    }
+  }
+}

@@ -195,6 +195,14 @@ export interface MetaNotFoundPage extends Schema.Component {
   };
 }
 
+export interface SectionsBlogPostsSection extends Schema.Component {
+  collectionName: 'components_sections_blog_posts_sections';
+  info: {
+    displayName: 'BlogPostsSection';
+  };
+  attributes: {};
+}
+
 export interface SectionsCampaignSection extends Schema.Component {
   collectionName: 'components_sections_campaign_sections';
   info: {
@@ -444,6 +452,17 @@ export interface SectionsThankYouSection extends Schema.Component {
   };
 }
 
+export interface SpecialSectionsBlogHeaderSection extends Schema.Component {
+  collectionName: 'components_special_sections_blog_header_sections';
+  info: {
+    displayName: 'BlogHeaderSection';
+    description: '';
+  };
+  attributes: {
+    backButton: Attribute.Component<'elements.button'>;
+  };
+}
+
 export interface SpecialSectionsCauseOrganizationsSection
   extends Schema.Component {
   collectionName: 'components_special_sections_cause_organizations_sections';
@@ -524,6 +543,7 @@ declare module '@strapi/types' {
       'meta.metadata': MetaMetadata;
       'meta.navbar': MetaNavbar;
       'meta.not-found-page': MetaNotFoundPage;
+      'sections.blog-posts-section': SectionsBlogPostsSection;
       'sections.campaign-section': SectionsCampaignSection;
       'sections.causes-section': SectionsCausesSection;
       'sections.contact-section': SectionsContactSection;
@@ -539,6 +559,7 @@ declare module '@strapi/types' {
       'sections.testimonials-section': SectionsTestimonialsSection;
       'sections.text-section': SectionsTextSection;
       'sections.thank-you-section': SectionsThankYouSection;
+      'special-sections.blog-header-section': SpecialSectionsBlogHeaderSection;
       'special-sections.cause-organizations-section': SpecialSectionsCauseOrganizationsSection;
       'special-sections.entity-text-section': SpecialSectionsEntityTextSection;
       'special-sections.org-header-section': SpecialSectionsOrgHeaderSection;

@@ -145,6 +145,18 @@ export async function getAllSlugs() {
   return allSlugs;
 }
 
+export async function getBlogPosts() {
+  const path = "/blog-posts";
+  const options = headersWithAuthToken();
+  const urlParamsObject = { populate: "deep,2", sort: "date:desc" };
+
+  const response = await fetchAPI(path, urlParamsObject, options);
+
+  const blogPosts = response.data.map(({ attributes }) => attributes);
+
+  return blogPosts;
+}
+
 export function strapiSectionNameToReactComponentName(component) {
   return snakeCaseToPascalCase(component.split(".")[1]);
 }

@@ -41,7 +41,8 @@
         "sections.faq-section",
         "sections.stats-section",
         "sections.campaign-section",
-        "sections.redirect-section"
+        "sections.redirect-section",
+        "sections.blog-posts-section"
       ]
     }
   }

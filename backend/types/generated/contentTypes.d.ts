@@ -1069,6 +1069,7 @@ export interface ApiGlobalGlobal extends Schema.SingleType {
     totalText: Attribute.String;
     currency: Attribute.String & Attribute.DefaultTo<'\u20AC'>;
     tipOrganization: Attribute.String;
+    dateLocale: Attribute.Enumeration<['et-EE']>;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -1254,7 +1255,8 @@ export interface ApiPagePage extends Schema.CollectionType {
         'sections.faq-section',
         'sections.stats-section',
         'sections.campaign-section',
-        'sections.redirect-section'
+        'sections.redirect-section',
+        'sections.blog-posts-section'
       ]
     >;
     createdAt: Attribute.DateTime;
@@ -1346,7 +1348,8 @@ export interface ApiSpecialPageSpecialPage extends Schema.CollectionType {
         'special-sections.cause-organizations-section',
         'special-sections.entity-text-section',
         'special-sections.org-header-section',
-        'special-sections.organization-cta-section'
+        'special-sections.organization-cta-section',
+        'special-sections.blog-header-section'
       ]
     >;
     createdAt: Attribute.DateTime;
