@@ -213,5 +213,34 @@ module.exports = createCoreController(
         campaignSum,
       });
     },
+
+    async findTransaction(ctx) {
+      const { idCode, amount, date } = ctx.request.query;
+
+      let donation;
+      try {
+        donation = await strapi
+          .service("api::donation.donation")
+          .findTransactionDonation({ idCode, amount, date });
+      } catch (error) {
+        console.error(error);
+        return ctx.badRequest(error.message);
+      }
+
+      return ctx.send({ donation });
+    },
+
+    async insertTransaction(ctx) {
+      const { idCode, amount, date, iban } = ctx.request.body;
+
+      await strapi.service("api::donation.donation").insertFromTransaction({
+        idCode,
+        amount,
+        date,
+        iban,
+      });
+
+      return ctx.send();
+    },
   })
 );

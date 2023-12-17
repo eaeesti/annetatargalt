@@ -468,6 +468,9 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
             paymentMethod: donation.paymentMethod,
             iban: donation.iban,
             finalized: donation.finalized,
+            dedicationName: donation.dedicationName,
+            dedicationEmail: donation.dedicationEmail,
+            dedicationMessage: donation.dedicationMessage,
             recurringDonation: donation.recurringDonation
               ? recurringDonationMap[donation.recurringDonation]
               : null,
@@ -613,5 +616,109 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     );
     const totalAmount = Number(result.rows[0].total_amount);
     return totalAmount;
+  },
+
+  async findTransactionDonation({ idCode, date, amount }) {
+    const donor = await strapi.service("api::donor.donor").findDonor(idCode);
+
+    if (!donor) {
+      throw new Error("Donor not found");
+    }
+
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+    startDate.setHours(startDate.getHours() + 2);
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+    endDate.setHours(endDate.getHours() + 2);
+
+    const donations = await strapi.entityService.findMany(
+      "api::donation.donation",
+      {
+        filters: {
+          donor: donor.id,
+          amount: amount * 100,
+          datetime: {
+            $gte: startDate,
+            $lte: endDate,
+          },
+        },
+      }
+    );
+
+    if (donations.length === 0) {
+      return null;
+    }
+
+    if (donations.length > 1) {
+      throw new Error("Multiple donations found");
+    }
+
+    return donations[0];
+  },
+
+  async insertFromTransaction({ idCode, date, amount, iban }) {
+    const donor = await strapi.service("api::donor.donor").findDonor(idCode);
+
+    if (!donor) {
+      throw new Error("Donor not found");
+    }
+
+    const datetime = new Date(date);
+    datetime.setHours(12, 0, 0, 0);
+
+    const latestRecurringDonations = await strapi.entityService.findMany(
+      "api::recurring-donation.recurring-donation",
+      {
+        filters: {
+          donor: donor.id,
+        },
+        populate: [
+          "organizationRecurringDonations",
+          "organizationRecurringDonations.organization",
+        ],
+        sort: "datetime:desc",
+        limit: 1,
+      }
+    );
+
+    if (!latestRecurringDonations || latestRecurringDonations.length === 0) {
+      throw new Error("No recurring donations found");
+    }
+
+    const recurringDonation = latestRecurringDonations[0];
+
+    const totalAmount = amount * 100;
+    const tipSize = recurringDonation.tipSize;
+    const tipAmount = Math.round(tipSize * totalAmount);
+    const amountWithoutTip = totalAmount - tipAmount;
+
+    const donation = await strapi.entityService.create(
+      "api::donation.donation",
+      {
+        data: {
+          donor: donor.id,
+          recurringDonation: recurringDonation.id,
+          amount: totalAmount,
+          datetime,
+          finalized: true,
+          companyName: recurringDonation.companyName,
+          companyCode: recurringDonation.companyCode,
+          tipSize,
+          tipAmount,
+          iban,
+          paymentMethod: recurringDonation.bank,
+        },
+      }
+    );
+
+    await strapi
+      .service("api::organization-donation.organization-donation")
+      .createFromOrganizationRecurringDonations({
+        donationId: donation.id,
+        donationAmount: amountWithoutTip,
+        organizationRecurringDonations:
+          recurringDonation.organizationRecurringDonations,
+      });
   },
 }));

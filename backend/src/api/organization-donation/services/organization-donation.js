@@ -30,5 +30,33 @@ module.exports = createCoreService(
         )
       );
     },
+
+    async createFromOrganizationRecurringDonations({
+      donationId,
+      donationAmount,
+      organizationRecurringDonations,
+    }) {
+      Promise.all(
+        organizationRecurringDonations.map(
+          async (organizationRecurringDonation) => {
+            const amount = Math.round(
+              donationAmount * organizationRecurringDonation.proportion
+            );
+
+            await strapi.entityService.create(
+              "api::organization-donation.organization-donation",
+              {
+                data: {
+                  donation: donationId,
+                  organization: organizationRecurringDonation.organization.id,
+                  proportion: organizationRecurringDonation.proportion,
+                  amount,
+                },
+              }
+            );
+          }
+        )
+      );
+    },
   })
 );
