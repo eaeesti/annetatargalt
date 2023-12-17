@@ -14,6 +14,8 @@ export default function Anchor({
   ...rest
 }) {
   // Overwrite the default id that Next.js generates for the <a> tag
+  // (because it generates duplicate IDs which is invalid HTML)
+  // (and lighthouse complains about it)
   const ref = useRef(null);
   useEffect(() => {
     if (ref.current) ref.current.id = uuidv4();
@@ -31,10 +33,7 @@ export default function Anchor({
     >
       {children}
       {newTab && !noIcon && (
-        <>
-          <span className="sr-only">(opens in new tab)</span>
-          <ExternalLinkIcon className="ml-1 inline h-4 w-4" />
-        </>
+        <ExternalLinkIcon className="ml-1 inline h-4 w-4" />
       )}
     </Link>
   );
