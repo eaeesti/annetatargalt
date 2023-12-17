@@ -152,7 +152,6 @@ export async function getAllSlugs() {
     ...organizationSlugs,
     ...blogPostSlugs,
   ];
-  console.log(allSlugs);
 
   return allSlugs;
 }

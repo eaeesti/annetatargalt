@@ -12,7 +12,7 @@ import IdCodeInput from "../elements/forms/IdCodeInput";
 import { formatEstonianAmount } from "@/utils/estonia";
 import CheckboxInput from "../elements/forms/CheckboxInput";
 import { makeDonationRequest } from "@/utils/donation";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import BankChooser from "../elements/forms/BankChooser";
 import Markdown from "../elements/Markdown";
 import { format } from "@/utils/string";
@@ -27,6 +27,7 @@ import DedicationInput from "../elements/forms/DedicationInput";
 export default function DonationSection(props) {
   const router = useRouter();
   const plausible = usePlausible();
+  const searchParams = useSearchParams();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState({});
@@ -41,10 +42,11 @@ export default function DonationSection(props) {
     value: amount,
     label: `${amount}${props.global.currency}`,
   }));
+  const typeParam = searchParams.get("type");
 
   const [donation, setDonation] = useState({
     amount: amountOptions[1].value,
-    type: "recurring",
+    type: typeParam === "onetime" ? "onetime" : "recurring",
     firstName: "",
     lastName: "",
     email: "",
