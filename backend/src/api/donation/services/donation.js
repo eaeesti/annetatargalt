@@ -658,21 +658,24 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   },
 
   async insertFromTransaction({ idCode, date, amount, iban }) {
-    const donor = await strapi.service("api::donor.donor").findDonor(idCode);
+    let donor = await strapi.service("api::donor.donor").findDonor(idCode);
 
     if (!donor) {
-      throw new Error("Donor not found");
+      throw new Error(`Donor not found for ID code ${idCode}`);
     }
 
-    const datetime = new Date(date);
-    datetime.setHours(12, 0, 0, 0);
+    const filters = {
+      donor: donor.id,
+    };
+
+    if (idCode.length !== 11) {
+      filters.companyCode = idCode;
+    }
 
     const latestRecurringDonations = await strapi.entityService.findMany(
       "api::recurring-donation.recurring-donation",
       {
-        filters: {
-          donor: donor.id,
-        },
+        filters,
         populate: [
           "organizationRecurringDonations",
           "organizationRecurringDonations.organization",
@@ -682,7 +685,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       }
     );
 
-    if (!latestRecurringDonations || latestRecurringDonations.length === 0) {
+    if (latestRecurringDonations.length === 0) {
       throw new Error("No recurring donations found");
     }
 
@@ -692,6 +695,9 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     const tipSize = recurringDonation.tipSize;
     const tipAmount = Math.round(tipSize * totalAmount);
     const amountWithoutTip = totalAmount - tipAmount;
+
+    const datetime = new Date(date);
+    datetime.setHours(12, 0, 0, 0);
 
     const donation = await strapi.entityService.create(
       "api::donation.donation",

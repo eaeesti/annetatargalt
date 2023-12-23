@@ -17,6 +17,22 @@ module.exports = createCoreService("api::donor.donor", ({ strapi }) => ({
       return existingDonorEntries[0];
     }
 
+    const recurringDonations = await strapi.entityService.findMany(
+      "api::recurring-donation.recurring-donation",
+      {
+        filters: {
+          companyCode: idCode,
+        },
+        populate: ["donor"],
+        sort: "datetime:desc",
+        limit: 1,
+      }
+    );
+
+    if (recurringDonations.length > 0) {
+      return recurringDonations[0].donor;
+    }
+
     return null;
   },
 
