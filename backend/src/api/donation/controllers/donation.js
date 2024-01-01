@@ -242,5 +242,12 @@ module.exports = createCoreController(
 
       return ctx.send();
     },
+
+    async insertDonation(ctx) {
+      const donation = { ...ctx.request.body };
+      await strapi.service("api::donation.donation").insertDonation(donation);
+
+      return ctx.send();
+    },
   })
 );

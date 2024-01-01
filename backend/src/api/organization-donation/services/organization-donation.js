@@ -58,5 +58,29 @@ module.exports = createCoreService(
         )
       );
     },
+
+    async createFromArray({
+      donationId,
+      donationAmount,
+      organizationDonations,
+    }) {
+      Promise.all(
+        organizationDonations.map(async (organizationDonation) => {
+          const proportion = organizationDonation.amount / donationAmount;
+
+          await strapi.entityService.create(
+            "api::organization-donation.organization-donation",
+            {
+              data: {
+                donation: donationId,
+                organization: organizationDonation.organization,
+                proportion,
+                amount: organizationDonation.amount,
+              },
+            }
+          );
+        })
+      );
+    },
   })
 );

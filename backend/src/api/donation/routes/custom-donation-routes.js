@@ -41,6 +41,11 @@ module.exports = {
       handler: "donation.insertTransaction",
     },
     {
+      method: "POST",
+      path: "/donations/insertDonation",
+      handler: "donation.insertDonation",
+    },
+    {
       method: "GET",
       path: "/stats",
       handler: "donation.stats",

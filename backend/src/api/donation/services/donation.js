@@ -727,4 +727,26 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
           recurringDonation.organizationRecurringDonations,
       });
   },
+
+  async insertDonation(donationData) {
+    const {
+      organizationDonations,
+      ...donationDataWithoutOrganizationDonations
+    } = donationData;
+
+    const donation = await strapi.entityService.create(
+      "api::donation.donation",
+      {
+        data: donationDataWithoutOrganizationDonations,
+      }
+    );
+
+    await strapi
+      .service("api::organization-donation.organization-donation")
+      .createFromArray({
+        donationId: donation.id,
+        donationAmount: donation.amount,
+        organizationDonations,
+      });
+  },
 }));
