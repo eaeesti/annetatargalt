@@ -971,6 +971,7 @@ export interface ApiDonorDonor extends Schema.CollectionType {
       Attribute.SetMinMaxLength<{
         maxLength: 256;
       }>;
+    recurringDonor: Attribute.Boolean;
     donations: Attribute.Relation<
       'api::donor.donor',
       'oneToMany',

@@ -31,6 +31,9 @@
       "type": "email",
       "maxLength": 256
     },
+    "recurringDonor": {
+      "type": "boolean"
+    },
     "donations": {
       "type": "relation",
       "relation": "oneToMany",
