@@ -1183,6 +1183,8 @@ export interface ApiGlobalGlobal extends Schema.SingleType {
     tipOrganization: Attribute.String;
     dateLocale: Attribute.Enumeration<['et-EE']>;
     blogSlug: Attribute.String;
+    donateText: Attribute.String;
+    readMoreText: Attribute.String;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -1369,7 +1371,8 @@ export interface ApiPagePage extends Schema.CollectionType {
         'sections.stats-section',
         'sections.campaign-section',
         'sections.redirect-section',
-        'sections.blog-posts-section'
+        'sections.blog-posts-section',
+        'sections.organizations-section'
       ]
     >;
     createdAt: Attribute.DateTime;

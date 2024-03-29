@@ -364,6 +364,14 @@ export interface SectionsHeroSection extends Schema.Component {
   };
 }
 
+export interface SectionsOrganizationsSection extends Schema.Component {
+  collectionName: 'components_sections_organizations_sections';
+  info: {
+    displayName: 'OrganizationsSection';
+  };
+  attributes: {};
+}
+
 export interface SectionsPowerSection extends Schema.Component {
   collectionName: 'components_sections_power_sections';
   info: {
@@ -473,8 +481,6 @@ export interface SpecialSectionsCauseOrganizationsSection
   attributes: {
     recommendedFundTitle: Attribute.String;
     recommendedOrganizationsTitle: Attribute.String;
-    donateButtonText: Attribute.String;
-    readMoreText: Attribute.String;
   };
 }
 
@@ -552,6 +558,7 @@ declare module '@strapi/types' {
       'sections.faq-section': SectionsFaqSection;
       'sections.header-section': SectionsHeaderSection;
       'sections.hero-section': SectionsHeroSection;
+      'sections.organizations-section': SectionsOrganizationsSection;
       'sections.power-section': SectionsPowerSection;
       'sections.redirect-section': SectionsRedirectSection;
       'sections.stats-section': SectionsStatsSection;

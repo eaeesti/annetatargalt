@@ -11,12 +11,6 @@
     },
     "recommendedOrganizationsTitle": {
       "type": "string"
-    },
-    "donateButtonText": {
-      "type": "string"
-    },
-    "readMoreText": {
-      "type": "string"
     }
   }
 }

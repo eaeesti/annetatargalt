@@ -93,6 +93,12 @@
     },
     "blogSlug": {
       "type": "string"
+    },
+    "donateText": {
+      "type": "string"
+    },
+    "readMoreText": {
+      "type": "string"
     }
   }
 }

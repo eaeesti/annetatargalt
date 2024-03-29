@@ -178,3 +178,25 @@ export function snakeCaseToPascalCase(string) {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join("");
 }
+
+export async function getOrganizaitons() {
+  const path = "/organizations";
+  const options = headersWithAuthToken();
+  const urlParamsObject = {
+    populate: "deep,2",
+    sort: "title:asc",
+    filters: {
+      cause: {
+        id: {
+          $notNull: true,
+        },
+      },
+    },
+  };
+
+  const response = await fetchAPI(path, urlParamsObject, options);
+
+  const organizations = response.data.map(({ attributes }) => attributes);
+
+  return organizations;
+}
