@@ -12,8 +12,7 @@ export default function Image({
     return (
       <NextImage
         className={className}
-        src="https://placekitten.com/320/320"
-        alt="Placeholder kitten"
+        src="https://placehold.co/320x320.png"
         width={320}
         height={320}
       />

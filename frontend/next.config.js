@@ -2,7 +2,7 @@
 
 const nextConfig = {
   images: {
-    domains: ["res.cloudinary.com", "placekitten.com"],
+    domains: ["res.cloudinary.com", "placehold.co"],
   },
   async rewrites() {
     return [
