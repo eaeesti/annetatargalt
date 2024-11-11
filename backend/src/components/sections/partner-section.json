@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_sections_partner_sections",
+  "info": {
+    "displayName": "PartnerSection"
+  },
+  "options": {},
+  "attributes": {
+    "text": {
+      "type": "richtext"
+    },
+    "image": {
+      "allowedTypes": [
+        "images"
+      ],
+      "type": "media",
+      "multiple": false
+    }
+  }
+}

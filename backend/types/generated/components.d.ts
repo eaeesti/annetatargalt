@@ -372,6 +372,17 @@ export interface SectionsOrganizationsSection extends Schema.Component {
   attributes: {};
 }
 
+export interface SectionsPartnerSection extends Schema.Component {
+  collectionName: 'components_sections_partner_sections';
+  info: {
+    displayName: 'PartnerSection';
+  };
+  attributes: {
+    text: Attribute.RichText;
+    image: Attribute.Media;
+  };
+}
+
 export interface SectionsPowerSection extends Schema.Component {
   collectionName: 'components_sections_power_sections';
   info: {
@@ -559,6 +570,7 @@ declare module '@strapi/types' {
       'sections.header-section': SectionsHeaderSection;
       'sections.hero-section': SectionsHeroSection;
       'sections.organizations-section': SectionsOrganizationsSection;
+      'sections.partner-section': SectionsPartnerSection;
       'sections.power-section': SectionsPowerSection;
       'sections.redirect-section': SectionsRedirectSection;
       'sections.stats-section': SectionsStatsSection;
