@@ -331,11 +331,16 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       {
         fields: [
           "amount",
+          "tipAmount",
           "dedicationEmail",
           "dedicationMessage",
           "dedicationName",
         ],
-        populate: ["donor"],
+        populate: [
+          "donor",
+          "organizationDonations",
+          "organizationDonations.organization",
+        ],
       }
     );
 
@@ -367,6 +372,20 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     data.dedicationMessageHtml = textIntoParagraphs(
       sanitize(data.dedicationMessage)
     );
+
+    const tip = {
+      organization: { title: global.tipOrganization },
+      amount: donation.tipAmount,
+    };
+
+    data.summary = donation.organizationDonations
+      .concat(donation.tipAmount > 0 ? [tip] : [])
+      .map((organizationDonation) => {
+        const organization = organizationDonation.organization;
+        const amount = formatEstonianAmount(organizationDonation.amount / 100);
+        return `${organization.title}: ${amount}${global.currency}`;
+      })
+      .join("\n");
 
     await strapi.plugins["email"].services.email.sendTemplatedEmail(
       {
