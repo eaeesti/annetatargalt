@@ -69,7 +69,7 @@ export default function Button({
       type={buttonType}
       onClick={(event) => {
         if (plausibleEvent) plausible(plausibleEvent);
-        onClick(event);
+        if (onClick) onClick(event);
       }}
       className={fullClassName}
       {...rest}
