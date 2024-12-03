@@ -4,6 +4,7 @@ import Image from "../elements/Image";
 import Markdown from "../elements/Markdown";
 
 export default function Organization({
+  id,
   organization,
   donateButtonText,
   donateLink,
@@ -27,7 +28,7 @@ export default function Organization({
       <div className="mt-4 flex w-full flex-col flex-wrap items-stretch gap-4 xs:flex-row xs:items-center">
         <Button
           text={donateButtonText}
-          href={donateLink}
+          href={`${donateLink}?org=${id}`}
           type="primary"
           size="md"
         />

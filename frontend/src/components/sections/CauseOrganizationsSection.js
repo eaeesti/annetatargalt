@@ -22,6 +22,7 @@ export default function SpecialOrganizationsSection({
         </h2>
         <div className="w-full xs:px-4">
           <Organization
+            id={fund.id}
             organization={fund.attributes}
             donateButtonText={global.donateText}
             donateLink={global.donateLink}
@@ -33,9 +34,10 @@ export default function SpecialOrganizationsSection({
           {recommendedOrganizationsTitle}
         </h2>
         <div className="grid grid-cols-1 justify-center gap-8 xs:px-4 lg:grid-cols-2 xl:grid-cols-3">
-          {organizations.map(({ attributes: organization }) => (
+          {organizations.map(({ attributes: organization, id }) => (
             <Organization
-              key={organization.id}
+              key={id}
+              id={id}
               organization={organization}
               donateButtonText={global.donateText}
               donateLink={global.donateLink}

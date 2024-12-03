@@ -111,9 +111,10 @@ export async function getEntityBySlug(type, slug) {
   };
 
   const response = await fetchAPI(path, urlParamsObject, options);
+  const { attributes, id } = response.data[0];
 
   try {
-    return response.data[0].attributes;
+    return { ...attributes, id };
   } catch (error) {
     notFound();
   }
@@ -196,7 +197,9 @@ export async function getOrganizaitons() {
 
   const response = await fetchAPI(path, urlParamsObject, options);
 
-  const organizations = response.data.map(({ attributes }) => attributes);
+  const organizations = response.data.map(({ id, attributes }) => {
+    return { ...attributes, id };
+  });
 
   return organizations;
 }

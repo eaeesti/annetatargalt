@@ -11,6 +11,7 @@ export default async function SpecialOrganizationsSection({ global }) {
           {organizations.map((organization) => (
             <Organization
               key={organization.id}
+              id={organization.id}
               organization={organization}
               donateButtonText={global.donateText}
               donateLink={global.donateLink}

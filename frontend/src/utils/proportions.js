@@ -232,7 +232,7 @@ export default class Proportions {
     );
   }
 
-  static fromStrapiData(data) {
+  static fromStrapiDataWithEqualProportions(data) {
     const equalProportions = data.map(
       (_, i) => Math.floor(100 / data.length) + (i < 100 % data.length ? 1 : 0),
     );
@@ -249,6 +249,55 @@ export default class Proportions {
               organization.id,
               {
                 proportion: organization.attributes.fund ? 100 : 0,
+                fund: organization.attributes.fund,
+                locked: false,
+              },
+            ]),
+          ),
+        },
+      ]),
+    );
+  }
+
+  static fromStrapiData(data, chosenOrganization) {
+    if (!chosenOrganization) {
+      return Proportions.fromStrapiDataWithEqualProportions(data);
+    }
+
+    const preChosenProportions = data.map((cause) =>
+      cause.attributes.organizations.data.find(
+        (organization) => organization.id === chosenOrganization,
+      )
+        ? 100
+        : 0,
+    );
+
+    function calculateProportion(isInCause, isChosenOrganization, isFund) {
+      if (isInCause) {
+        if (isChosenOrganization) return 100;
+        return 0;
+      }
+
+      if (isFund) return 100;
+      return 0;
+    }
+
+    return new Proportions(
+      data.map((cause, causeIndex) => [
+        cause.id,
+        {
+          proportion: preChosenProportions[causeIndex],
+          locked: false,
+          toFund: preChosenProportions[causeIndex] === 100 ? false : true,
+          proportions: new Proportions(
+            cause.attributes.organizations.data.map((organization) => [
+              organization.id,
+              {
+                proportion: calculateProportion(
+                  preChosenProportions[causeIndex] === 100,
+                  organization.id === chosenOrganization,
+                  organization.attributes.fund,
+                ),
                 fund: organization.attributes.fund,
                 locked: false,
               },

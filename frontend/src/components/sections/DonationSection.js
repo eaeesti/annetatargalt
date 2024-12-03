@@ -43,6 +43,7 @@ export default function DonationSection(props) {
     label: `${amount}${props.global.currency}`,
   }));
   const typeParam = searchParams.get("type");
+  const orgParam = Number(searchParams.get("org"));
 
   const [donation, setDonation] = useState({
     amount: amountOptions[1].value,
@@ -59,7 +60,7 @@ export default function DonationSection(props) {
     dedicationName: "",
     dedicationEmail: "",
     dedicationMessage: "",
-    proportions: Proportions.fromStrapiData(props.causes.data),
+    proportions: Proportions.fromStrapiData(props.causes.data, orgParam),
     addTip: false,
     acceptTerms: false,
   });

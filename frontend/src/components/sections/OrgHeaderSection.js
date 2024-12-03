@@ -50,7 +50,7 @@ export default function OrgHeaderSection({ breadcrumbs, entity, global }) {
               )}
               <Button
                 text="Anneta"
-                href={global.donateLink}
+                href={`${global.donateLink}?org=${entity.id}`}
                 type="primary"
                 size="lg"
               />
