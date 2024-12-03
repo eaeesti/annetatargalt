@@ -50,6 +50,15 @@
     },
     "dedicationMessageHtml": {
       "type": "text"
+    },
+    "recurringConfirmationText": {
+      "type": "text"
+    },
+    "recurringConfirmationHtml": {
+      "type": "text"
+    },
+    "recurringConfirmationSubject": {
+      "type": "string"
     }
   }
 }

@@ -243,20 +243,23 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       .query("api::donation-info.donation-info")
       .findOne();
 
-    try {
-      const recurringPaymentLink = createRecurringPaymentLink(
-        donation.bank,
-        {
-          iban: donationInfo.iban,
-          recipient: donationInfo.recipient,
-          description: donationInfo.recurringPaymentComment,
-        },
-        calculations.totalAmount
-      );
-      return { redirectURL: recurringPaymentLink };
-    } catch (error) {
-      return { redirectURL: "" };
-    }
+    const recurringPaymentLink =
+      donation.bank === "other"
+        ? ""
+        : createRecurringPaymentLink(
+            donation.bank,
+            {
+              iban: donationInfo.iban,
+              recipient: donationInfo.recipient,
+              description: donationInfo.recurringPaymentComment,
+            },
+            calculations.totalAmount
+          );
+
+    return {
+      redirectURL: recurringPaymentLink,
+      recurringDonationId: recurringDonationEntry.id,
+    };
   },
 
   async sendConfirmationEmail(donationId) {
@@ -311,6 +314,67 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     await strapi.plugins["email"].services.email.sendTemplatedEmail(
       {
         to: donation.donor.email,
+        replyTo: emailConfig.confirmationReplyTo,
+      },
+      template,
+      data
+    );
+  },
+
+  async sendRecurringConfirmationEmail(recurringDonationId) {
+    const emailConfig = await strapi.db
+      .query("api::email-config.email-config")
+      .findOne();
+
+    const global = await strapi.db.query("api::global.global").findOne();
+
+    const recurringDonation = await strapi.entityService.findOne(
+      "api::recurring-donation.recurring-donation",
+      recurringDonationId,
+      {
+        fields: ["amount", "tipAmount"],
+        populate: [
+          "donor",
+          "organizationRecurringDonations",
+          "organizationRecurringDonations.organization",
+        ],
+      }
+    );
+
+    const template = {
+      subject: emailConfig.recurringConfirmationSubject,
+      text: emailConfig.recurringConfirmationText,
+      html: emailConfig.recurringConfirmationHtml,
+    };
+
+    const data = {
+      firstName: recurringDonation.donor.firstName,
+      firstNameHtml: sanitize(recurringDonation.donor.firstName),
+      lastName: recurringDonation.donor.lastName,
+      lastNameHtml: sanitize(recurringDonation.donor.lastName),
+      amount: formatEstonianAmount(recurringDonation.amount / 100),
+      currency: global.currency,
+    };
+
+    const tip = {
+      organization: { title: global.tipOrganization },
+      amount: recurringDonation.tipAmount,
+    };
+
+    data.summary = recurringDonation.organizationRecurringDonations
+      .concat(recurringDonation.tipAmount > 0 ? [tip] : [])
+      .map((organizationRecurringDonation) => {
+        const organization = organizationRecurringDonation.organization;
+        const amount = formatEstonianAmount(
+          organizationRecurringDonation.amount / 100
+        );
+        return `${organization.title}: ${amount}${global.currency}`;
+      })
+      .join("\n");
+
+    await strapi.plugins["email"].services.email.sendTemplatedEmail(
+      {
+        to: recurringDonation.donor.email,
         replyTo: emailConfig.confirmationReplyTo,
       },
       template,

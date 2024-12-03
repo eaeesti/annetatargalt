@@ -1135,6 +1135,9 @@ export interface ApiEmailConfigEmailConfig extends Schema.SingleType {
     dedicationHtml: Attribute.Text;
     dedicationMessageText: Attribute.Text;
     dedicationMessageHtml: Attribute.Text;
+    recurringConfirmationText: Attribute.Text;
+    recurringConfirmationHtml: Attribute.Text;
+    recurringConfirmationSubject: Attribute.String;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<

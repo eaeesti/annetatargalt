@@ -27,9 +27,16 @@ module.exports = createCoreController(
 
       if (donation.type === "recurring") {
         try {
-          const { redirectURL } = await strapi
+          const { redirectURL, recurringDonationId } = await strapi
             .service("api::donation.donation")
             .createRecurringDonation({ donation, donor, calculations });
+
+          setTimeout(() => {
+            strapi
+              .service("api::donation.donation")
+              .sendRecurringConfirmationEmail(recurringDonationId);
+          }, 3 * 60 * 1000); // 3 minutes
+
           return ctx.send({ redirectURL });
         } catch (error) {
           console.error(error);
