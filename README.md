@@ -6,8 +6,8 @@ This is the code for the Anneta Targalt donation platform that runs at https://a
 ## Overview
 
 External services (need accounts):
-- [Strapi](https://strapi.io/pricing-cloud) SaaS - host BE (Strapi)
-- [Vercel](https://vercel.com/) - host FE (NextJS)
+- [Strapi](https://strapi.io/pricing-cloud) SaaS - host BE
+- [Netlify](https://www.netlify.com/) - host FE (Vercel is paid only for org repos)
 - [Goatcounter](https://www.goatcounter.com) - for cookie-less tracking
 - [Brevo](https://www.brevo.com/) (plugin in Strapi) - for emails
 - [Cloudinary](https://cloudinary.com/) (how?) - for CDN
