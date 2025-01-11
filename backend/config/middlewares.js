@@ -8,8 +8,20 @@ module.exports = [
         useDefaults: true,
         directives: {
           "connect-src": ["'self'", "https:"],
-          "img-src": ["'self'", "data:", "blob:", "diplomatic-dream-7916d376b8.media.strapiapp.com"],
-          "media-src": ["'self'", "data:", "blob:", "diplomatic-dream-7916d376b8.media.strapiapp.com"],
+          "img-src": [
+            "'self'",
+            "data:",
+            "blob:",
+            "res.cloudinary.com", // TODO: remove after clearing data from cloudinary links.
+            "diplomatic-dream-7916d376b8.media.strapiapp.com"
+          ],
+          "media-src": [
+            "'self'",
+            "data:",
+            "blob:",
+            "res.cloudinary.com", // TODO: remove after clearing data from cloudinary links.
+            "diplomatic-dream-7916d376b8.media.strapiapp.com"
+          ],
           upgradeInsecureRequests: null,
         },
       },

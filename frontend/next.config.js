@@ -2,6 +2,7 @@
 const nextConfig = {
   images: {
     domains: [
+      "res.cloudinary.com", // TODO: remove after clearing data from cloudinary links.
       "diplomatic-dream-7916d376b8.media.strapiapp.com"
     ],
   },
