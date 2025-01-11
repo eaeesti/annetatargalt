@@ -1,0 +1,398 @@
+[
+  {
+    "percentile": 1,
+    "daily_household_income": 0.84
+  },
+  {
+    "percentile": 2,
+    "daily_household_income": 1.13
+  },
+  {
+    "percentile": 3,
+    "daily_household_income": 1.35
+  },
+  {
+    "percentile": 4,
+    "daily_household_income": 1.53
+  },
+  {
+    "percentile": 5,
+    "daily_household_income": 1.69
+  },
+  {
+    "percentile": 6,
+    "daily_household_income": 1.84
+  },
+  {
+    "percentile": 7,
+    "daily_household_income": 1.97
+  },
+  {
+    "percentile": 8,
+    "daily_household_income": 2.09
+  },
+  {
+    "percentile": 9,
+    "daily_household_income": 2.21
+  },
+  {
+    "percentile": 10,
+    "daily_household_income": 2.32
+  },
+  {
+    "percentile": 11,
+    "daily_household_income": 2.42
+  },
+  {
+    "percentile": 12,
+    "daily_household_income": 2.53
+  },
+  {
+    "percentile": 13,
+    "daily_household_income": 2.63
+  },
+  {
+    "percentile": 14,
+    "daily_household_income": 2.72
+  },
+  {
+    "percentile": 15,
+    "daily_household_income": 2.82
+  },
+  {
+    "percentile": 16,
+    "daily_household_income": 2.92
+  },
+  {
+    "percentile": 17,
+    "daily_household_income": 3.01
+  },
+  {
+    "percentile": 18,
+    "daily_household_income": 3.11
+  },
+  {
+    "percentile": 19,
+    "daily_household_income": 3.2
+  },
+  {
+    "percentile": 20,
+    "daily_household_income": 3.3
+  },
+  {
+    "percentile": 21,
+    "daily_household_income": 3.39
+  },
+  {
+    "percentile": 22,
+    "daily_household_income": 3.49
+  },
+  {
+    "percentile": 23,
+    "daily_household_income": 3.59
+  },
+  {
+    "percentile": 24,
+    "daily_household_income": 3.68
+  },
+  {
+    "percentile": 25,
+    "daily_household_income": 3.78
+  },
+  {
+    "percentile": 26,
+    "daily_household_income": 3.88
+  },
+  {
+    "percentile": 27,
+    "daily_household_income": 3.99
+  },
+  {
+    "percentile": 28,
+    "daily_household_income": 4.09
+  },
+  {
+    "percentile": 29,
+    "daily_household_income": 4.2
+  },
+  {
+    "percentile": 30,
+    "daily_household_income": 4.31
+  },
+  {
+    "percentile": 31,
+    "daily_household_income": 4.42
+  },
+  {
+    "percentile": 32,
+    "daily_household_income": 4.53
+  },
+  {
+    "percentile": 33,
+    "daily_household_income": 4.65
+  },
+  {
+    "percentile": 34,
+    "daily_household_income": 4.78
+  },
+  {
+    "percentile": 35,
+    "daily_household_income": 4.9
+  },
+  {
+    "percentile": 36,
+    "daily_household_income": 5.03
+  },
+  {
+    "percentile": 37,
+    "daily_household_income": 5.17
+  },
+  {
+    "percentile": 38,
+    "daily_household_income": 5.31
+  },
+  {
+    "percentile": 39,
+    "daily_household_income": 5.45
+  },
+  {
+    "percentile": 40,
+    "daily_household_income": 5.61
+  },
+  {
+    "percentile": 41,
+    "daily_household_income": 5.76
+  },
+  {
+    "percentile": 42,
+    "daily_household_income": 5.93
+  },
+  {
+    "percentile": 43,
+    "daily_household_income": 6.1
+  },
+  {
+    "percentile": 44,
+    "daily_household_income": 6.28
+  },
+  {
+    "percentile": 45,
+    "daily_household_income": 6.47
+  },
+  {
+    "percentile": 46,
+    "daily_household_income": 6.66
+  },
+  {
+    "percentile": 47,
+    "daily_household_income": 6.86
+  },
+  {
+    "percentile": 48,
+    "daily_household_income": 7.07
+  },
+  {
+    "percentile": 49,
+    "daily_household_income": 7.29
+  },
+  {
+    "percentile": 50,
+    "daily_household_income": 7.51
+  },
+  {
+    "percentile": 51,
+    "daily_household_income": 7.74
+  },
+  {
+    "percentile": 52,
+    "daily_household_income": 7.98
+  },
+  {
+    "percentile": 53,
+    "daily_household_income": 8.25
+  },
+  {
+    "percentile": 54,
+    "daily_household_income": 8.51
+  },
+  {
+    "percentile": 55,
+    "daily_household_income": 8.78
+  },
+  {
+    "percentile": 56,
+    "daily_household_income": 9.07
+  },
+  {
+    "percentile": 57,
+    "daily_household_income": 9.36
+  },
+  {
+    "percentile": 58,
+    "daily_household_income": 9.68
+  },
+  {
+    "percentile": 59,
+    "daily_household_income": 10.0
+  },
+  {
+    "percentile": 60,
+    "daily_household_income": 10.34
+  },
+  {
+    "percentile": 61,
+    "daily_household_income": 10.68
+  },
+  {
+    "percentile": 62,
+    "daily_household_income": 11.06
+  },
+  {
+    "percentile": 63,
+    "daily_household_income": 11.44
+  },
+  {
+    "percentile": 64,
+    "daily_household_income": 11.84
+  },
+  {
+    "percentile": 65,
+    "daily_household_income": 12.28
+  },
+  {
+    "percentile": 66,
+    "daily_household_income": 12.72
+  },
+  {
+    "percentile": 67,
+    "daily_household_income": 13.2
+  },
+  {
+    "percentile": 68,
+    "daily_household_income": 13.7
+  },
+  {
+    "percentile": 69,
+    "daily_household_income": 14.24
+  },
+  {
+    "percentile": 70,
+    "daily_household_income": 14.8
+  },
+  {
+    "percentile": 71,
+    "daily_household_income": 15.4
+  },
+  {
+    "percentile": 72,
+    "daily_household_income": 16.06
+  },
+  {
+    "percentile": 73,
+    "daily_household_income": 16.74
+  },
+  {
+    "percentile": 74,
+    "daily_household_income": 17.5
+  },
+  {
+    "percentile": 75,
+    "daily_household_income": 18.3
+  },
+  {
+    "percentile": 76,
+    "daily_household_income": 19.18
+  },
+  {
+    "percentile": 77,
+    "daily_household_income": 20.14
+  },
+  {
+    "percentile": 78,
+    "daily_household_income": 21.18
+  },
+  {
+    "percentile": 79,
+    "daily_household_income": 22.3
+  },
+  {
+    "percentile": 80,
+    "daily_household_income": 23.54
+  },
+  {
+    "percentile": 81,
+    "daily_household_income": 24.9
+  },
+  {
+    "percentile": 82,
+    "daily_household_income": 26.42
+  },
+  {
+    "percentile": 83,
+    "daily_household_income": 28.1
+  },
+  {
+    "percentile": 84,
+    "daily_household_income": 29.94
+  },
+  {
+    "percentile": 85,
+    "daily_household_income": 31.95
+  },
+  {
+    "percentile": 86,
+    "daily_household_income": 34.2
+  },
+  {
+    "percentile": 87,
+    "daily_household_income": 36.5
+  },
+  {
+    "percentile": 88,
+    "daily_household_income": 39.15
+  },
+  {
+    "percentile": 89,
+    "daily_household_income": 42.1
+  },
+  {
+    "percentile": 90,
+    "daily_household_income": 45.25
+  },
+  {
+    "percentile": 91,
+    "daily_household_income": 48.75
+  },
+  {
+    "percentile": 92,
+    "daily_household_income": 52.75
+  },
+  {
+    "percentile": 93,
+    "daily_household_income": 57.5
+  },
+  {
+    "percentile": 94,
+    "daily_household_income": 63.0
+  },
+  {
+    "percentile": 95,
+    "daily_household_income": 69.6
+  },
+  {
+    "percentile": 96,
+    "daily_household_income": 78.15
+  },
+  {
+    "percentile": 97,
+    "daily_household_income": 89.75
+  },
+  {
+    "percentile": 98,
+    "daily_household_income": 107.5
+  },
+  {
+    "percentile": 99,
+    "daily_household_income": 142.3
+  }
+]
