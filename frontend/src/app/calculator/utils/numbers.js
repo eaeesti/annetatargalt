@@ -2,9 +2,9 @@ export const formatNumber = (number) => {
   const asString = String(number);
   const [integerPart, decimalPart] = asString.split(".");
   const integerWithSpaces = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  const estonianNumber =
+  const number =
     integerWithSpaces + (decimalPart ? "," + decimalPart : "");
-  return estonianNumber;
+  return number;
 };
 
 export const round = (number, digits = 0) => {

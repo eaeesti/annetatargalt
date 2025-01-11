@@ -4,7 +4,7 @@ import PIP_GLOBAL_PERCENTILES from "../data/pip_global_percentiles.json";
 import { range } from "./utils";
 
 // https://github.com/owid/notebooks/blob/main/PabloArriagada/global_distribution_giving_what_we_can/wdi_ppp.csv
-const ESTONIA_PPP = 0.7982072518265738;
+const LATVIA_PPP = 0.7193884839583855;
 
 const DAYS_PER_YEAR = 365.2425;
 const DAYS_PER_MONTH = DAYS_PER_YEAR / 12;
@@ -19,7 +19,7 @@ export const monthlyToDaily = (monthlyIncome) => monthlyIncome / DAYS_PER_MONTH;
 
 export const dailyToMonthly = (dailyIncome) => dailyIncome * DAYS_PER_MONTH;
 
-export const internationalizeIncome = (incomeEUR) => incomeEUR / ESTONIA_PPP;
+export const internationalizeIncome = (incomeEUR) => incomeEUR / LATVIA_PPP;
 
 export const getPercentile = (dailyIncomeIUSD) => {
   const smaller_percentile = PIP_GLOBAL_PERCENTILES.findLast(
@@ -84,7 +84,7 @@ export const getIncome = (percentile) => {
 };
 
 // https://github.com/centre-for-effective-altruism/how-rich-am-i/blob/master/src/lib/calculate/index.js
-export const getEstonianIncomePercentile = (monthlyIncomeEUR) => {
+export const getIncomePercentile = (monthlyIncomeEUR) => {
   const dailyIncomeEUR = monthlyToDaily(monthlyIncomeEUR);
   const internationalizedDailyIncomeIUSD =
     internationalizeIncome(dailyIncomeEUR);

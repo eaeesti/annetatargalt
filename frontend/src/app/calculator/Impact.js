@@ -1,5 +1,5 @@
 import { outputsPerDonation } from "./utils/impact";
-import { formatEstonianNumber, round } from "./utils/numbers";
+import { formatNumber, round } from "./utils/numbers";
 import { ChildrenIcon, MedicineIcon, MosquitoNetIcon } from "./icons";
 
 const charities = [
@@ -38,7 +38,7 @@ export default function Impact({ evaluations, donation }) {
           <div>
             {beforeText}{" "}
             <span className="font-bold tracking-tight text-primary-700">
-              {formatEstonianNumber(
+              {formatNumber(
                 round(outputsPerDonation(evaluations, name, donation))
               )}
             </span>{" "}
