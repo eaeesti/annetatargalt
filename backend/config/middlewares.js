@@ -8,8 +8,8 @@ module.exports = [
         useDefaults: true,
         directives: {
           "connect-src": ["'self'", "https:"],
-          "img-src": ["'self'", "data:", "blob:", "ziedoefektivi.lv"],
-          "media-src": ["'self'", "data:", "blob:", "ziedoefektivi.lv"],
+          "img-src": ["'self'", "data:", "blob:", "diplomatic-dream-7916d376b8.strapiapp.com"],
+          "media-src": ["'self'", "data:", "blob:", "diplomatic-dream-7916d376b8.strapiapp.com"],
           upgradeInsecureRequests: null,
         },
       },
