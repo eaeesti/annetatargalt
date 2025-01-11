@@ -1,37 +1,42 @@
 # Frontend
 
-1\. Navgate to the frontend directory. From `/backend`:
+1. Navgate to the frontend directory. From `/backend`:
+    ```bash
+    cd ../frontend
+    yarn
+    ```
 
-```bash
-cd ../frontend
-```
+2. Create the `.env` file from `.env.example`:
+    ```ini
+    NEXT_PUBLIC_STRAPI_API_TOKEN=your-api-token
+    NEXT_PUBLIC_STRAPI_API_URL=http://127.0.0.1:1337
+    ```
 
-2\. Create the `.env` file from `.env.example`:
+    To get the API token, run Strapi and generate it:
 
-```ini
-NEXT_PUBLIC_STRAPI_API_TOKEN=your-api-token
-NEXT_PUBLIC_STRAPI_API_URL=http://127.0.0.1:1337
-```
+    Settings (left sidebar) → API Tokens (second sidebar) → Create new API Token (top right)
 
-3\. To get the API token, run Strapi and generate it:
+    - Name: Public API Token
+    - Token duration: Unlimited
+    - Type: Custom
 
-Settings (left sidebar) → API Tokens (second sidebar) → Create new API Token (top right)
+    Under Permissions, give the token access `find` and `findOne` access for the following:
 
-- Name: Public API Token
-- Token duration: Unlimited
-- Type: Custom
+    - `Blog-author`
+    - `Blog-post`
+    - `Cause`
+    - `Global` (does not have `findOne`)
+    - `Organization`
+    - `Page`
+    - `Special-page`
 
-Under Permissions, give the token access `find` and `findOne` access for the following:
+    Click Save and place the token you are given to `.env` under `NEXT_PUBLIC_STRAPI_API_TOKEN`.
 
-- `Blog-author`
-- `Blog-post`
-- `Cause`
-- `Global` (does not have `findOne`)
-- `Organization`
-- `Page`
-- `Special-page`
-
-Click Save and place the token you are given to `.env` under `NEXT_PUBLIC_STRAPI_API_TOKEN`.
+3. Install dependencies and run it
+    ```bash
+    yarn
+    yarn develop
+    ```
 
 
 ****

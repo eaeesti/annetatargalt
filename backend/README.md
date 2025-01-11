@@ -14,6 +14,7 @@ grant all privileges on database annetatargalt to annetatargalt;
 ALTER DATABASE annetatargalt OWNER TO annetatargalt;
 # fill .env.example Postgres section
 
+yarn
 yarn build
 yarn develop
 # create admin account on http://127.0.0.1:1337
