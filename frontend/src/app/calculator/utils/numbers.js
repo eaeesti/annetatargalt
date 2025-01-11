@@ -1,4 +1,4 @@
-export const formatEstonianNumber = (number) => {
+export const formatNumber = (number) => {
   const asString = String(number);
   const [integerPart, decimalPart] = asString.split(".");
   const integerWithSpaces = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
