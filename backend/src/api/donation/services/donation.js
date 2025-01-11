@@ -734,7 +734,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     }
 
     if (donations.length > 1) {
-      throw new Error("Multiple donations found");
+      throw new Error("Multiple donation found");
     }
 
     return donations[0];
@@ -769,7 +769,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     );
 
     if (latestRecurringDonations.length === 0) {
-      throw new Error("No recurring donations found");
+      throw new Error("No recurring donation found");
     }
 
     const recurringDonation = latestRecurringDonations[0];

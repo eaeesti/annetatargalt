@@ -17,32 +17,32 @@ module.exports = {
     },
     {
       method: "POST",
-      path: "/donations/import",
+      path: "/donation/import",
       handler: "donation.import",
     },
     {
       method: "GET",
-      path: "/donations/export",
+      path: "/donation/export",
       handler: "donation.export",
     },
     {
       method: "POST",
-      path: "/donations/deleteAll",
+      path: "/donation/deleteAll",
       handler: "donation.deleteAll",
     },
     {
       method: "GET",
-      path: "/donations/findTransaction",
+      path: "/donation/findTransaction",
       handler: "donation.findTransaction",
     },
     {
       method: "POST",
-      path: "/donations/insertTransaction",
+      path: "/donation/insertTransaction",
       handler: "donation.insertTransaction",
     },
     {
       method: "POST",
-      path: "/donations/insertDonation",
+      path: "/donation/insertDonation",
       handler: "donation.insertDonation",
     },
     {

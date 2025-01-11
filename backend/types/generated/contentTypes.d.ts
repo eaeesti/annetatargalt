@@ -1263,7 +1263,7 @@ export interface ApiOrganizationDonationOrganizationDonation
   collectionName: 'organization_donations';
   info: {
     singularName: 'organization-donation';
-    pluralName: 'organization-donations';
+    pluralName: 'organization-donation';
     displayName: 'OrganizationDonation';
     description: '';
   };
@@ -1305,7 +1305,7 @@ export interface ApiOrganizationRecurringDonationOrganizationRecurringDonation
   collectionName: 'organization_recurring_donations';
   info: {
     singularName: 'organization-recurring-donation';
-    pluralName: 'organization-recurring-donations';
+    pluralName: 'organization-recurring-donation';
     displayName: 'OrganizationRecurringDonation';
     description: '';
   };
@@ -1393,7 +1393,7 @@ export interface ApiRecurringDonationRecurringDonation
   collectionName: 'recurring_donations';
   info: {
     singularName: 'recurring-donation';
-    pluralName: 'recurring-donations';
+    pluralName: 'recurring-donation';
     displayName: 'RecurringDonation';
     description: '';
   };
