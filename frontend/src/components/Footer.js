@@ -6,7 +6,7 @@ export default function Footer({ global }) {
   const { footer } = global;
 
   return (
-    <footer className="bg-slate-800" aria-labelledby="footer-heading">
+    <footer className="bg-teal-500" aria-labelledby="footer-heading">
       <h2 id="footer-heading" className="sr-only">
         Footer
       </h2>
@@ -14,7 +14,7 @@ export default function Footer({ global }) {
         <div className="xl:grid xl:grid-cols-3 xl:gap-8">
           <div className="flex flex-col gap-8 items-start px-3">
             <Image className="w-auto h-8" data={footer.logo} />
-            <p className="text-sm leading-6 text-slate-300">{footer.text}</p>
+            <p className="text-sm leading-6 text-cyan-900">{footer.text}</p>
             <div className="flex gap-4">
               {footer.socialMediaLinks.map((socialMediaLink) => (
                 <Button
@@ -23,7 +23,7 @@ export default function Footer({ global }) {
                   newTab={true}
                   size="link"
                   type="text"
-                  className="text-slate-500"
+                  className="text-cyan-900"
                   noIcon={true}
                 >
                   <SocialMediaIcon type={socialMediaLink.type} />
@@ -34,12 +34,12 @@ export default function Footer({ global }) {
           <div className="grid grid-cols-1 gap-x-4 gap-y-8 py-16 xs:grid-cols-2 xl:pt-0 lg:grid-cols-4 xl:col-span-2 xl:mt-0">
             {footer.columns.map((column) => (
               <div key={column.id}>
-                <h3 className="px-3 pb-2.5 text-sm font-semibold tracking-wider leading-5 text-white uppercase">
+                <h3 className="px-3 pb-2.5 text-sm font-semibold tracking-wider leading-5 text-cyan-900 uppercase">
                   {column.title}
                 </h3>
                 <ul
                   role="list"
-                  className="flex flex-col items-start text-sm text-slate-200"
+                  className="flex flex-col items-start text-sm text-cyan-900"
                 >
                   {column.links.map((link) => (
                     <li key={link.id}>
