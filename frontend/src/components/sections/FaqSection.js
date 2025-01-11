@@ -3,11 +3,9 @@
 import { Disclosure } from "@headlessui/react";
 import { MinusSmallIcon, PlusSmallIcon } from "@heroicons/react/24/outline";
 import Markdown from "../elements/Markdown";
-import { usePlausible } from "next-plausible";
+import { GCEvent } from "next-goatcounter";
 
 export default function FAQSection({ questions }) {
-  const plausible = usePlausible();
-
   return (
     <section className="flex-grow bg-white px-4 lg:px-8">
       <div className="container mx-auto py-8 sm:py-16 lg:max-w-3xl">
@@ -21,7 +19,7 @@ export default function FAQSection({ questions }) {
                       className="flex w-full items-center justify-between text-left text-slate-800 hover:opacity-70"
                       onClick={() => {
                         if (question.plausibleEvent && !open) {
-                          plausible(question.plausibleEvent);
+                          GCEvent(question.plausibleEvent);
                         }
                       }}
                     >

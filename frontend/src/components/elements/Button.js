@@ -2,7 +2,7 @@
 import { classes } from "@/utils/react";
 import { ArrowLongRightIcon } from "@heroicons/react/20/solid";
 import Anchor from "./Anchor";
-import { usePlausible } from "next-plausible";
+import { GCEvent } from "next-goatcounter";
 
 export default function Button({
   text,
@@ -15,11 +15,10 @@ export default function Button({
   className = "",
   children,
   buttonType = "button",
+  // TODO: Rename field in Strapi to a more generic one.
   plausibleEvent,
   ...rest
 }) {
-  const plausible = usePlausible();
-
   const buttons = {
     primary:
       "text-white shadow-sm bg-primary-700 hover:bg-primary-600 focus-visible:outline-primary-700 disabled:hover:bg-primary-600",
@@ -52,7 +51,7 @@ export default function Button({
         className={fullClassName}
         onClick={() => {
           if (plausibleEvent) {
-            plausible(plausibleEvent);
+            GCEvent(plausibleEvent);
           }
         }}
         {...rest}
@@ -68,7 +67,7 @@ export default function Button({
     <button
       type={buttonType}
       onClick={(event) => {
-        if (plausibleEvent) plausible(plausibleEvent);
+        if (plausibleEvent) GCEvent(plausibleEvent);
         if (onClick) onClick(event);
       }}
       className={fullClassName}

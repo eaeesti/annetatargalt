@@ -21,12 +21,11 @@ import Proportions from "@/utils/proportions";
 import PaymentSummary from "../elements/forms/PaymentSummary";
 import Modal from "../Modal";
 import CompanyInput from "../elements/forms/CompanyInput";
-import { usePlausible } from "next-plausible";
 import DedicationInput from "../elements/forms/DedicationInput";
+import { GCEvent } from "next-goatcounter";
 
 export default function DonationSection(props) {
   const router = useRouter();
-  const plausible = usePlausible();
   const searchParams = useSearchParams();
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -186,7 +185,7 @@ export default function DonationSection(props) {
                 type="primary"
                 size="md"
                 onClick={() => {
-                  plausible("donation-info-stage");
+                  GCEvent("donation-info-stage");
                   setStage(1);
                 }}
                 disabled={!stageValidity[0]}
@@ -277,7 +276,7 @@ export default function DonationSection(props) {
                 type="primary"
                 size="lg"
                 onClick={() => {
-                  plausible("donation-support-stage");
+                  GCEvent("donation-support-stage");
                   setStage(2);
                 }}
                 disabled={!stageValidity[1]}
@@ -308,7 +307,7 @@ export default function DonationSection(props) {
                 type="primary"
                 size="lg"
                 onClick={() => {
-                  plausible("donation-summary-stage");
+                  GCEvent("donation-summary-stage");
                   setStage(3);
                 }}
                 buttonType="submit"
@@ -358,7 +357,7 @@ export default function DonationSection(props) {
                 type="primary"
                 size="lg"
                 onClick={() => {
-                  plausible("donation-clicked");
+                  GCEvent("donation-clicked");
                   donate();
                 }}
                 disabled={!stageValidity[2]}

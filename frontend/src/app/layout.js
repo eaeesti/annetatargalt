@@ -1,7 +1,7 @@
 import "./globals.css";
 import { getGlobal } from "../utils/strapi";
 import { buildMetadata } from "../utils/seo";
-import PlausibleProvider from "next-plausible";
+import { GCScript } from "next-goatcounter";
 import "@fontsource-variable/inter/opsz-italic.css";
 
 export async function generateMetadata() {
@@ -11,19 +11,13 @@ export async function generateMetadata() {
 }
 
 export default async function RootLayout({ children }) {
-  const plausibleDomain = process.env.PLAUSIBLE_DOMAIN;
+  const goatCounterCode = process.env.GOATCOUNTER_CODE;
 
   return (
     <html lang="et" className="h-full">
-      {plausibleDomain && (
+      {goatCounterCode && (
         <head>
-          <PlausibleProvider
-            domain={plausibleDomain}
-            scriptProps={{
-              src: "/js/script.js",
-              "data-api": "/api/event",
-            }}
-          />
+          <GCScript siteUrl={`https://${goatCounterCode}.goatcounter.com/count`} />
         </head>
       )}
       <body className="flex min-h-full flex-col">{children}</body>
