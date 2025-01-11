@@ -28,65 +28,21 @@ Frontend stack (see `/frontend`):
 
 ### Getting started
 
-1\. Clone the repository and install dependencies:
+1. Clone the repository and install dependencies:
+    ```bash
+    git clone https://github.com/eaeesti/annetatargalt.git
+    cd annetatargalt
+    yarn setup
+    ```
 
-```bash
-git clone https://github.com/eaeesti/annetatargalt.git
-cd annetatargalt
-yarn setup
-```
+2. Setup backend locally (see [`backend/README.md`](backend/README.md])) or create a cloud account (TBD).
 
-### Backend
+3. Setup frontend locally, see [`frontend/README.md`](frontend/README.md])
 
-Either setup backend (see (`backend/README.md`)[backend/README.md]) or connect to cloud backend.
-
-
-### Frontend
-
-1\. Navgate to the frontend directory. From `/backend`:
-
-```bash
-cd ../frontend
-```
-
-2\. Create the `.env` file from `.env.example`:
-
-```ini
-NEXT_PUBLIC_STRAPI_API_TOKEN=your-api-token
-NEXT_PUBLIC_STRAPI_API_URL=http://127.0.0.1:1337
-```
-
-3\. To get the API token, run Strapi and generate it:
-
-Settings (left sidebar) → API Tokens (second sidebar) → Create new API Token (top right)
-
-- Name: Public API Token
-- Token duration: Unlimited
-- Type: Custom
-
-Under Permissions, give the token access `find` and `findOne` access for the following:
-
-- `Blog-author`
-- `Blog-post`
-- `Cause`
-- `Global` (does not have `findOne`)
-- `Organization`
-- `Page`
-- `Special-page`
-
-Click Save and place the token you are given to `.env` under `NEXT_PUBLIC_STRAPI_API_TOKEN`.
-
-4\. Close Strapi and go the repository root directory:
-
-```bash
-cd ..
-```
-
-5\. Run both the frontend and backend at the same time:
-
-```bash
-yarn develop
-```
+4. Run frontend and backend separately from their folders, or at the same time from root folder:
+    ```bash
+    yarn develop
+    ```
 
 
 

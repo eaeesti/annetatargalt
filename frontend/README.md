@@ -1,3 +1,41 @@
+# Frontend
+
+1\. Navgate to the frontend directory. From `/backend`:
+
+```bash
+cd ../frontend
+```
+
+2\. Create the `.env` file from `.env.example`:
+
+```ini
+NEXT_PUBLIC_STRAPI_API_TOKEN=your-api-token
+NEXT_PUBLIC_STRAPI_API_URL=http://127.0.0.1:1337
+```
+
+3\. To get the API token, run Strapi and generate it:
+
+Settings (left sidebar) → API Tokens (second sidebar) → Create new API Token (top right)
+
+- Name: Public API Token
+- Token duration: Unlimited
+- Type: Custom
+
+Under Permissions, give the token access `find` and `findOne` access for the following:
+
+- `Blog-author`
+- `Blog-post`
+- `Cause`
+- `Global` (does not have `findOne`)
+- `Organization`
+- `Page`
+- `Special-page`
+
+Click Save and place the token you are given to `.env` under `NEXT_PUBLIC_STRAPI_API_TOKEN`.
+
+
+****
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
@@ -5,13 +43,7 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 First, run the development server:
 
 ```bash
-npm run dev
-# or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
