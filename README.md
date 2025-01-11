@@ -14,10 +14,12 @@ External services (need accounts):
 - [Montonio](https://montonio.com/) - for payments
 
 Backend stack (see `/backend`):
+- Javascript
 - [Strapi 4](https://strapi.io/)
 
 Frontend stack (see `/frontend`):
-- [Next.js 13](https://nextjs.org/)
+- Javascript
+- [Next.js 13](https://nextjs.org/) & [React](https://react.dev/)
 - [HeadlessUI](https://headlessui.com/)
 - [TailwindCSS](https://tailwindcss.com/)
 
@@ -26,20 +28,18 @@ Frontend stack (see `/frontend`):
 
 ### Getting started
 
-1\. Clone the repository:
+1\. Clone the repository and install dependencies:
 
 ```bash
 git clone https://github.com/eaeesti/annetatargalt.git
 cd annetatargalt
-```
-
-2\. Run the setup command:
-
-```bash
 yarn setup
 ```
 
-3\. Setup backend, see Backend Readme
+### Backend
+
+Either setup backend (see (`backend/README.md`)[backend/README.md]) or connect to cloud backend.
+
 
 ### Frontend
 
