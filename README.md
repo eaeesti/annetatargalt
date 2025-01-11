@@ -10,7 +10,6 @@ External services (need accounts):
 - [Netlify](https://www.netlify.com/) - host FE (Vercel is paid only for org repos)
 - [Goatcounter](https://www.goatcounter.com) - for cookie-less tracking
 - [Brevo](https://www.brevo.com/) (plugin in Strapi) - for emails
-- [Cloudinary](https://cloudinary.com/) (how?) - for CDN
 - [Montonio](https://montonio.com/) - for payments
 
 Backend stack (see `/backend`):

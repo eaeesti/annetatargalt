@@ -39,10 +39,6 @@ More info here: https://docs.strapi.io/dev-docs/configurations/server
 - `TRANSFER_TOKEN_SALT`: generate using `openssl rand -base64 16`
 - `JWT_SECRET`: generate using `openssl rand -base64 16`
 
-#### Cloudinary
-
-Create an account at https://cloudinary.com/ and get the three keys from there.
-
 #### Database
 
 Strapi supports [multiple databases](https://docs.strapi.io/dev-docs/configurations/database), but this project has only been tested with Postgres, so using that is recommended.

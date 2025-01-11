@@ -16,7 +16,6 @@
   "dependencies": {
     "@strapi/plugin-i18n": "4.21.1",
     "@strapi/plugin-users-permissions": "4.21.1",
-    "@strapi/provider-upload-cloudinary": "^4.21.1",
     "@strapi/strapi": "4.21.1",
     "jsonwebtoken": "^9.0.2",
     "pg": "8.8.0",
