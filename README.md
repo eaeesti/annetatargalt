@@ -14,14 +14,14 @@ The old platform can be found at https://github.com/eaeesti/annetatargalt-old.
 
 1\. Clone the repository:
 
-```
+```bash
 git clone https://github.com/eaeesti/annetatargalt.git
 cd annetatargalt
 ```
 
 2\. Run the setup command:
 
-```
+```bash
 yarn setup
 ```
 
@@ -29,7 +29,7 @@ yarn setup
 
 1\. Navgate to the backend directory:
 
-```
+```bash
 cd backend
 ```
 
@@ -46,7 +46,6 @@ More info here: https://docs.strapi.io/dev-docs/configurations/server
 - `ADMIN_JWT_SECRET`: generate using `openssl rand -base64 16`
 - `TRANSFER_TOKEN_SALT`: generate using `openssl rand -base64 16`
 - `JWT_SECRET`: generate using `openssl rand -base64 16`
-- `API_TOKEN_SALT`: generate using `openssl rand -base64 16`
 
 #### Cloudinary
 
@@ -58,13 +57,17 @@ Strapi supports [multiple databases](https://docs.strapi.io/dev-docs/configurati
 
 Fill in your Postgres details in `.env` and create a new database called `annetatargalt` or whatever you have under `DATABASE_NAME`:
 
-```
+```sql
 sudo -u postgres createdb annetatargalt
+sudo -u postgres psql
+create user annetatargalt with encrypted password 'TODO';
+grant all privileges on database annetatargalt to annetatargalt;
+ALTER DATABASE annetatargalt OWNER TO annetatargalt;
 ```
 
 4\. Build and run Strapi:
 
-```
+```bash
 yarn build
 yarn develop
 ```
@@ -73,7 +76,7 @@ yarn develop
 
 6\. Close Strapi and seed the data if you have it:
 
-```
+```bash
 yarn strapi import -f data.tar.gz
 ```
 
@@ -83,13 +86,13 @@ Read more about data importing and exporting: https://docs.strapi.io/dev-docs/da
 
 1\. Navgate to the frontend directory. From `/backend`:
 
-```
+```bash
 cd ../frontend
 ```
 
 2\. Create the `.env` file from `.env.example`:
 
-```
+```ini
 NEXT_PUBLIC_STRAPI_API_TOKEN=your-api-token
 NEXT_PUBLIC_STRAPI_API_URL=http://127.0.0.1:1337
 ```
@@ -116,12 +119,12 @@ Click Save and place the token you are given to `.env` under `NEXT_PUBLIC_STRAPI
 
 4\. Close Strapi and go the repository root directory:
 
-```
+```bash
 cd ..
 ```
 
 5\. Run both the frontend and backend at the same time:
 
-```
+```bash
 yarn develop
 ```
