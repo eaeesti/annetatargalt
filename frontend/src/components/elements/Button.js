@@ -21,12 +21,12 @@ export default function Button({
 }) {
   const buttons = {
     primary:
-      "text-white shadow-sm bg-primary-700 hover:bg-primary-600 focus-visible:outline-primary-700 disabled:hover:bg-primary-600",
+      "text-cyan-900 shadow-sm bg-teal-500 hover:bg-teal-400 focus-visible:outline-primary-700 disabled:hover:bg-primary-600",
     secondary:
       "text-primary-600 shadow-sm bg-primary-100 hover:bg-primary-200 focus-visible:outline-primary-600 disabled:hover:bg-primary-100",
     white:
       "text-primary-800 shadow-sm bg-white hover:bg-primary-100 focus-visible:outline-white disabled:hover:bg-white",
-    text: "hover:opacity-70 focus-visible:outline-primary-600 disabled:hover:opacity-70",
+    text: "text-cyan-900 hover:opacity-70 focus-visible:outline-primary-600 disabled:hover:opacity-70",
   };
 
   const sizes = {
