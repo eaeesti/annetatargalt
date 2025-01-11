@@ -21,17 +21,15 @@ module.exports = {
       },
       colors: {
         primary: {
-          50: "#eef8f2",
-          100: "#d4ede1",
-          200: "#b2ddc9",
-          300: "#81ceb0",
-          400: "#50c79c",
-          500: "#1aab7c",
-          600: "#099067",
-          700: "#047857",
-          800: "#065f46",
-          900: "#064e3b",
-          950: "#022c1f",
+          100: '#ccfbf1',
+          200: '#99f6e4',
+          300: '#5eead4',
+          400: '#2dd4bf',
+          500: '#50A19E', // EA LV krāsa
+          600: '#0d9488',
+          700: '#0f766e',
+          800: '#115e59',
+          900: '#134e4a',
         },
         'teal': {
           100: '#ccfbf1',
@@ -77,11 +75,6 @@ module.exports = {
           800: '#1f2937',
           900: '#111827', 
         },
-        // TODO: change 4 tailwind palettes, change one of colors slightly 
-        // 'ealv-teal': '#50A19E',
-        // 'ealv-darkblue': '#2D3047',
-        // 'ealv-pink': '#DA1884',
-        // 'ealv-lightgray': '#DCCFCE',
       },
       spacing: {
         128: "32rem",
