@@ -1,7 +1,7 @@
 "use strict";
 
 const { createCoreController } = require("@strapi/strapi").factories;
-const { decodePaymentToken } = require("../../../utils/montonio");
+const { decodeOrderToken } = require("../../../utils/montonio");
 
 module.exports = createCoreController(
   "api::donation.donation",
@@ -56,22 +56,18 @@ module.exports = createCoreController(
     },
 
     async confirm(ctx) {
-      const paymentToken = ctx.request.query.payment_token;
+      const orderToken = ctx.request.query["order-token"];
 
-      if (!paymentToken) {
-        return ctx.badRequest("No payment token provided");
+      if (!orderToken) {
+        return ctx.badRequest("No order token provided");
       }
 
       let decoded;
       try {
-        decoded = decodePaymentToken(paymentToken);
+        decoded = decodeOrderToken(orderToken);
       } catch (error) {
         console.error(error);
         return ctx.badRequest("Invalid payment token");
-      }
-
-      if (decoded.status !== "finalized") {
-        return ctx.badRequest("Payment not finalized");
       }
 
       const id = Number(decoded.merchant_reference.split(" ").at(-1));
@@ -112,22 +108,18 @@ module.exports = createCoreController(
     },
 
     async decode(ctx) {
-      const paymentToken = ctx.request.query.payment_token;
+      const orderToken = ctx.request.query["order-token"];
 
-      if (!paymentToken) {
+      if (!orderToken) {
         return ctx.badRequest("No payment token provided");
       }
 
       let decoded;
       try {
-        decoded = decodePaymentToken(paymentToken);
+        decoded = decodeOrderToken(orderToken);
       } catch (error) {
         console.error(error);
         return ctx.badRequest("Invalid payment token");
-      }
-
-      if (decoded.status !== "finalized") {
-        return { success: false, reason: "Payment not finalized" };
       }
 
       const id = Number(decoded.merchant_reference.split(" ").at(-1));

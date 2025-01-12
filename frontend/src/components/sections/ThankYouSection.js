@@ -21,14 +21,14 @@ export default function ThankYouSection({
   const router = useRouter();
 
   const searchParams = useSearchParams();
-  const paymentToken = searchParams.get("payment_token");
+  const orderToken = searchParams.get("order-token");
 
   const decodeURL = getStrapiURL(
-    "/api/decode?" + new URLSearchParams({ payment_token: paymentToken }),
+    "/api/decode?" + new URLSearchParams({ "order-token": orderToken }),
   );
 
   const { data, error, isLoading } = useSWR(
-    () => (paymentToken ? decodeURL : null),
+    () => (orderToken ? decodeURL : null),
     fetcher,
   );
 
@@ -36,6 +36,8 @@ export default function ThankYouSection({
 
   // TODO: Make error section
   if (error) return <p>Error</p>;
+
+  console.log("data", data);
 
   if (!data || !data.donation) {
     router.push("/");
@@ -46,9 +48,6 @@ export default function ThankYouSection({
     ...data.donation.donor,
     amount: formatEstonianAmount(data.donation.amount / 100),
   };
-
-  // Remove payment_token from URL
-  // window.history.replaceState({}, document.title, window.location.pathname);
 
   return (
     <section className="flex h-full flex-grow bg-white px-4 py-24 sm:py-32 lg:px-8">

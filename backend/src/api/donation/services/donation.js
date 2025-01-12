@@ -8,7 +8,7 @@ const {
   validateAmount,
 } = require("../../../utils/donation");
 const { createRecurringPaymentLink } = require("../../../utils/banks");
-const { createPaymentURL } = require("../../../utils/montonio");
+const { fetchRedirectUrl } = require("../../../utils/montonio");
 const { formatEstonianAmount } = require("../../../utils/estonia");
 const {
   format,
@@ -165,16 +165,27 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       .query("api::donation-info.donation-info")
       .findOne();
 
+    const amount = donation.amount / 100;
+
+    // https://docs.montonio.com/api/stargate/guides/orders#creating-an-order
     const payload = {
-      amount: donation.amount / 100,
+      merchantReference: `${donationInfo.merchantReferencePrefix} ${donation.id}`,
+      returnUrl: `${process.env.FRONTEND_URL}/${donationInfo.returnPath}`,
+      notificationUrl: `${process.env.MONTONIO_RETURN_URL}/confirm`,
+      grandTotal: amount,
       currency: currency,
-      merchant_reference: `${donationInfo.merchantReferencePrefix} ${donation.id}`,
-      merchant_return_url: `${process.env.FRONTEND_URL}/${donationInfo.returnPath}`,
-      merchant_notification_url: `${process.env.MONTONIO_RETURN_URL}/confirm`,
-      payment_information_unstructured: donationInfo.transactionComment,
-      checkout_email: donor.email,
-      checkout_first_name: donor.firstName,
-      checkout_last_name: donor.lastName,
+      locale: "et",
+      payment: {
+        amount,
+        currency,
+        method: "paymentInitiation",
+        methodDisplay: "Annetus",
+        methodOptions: {
+          preferredCountry: "EE",
+          preferredLocale: "et",
+          paymentDescription: "Test annetus",
+        },
+      },
     };
 
     return payload;
@@ -208,7 +219,8 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       });
 
     const payload = await this.createMontonioPayload(donationEntry, donor);
-    const redirectURL = createPaymentURL(payload);
+    const redirectURL = await fetchRedirectUrl(payload);
+
     return { redirectURL };
   },
 
