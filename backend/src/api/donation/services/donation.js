@@ -179,11 +179,9 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
         amount,
         currency,
         method: "paymentInitiation",
-        methodDisplay: "Annetus",
         methodOptions: {
           preferredCountry: "EE",
           preferredLocale: "et",
-          paymentDescription: "Test annetus",
         },
       },
     };
