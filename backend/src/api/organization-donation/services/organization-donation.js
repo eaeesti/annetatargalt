@@ -6,28 +6,20 @@ const { amountsFromProportions } = require("../../../utils/donation");
 module.exports = createCoreService(
   "api::organization-donation.organization-donation",
   ({ strapi }) => ({
-    async createFromProportions({ donationId, donationAmount, proportions }) {
-      const amountsAndProportions = amountsFromProportions(
-        proportions,
-        donationAmount
-      );
-
-      Promise.all(
-        Object.entries(amountsAndProportions).map(
-          async ([organizationId, amountAndProportion]) => {
-            await strapi.entityService.create(
-              "api::organization-donation.organization-donation",
-              {
-                data: {
-                  donation: donationId,
-                  organization: organizationId,
-                  amount: amountAndProportion.amount,
-                  proportion: amountAndProportion.proportion,
-                },
-              }
-            );
-          }
-        )
+    async createOrganizationDonations({ donationId, amounts }) {
+      return Promise.all(
+        amounts.map(async ({ organizationId, amount }) => {
+          await strapi.entityService.create(
+            "api::organization-donation.organization-donation",
+            {
+              data: {
+                donation: donationId,
+                organization: organizationId,
+                amount,
+              },
+            }
+          );
+        })
       );
     },
 

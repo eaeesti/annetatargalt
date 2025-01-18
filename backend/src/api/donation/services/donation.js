@@ -54,7 +54,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       return { valid: false, reason: `Invalid amount: ${donation.amount}` };
     }
 
-    if (donation.amount >= 15000) {
+    if (donation.amount >= 1500000) {
       return { valid: false, reason: "Amount must be smaller than 15000€" };
     }
 
@@ -96,55 +96,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       }
     }
 
-    const allProportions = [Object.values(donation.proportions)].concat(
-      Object.values(donation.proportions).map(({ proportions }) =>
-        Object.values(proportions)
-      )
-    );
-
-    for (let proportions of allProportions) {
-      const proportionSum = Object.values(proportions).reduce(
-        (acc, { proportion }) => acc + proportion,
-        0
-      );
-      if (proportionSum !== 100) {
-        return {
-          valid: false,
-          reason: `Proportions don't add up to 100: ${proportionSum}`,
-        };
-      }
-    }
-
-    for (let proportions of allProportions) {
-      for (let { proportion } of Object.values(proportions)) {
-        if (
-          !Number.isInteger(proportion) ||
-          proportion < 1 ||
-          proportion > 100
-        ) {
-          return {
-            valid: false,
-            reason: `Proportion must be an integer from 1 to 100: ${proportion}`,
-          };
-        }
-      }
-    }
-
-    const causeIds = Object.keys(donation.proportions);
-    for (let causeId of causeIds) {
-      const cause = await strapi.entityService.findOne(
-        "api::cause.cause",
-        causeId
-      );
-      if (!cause || !cause.active) {
-        return { valid: false, reason: `Not a valid cause: ${causeId}` };
-      }
-    }
-
-    const organizationIds = Object.values(donation.proportions)
-      .map((cause) => Object.keys(cause.proportions))
-      .flat();
-    for (let organizationId of organizationIds) {
+    for (let { organizationId } of donation.amounts) {
       const organization = await strapi.entityService.findOne(
         "api::organization.organization",
         organizationId
@@ -155,6 +107,17 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
           reason: `Not a valid organization: ${organizationId}`,
         };
       }
+    }
+
+    const amountSum = donation.amounts.reduce(
+      (acc, { amount }) => acc + amount,
+      0
+    );
+    if (amountSum !== donation.amount) {
+      return {
+        valid: false,
+        reason: "Organization amounts do not add up to the total amount",
+      };
     }
 
     return { valid: true };
@@ -189,14 +152,12 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     return payload;
   },
 
-  async createSingleDonation({ donation, donor, calculations }) {
+  async createSingleDonation({ donation, donor }) {
     const donationEntry = await strapi.entityService.create(
       "api::donation.donation",
       {
         data: {
-          amount: amountToCents(calculations.totalAmount),
-          tipSize: calculations.tipSize,
-          tipAmount: amountToCents(calculations.tipAmount),
+          amount: donation.amount,
           donor: donor.id,
           datetime: new Date(),
           companyName: donation.companyName,
@@ -210,10 +171,9 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
 
     await strapi
       .service("api::organization-donation.organization-donation")
-      .createFromProportions({
+      .createOrganizationDonations({
         donationId: donationEntry.id,
-        donationAmount: amountToCents(donation.amount),
-        proportions: donation.proportions,
+        amounts: donation.amounts,
       });
 
     const payload = await this.createMontonioPayload(donationEntry, donor);
@@ -222,14 +182,12 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     return { redirectURL };
   },
 
-  async createRecurringDonation({ donation, donor, calculations }) {
+  async createRecurringDonation({ donation, donor }) {
     const recurringDonationEntry = await strapi.entityService.create(
       "api::recurring-donation.recurring-donation",
       {
         data: {
-          amount: amountToCents(calculations.totalAmount),
-          tipSize: calculations.tipSize,
-          tipAmount: amountToCents(calculations.tipAmount),
+          amount: donation.amount,
           donor: donor.id,
           bank: donation.bank,
           datetime: new Date(),
@@ -243,10 +201,9 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       .service(
         "api::organization-recurring-donation.organization-recurring-donation"
       )
-      .createFromProportions({
+      .createOrganizationDonations({
         recurringDonationId: recurringDonationEntry.id,
-        recurringDonationAmount: amountToCents(donation.amount),
-        proportions: donation.proportions,
+        amounts: donation.amounts,
       });
 
     const donationInfo = await strapi.db
@@ -263,7 +220,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
               recipient: donationInfo.recipient,
               description: donationInfo.recurringPaymentComment,
             },
-            calculations.totalAmount
+            donation.amount / 100
           );
 
     return {

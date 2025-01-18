@@ -84,22 +84,32 @@ export default function DonationSection(props) {
   const [stage, setStage] = useState(0);
   const [donated, setDonated] = useState(false);
 
+  const tipSize = 0.05;
   const tipAmount = donation.addTip
-    ? Math.round(0.05 * donation.amount * 100) / 100
+    ? Math.round(tipSize * donation.amount * 100) / 100
     : 0;
   const totalAmount = Math.round((donation.amount + tipAmount) * 100) / 100;
 
   const donate = async () => {
     const donationData = pick(donation, [
-      "amount",
       "type",
       "firstName",
       "lastName",
       "email",
       "idCode",
       "bank",
-      "proportions",
     ]);
+    donationData.amounts = [
+      ...donation.proportions.calculateAmounts(
+        donation.amount * 100,
+        props.causes,
+      ),
+      {
+        organizationId: props.tipOrganizationId,
+        amount: tipAmount * 100,
+      },
+    ];
+    donationData.amount = totalAmount * 100;
     if (donation.companyDonation) {
       donationData.companyName = donation.companyName;
       donationData.companyCode = donation.companyCode;
@@ -110,7 +120,7 @@ export default function DonationSection(props) {
       donationData.dedicationMessage = donation.dedicationMessage;
     }
 
-    const response = await makeDonationRequest(donation);
+    const response = await makeDonationRequest(donationData);
     const data = await response.json();
 
     if (response.ok) {

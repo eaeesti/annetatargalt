@@ -6,19 +6,15 @@ export default function DonationSummary({
   totalText,
   tipOrganization,
 }) {
-  const tip = {
-    title: tipOrganization,
-    href: "",
-    amount: donation.tipAmount / 100,
-  };
-
-  const summary = donation.organizationDonations
-    .map((organizationDonation) => ({
+  const summary = donation.organizationDonations.map(
+    (organizationDonation) => ({
       title: organizationDonation.organization.title,
-      href: `/${organizationDonation.organization.cause.slug}/${organizationDonation.organization.slug}`,
+      href: organizationDonation.organization.cause
+        ? `/${organizationDonation.organization.cause.slug}/${organizationDonation.organization.slug}`
+        : "",
       amount: organizationDonation.amount / 100,
-    }))
-    .concat(donation.tipAmount > 0 ? [tip] : []);
+    }),
+  );
 
   return (
     <Summary
