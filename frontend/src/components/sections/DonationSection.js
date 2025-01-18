@@ -107,7 +107,7 @@ export default function DonationSection(props) {
           amount: Math.round(amount * 100),
         })),
       {
-        organizationId: props.tipOrganizationId,
+        organizationId: props.global.tipOrganizationId,
         amount: Math.round(tipAmount * 100),
       },
     ];

@@ -50,5 +50,10 @@ module.exports = {
       path: "/stats",
       handler: "donation.stats",
     },
+    {
+      method: "POST",
+      path: "/donations/migrateTips",
+      handler: "donation.migrateTips",
+    },
   ],
 };

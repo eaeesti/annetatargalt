@@ -141,9 +141,6 @@
     },
     "dedicationMessageText": {
       "type": "string"
-    },
-    "tipOrganizationId": {
-      "type": "integer"
     }
   }
 }

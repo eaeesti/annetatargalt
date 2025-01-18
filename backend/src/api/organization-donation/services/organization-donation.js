@@ -56,7 +56,7 @@ module.exports = createCoreService(
     },
 
     async createFromArray({ donationId, organizationDonations }) {
-      Promise.all(
+      return Promise.all(
         organizationDonations.map(async (organizationDonation) => {
           await strapi.entityService.create(
             "api::organization-donation.organization-donation",

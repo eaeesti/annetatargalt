@@ -1188,6 +1188,7 @@ export interface ApiGlobalGlobal extends Schema.SingleType {
     blogSlug: Attribute.String;
     donateText: Attribute.String;
     readMoreText: Attribute.String;
+    tipOrganizationId: Attribute.Integer;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<

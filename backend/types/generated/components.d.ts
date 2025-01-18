@@ -323,7 +323,6 @@ export interface SectionsDonationSection extends Schema.Component {
     dedicationNameText: Attribute.String;
     dedicationEmailText: Attribute.String;
     dedicationMessageText: Attribute.String;
-    tipOrganizationId: Attribute.Integer;
   };
 }
 

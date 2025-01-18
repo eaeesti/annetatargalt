@@ -1,11 +1,6 @@
 import Summary from "./Summary";
 
-export default function DonationSummary({
-  donation,
-  currency,
-  totalText,
-  tipOrganization,
-}) {
+export default function DonationSummary({ donation, currency, totalText }) {
   const summary = donation.organizationDonations.map(
     (organizationDonation) => ({
       title: organizationDonation.organization.title,
