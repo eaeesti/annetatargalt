@@ -43,35 +43,35 @@ function validateEmail(string) {
   return emailRegex.test(string);
 }
 
-function amountsFromProportions(proportions, totalAmount) {
-  const amountsAndProportions = {};
-
-  for (let [_, cause] of Object.entries(proportions)) {
-    for (let [orgId, org] of Object.entries(cause.proportions)) {
-      const proportion = (cause.proportion * org.proportion) / 10000;
-      const amount = Math.round(totalAmount * proportion);
-      amountsAndProportions[orgId] = { amount, proportion };
+function resizeOrganizationDonations(
+  organizationDonations,
+  multiplier,
+  expectedTotal
+) {
+  const resizedOrganizationDonations = organizationDonations.map(
+    (organizationDonation) => {
+      const amount = Math.round(organizationDonation.amount * multiplier);
+      return { ...organizationDonation, amount };
     }
-  }
+  );
 
-  const total = Object.values(amountsAndProportions)
-    .map((value) => value.amount)
-    .reduce((a, b) => a + b, 0);
-  if (total !== totalAmount) {
-    const discrepancy = Math.round(totalAmount - total);
+  const resizedTotal = resizedOrganizationDonations.reduce(
+    (prev, cur) => prev + cur.amount,
+    0
+  );
+
+  if (resizedTotal !== expectedTotal) {
+    const discrepancy = expectedTotal - resizedTotal;
     const timesToAdd = Math.abs(discrepancy);
     const adder = discrepancy / timesToAdd;
 
-    const keys = Object.keys(amountsAndProportions);
     for (let i = 0; i < timesToAdd; i++) {
-      const key = keys.at(-(i % keys.length) - 1);
-      amountsAndProportions[key].amount = Math.round(
-        amountsAndProportions[key].amount + adder
-      );
+      const index = resizedOrganizationDonations.length - 1 - i;
+      resizedOrganizationDonations[index].amount += adder;
     }
   }
 
-  return amountsAndProportions;
+  return resizedOrganizationDonations;
 }
 
 module.exports = {
@@ -79,5 +79,5 @@ module.exports = {
   validateAmount,
   validateIdCode,
   validateEmail,
-  amountsFromProportions,
+  resizeOrganizationDonations,
 };

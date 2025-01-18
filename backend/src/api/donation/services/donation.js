@@ -496,7 +496,6 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
             organization:
               organizationMap[organizationRecurringDonation.organization],
             amount: organizationRecurringDonation.amount,
-            proportion: organizationRecurringDonation.proportion,
           },
         }
       );
@@ -539,7 +538,6 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
             donation: donationMap[organizationDonation.donation],
             organization: organizationMap[organizationDonation.organization],
             amount: organizationDonation.amount,
-            proportion: organizationDonation.proportion,
           },
         }
       );
@@ -687,7 +685,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       {
         filters: {
           donor: donor.id,
-          amount: amount * 100,
+          amount: Math.round(amount * 100),
           datetime: {
             $gte: startDate,
             $lte: endDate,
@@ -741,11 +739,6 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
 
     const recurringDonation = latestRecurringDonations[0];
 
-    const totalAmount = amount * 100;
-    const tipSize = recurringDonation.tipSize;
-    const tipAmount = Math.round(tipSize * totalAmount);
-    const amountWithoutTip = totalAmount - tipAmount;
-
     const datetime = new Date(date);
     datetime.setHours(12, 0, 0, 0);
 
@@ -755,13 +748,11 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
         data: {
           donor: donor.id,
           recurringDonation: recurringDonation.id,
-          amount: totalAmount,
+          amount: Math.round(amount * 100),
           datetime,
           finalized: true,
           companyName: recurringDonation.companyName,
           companyCode: recurringDonation.companyCode,
-          tipSize,
-          tipAmount,
           iban,
           paymentMethod: recurringDonation.bank,
         },
@@ -772,7 +763,8 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       .service("api::organization-donation.organization-donation")
       .createFromOrganizationRecurringDonations({
         donationId: donation.id,
-        donationAmount: amountWithoutTip,
+        donationAmount: Math.round(amount * 100),
+        recurringDonationAmount: recurringDonation.amount,
         organizationRecurringDonations:
           recurringDonation.organizationRecurringDonations,
       });
@@ -795,7 +787,6 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       .service("api::organization-donation.organization-donation")
       .createFromArray({
         donationId: donation.id,
-        donationAmount: donation.amount,
         organizationDonations,
       });
   },
