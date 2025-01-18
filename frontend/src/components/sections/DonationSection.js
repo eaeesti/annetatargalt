@@ -100,16 +100,18 @@ export default function DonationSection(props) {
       "bank",
     ]);
     donationData.amounts = [
-      ...donation.proportions.calculateAmounts(
-        donation.amount * 100,
-        props.causes,
-      ),
+      ...donation.proportions
+        .calculateAmounts(donation.amount, props.causes)
+        .map(({ organizationId, amount }) => ({
+          organizationId,
+          amount: Math.round(amount * 100),
+        })),
       {
         organizationId: props.tipOrganizationId,
-        amount: tipAmount * 100,
+        amount: Math.round(tipAmount * 100),
       },
     ];
-    donationData.amount = totalAmount * 100;
+    donationData.amount = Math.round(totalAmount * 100);
     if (donation.companyDonation) {
       donationData.companyName = donation.companyName;
       donationData.companyCode = donation.companyCode;
