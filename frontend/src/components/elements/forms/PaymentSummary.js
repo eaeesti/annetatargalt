@@ -1,4 +1,3 @@
-import { amountsFromProportions } from "@/utils/donation";
 import Summary from "../Summary";
 
 export default function PaymentSummary({
@@ -10,11 +9,10 @@ export default function PaymentSummary({
   tipAmount,
   totalAmount,
 }) {
-  const organizationAmounts = amountsFromProportions({
-    proportions: donation.proportions,
-    causes: causes,
-    totalAmount: donation.amount,
-  });
+  const organizationAmounts = donation.proportions.calculateAmounts(
+    donation.amount,
+    causes,
+  );
 
   const tip = {
     title: tipOrganization,
