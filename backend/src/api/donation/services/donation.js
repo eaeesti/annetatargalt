@@ -790,4 +790,58 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
         organizationDonations,
       });
   },
+
+  /**
+   * Migrate tips from fields in the donation model to OrganizationDonations to
+   * our organization.
+   *
+   * Strapi supports database migrations, but they don't seem to work very well, so
+   * we're doing this through an API endpoint.
+   */
+  async migrateTips() {
+    const donations = await strapi.entityService.findMany(
+      "api::donation.donation",
+      {
+        filters: {
+          tipAmount: { $gt: 0 },
+          finalized: true,
+        },
+        populate: ["donor"],
+      }
+    );
+
+    const global = await strapi.db.query("api::global.global").findOne();
+    const tipOrganizationId = global.tipOrganizationId;
+
+    await Promise.all(
+      donations.map(async (donation) => {
+        await strapi.entityService.create(
+          "api::organization-donation.organization-donation",
+          {
+            data: {
+              donation: donation.id,
+              organization: tipOrganizationId,
+              amount: donation.tipAmount,
+            },
+          }
+        );
+      })
+    );
+
+    await Promise.all(
+      donations.map(async (donation) => {
+        await strapi.entityService.update(
+          "api::donation.donation",
+          donation.id,
+          {
+            data: {
+              tipAmount: null,
+            },
+          }
+        );
+      })
+    );
+
+    return donations.length;
+  },
 }));

@@ -243,5 +243,13 @@ module.exports = createCoreController(
 
       return ctx.send();
     },
+
+    async migrateTips(ctx) {
+      const migratedCount = await strapi
+        .service("api::donation.donation")
+        .migrateTips();
+
+      return ctx.send({ migratedCount });
+    },
   })
 );
