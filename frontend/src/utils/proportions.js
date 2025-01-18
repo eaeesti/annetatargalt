@@ -233,7 +233,7 @@ export default class Proportions {
   }
 
   calculateAmounts(totalAmount, causes) {
-    const amounts = {};
+    const amounts = [];
 
     causes.data.forEach((cause) => {
       const causeProportion = this.getProportion(cause.id);
@@ -246,22 +246,25 @@ export default class Proportions {
         const amount = totalAmount * proportion;
         const roundedAmount = Math.round(amount * 100) / 100;
         if (roundedAmount > 0) {
-          amounts[organization.id] = roundedAmount;
+          amounts.push({
+            organizationId: organization.id,
+            amount: roundedAmount,
+          });
         }
       });
     });
 
     // Avoid rounding errors
-    const total = Object.values(amounts).reduce((a, b) => a + b, 0);
+    const total = amounts.reduce((sum, item) => sum + item.amount, 0);
     if (total !== totalAmount) {
       const discrepancy = Math.round((totalAmount - total) * 100) / 100;
       const timesToAdd = Math.floor(Math.abs(discrepancy) / 0.01);
       const adder = discrepancy / timesToAdd;
 
-      const keys = Object.keys(amounts);
       for (let i = 0; i < timesToAdd; i++) {
-        const key = keys.at(-(i % keys.length) - 1);
-        amounts[key] = Math.round((amounts[key] + adder) * 100) / 100;
+        const index = amounts.length - 1 - (i % amounts.length);
+        amounts[index].amount =
+          Math.round((amounts[index].amount + adder) * 100) / 100;
       }
     }
 
