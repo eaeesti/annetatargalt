@@ -20,16 +20,11 @@ module.exports = createCoreController(
         .service("api::donor.donor")
         .updateOrCreateDonor(donation);
 
-      const tipSize = donation.addTip ? 0.05 : 0;
-      const tipAmount = Math.round(donation.amount * tipSize * 100) / 100;
-      const totalAmount = Math.round((donation.amount + tipAmount) * 100) / 100;
-      const calculations = { tipSize, tipAmount, totalAmount };
-
       if (donation.type === "recurring") {
         try {
           const { redirectURL, recurringDonationId } = await strapi
             .service("api::donation.donation")
-            .createRecurringDonation({ donation, donor, calculations });
+            .createRecurringDonation({ donation, donor });
 
           setTimeout(() => {
             strapi
@@ -47,7 +42,7 @@ module.exports = createCoreController(
       try {
         const { redirectURL } = await strapi
           .service("api::donation.donation")
-          .createSingleDonation({ donation, donor, calculations });
+          .createSingleDonation({ donation, donor });
         return ctx.send({ redirectURL });
       } catch (error) {
         console.error(error);

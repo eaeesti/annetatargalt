@@ -37,8 +37,6 @@ export default function ThankYouSection({
   // TODO: Make error section
   if (error) return <p>Error</p>;
 
-  console.log("data", data);
-
   if (!data || !data.donation) {
     router.push("/");
     return <LoadingSection />;

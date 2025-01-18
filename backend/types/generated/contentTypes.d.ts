@@ -1281,7 +1281,6 @@ export interface ApiOrganizationDonationOrganizationDonation
       'manyToOne',
       'api::organization.organization'
     >;
-    proportion: Attribute.Float;
     amount: Attribute.Integer;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
@@ -1323,7 +1322,6 @@ export interface ApiOrganizationRecurringDonationOrganizationRecurringDonation
       'manyToOne',
       'api::organization.organization'
     >;
-    proportion: Attribute.Float;
     amount: Attribute.Integer;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;

@@ -24,9 +24,6 @@
       "target": "api::organization.organization",
       "inversedBy": "organizationDonations"
     },
-    "proportion": {
-      "type": "float"
-    },
     "amount": {
       "type": "integer"
     }

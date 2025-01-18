@@ -5,7 +5,7 @@ function amountToCents(amount) {
 function validateAmount(amount) {
   if (typeof amount !== "number") return false;
 
-  return amountToCents(amount) >= 100;
+  return amount >= 100;
 }
 
 /**
