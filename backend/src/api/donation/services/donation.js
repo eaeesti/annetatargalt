@@ -844,4 +844,50 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
 
     return donations.length;
   },
+
+  async migrateRecurringTips() {
+    const recurringDonations = await strapi.entityService.findMany(
+      "api::recurring-donation.recurring-donation",
+      {
+        filters: {
+          tipAmount: { $gt: 0 },
+        },
+        populate: ["donor"],
+      }
+    );
+
+    const global = await strapi.db.query("api::global.global").findOne();
+    const tipOrganizationId = global.tipOrganizationId;
+
+    await Promise.all(
+      recurringDonations.map(async (recurringDonation) => {
+        await strapi.entityService.create(
+          "api::organization-recurring-donation.organization-recurring-donation",
+          {
+            data: {
+              recurringDonation: recurringDonation.id,
+              organization: tipOrganizationId,
+              amount: recurringDonation.tipAmount,
+            },
+          }
+        );
+      })
+    );
+
+    await Promise.all(
+      recurringDonations.map(async (recurringDonation) => {
+        await strapi.entityService.update(
+          "api::recurring-donation.recurring-donation",
+          recurringDonation.id,
+          {
+            data: {
+              tipAmount: null,
+            },
+          }
+        );
+      })
+    );
+
+    return recurringDonations.length;
+  },
 }));

@@ -249,7 +249,11 @@ module.exports = createCoreController(
         .service("api::donation.donation")
         .migrateTips();
 
-      return ctx.send({ migratedCount });
+      const migratedRecurringCount = await strapi
+        .service("api::donation.donation")
+        .migrateRecurringTips();
+
+      return ctx.send({ migratedCount, migratedRecurringCount });
     },
   })
 );
