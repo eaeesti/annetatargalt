@@ -1,5 +1,15 @@
+/**
+ * Construct a URL with query parameters.
+ * Spaces are converted to %20.
+ * @param {string} url - The base URL.
+ * @param {Object} params - The query parameters as key-value pairs.
+ * @return {string} - The URL with query parameters.
+ */
 function urlWithParams(url, params) {
-  return `${url}?${new URLSearchParams(params)}`;
+  const paramsString = Object.entries(params)
+    .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+    .join("&");
+  return `${url}?${paramsString}`;
 }
 
 /**
