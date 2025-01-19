@@ -240,7 +240,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       "api::donation.donation",
       donationId,
       {
-        fields: ["amount", "tipAmount"],
+        fields: ["amount"],
         populate: [
           "donor",
           "organizationDonations",
@@ -264,13 +264,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       currency: global.currency,
     };
 
-    const tip = {
-      organization: { title: global.tipOrganization },
-      amount: donation.tipAmount,
-    };
-
     data.summary = donation.organizationDonations
-      .concat(donation.tipAmount > 0 ? [tip] : [])
       .map((organizationDonation) => {
         const organization = organizationDonation.organization;
         const amount = formatEstonianAmount(organizationDonation.amount / 100);
@@ -299,7 +293,6 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       "api::recurring-donation.recurring-donation",
       recurringDonationId,
       {
-        fields: ["amount", "tipAmount"],
         populate: [
           "donor",
           "organizationRecurringDonations",
@@ -323,13 +316,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       currency: global.currency,
     };
 
-    const tip = {
-      organization: { title: global.tipOrganization },
-      amount: recurringDonation.tipAmount,
-    };
-
     data.summary = recurringDonation.organizationRecurringDonations
-      .concat(recurringDonation.tipAmount > 0 ? [tip] : [])
       .map((organizationRecurringDonation) => {
         const organization = organizationRecurringDonation.organization;
         const amount = formatEstonianAmount(
@@ -362,7 +349,6 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       {
         fields: [
           "amount",
-          "tipAmount",
           "dedicationEmail",
           "dedicationMessage",
           "dedicationName",
@@ -404,13 +390,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       sanitize(data.dedicationMessage)
     );
 
-    const tip = {
-      organization: { title: global.tipOrganization },
-      amount: donation.tipAmount,
-    };
-
     data.summary = donation.organizationDonations
-      .concat(donation.tipAmount > 0 ? [tip] : [])
       .map((organizationDonation) => {
         const organization = organizationDonation.organization;
         const amount = formatEstonianAmount(organizationDonation.amount / 100);
@@ -471,8 +451,6 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
         {
           data: {
             amount: recurringDonation.amount,
-            tipSize: recurringDonation.tipSize,
-            tipAmount: recurringDonation.tipAmount,
             donor: donorMap[recurringDonation.donor],
             bank: recurringDonation.bank,
             datetime: recurringDonation.datetime,
@@ -508,8 +486,6 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
         {
           data: {
             amount: donation.amount,
-            tipSize: donation.tipSize,
-            tipAmount: donation.tipAmount,
             donor: donorMap[donation.donor],
             datetime: donation.datetime,
             companyName: donation.companyName,

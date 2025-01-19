@@ -36,12 +36,6 @@
       "target": "api::organization-recurring-donation.organization-recurring-donation",
       "mappedBy": "recurringDonation"
     },
-    "tipSize": {
-      "type": "float"
-    },
-    "tipAmount": {
-      "type": "integer"
-    },
     "datetime": {
       "type": "datetime"
     },

@@ -123,7 +123,7 @@ module.exports = createCoreController(
         "api::donation.donation",
         id,
         {
-          fields: ["amount", "tipAmount"],
+          fields: ["amount"],
           populate: [
             "donor",
             "organizationDonations",

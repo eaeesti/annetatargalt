@@ -984,8 +984,6 @@ export interface ApiDonationDonation extends Schema.CollectionType {
       'oneToMany',
       'api::organization-donation.organization-donation'
     >;
-    tipSize: Attribute.Float;
-    tipAmount: Attribute.Integer;
     sentToOrganization: Attribute.Boolean & Attribute.DefaultTo<false>;
     dedicationName: Attribute.String &
       Attribute.SetMinMaxLength<{
@@ -1411,8 +1409,6 @@ export interface ApiRecurringDonationRecurringDonation
       'oneToMany',
       'api::organization-recurring-donation.organization-recurring-donation'
     >;
-    tipSize: Attribute.Float;
-    tipAmount: Attribute.Integer;
     datetime: Attribute.DateTime;
     donations: Attribute.Relation<
       'api::recurring-donation.recurring-donation',

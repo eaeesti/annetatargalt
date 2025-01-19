@@ -58,12 +58,6 @@
       "target": "api::organization-donation.organization-donation",
       "mappedBy": "donation"
     },
-    "tipSize": {
-      "type": "float"
-    },
-    "tipAmount": {
-      "type": "integer"
-    },
     "sentToOrganization": {
       "type": "boolean",
       "default": false
