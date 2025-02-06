@@ -360,7 +360,7 @@ export default function DonationSection(props) {
                   setBank={(bank) => setDonation({ ...donation, bank })}
                 />
               )}
-              {donation.type === "onetime" && (
+              {/* {donation.type === "onetime" && (
                 <PaymentMethodChooser
                   paymentMethod={donation.paymentMethod}
                   setPaymentMethod={(paymentMethod) =>
@@ -370,7 +370,7 @@ export default function DonationSection(props) {
                   paymentInitiationText={props.paymentInitiationText}
                   cardPaymentsText={props.cardPaymentsText}
                 />
-              )}
+              )} */}
               <CheckboxInput
                 name="terms"
                 label={props.termsText}
