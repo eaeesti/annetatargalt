@@ -323,6 +323,9 @@ export interface SectionsDonationSection extends Schema.Component {
     dedicationNameText: Attribute.String;
     dedicationEmailText: Attribute.String;
     dedicationMessageText: Attribute.String;
+    paymentMethodText: Attribute.String & Attribute.DefaultTo<'Makseviis'>;
+    paymentInitiationText: Attribute.String & Attribute.DefaultTo<'Pangalink'>;
+    cardPaymentsText: Attribute.String & Attribute.DefaultTo<'Kaardimakse'>;
   };
 }
 

@@ -69,6 +69,17 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       };
     }
 
+    if (donation.type === "onetime") {
+      if (
+        !["paymentInitiation", "cardPayments"].includes(donation.paymentMethod)
+      ) {
+        return {
+          valid: false,
+          reason: `Invalid payment method: ${donation.paymentMethod}`,
+        };
+      }
+    }
+
     if (donation.companyName || donation.companyCode) {
       if (!donation.companyName) {
         return { valid: false, reason: "No company name provided" };
@@ -123,7 +134,10 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     return { valid: true };
   },
 
-  async createMontonioPayload(donation, donor, { currency = "EUR" } = {}) {
+  async createMontonioPayload(
+    donation,
+    { paymentMethod = "paymentInitiation", currency = "EUR" } = {}
+  ) {
     const donationInfo = await strapi.db
       .query("api::donation-info.donation-info")
       .findOne();
@@ -141,7 +155,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       payment: {
         amount,
         currency,
-        method: "paymentInitiation",
+        method: paymentMethod,
         methodOptions: {
           preferredCountry: "EE",
           preferredLocale: "et",
@@ -176,7 +190,9 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
         amounts: donation.amounts,
       });
 
-    const payload = await this.createMontonioPayload(donationEntry, donor);
+    const payload = await this.createMontonioPayload(donationEntry, {
+      paymentMethod: donation.paymentMethod,
+    });
     const redirectURL = await fetchRedirectUrl(payload);
 
     return { redirectURL };

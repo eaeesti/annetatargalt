@@ -141,6 +141,18 @@
     },
     "dedicationMessageText": {
       "type": "string"
+    },
+    "paymentMethodText": {
+      "type": "string",
+      "default": "Makseviis"
+    },
+    "paymentInitiationText": {
+      "type": "string",
+      "default": "Pangalink"
+    },
+    "cardPaymentsText": {
+      "type": "string",
+      "default": "Kaardimakse"
     }
   }
 }

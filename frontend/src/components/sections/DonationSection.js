@@ -23,6 +23,7 @@ import Modal from "../Modal";
 import CompanyInput from "../elements/forms/CompanyInput";
 import { usePlausible } from "next-plausible";
 import DedicationInput from "../elements/forms/DedicationInput";
+import PaymentMethodChooser from "../elements/forms/PaymentMethodChooser";
 
 export default function DonationSection(props) {
   const router = useRouter();
@@ -62,6 +63,7 @@ export default function DonationSection(props) {
     dedicationMessage: "",
     proportions: Proportions.fromStrapiData(props.causes.data, orgParam),
     addTip: false,
+    paymentMethod: "paymentInitiation",
     acceptTerms: false,
   });
 
@@ -98,6 +100,7 @@ export default function DonationSection(props) {
       "email",
       "idCode",
       "bank",
+      "paymentMethod",
     ]);
     donationData.amounts = [
       ...donation.proportions
@@ -355,6 +358,17 @@ export default function DonationSection(props) {
                   banks={props.banks}
                   bank={donation.bank}
                   setBank={(bank) => setDonation({ ...donation, bank })}
+                />
+              )}
+              {donation.type === "onetime" && (
+                <PaymentMethodChooser
+                  paymentMethod={donation.paymentMethod}
+                  setPaymentMethod={(paymentMethod) =>
+                    setDonation({ ...donation, paymentMethod })
+                  }
+                  label={props.paymentMethodText}
+                  paymentInitiationText={props.paymentInitiationText}
+                  cardPaymentsText={props.cardPaymentsText}
                 />
               )}
               <CheckboxInput
