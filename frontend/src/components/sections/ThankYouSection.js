@@ -34,12 +34,8 @@ export default function ThankYouSection({
 
   if (isLoading) return <LoadingSection />;
 
-  // TODO: Make error section
-  if (error) return <p>Error</p>;
-
   if (!data || !data.donation) {
-    router.push("/");
-    return <LoadingSection />;
+    return router.push("/");
   }
 
   const donation = {

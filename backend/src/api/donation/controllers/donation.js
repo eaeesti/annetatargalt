@@ -65,6 +65,10 @@ module.exports = createCoreController(
         return ctx.badRequest("Invalid payment token");
       }
 
+      if (decoded.paymentStatus !== "PAID") {
+        return ctx.badRequest("Payment not paid");
+      }
+
       const id = Number(decoded.merchant_reference.split(" ").at(-1));
 
       const donation = await strapi.entityService.findOne(
@@ -115,6 +119,10 @@ module.exports = createCoreController(
       } catch (error) {
         console.error(error);
         return ctx.badRequest("Invalid payment token");
+      }
+
+      if (decoded.paymentStatus !== "PAID") {
+        return ctx.badRequest("Payment not paid");
       }
 
       const id = Number(decoded.merchant_reference.split(" ").at(-1));
