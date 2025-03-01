@@ -28,7 +28,7 @@ export default function PaymentMethodChooser({
 }) {
   return (
     <fieldset aria-labelledby="paymentMethodLabel">
-      <div class="flex flex-row gap-4">
+      <div className="flex flex-row gap-4">
         <legend
           id="paymentMethodLabel"
           className="text-sm font-medium leading-6 text-slate-900"
