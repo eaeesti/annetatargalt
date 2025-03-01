@@ -19,6 +19,36 @@ module.exports = createCoreController(
       }
     },
 
+    async donateExternal(ctx) {
+      const returnUrl = ctx.request.body.returnUrl;
+      if (!returnUrl) {
+        return ctx.badRequest("No return URL provided");
+      }
+
+      const global = await strapi.db.query("api::global.global").findOne();
+
+      const donation = {
+        ...ctx.request.body,
+        comment: `Return URL: ${returnUrl}`,
+        // Donate everything to tip organization by default, otherwise use the provided amounts
+        amounts: ctx.request.body.amounts ?? [
+          {
+            amount: ctx.request.body.amount,
+            organizationId: global.tipOrganizationId,
+          },
+        ],
+      };
+
+      try {
+        const { redirectURL } = await strapi
+          .service("api::donation.donation")
+          .createDonation(donation, returnUrl);
+        return ctx.send({ redirectURL });
+      } catch (error) {
+        return ctx.badRequest(error.message);
+      }
+    },
+
     async confirm(ctx) {
       const orderToken = ctx.request.query["order-token"];
 

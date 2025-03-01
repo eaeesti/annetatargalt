@@ -7,6 +7,11 @@ module.exports = {
     },
     {
       method: "POST",
+      path: "/donateExternal",
+      handler: "donation.donateExternal",
+    },
+    {
+      method: "POST",
       path: "/confirm",
       handler: "donation.confirm",
     },
