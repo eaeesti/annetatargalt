@@ -166,6 +166,52 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     return payload;
   },
 
+  async createDonation(donation) {
+    // TODO: Use the one in this file
+    const validation = await strapi
+      .service("api::donation.donation")
+      .validateDonation(donation);
+
+    if (!validation.valid) {
+      throw new Error(validation.reason);
+    }
+
+    const donor = await strapi
+      .service("api::donor.donor")
+      .updateOrCreateDonor(donation);
+
+    if (donation.type === "recurring") {
+      try {
+        // TODO: Use the one in this file
+        const { redirectURL, recurringDonationId } = await strapi
+          .service("api::donation.donation")
+          .createRecurringDonation({ donation, donor });
+
+        setTimeout(() => {
+          strapi
+            .service("api::donation.donation")
+            .sendRecurringConfirmationEmail(recurringDonationId);
+        }, 3 * 60 * 1000); // 3 minutes
+
+        return { redirectURL };
+      } catch (error) {
+        console.error(error);
+        throw new Error("Failed to create recurring donation");
+      }
+    }
+
+    try {
+      // TODO: Use the one in this file
+      const { redirectURL } = await strapi
+        .service("api::donation.donation")
+        .createSingleDonation({ donation, donor });
+      return { redirectURL };
+    } catch (error) {
+      console.error(error);
+      throw new Error("Failed to create single donation");
+    }
+  },
+
   async createSingleDonation({ donation, donor }) {
     const donationEntry = await strapi.entityService.create(
       "api::donation.donation",
