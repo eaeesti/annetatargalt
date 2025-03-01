@@ -167,10 +167,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   },
 
   async createDonation(donation) {
-    // TODO: Use the one in this file
-    const validation = await strapi
-      .service("api::donation.donation")
-      .validateDonation(donation);
+    const validation = await this.validateDonation(donation);
 
     if (!validation.valid) {
       throw new Error(validation.reason);
@@ -182,15 +179,11 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
 
     if (donation.type === "recurring") {
       try {
-        // TODO: Use the one in this file
-        const { redirectURL, recurringDonationId } = await strapi
-          .service("api::donation.donation")
-          .createRecurringDonation({ donation, donor });
+        const { redirectURL, recurringDonationId } =
+          await this.createRecurringDonation({ donation, donor });
 
         setTimeout(() => {
-          strapi
-            .service("api::donation.donation")
-            .sendRecurringConfirmationEmail(recurringDonationId);
+          this.sendRecurringConfirmationEmail(recurringDonationId);
         }, 3 * 60 * 1000); // 3 minutes
 
         return { redirectURL };
@@ -201,10 +194,10 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     }
 
     try {
-      // TODO: Use the one in this file
-      const { redirectURL } = await strapi
-        .service("api::donation.donation")
-        .createSingleDonation({ donation, donor });
+      const { redirectURL } = await this.createSingleDonation({
+        donation,
+        donor,
+      });
       return { redirectURL };
     } catch (error) {
       console.error(error);
