@@ -1027,8 +1027,6 @@ export interface ApiDonationInfoDonationInfo extends Schema.SingleType {
   };
   attributes: {
     returnPath: Attribute.String & Attribute.DefaultTo<'annetatud'>;
-    transactionComment: Attribute.String &
-      Attribute.DefaultTo<'Anneta Targalt annetus'>;
     iban: Attribute.String;
     recipient: Attribute.String;
     recurringPaymentComment: Attribute.String;

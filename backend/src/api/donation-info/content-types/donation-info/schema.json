@@ -16,10 +16,6 @@
       "type": "string",
       "default": "annetatud"
     },
-    "transactionComment": {
-      "type": "string",
-      "default": "Anneta Targalt annetus"
-    },
     "iban": {
       "type": "string"
     },
