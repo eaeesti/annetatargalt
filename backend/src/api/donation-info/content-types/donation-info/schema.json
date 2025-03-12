@@ -27,6 +27,14 @@
     },
     "merchantReferencePrefix": {
       "type": "string"
+    },
+    "externalRecurringPaymentComment": {
+      "type": "string",
+      "default": "Efektiivne Altruism Eesti püsiannetus"
+    },
+    "externalMerchantReferencePrefix": {
+      "type": "string",
+      "default": "Efektiivne Altruism Eesti annetus"
     }
   }
 }

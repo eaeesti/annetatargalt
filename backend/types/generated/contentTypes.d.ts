@@ -1031,6 +1031,10 @@ export interface ApiDonationInfoDonationInfo extends Schema.SingleType {
     recipient: Attribute.String;
     recurringPaymentComment: Attribute.String;
     merchantReferencePrefix: Attribute.String;
+    externalRecurringPaymentComment: Attribute.String &
+      Attribute.DefaultTo<'Efektiivne Altruism Eesti p\u00FCsiannetus'>;
+    externalMerchantReferencePrefix: Attribute.String &
+      Attribute.DefaultTo<'Efektiivne Altruism Eesti annetus'>;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -1134,6 +1138,12 @@ export interface ApiEmailConfigEmailConfig extends Schema.SingleType {
     recurringConfirmationText: Attribute.Text;
     recurringConfirmationHtml: Attribute.Text;
     recurringConfirmationSubject: Attribute.String;
+    externalConfirmationSubject: Attribute.String;
+    externalConfirmationText: Attribute.Text;
+    externalConfirmationHtml: Attribute.Text;
+    externalRecurringConfirmationText: Attribute.Text;
+    externalRecurringConfirmationHtml: Attribute.Text;
+    externalRecurringConfirmationSubject: Attribute.String;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<

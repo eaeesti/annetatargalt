@@ -59,6 +59,24 @@
     },
     "recurringConfirmationSubject": {
       "type": "string"
+    },
+    "externalConfirmationSubject": {
+      "type": "string"
+    },
+    "externalConfirmationText": {
+      "type": "text"
+    },
+    "externalConfirmationHtml": {
+      "type": "text"
+    },
+    "externalRecurringConfirmationText": {
+      "type": "text"
+    },
+    "externalRecurringConfirmationHtml": {
+      "type": "text"
+    },
+    "externalRecurringConfirmationSubject": {
+      "type": "string"
     }
   }
 }
