@@ -997,6 +997,7 @@ export interface ApiDonationDonation extends Schema.CollectionType {
       Attribute.SetMinMaxLength<{
         maxLength: 1024;
       }>;
+    externalDonation: Attribute.Boolean & Attribute.DefaultTo<false>;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<

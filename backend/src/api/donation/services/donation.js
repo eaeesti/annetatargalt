@@ -140,6 +140,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       paymentMethod = "paymentInitiation",
       currency = "EUR",
       customReturnUrl,
+      externalDonation = false,
     } = {}
   ) {
     const donationInfo = await strapi.db
@@ -152,9 +153,13 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       ? customReturnUrl
       : `${process.env.FRONTEND_URL}/${donationInfo.returnPath}`;
 
+    const merchantReferencePrefix = externalDonation
+      ? donationInfo.externalMerchantReferencePrefix
+      : donationInfo.merchantReferencePrefix;
+
     // https://docs.montonio.com/api/stargate/guides/orders#creating-an-order
     const payload = {
-      merchantReference: `${donationInfo.merchantReferencePrefix} ${donation.id}`,
+      merchantReference: `${merchantReferencePrefix} ${donation.id}`,
       returnUrl,
       notificationUrl: `${process.env.MONTONIO_RETURN_URL}/confirm`,
       grandTotal: amount,
@@ -174,7 +179,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     return payload;
   },
 
-  async createDonation(donation, customReturnUrl) {
+  async createDonation(donation, customReturnUrl, externalDonation) {
     const validation = await this.validateDonation(donation);
 
     if (!validation.valid) {
@@ -187,12 +192,11 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
 
     if (donation.type === "recurring") {
       try {
-        const { redirectURL, recurringDonationId } =
-          await this.createRecurringDonation({ donation, donor });
-
-        setTimeout(() => {
-          this.sendRecurringConfirmationEmail(recurringDonationId);
-        }, 3 * 60 * 1000); // 3 minutes
+        const { redirectURL } = await this.createRecurringDonation({
+          donation,
+          donor,
+          externalDonation,
+        });
 
         return { redirectURL };
       } catch (error) {
@@ -206,6 +210,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
         donation,
         donor,
         customReturnUrl,
+        externalDonation,
       });
       return { redirectURL };
     } catch (error) {
@@ -214,7 +219,12 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     }
   },
 
-  async createSingleDonation({ donation, donor, customReturnUrl }) {
+  async createSingleDonation({
+    donation,
+    donor,
+    customReturnUrl,
+    externalDonation,
+  }) {
     const donationEntry = await strapi.entityService.create(
       "api::donation.donation",
       {
@@ -228,6 +238,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
           dedicationEmail: donation.dedicationEmail,
           dedicationMessage: donation.dedicationMessage,
           comment: donation.comment,
+          externalDonation,
         },
       }
     );
@@ -242,13 +253,14 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     const payload = await this.createMontonioPayload(donationEntry, {
       paymentMethod: donation.paymentMethod,
       customReturnUrl,
+      externalDonation,
     });
     const redirectURL = await fetchRedirectUrl(payload);
 
     return { redirectURL };
   },
 
-  async createRecurringDonation({ donation, donor }) {
+  async createRecurringDonation({ donation, donor, externalDonation }) {
     const recurringDonationEntry = await strapi.entityService.create(
       "api::recurring-donation.recurring-donation",
       {
@@ -277,6 +289,10 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       .query("api::donation-info.donation-info")
       .findOne();
 
+    const description = externalDonation
+      ? donationInfo.externalRecurringPaymentComment
+      : donationInfo.recurringPaymentComment;
+
     const recurringPaymentLink =
       donation.bank === "other"
         ? ""
@@ -285,15 +301,20 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
             {
               iban: donationInfo.iban,
               recipient: donationInfo.recipient,
-              description: donationInfo.recurringPaymentComment,
+              description,
             },
             donation.amount / 100
           );
 
-    return {
-      redirectURL: recurringPaymentLink,
-      recurringDonationId: recurringDonationEntry.id,
-    };
+    setTimeout(() => {
+      if (externalDonation) {
+        this.sendExternalRecurringConfirmationEmail(recurringDonationEntry.id);
+      } else {
+        this.sendRecurringConfirmationEmail(recurringDonationEntry.id);
+      }
+    }, 3 * 60 * 1000); // 3 minutes
+
+    return { redirectURL: recurringPaymentLink };
   },
 
   async sendConfirmationEmail(donationId) {
@@ -349,6 +370,44 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     );
   },
 
+  async sendExternalConfirmationEmail(donationId) {
+    const emailConfig = await strapi.db
+      .query("api::email-config.email-config")
+      .findOne();
+
+    const global = await strapi.db.query("api::global.global").findOne();
+
+    const donation = await strapi.entityService.findOne(
+      "api::donation.donation",
+      donationId,
+      { populate: ["donor"] }
+    );
+
+    const template = {
+      subject: emailConfig.externalConfirmationSubject,
+      text: emailConfig.externalConfirmationText,
+      html: emailConfig.externalConfirmationHtml,
+    };
+
+    const data = {
+      firstName: donation.donor.firstName,
+      firstNameHtml: sanitize(donation.donor.firstName),
+      lastName: donation.donor.lastName,
+      lastNameHtml: sanitize(donation.donor.lastName),
+      amount: formatEstonianAmount(donation.amount / 100),
+      currency: global.currency,
+    };
+
+    await strapi.plugins["email"].services.email.sendTemplatedEmail(
+      {
+        to: donation.donor.email,
+        replyTo: emailConfig.confirmationReplyTo,
+      },
+      template,
+      data
+    );
+  },
+
   async sendRecurringConfirmationEmail(recurringDonationId) {
     const emailConfig = await strapi.db
       .query("api::email-config.email-config")
@@ -392,6 +451,43 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
         return `${organization.title}: ${amount}${global.currency}`;
       })
       .join("\n");
+
+    await strapi.plugins["email"].services.email.sendTemplatedEmail(
+      {
+        to: recurringDonation.donor.email,
+        replyTo: emailConfig.confirmationReplyTo,
+      },
+      template,
+      data
+    );
+  },
+
+  async sendExternalRecurringConfirmationEmail(recurringDonationId) {
+    const emailConfig = await strapi.db
+      .query("api::email-config.email-config")
+      .findOne();
+    const global = await strapi.db.query("api::global.global").findOne();
+
+    const recurringDonation = await strapi.entityService.findOne(
+      "api::recurring-donation.recurring-donation",
+      recurringDonationId,
+      { populate: ["donor"] }
+    );
+
+    const template = {
+      subject: emailConfig.externalRecurringConfirmationSubject,
+      text: emailConfig.externalRecurringConfirmationText,
+      html: emailConfig.externalRecurringConfirmationHtml,
+    };
+
+    const data = {
+      firstName: recurringDonation.donor.firstName,
+      firstNameHtml: sanitize(recurringDonation.donor.firstName),
+      lastName: recurringDonation.donor.lastName,
+      lastNameHtml: sanitize(recurringDonation.donor.lastName),
+      amount: formatEstonianAmount(recurringDonation.amount / 100),
+      currency: global.currency,
+    };
 
     await strapi.plugins["email"].services.email.sendTemplatedEmail(
       {

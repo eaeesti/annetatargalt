@@ -73,6 +73,10 @@
     "dedicationMessage": {
       "type": "text",
       "maxLength": 1024
+    },
+    "externalDonation": {
+      "type": "boolean",
+      "default": false
     }
   }
 }

@@ -30,8 +30,8 @@ module.exports = createCoreController(
       const donation = {
         ...ctx.request.body,
         comment: `Return URL: ${returnUrl}`,
-        // Donate everything to tip organization by default, otherwise use the provided amounts
-        amounts: ctx.request.body.amounts ?? [
+        // External donations always go to the tip organization
+        amounts: [
           {
             amount: ctx.request.body.amount,
             organizationId: global.tipOrganizationId,
@@ -42,7 +42,7 @@ module.exports = createCoreController(
       try {
         const { redirectURL } = await strapi
           .service("api::donation.donation")
-          .createDonation(donation, returnUrl);
+          .createDonation(donation, returnUrl, true);
         return ctx.send({ redirectURL });
       } catch (error) {
         return ctx.badRequest(error.message);
@@ -96,7 +96,15 @@ module.exports = createCoreController(
         return ctx.badRequest("Failed to update donation");
       }
 
-      await strapi.service("api::donation.donation").sendConfirmationEmail(id);
+      if (donation.externalDonation) {
+        await strapi
+          .service("api::donation.donation")
+          .sendExternalConfirmationEmail(id);
+      } else {
+        await strapi
+          .service("api::donation.donation")
+          .sendConfirmationEmail(id);
+      }
 
       if (donation.dedicationEmail) {
         await strapi.service("api::donation.donation").sendDedicationEmail(id);
