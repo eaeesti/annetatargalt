@@ -77,6 +77,12 @@
     "externalDonation": {
       "type": "boolean",
       "default": false
+    },
+    "donation_transfer": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::donation-transfer.donation-transfer",
+      "inversedBy": "donations"
     }
   }
 }

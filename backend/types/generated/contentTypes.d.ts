@@ -998,6 +998,11 @@ export interface ApiDonationDonation extends Schema.CollectionType {
         maxLength: 1024;
       }>;
     externalDonation: Attribute.Boolean & Attribute.DefaultTo<false>;
+    donation_transfer: Attribute.Relation<
+      'api::donation.donation',
+      'manyToOne',
+      'api::donation-transfer.donation-transfer'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -1046,6 +1051,44 @@ export interface ApiDonationInfoDonationInfo extends Schema.SingleType {
       Attribute.Private;
     updatedBy: Attribute.Relation<
       'api::donation-info.donation-info',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
+export interface ApiDonationTransferDonationTransfer
+  extends Schema.CollectionType {
+  collectionName: 'donation_transfers';
+  info: {
+    singularName: 'donation-transfer';
+    pluralName: 'donation-transfers';
+    displayName: 'DonationTransfer';
+    description: '';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    datetime: Attribute.Date;
+    donations: Attribute.Relation<
+      'api::donation-transfer.donation-transfer',
+      'oneToMany',
+      'api::donation.donation'
+    >;
+    recipient: Attribute.String;
+    notes: Attribute.Text;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::donation-transfer.donation-transfer',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::donation-transfer.donation-transfer',
       'oneToOne',
       'admin::user'
     > &
@@ -1517,6 +1560,7 @@ declare module '@strapi/types' {
       'api::contact-submission.contact-submission': ApiContactSubmissionContactSubmission;
       'api::donation.donation': ApiDonationDonation;
       'api::donation-info.donation-info': ApiDonationInfoDonationInfo;
+      'api::donation-transfer.donation-transfer': ApiDonationTransferDonationTransfer;
       'api::donor.donor': ApiDonorDonor;
       'api::email-config.email-config': ApiEmailConfigEmailConfig;
       'api::global.global': ApiGlobalGlobal;

@@ -1,0 +1,31 @@
+{
+  "kind": "collectionType",
+  "collectionName": "donation_transfers",
+  "info": {
+    "singularName": "donation-transfer",
+    "pluralName": "donation-transfers",
+    "displayName": "DonationTransfer",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "datetime": {
+      "type": "date"
+    },
+    "donations": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::donation.donation",
+      "mappedBy": "donation_transfer"
+    },
+    "recipient": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "text"
+    }
+  }
+}
