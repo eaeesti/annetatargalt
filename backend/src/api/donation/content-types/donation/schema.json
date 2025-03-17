@@ -78,7 +78,7 @@
       "type": "boolean",
       "default": false
     },
-    "donation_transfer": {
+    "donationTransfer": {
       "type": "relation",
       "relation": "manyToOne",
       "target": "api::donation-transfer.donation-transfer",

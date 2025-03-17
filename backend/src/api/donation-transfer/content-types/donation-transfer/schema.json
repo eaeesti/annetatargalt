@@ -19,7 +19,7 @@
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::donation.donation",
-      "mappedBy": "donation_transfer"
+      "mappedBy": "donationTransfer"
     },
     "recipient": {
       "type": "string"

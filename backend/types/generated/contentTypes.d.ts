@@ -998,7 +998,7 @@ export interface ApiDonationDonation extends Schema.CollectionType {
         maxLength: 1024;
       }>;
     externalDonation: Attribute.Boolean & Attribute.DefaultTo<false>;
-    donation_transfer: Attribute.Relation<
+    donationTransfer: Attribute.Relation<
       'api::donation.donation',
       'manyToOne',
       'api::donation-transfer.donation-transfer'
