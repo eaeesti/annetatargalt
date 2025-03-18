@@ -749,13 +749,16 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     const donations = (
       await strapi.entityService.findMany("api::donation.donation", {
         sort: "id",
-        populate: ["donor", "recurringDonation"],
+        populate: ["donor", "recurringDonation", "donationTransfer"],
       })
     ).map((donation) => ({
       ...donation,
       donor: donation.donor.id,
       recurringDonation: donation.recurringDonation
         ? donation.recurringDonation.id
+        : null,
+      donationTransfer: donation.donationTransfer
+        ? donation.donationTransfer.id
         : null,
     }));
 
