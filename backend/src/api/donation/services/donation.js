@@ -579,6 +579,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     organizationRecurringDonations,
     donations,
     organizationDonations,
+    donationTransfers,
   }) {
     const causeMap = {};
     for (let cause of causes) {
@@ -681,6 +682,22 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
         }
       );
     }
+
+    for (let donationTransfer of donationTransfers) {
+      await strapi.entityService.create(
+        "api::donation-transfer.donation-transfer",
+        {
+          data: {
+            donations: donationTransfer.donations.map(
+              (donationId) => donationMap[donationId]
+            ),
+            datetime: donationTransfer.datetime,
+            recipient: donationTransfer.recipient,
+            notes: donationTransfer.notes,
+          },
+        }
+      );
+    }
   },
 
   async export() {
@@ -756,6 +773,19 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       organization: organizationDonation.organization.id,
     }));
 
+    const donationTransfers = (
+      await strapi.entityService.findMany(
+        "api::donation-transfer.donation-transfer",
+        {
+          sort: "id",
+          populate: ["donations"],
+        }
+      )
+    ).map((donationTransfer) => ({
+      ...donationTransfer,
+      donations: donationTransfer.donations.map((donation) => donation.id),
+    }));
+
     return {
       causes,
       organizations,
@@ -764,6 +794,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       organizationRecurringDonations,
       donations,
       organizationDonations,
+      donationTransfers,
     };
   },
 
