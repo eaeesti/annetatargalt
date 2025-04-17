@@ -911,7 +911,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     // Subtract 24 hours because the recurring donation includes a time but the bank transaction only includes a date
     const recurringDonation = latestRecurringDonations.find(
       (recurringDonation) =>
-        recurringDonation.datetime.getTime() <=
+        new Date(recurringDonation.datetime).getTime() <=
         (new Date(date) - 24 * 60 * 60 * 1000).getTime()
     );
 
