@@ -908,7 +908,13 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       throw new Error("No recurring donations found");
     }
 
-    const recurringDonation = latestRecurringDonations[0];
+    // Find the latest recurring donation that is before the date of the transaction
+    // Subtract 24 hours because the recurring donation includes a time but the bank transaction only includes a date
+    const recurringDonation = latestRecurringDonations.find(
+      (recurringDonation) =>
+        recurringDonation.datetime.getTime() <=
+        (new Date(date) - 24 * 60 * 60 * 1000).getTime()
+    );
 
     const datetime = new Date(date);
     datetime.setHours(12, 0, 0, 0);
