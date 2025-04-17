@@ -900,7 +900,6 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
           "organizationRecurringDonations.organization",
         ],
         sort: "datetime:desc",
-        limit: 1,
       }
     );
 
@@ -915,6 +914,10 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
         recurringDonation.datetime.getTime() <=
         (new Date(date) - 24 * 60 * 60 * 1000).getTime()
     );
+
+    if (!recurringDonation) {
+      throw new Error("No recurring donation found for this date");
+    }
 
     const datetime = new Date(date);
     datetime.setHours(12, 0, 0, 0);
