@@ -908,11 +908,11 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     }
 
     // Find the latest recurring donation that is before the date of the transaction
-    // Subtract 24 hours because the recurring donation includes a time but the bank transaction only includes a date
+    // Add 24 hours because the recurring donation includes a time but the bank transaction only includes a date
     const recurringDonation = latestRecurringDonations.find(
       (recurringDonation) =>
         new Date(recurringDonation.datetime).getTime() <=
-        new Date(date).getTime() - 24 * 60 * 60 * 1000
+        new Date(date).getTime() + 24 * 60 * 60 * 1000
     );
 
     if (!recurringDonation) {
