@@ -912,7 +912,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     const recurringDonation = latestRecurringDonations.find(
       (recurringDonation) =>
         new Date(recurringDonation.datetime).getTime() <=
-        (new Date(date) - 24 * 60 * 60 * 1000).getTime()
+        new Date(date).getTime() - 24 * 60 * 60 * 1000
     );
 
     if (!recurringDonation) {
