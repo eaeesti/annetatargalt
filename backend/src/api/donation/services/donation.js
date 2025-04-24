@@ -1070,4 +1070,32 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
 
     return recurringDonations.length;
   },
+
+  async getDonationsInDateRange(startDate, endDate) {
+    const donations = await strapi.entityService.findMany(
+      "api::donation.donation",
+      {
+        filters: {
+          datetime: {
+            $gte: startDate,
+            $lte: endDate,
+          },
+          finalized: true,
+        },
+        populate: ["donor"],
+      }
+    );
+
+    return donations;
+  },
+
+  async addDonationsToTransfer(donationIds, transferId) {
+    donationIds.forEach(async (donationId) => {
+      await strapi.entityService.update("api::donation.donation", donationId, {
+        data: {
+          donationTransfer: transferId,
+        },
+      });
+    });
+  },
 }));

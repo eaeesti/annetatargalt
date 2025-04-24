@@ -60,5 +60,10 @@ module.exports = {
       path: "/donations/migrateTips",
       handler: "donation.migrateTips",
     },
+    {
+      method: "PUT",
+      path: "/donations/addDonationsToTransferByDate",
+      handler: "donation.addDonationsToTransferByDate",
+    },
   ],
 };

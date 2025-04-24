@@ -270,5 +270,29 @@ module.exports = createCoreController(
 
       return ctx.send({ migratedCount, migratedRecurringCount });
     },
+
+    async addDonationsToTransferByDate(ctx) {
+      const { startDate, endDate, transferId } = ctx.request.body;
+
+      if (!startDate || !endDate || !transferId) {
+        return ctx.badRequest(
+          "Missing required fields (startDate, endDate, transferId)"
+        );
+      }
+
+      const donations = await strapi
+        .service("api::donation.donation")
+        .getDonationsInDateRange(startDate, endDate);
+
+      const donationIds = donations.map((donation) => donation.id);
+
+      await strapi
+        .service("api::donation.donation")
+        .addDonationsToTransfer(donationIds, transferId);
+
+      return ctx.send({
+        message: `Added ${donationIds.length} donations to transfer ${transferId}`,
+      });
+    },
   })
 );
