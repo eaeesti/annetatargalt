@@ -114,6 +114,9 @@
     },
     "tipOrganizationId": {
       "type": "integer"
+    },
+    "externalOrganizationId": {
+      "type": "integer"
     }
   }
 }

@@ -30,11 +30,11 @@ module.exports = createCoreController(
       const donation = {
         ...ctx.request.body,
         comment: `Return URL: ${returnUrl}`,
-        // External donations always go to the tip organization
+        // External donations always go to the specified organization
         amounts: [
           {
             amount: ctx.request.body.amount,
-            organizationId: global.tipOrganizationId,
+            organizationId: global.externalOrganizationId,
           },
         ],
       };
