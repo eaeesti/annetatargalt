@@ -107,7 +107,14 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       }
     }
 
-    for (let { organizationId } of donation.amounts) {
+    for (let { organizationId, amount } of donation.amounts) {
+      if (amount <= 0) {
+        return {
+          valid: false,
+          reason: `Invalid organization amount: ${amount}`,
+        };
+      }
+
       const organization = await strapi.entityService.findOne(
         "api::organization.organization",
         organizationId
