@@ -136,10 +136,12 @@ export interface ElementsTeamMember extends Schema.Component {
     description: '';
   };
   attributes: {
-    name: Attribute.String;
+    name: Attribute.String & Attribute.Required;
     role: Attribute.String;
     image: Attribute.Media;
     bio: Attribute.RichText;
+    email: Attribute.String;
+    socialMediaLinks: Attribute.Component<'elements.social-media-link', true>;
   };
 }
 
@@ -434,7 +436,10 @@ export interface SectionsTeamSection extends Schema.Component {
   };
   attributes: {
     title: Attribute.String;
-    teamMembers: Attribute.Component<'elements.person', true>;
+    emailCopiedText: Attribute.String &
+      Attribute.Required &
+      Attribute.DefaultTo<'Email copied to clipboard!'>;
+    teamMembers: Attribute.Component<'elements.team-member', true>;
   };
 }
 
