@@ -1,0 +1,65 @@
+{
+  "collectionName": "components_sections_foreign_donation_sections",
+  "info": {
+    "displayName": "ForeignDonationSection"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "default": "Donate"
+    },
+    "description": {
+      "type": "richtext",
+      "default": "On this page you can donate directly to Anneta Targalt using a card payment.\n\nThank you for supporting our platform!"
+    },
+    "firstNameText": {
+      "type": "string",
+      "default": "First name"
+    },
+    "lastNameText": {
+      "type": "string",
+      "default": "Last name"
+    },
+    "emailText": {
+      "type": "string",
+      "default": "Email address"
+    },
+    "amountText": {
+      "type": "string",
+      "default": "Amount"
+    },
+    "amount1": {
+      "type": "integer",
+      "default": 20
+    },
+    "amount2": {
+      "type": "integer",
+      "default": 50
+    },
+    "amount3": {
+      "type": "integer",
+      "default": 100
+    },
+    "otherAmountText": {
+      "type": "string",
+      "default": "Other amount"
+    },
+    "otherAmountOptionText": {
+      "type": "string",
+      "default": "Other"
+    },
+    "nextButtonText": {
+      "type": "string",
+      "default": "Next"
+    },
+    "donateButtonText": {
+      "type": "string",
+      "default": "Donate"
+    },
+    "termsText": {
+      "type": "richtext",
+      "default": "I agree with the [terms and conditions](/annetustingimused)."
+    }
+  }
+}

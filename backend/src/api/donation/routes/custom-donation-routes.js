@@ -12,6 +12,11 @@ module.exports = {
     },
     {
       method: "POST",
+      path: "/donateForeign",
+      handler: "donation.donateForeign",
+    },
+    {
+      method: "POST",
       path: "/confirm",
       handler: "donation.confirm",
     },

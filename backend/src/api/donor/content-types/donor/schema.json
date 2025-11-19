@@ -13,11 +13,7 @@
   "pluginOptions": {},
   "attributes": {
     "idCode": {
-      "type": "string",
-      "maxLength": 11,
-      "minLength": 11,
-      "required": true,
-      "regex": "[1-6]\\d{2}[0-1]\\d[0-3]\\d{5}"
+      "type": "string"
     },
     "firstName": {
       "type": "string",

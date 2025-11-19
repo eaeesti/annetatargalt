@@ -36,6 +36,19 @@ module.exports = createCoreService("api::donor.donor", ({ strapi }) => ({
     return null;
   },
 
+  async findDonorByEmail(email) {
+    const existingDonorEntries = await strapi.entityService.findMany(
+      "api::donor.donor",
+      { filters: { email } }
+    );
+
+    if (existingDonorEntries.length > 0) {
+      return existingDonorEntries[0];
+    }
+
+    return null;
+  },
+
   async findOrCreateDonor(donor) {
     const donorEntry = await this.findDonor(donor.idCode);
 
@@ -51,6 +64,25 @@ module.exports = createCoreService("api::donor.donor", ({ strapi }) => ({
           lastName: donor.lastName,
           email: donor.email,
           idCode: donor.idCode,
+        },
+      }
+    );
+
+    return newDonorEntry;
+  },
+
+  async findOrCreateDonorByEmail(donor) {
+    const donorEntry = await this.findDonorByEmail(donor.email);
+
+    if (donorEntry) return donorEntry;
+
+    const newDonorEntry = await strapi.entityService.create(
+      "api::donor.donor",
+      {
+        data: {
+          firstName: donor.firstName,
+          lastName: donor.lastName,
+          email: donor.email,
         },
       }
     );
@@ -76,12 +108,29 @@ module.exports = createCoreService("api::donor.donor", ({ strapi }) => ({
     return updatedDonor;
   },
 
+  async updateOrCreateDonorByEmail(donor) {
+    const donorEntry = await this.findOrCreateDonorByEmail(donor);
+
+    const updatedDonor = await strapi.entityService.update(
+      "api::donor.donor",
+      donorEntry.id,
+      {
+        data: {
+          firstName: donor.firstName,
+          lastName: donor.lastName,
+        },
+      }
+    );
+
+    return donorEntry;
+  },
+
   async donorsWithFinalizedDonationCount() {
     const result = await strapi.db.connection.raw(
-      `SELECT COUNT(DISTINCT donations_donor_links.donor_id) 
-       FROM donations 
-       JOIN donations_donor_links ON donations.id = donations_donor_links.donation_id 
-       JOIN donors ON donations_donor_links.donor_id = donors.id 
+      `SELECT COUNT(DISTINCT donations_donor_links.donor_id)
+       FROM donations
+       JOIN donations_donor_links ON donations.id = donations_donor_links.donation_id
+       JOIN donors ON donations_donor_links.donor_id = donors.id
        WHERE donations.finalized = true`
     );
     const count = Number(result.rows[0].count);

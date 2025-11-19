@@ -141,6 +141,42 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     return { valid: true };
   },
 
+  validateForeignDonation(donation) {
+    if (!donation) {
+      return { valid: false, reason: "No donation provided" };
+    }
+
+    if (!donation.firstName) {
+      return { valid: false, reason: "No first name provided" };
+    }
+
+    if (!donation.lastName) {
+      return { valid: false, reason: "No last name provided" };
+    }
+
+    if (!donation.email) {
+      return { valid: false, reason: "No email provided" };
+    }
+
+    if (!validateEmail(donation.email)) {
+      return { valid: false, reason: `Invalid email: ${donation.email}` };
+    }
+
+    if (!donation.amount) {
+      return { valid: false, reason: "No amount provided" };
+    }
+
+    if (!validateAmount(donation.amount)) {
+      return { valid: false, reason: `Invalid amount: ${donation.amount}` };
+    }
+
+    if (donation.amount >= 1500000) {
+      return { valid: false, reason: "Amount must be smaller than 15000€" };
+    }
+
+    return { valid: true };
+  },
+
   async createMontonioPayload(
     donation,
     {
@@ -224,6 +260,50 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       console.error(error);
       throw new Error("Failed to create single donation");
     }
+  },
+
+  async createForeignDonation(donation) {
+    const validation = await this.validateForeignDonation(donation);
+
+    if (!validation.valid) {
+      throw new Error(validation.reason);
+    }
+
+    const donor = await strapi
+      .service("api::donor.donor")
+      .updateOrCreateDonorByEmail(donation);
+
+    const donationEntry = await strapi.entityService.create(
+      "api::donation.donation",
+      {
+        data: {
+          amount: donation.amount,
+          donor: donor.id,
+          datetime: new Date(),
+          comment: "Foreign donation",
+        },
+      }
+    );
+
+    const global = await strapi.db.query("api::global.global").findOne();
+
+    await strapi
+      .service("api::organization-donation.organization-donation")
+      .createOrganizationDonations({
+        donationId: donationEntry.id,
+        amounts: [{
+          organizationId: global.tipOrganizationId,
+          amount: donation.amount,
+        }]
+      });
+
+    const payload = await this.createMontonioPayload(donationEntry, {
+      paymentMethod: "cardPayments",
+    });
+
+    const redirectURL = await fetchRedirectUrl(payload);
+
+    return { redirectURL };
   },
 
   async createSingleDonation({

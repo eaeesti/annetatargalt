@@ -44,7 +44,8 @@
         "sections.redirect-section",
         "sections.blog-posts-section",
         "sections.organizations-section",
-        "sections.partner-section"
+        "sections.partner-section",
+        "sections.foreign-donation-section"
       ]
     }
   }

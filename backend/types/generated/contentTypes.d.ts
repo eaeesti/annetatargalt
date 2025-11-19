@@ -1108,12 +1108,7 @@ export interface ApiDonorDonor extends Schema.CollectionType {
     draftAndPublish: false;
   };
   attributes: {
-    idCode: Attribute.String &
-      Attribute.Required &
-      Attribute.SetMinMaxLength<{
-        minLength: 11;
-        maxLength: 11;
-      }>;
+    idCode: Attribute.String;
     firstName: Attribute.String &
       Attribute.SetMinMaxLength<{
         maxLength: 128;
@@ -1426,7 +1421,8 @@ export interface ApiPagePage extends Schema.CollectionType {
         'sections.redirect-section',
         'sections.blog-posts-section',
         'sections.organizations-section',
-        'sections.partner-section'
+        'sections.partner-section',
+        'sections.foreign-donation-section'
       ]
     >;
     createdAt: Attribute.DateTime;

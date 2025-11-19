@@ -341,6 +341,31 @@ export interface SectionsFaqSection extends Schema.Component {
   };
 }
 
+export interface SectionsForeignDonationSection extends Schema.Component {
+  collectionName: 'components_sections_foreign_donation_sections';
+  info: {
+    displayName: 'ForeignDonationSection';
+  };
+  attributes: {
+    title: Attribute.String & Attribute.DefaultTo<'Donate'>;
+    description: Attribute.RichText &
+      Attribute.DefaultTo<'On this page you can donate directly to Anneta Targalt using a card payment.\n\nThank you for supporting our platform!'>;
+    firstNameText: Attribute.String & Attribute.DefaultTo<'First name'>;
+    lastNameText: Attribute.String & Attribute.DefaultTo<'Last name'>;
+    emailText: Attribute.String & Attribute.DefaultTo<'Email address'>;
+    amountText: Attribute.String & Attribute.DefaultTo<'Amount'>;
+    amount1: Attribute.Integer & Attribute.DefaultTo<20>;
+    amount2: Attribute.Integer & Attribute.DefaultTo<50>;
+    amount3: Attribute.Integer & Attribute.DefaultTo<100>;
+    otherAmountText: Attribute.String & Attribute.DefaultTo<'Other amount'>;
+    otherAmountOptionText: Attribute.String & Attribute.DefaultTo<'Other'>;
+    nextButtonText: Attribute.String & Attribute.DefaultTo<'Next'>;
+    donateButtonText: Attribute.String & Attribute.DefaultTo<'Donate'>;
+    termsText: Attribute.RichText &
+      Attribute.DefaultTo<'I agree with the [terms and conditions](/annetustingimused).'>;
+  };
+}
+
 export interface SectionsHeaderSection extends Schema.Component {
   collectionName: 'components_sections_header_sections';
   info: {
@@ -575,6 +600,7 @@ declare module '@strapi/types' {
       'sections.cta-section': SectionsCtaSection;
       'sections.donation-section': SectionsDonationSection;
       'sections.faq-section': SectionsFaqSection;
+      'sections.foreign-donation-section': SectionsForeignDonationSection;
       'sections.header-section': SectionsHeaderSection;
       'sections.hero-section': SectionsHeroSection;
       'sections.organizations-section': SectionsOrganizationsSection;

@@ -49,6 +49,19 @@ module.exports = createCoreController(
       }
     },
 
+    async donateForeign(ctx) {
+      const donation = ctx.request.body;
+
+      try {
+        const { redirectURL } = await strapi
+          .service("api::donation.donation")
+          .createForeignDonation(donation);
+        return ctx.send({ redirectURL });
+      } catch (error) {
+        return ctx.badRequest(error.message);
+      }
+    },
+
     async confirm(ctx) {
       const orderToken = ctx.request.query["order-token"];
 
