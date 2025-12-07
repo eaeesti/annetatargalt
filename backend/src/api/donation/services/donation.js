@@ -922,12 +922,19 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   },
 
   async sumOfFinalizedCampaignDonations() {
+    const global = await strapi.db.query("api::global.global").findOne();
+
     const result = await strapi.db.connection.raw(
-      `SELECT SUM(donations.amount) AS total_amount
-       FROM donations
+      `SELECT SUM(organization_donations.amount) AS total_amount
+       FROM organization_donations
+       INNER JOIN organization_donations_donation_links ON organization_donations.id = organization_donations_donation_links.organization_donation_id
+       INNER JOIN donations ON organization_donations_donation_links.donation_id = donations.id
+       INNER JOIN organization_donations_organization_links ON organization_donations.id = organization_donations_organization_links.organization_donation_id
        WHERE donations.finalized = true
-       AND donations.datetime >= '2023-12-01 00:00:00'
-       AND donations.datetime <= '2023-12-31 23:59:59'`
+       AND donations.datetime >= '2025-12-08 00:00:00'
+       AND donations.datetime <= '2025-12-31 23:59:59'
+       AND organization_donations_organization_links.organization_id NOT IN (?, ?)`,
+      [global.tipOrganizationId, global.externalOrganizationId]
     );
     const totalAmount = Number(result.rows[0].total_amount);
     return totalAmount;
