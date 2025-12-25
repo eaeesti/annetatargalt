@@ -212,11 +212,17 @@ export interface SectionsCampaignSection extends Schema.Component {
     description: '';
   };
   attributes: {
-    title: Attribute.String;
-    topText: Attribute.RichText;
-    bottomText: Attribute.RichText;
+    title: Attribute.String & Attribute.DefaultTo<'J\u00F5ulukampaania 2025'>;
+    topText: Attribute.RichText &
+      Attribute.DefaultTo<'**<%= amount %>\u20AC** on annetatud **<%= goal %>\u20AC** eesm\u00E4rgist.  Eesm\u00E4rgi saavutamiseks on puudu vaid **<%= remainingUntilGoal %>\u20AC**!'>;
+    bottomText: Attribute.RichText &
+      Attribute.DefaultTo<'**Sinu annetusel on topeltm\u00F5ju!** Suurannetajad Martin ja Mari-Liis Villig kahekordistavad k\u00F5ik annetused 10 000 \u20AC ulatuses.'>;
     goals: Attribute.JSON;
     decoration: Attribute.Media;
+    endDate: Attribute.DateTime &
+      Attribute.DefaultTo<'2026-11-30T22:00:00.000Z'>;
+    countdownText: Attribute.RichText &
+      Attribute.DefaultTo<'Kampaania l\u00F5puni on j\u00E4\u00E4nud **<%= days %>** p\u00E4eva, **<%= hours %>** tundi, **<%= minutes %>** minutit ja **<%= seconds %>** sekundit.'>;
   };
 }
 

@@ -30,14 +30,78 @@ function useOnScreen(ref) {
   return isOnScreen;
 }
 
+function Countdown({ endDate, countdownText }) {
+  const [timeRemaining, setTimeRemaining] = useState(null);
+
+  useEffect(() => {
+    const calculateTimeRemaining = () => {
+      const now = new Date().getTime();
+      const end = new Date(endDate).getTime();
+      const distance = end - now;
+
+      if (distance < 0) {
+        setTimeRemaining({
+          days: 0,
+          hours: 0,
+          minutes: 0,
+          seconds: 0,
+          ended: true,
+        });
+        return;
+      }
+
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor(
+        (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+      );
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      setTimeRemaining({ days, hours, minutes, seconds, ended: false });
+    };
+
+    calculateTimeRemaining();
+    const interval = setInterval(calculateTimeRemaining, 1000);
+
+    return () => clearInterval(interval);
+  }, [endDate]);
+
+  if (!timeRemaining) {
+    return null;
+  }
+
+  if (timeRemaining.ended) {
+    return null;
+  }
+
+  const formattedText = format(countdownText, timeRemaining);
+
+  return (
+    <Markdown className="text-lg md:text-xl [&_strong]:font-bold [&_strong]:text-primary-700">
+      {formattedText}
+    </Markdown>
+  );
+}
+
 export default function CampaignSection({
   title,
   topText,
   bottomText,
   goals,
   decoration,
+  endDate,
+  countdownText,
 }) {
   const [progress, setProgress] = useState(0);
+
+  // Hide entire section if campaign has ended
+  if (endDate) {
+    const now = new Date().getTime();
+    const end = new Date(endDate).getTime();
+    if (now > end) {
+      return null;
+    }
+  }
 
   const progressBarRef = useRef(null);
   const progressBarOnScreen = useOnScreen(progressBarRef);
@@ -118,9 +182,14 @@ export default function CampaignSection({
           )}
         </div>
         {bottomText && (
-          <div className="prose-md prose max-w-full text-slate-600 [&_strong]:text-2xl [&_strong]:text-primary-700">
-            <Markdown>{bottomText}</Markdown>
+          <div class="flex justify-center">
+            <div className="prose-md prose max-w-full rounded-2xl bg-slate-50 p-8 text-slate-600 lg:px-12 [&_strong]:text-2xl [&_strong]:text-primary-700">
+              <Markdown>{bottomText}</Markdown>
+            </div>
           </div>
+        )}
+        {endDate && countdownText && (
+          <Countdown endDate={endDate} countdownText={countdownText} />
         )}
       </div>
     </div>
