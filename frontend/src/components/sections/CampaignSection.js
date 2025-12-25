@@ -96,16 +96,6 @@ export default function CampaignSection({
   ctaButtonText,
 }) {
   const [progress, setProgress] = useState(0);
-
-  // Hide entire section if campaign has ended
-  if (endDate) {
-    const now = new Date().getTime();
-    const end = new Date(endDate).getTime();
-    if (now > end) {
-      return null;
-    }
-  }
-
   const progressBarRef = useRef(null);
   const progressBarOnScreen = useOnScreen(progressBarRef);
 
@@ -127,6 +117,15 @@ export default function CampaignSection({
       setProgress(progress + (percentage - progress) * 0.1);
     }, 16);
   }, [progress, data, progressBarOnScreen]);
+
+  // Hide entire section if campaign has ended
+  if (endDate) {
+    const now = new Date().getTime();
+    const end = new Date(endDate).getTime();
+    if (now > end) {
+      return null;
+    }
+  }
 
   let amount;
   if (isLoading) {
