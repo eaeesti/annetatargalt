@@ -223,6 +223,9 @@ export interface SectionsCampaignSection extends Schema.Component {
       Attribute.DefaultTo<'2026-11-30T22:00:00.000Z'>;
     countdownText: Attribute.RichText &
       Attribute.DefaultTo<'Kampaania l\u00F5puni on j\u00E4\u00E4nud **<%= days %>** p\u00E4eva, **<%= hours %>** tundi, **<%= minutes %>** minutit ja **<%= seconds %>** sekundit.'>;
+    ctaButtonText: Attribute.String &
+      Attribute.DefaultTo<'Anneta kahekordse m\u00F5juga'>;
+    ctaButtonHref: Attribute.String & Attribute.DefaultTo<'/anneta'>;
   };
 }
 

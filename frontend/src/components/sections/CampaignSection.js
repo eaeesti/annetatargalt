@@ -2,6 +2,7 @@
 
 import { format } from "@/utils/string";
 import Markdown from "../elements/Markdown";
+import Button from "../elements/Button";
 import { formatEstonianAmount } from "@/utils/estonia";
 import useSWR from "swr";
 import { fetcher } from "@/utils/react";
@@ -91,6 +92,8 @@ export default function CampaignSection({
   decoration,
   endDate,
   countdownText,
+  ctaButtonHref,
+  ctaButtonText,
 }) {
   const [progress, setProgress] = useState(0);
 
@@ -190,6 +193,16 @@ export default function CampaignSection({
         )}
         {endDate && countdownText && (
           <Countdown endDate={endDate} countdownText={countdownText} />
+        )}
+        {ctaButtonHref && ctaButtonText && (
+          <div className="flex justify-center">
+            <Button
+              href={ctaButtonHref}
+              text={ctaButtonText}
+              type="primary"
+              size="xl"
+            />
+          </div>
         )}
       </div>
     </div>

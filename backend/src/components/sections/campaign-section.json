@@ -36,6 +36,14 @@
     "countdownText": {
       "type": "richtext",
       "default": "Kampaania lõpuni on jäänud **<%= days %>** päeva, **<%= hours %>** tundi, **<%= minutes %>** minutit ja **<%= seconds %>** sekundit."
+    },
+    "ctaButtonText": {
+      "type": "string",
+      "default": "Anneta kahekordse mõjuga"
+    },
+    "ctaButtonHref": {
+      "type": "string",
+      "default": "/anneta"
     }
   }
 }
