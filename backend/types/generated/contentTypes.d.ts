@@ -1235,6 +1235,7 @@ export interface ApiGlobalGlobal extends Schema.SingleType {
     readMoreText: Attribute.String;
     tipOrganizationId: Attribute.Integer;
     externalOrganizationId: Attribute.Integer;
+    topBannerText: Attribute.RichText;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<

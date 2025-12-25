@@ -117,6 +117,9 @@
     },
     "externalOrganizationId": {
       "type": "integer"
+    },
+    "topBannerText": {
+      "type": "richtext"
     }
   }
 }

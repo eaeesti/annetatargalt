@@ -1,3 +1,4 @@
+import Banner from "./Banner";
 import Footer from "./Footer";
 import Navbar from "./Navbar";
 import Section from "./Section";
@@ -5,6 +6,10 @@ import Section from "./Section";
 export default function Page({ page, global, entity }) {
   return (
     <>
+      <Banner
+        topBannerText={global.topBannerText}
+        closeText={global.closeText}
+      />
       <Navbar global={global} />
       {page.sections.map((section) => (
         <Section
