@@ -108,22 +108,13 @@ export default function CampaignSection({
     fetcher,
   );
 
-  // Hide entire section if campaign has ended
-  if (endDate) {
-    const now = new Date().getTime();
-    const end = new Date(endDate).getTime();
-    if (now > end) {
-      return null;
-    }
-  }
-
-  if (error) return;
-
   let amount;
   if (isLoading) {
     amount = 0;
-  } else {
+  } else if (data) {
     amount = data.campaignSum / 100;
+  } else {
+    amount = 0;
   }
 
   const goal = goals.find((goal) => amount < goal) || goals.at(-1);
@@ -142,6 +133,17 @@ export default function CampaignSection({
       setProgress(progress + (percentage - progress) * 0.1);
     }, 16);
   }, [progress, data, progressBarOnScreen, percentage]);
+
+  // Hide entire section if campaign has ended
+  if (endDate) {
+    const now = new Date().getTime();
+    const end = new Date(endDate).getTime();
+    if (now > end) {
+      return null;
+    }
+  }
+
+  if (error) return;
 
   const amountProgress = (progress / 100) * goal;
 
