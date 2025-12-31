@@ -21,10 +21,14 @@ function useOnScreen(ref) {
   }, []);
 
   useEffect(() => {
-    observerRef.current.observe(ref.current);
+    if (ref.current && observerRef.current) {
+      observerRef.current.observe(ref.current);
+    }
 
     return () => {
-      observerRef.current.disconnect();
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
     };
   }, [ref]);
 
@@ -104,6 +108,27 @@ export default function CampaignSection({
     fetcher,
   );
 
+  // Hide entire section if campaign has ended
+  if (endDate) {
+    const now = new Date().getTime();
+    const end = new Date(endDate).getTime();
+    if (now > end) {
+      return null;
+    }
+  }
+
+  if (error) return;
+
+  let amount;
+  if (isLoading) {
+    amount = 0;
+  } else {
+    amount = data.campaignSum / 100;
+  }
+
+  const goal = goals.find((goal) => amount < goal) || goals.at(-1);
+  const percentage = (amount / goal) * 100;
+
   useEffect(() => {
     if (progress === percentage) return;
     if (!progressBarOnScreen) return;
@@ -116,28 +141,7 @@ export default function CampaignSection({
     setTimeout(() => {
       setProgress(progress + (percentage - progress) * 0.1);
     }, 16);
-  }, [progress, data, progressBarOnScreen]);
-
-  // Hide entire section if campaign has ended
-  if (endDate) {
-    const now = new Date().getTime();
-    const end = new Date(endDate).getTime();
-    if (now > end) {
-      return null;
-    }
-  }
-
-  let amount;
-  if (isLoading) {
-    amount = 0;
-  } else {
-    amount = data.campaignSum / 100;
-  }
-
-  if (error) return;
-
-  const goal = goals.find((goal) => amount < goal) || goals.at(-1);
-  const percentage = (amount / goal) * 100;
+  }, [progress, data, progressBarOnScreen, percentage]);
 
   const amountProgress = (progress / 100) * goal;
 
