@@ -30,11 +30,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       return { valid: false, reason: "No last name provided" };
     }
 
-    if (!donation.idCode) {
-      return { valid: false, reason: "No ID code provided" };
-    }
-
-    if (!validateIdCode(donation.idCode)) {
+    if (donation.idCode && !validateIdCode(donation.idCode)) {
       return { valid: false, reason: `Invalid ID code: ${donation.idCode}` };
     }
 

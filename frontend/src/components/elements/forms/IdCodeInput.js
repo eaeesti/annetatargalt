@@ -14,7 +14,7 @@ export default function IdCodeInput({
       value={idCode}
       setValue={setIdCode}
       setValidity={setValidity}
-      isValid={(value) => validateIdCode(value)}
+      isValid={(value) => value === "" || validateIdCode(value)}
       label={idCodeText}
       autoComplete="isikukood"
       maxLength={11}

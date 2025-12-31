@@ -91,7 +91,13 @@ module.exports = createCoreService("api::donor.donor", ({ strapi }) => ({
   },
 
   async updateOrCreateDonor(donor) {
-    const donorEntry = await this.findOrCreateDonor(donor);
+    let donorEntry;
+
+    if (donor.idCode) {
+      donorEntry = await this.findOrCreateDonor(donor);
+    } else {
+      donorEntry = await this.findOrCreateDonorByEmail(donor);
+    }
 
     const updatedDonor = await strapi.entityService.update(
       "api::donor.donor",
@@ -101,6 +107,7 @@ module.exports = createCoreService("api::donor.donor", ({ strapi }) => ({
           firstName: donor.firstName,
           lastName: donor.lastName,
           email: donor.email,
+          idCode: donorEntry.idCode || donor.idCode,
         },
       }
     );
