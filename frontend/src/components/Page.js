@@ -11,7 +11,7 @@ export default function Page({ page, global, entity }) {
         closeText={global.closeText}
       />
       <Navbar global={global} />
-      {page.sections.map((section) => (
+      {page?.sections?.map((section) => (
         <Section
           key={section.id}
           section={section}

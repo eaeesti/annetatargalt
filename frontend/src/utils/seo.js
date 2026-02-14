@@ -7,24 +7,24 @@ export function buildMetadata(global, pageMetadata) {
   if (pageMetadata.title) title = `${pageMetadata.title} • ${title}`;
 
   const icons = {};
-  if (global.favicon16 && global.favicon32) {
+  if (global.favicon16?.data?.attributes?.url && global.favicon32?.data?.attributes?.url) {
     icons.icon = [
       {
-        url: global.favicon16?.data?.attributes.url,
+        url: global.favicon16.data.attributes.url,
         sizes: "16x16",
         type: "image/png",
       },
       {
-        url: global.favicon32?.data?.attributes.url,
+        url: global.favicon32.data.attributes.url,
         sizes: "32x32",
         type: "image/png",
       },
     ];
   }
-  if (global.appleTouchIcon) {
+  if (global.appleTouchIcon?.data?.attributes?.url) {
     icons.apple = [
       {
-        url: global.appleTouchIcon?.data?.attributes.url,
+        url: global.appleTouchIcon.data.attributes.url,
         sizes: "180x180",
         type: "image/png",
       },

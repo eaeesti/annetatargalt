@@ -12,6 +12,8 @@ export default function Navbar({ global }) {
 
   const { title, navbar } = global;
 
+  if (!navbar) return;
+
   return (
     <>
       <nav className="sticky top-0 z-10 flex w-full justify-center bg-white shadow-md shadow-primary-600/10">
