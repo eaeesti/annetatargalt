@@ -6,6 +6,9 @@ import { getGlobal } from "@/utils/strapi";
 
 export default async function NotFound() {
   const global = await getGlobal();
+
+  if (!global.notFoundPage) return;
+
   const { title, description, buttons } = global.notFoundPage;
 
   return (

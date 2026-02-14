@@ -5,6 +5,8 @@ import { SocialMediaIcon } from "./elements/SocialMediaIcon";
 export default function Footer({ global }) {
   const { footer } = global;
 
+  if (!footer) return;
+
   return (
     <footer className="bg-slate-800" aria-labelledby="footer-heading">
       <h2 id="footer-heading" className="sr-only">
@@ -13,7 +15,7 @@ export default function Footer({ global }) {
       <div className="px-3 pt-16 pb-8 mx-auto max-w-7xl xl:px-6 sm:pt-24 sm:px-32 lg:px-8 lg:pt-32">
         <div className="xl:grid xl:grid-cols-3 xl:gap-8">
           <div className="flex flex-col gap-8 items-start px-3">
-            <Image className="w-auto h-8" data={footer.logo} />
+            {footer.logo && <Image className="w-auto h-8" data={footer.logo} />}
             <p className="text-sm leading-6 text-slate-300">{footer.text}</p>
             <div className="flex gap-4">
               {footer.socialMediaLinks.map((socialMediaLink) => (
