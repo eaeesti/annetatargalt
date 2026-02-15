@@ -4,6 +4,15 @@ import { donors } from '../schema';
 
 export class DonorsRepository {
   /**
+   * Find all donors (for export)
+   */
+  async findAll() {
+    return db.query.donors.findMany({
+      orderBy: (donors, { asc }) => [asc(donors.id)],
+    });
+  }
+
+  /**
    * Find a donor by ID
    */
   async findById(id: number) {
