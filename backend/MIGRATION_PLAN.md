@@ -79,27 +79,44 @@ Linking: organization_donations.organizationInternalId → organizations.interna
 4. **`backend/src/api/donation/__tests__/donation-endpoints.test.js`** - Integration tests
 5. **`backend/src/api/donation/__tests__/fixtures/`** - Test data fixtures
 
-### New Files (Drizzle Infrastructure)
+### New Files (Drizzle Infrastructure - Phase 1)
 
-1. **`backend/src/db/schema.ts`** - Drizzle schema definitions for 6 tables
-2. **`backend/src/db/client.ts`** - Database connection singleton
-3. **`backend/src/db/repositories/donations.repository.ts`** - Donation data access
-4. **`backend/src/db/repositories/donors.repository.ts`** - Donor data access
-5. **`backend/src/db/repositories/recurring-donations.repository.ts`** - Recurring donation data access
-6. **`backend/src/db/repositories/organization-donations.repository.ts`** - Organization donation junction
-7. **`backend/src/db/repositories/donation-transfers.repository.ts`** - Transfer management
-8. **`backend/src/db/repositories/index.ts`** - Export all repositories
-9. **`backend/src/utils/organization-resolver.ts`** - Utility to join Drizzle + Strapi data
-10. **`backend/src/db/migrations/migrate-from-strapi.ts`** - One-time migration script
-11. **`backend/drizzle.config.ts`** - Drizzle Kit configuration
+1. **`backend/src/db/schema.ts`** ✅ - Drizzle schema definitions for 6 tables
+2. **`backend/src/db/client.ts`** ✅ - Database connection singleton with pooling
+3. **`backend/src/db/repositories/donations.repository.ts`** ✅ - Donation data access
+4. **`backend/src/db/repositories/donors.repository.ts`** ✅ - Donor data access
+5. **`backend/src/db/repositories/recurring-donations.repository.ts`** ✅ - Recurring donation data access
+6. **`backend/src/db/repositories/organization-donations.repository.ts`** ✅ - Organization donation junction
+7. **`backend/src/db/repositories/donation-transfers.repository.ts`** ✅ - Transfer management
+8. **`backend/src/db/repositories/organization-recurring-donations.repository.ts`** ✅ - Recurring splits
+9. **`backend/src/db/repositories/index.ts`** ✅ - Export all repositories
+10. **`backend/drizzle.config.ts`** ✅ - Drizzle Kit configuration
 
-### Modified Files (Strapi)
+### New Files (Migration Scripts - Phase 2)
 
-12. **`backend/src/api/organization/content-types/organization/schema.json`** - Add `internalId` field
-13. **`backend/src/api/organization/content-types/organization/lifecycles.js`** - Prevent deletion if donations exist
-14. **`backend/src/api/donation/services/donation.js`** - Replace entityService with Drizzle repositories (~1000 lines)
-15. **`backend/src/api/donation/controllers/donation.js`** - Update to use new service methods
-16. **`backend/package.json`** - Add `drizzle-orm`, `drizzle-kit`, `pg` dependencies ✅
+11. **`backend/src/db/migrations/00-populate-organization-internal-ids-db.js`** ✅ - Populate junction tables
+12. **`backend/src/db/migrations/01-export-strapi-data.js`** ✅ - Export from Strapi API
+13. **`backend/src/db/migrations/02-migrate-to-drizzle.ts`** ✅ - Transform and import to Drizzle
+
+### Modified Files (Strapi - Phase 1)
+
+14. **`backend/src/api/organization/content-types/organization/schema.json`** ✅ - Add `internalId` field
+15. **`backend/src/api/organization-donation/content-types/organization-donation/schema.json`** ✅ - Add `organizationInternalId`
+16. **`backend/src/api/organization-recurring-donation/content-types/organization-recurring-donation/schema.json`** ✅ - Add `organizationInternalId`
+17. **`backend/package.json`** ✅ - Add `drizzle-orm`, `drizzle-kit`, `pg`, `@types/pg` dependencies
+
+### Modified Files (Phase 2)
+
+18. **`backend/src/db/schema.ts`** ✅ - Made `donorId` nullable
+19. **`backend/src/db/repositories/donations.repository.ts`** ✅ - Handle nullable `donorId`
+20. **`backend/src/api/donation/services/donation.js`** ✅ - Null-safety checks in export service
+
+### To Be Created/Modified (Phase 3)
+
+21. **`backend/src/utils/organization-resolver.ts`** - Utility to join Drizzle + Strapi data
+22. **`backend/src/api/organization/content-types/organization/lifecycles.js`** - Prevent deletion if donations exist
+23. **`backend/src/api/donation/services/donation.js`** - Replace entityService with Drizzle repositories (~1000 lines)
+24. **`backend/src/api/donation/controllers/donation.js`** - Update to use new service methods
 
 ### Schema Changes
 
@@ -118,9 +135,37 @@ Linking: organization_donations.organizationInternalId → organizations.interna
 }
 ```
 
-**Remove relations**: Delete `organizationDonations` and `organizationRecurringDonations` relations (now in Drizzle)
+**Organization junction tables** - Both fields coexist during migration:
+- `organizationInternalId` (string) - Will be used by Drizzle
+- `organization` (relation) - Kept temporarily for safety, removed in Phase 5
+
+**Nullable fields** (discovered during Phase 2):
+- `donations.donorId` - Some legacy donations have no associated donor
+- Repositories and export service updated with null-safety checks
 
 ## Implementation Plan
+
+### 📍 Current Status
+
+**Completed:**
+- ✅ Phase 0: Test infrastructure with Vitest (22 passing tests, 89% coverage)
+- ✅ Phase 1: Drizzle ORM infrastructure (schema, repositories, migrations)
+- ✅ Phase 2: Migration scripts created (nullable donorId, export/import scripts)
+
+**Ready to start:**
+- 🚀 Phase 3: API endpoint migration (replace Strapi entityService with Drizzle)
+
+**Operational blocker (before production migration):**
+- ⚠️ **Organizations missing `internalId` values** - Manual task required before running migration scripts in production
+- Note: Migration scripts are complete and committed, but need to be executed before deploying Phase 3 code
+
+**Execution steps (when ready for production migration):**
+1. Populate `organization.internalId` for all organizations via Strapi admin
+2. Run migration scripts in order: `00-populate` → `01-export` → `02-migrate`
+3. Validate migration results
+4. Deploy Phase 3-5 code to production
+
+---
 
 ### Phase 0: Test Infrastructure & Coverage (Day 1-4) ✅ **COMPLETED**
 
@@ -168,59 +213,110 @@ See [TEST_STATUS.md](TEST_STATUS.md) for detailed rationale.
 
 ---
 
-### Phase 1: Pre-Migration Setup (Day 5-6)
+### Phase 1: Pre-Migration Setup (Day 5-6) ✅ **COMPLETED**
 
-**Step 1.1: Install Dependencies**
+**Step 1.1: Install Dependencies** ✅
 ```bash
 cd backend
 yarn add drizzle-orm pg
 yarn add -D drizzle-kit
 ```
 
-**Step 1.2: Create Drizzle Infrastructure**
-- Create `backend/src/db/` directory structure
-- Write schema definitions (6 tables + relations)
-- Write database client singleton
-- Create Drizzle config file
-- Generate and run migrations: `npx drizzle-kit generate:pg && npx drizzle-kit push:pg`
+**Step 1.2: Create Drizzle Infrastructure** ✅
+- ✅ Created `backend/src/db/` directory structure
+- ✅ Wrote schema definitions (6 tables + relations)
+- ✅ Wrote database client singleton with connection pooling
+- ✅ Created Drizzle config file (`drizzle.config.ts`)
+- ✅ Generated initial migration (`0000_snapshot.json`)
+- ✅ Applied schema to separate PostgreSQL database
 
-**Step 1.3: Add `internalId` to Organizations**
-- Update organization Strapi schema to add `internalId` field
-- Restart Strapi to apply schema changes
-- Manually populate `internalId` for all existing organizations via Strapi admin
-  - Examples: "AMF" (Against Malaria Foundation), "GD" (GiveDirectly), etc.
-- Verify all active organizations have unique `internalId` values
+**Step 1.3: Add `internalId` to Organizations** ✅
+- ✅ Updated organization Strapi schema to add `internalId` field
+- ✅ Updated junction table schemas to add `organizationInternalId` field
+- ✅ Kept `organization` relation temporarily during migration (both fields coexist)
+- ✅ Generated TypeScript type definitions (`contentTypes.d.ts`)
+- ⏸️ Organizations still need `internalId` values populated (see Phase 2, Step 2.0)
 
-**Step 1.4: Create Repository Layer**
-- Implement repository classes for all 6 tables
-- Write basic CRUD methods
-- Add complex queries (e.g., `findByIdWithOrganizations`, `sumFinalizedDonations`)
+**Step 1.4: Create Repository Layer** ✅
+- ✅ Implemented repository classes for all 6 tables:
+  - `donors.repository.ts` - Donor CRUD and lookups
+  - `donations.repository.ts` - Donation management with complex queries
+  - `recurring-donations.repository.ts` - Recurring donation templates
+  - `organization-donations.repository.ts` - Junction table for splits
+  - `organization-recurring-donations.repository.ts` - Recurring splits
+  - `donation-transfers.repository.ts` - Transfer batch tracking
+- ✅ Added CRUD methods with proper TypeScript types
+- ✅ Implemented complex queries (`findByIdWithOrganizations`, `sumFinalizedDonations`, etc.)
 
-### Phase 2: Data Migration (Day 7)
+### Phase 2: Data Migration Scripts (Day 7) ✅ **COMPLETED**
 
-**Step 2.1: Export Data from Strapi**
-- Use existing `/donations/export` endpoint to get all data
-- Save to JSON file as backup
-- Validate export is complete (check row counts)
+All migration scripts have been created and committed. Scripts are ready to execute when needed for production migration.
 
-**Step 2.2: Create Migration Script**
-- Write transformation script (`migrate-from-strapi.ts`)
-- Key transformations:
-  1. Map organization numeric IDs → `internalId` strings
-  2. Convert camelCase field names → snake_case
-  3. Preserve `createdAt`/`updatedAt` timestamps
-  4. Handle Strapi relation format → foreign key IDs
+**Step 2.0: Populate Organization Internal IDs** ✅
+- ✅ Created `00-populate-organization-internal-ids-db.js` script
+- ✅ Script uses direct SQL to copy `organization.internalId` → junction tables
+- Will update ~2,676 organization_donations + ~292 organization_recurring_donations when run
 
-**Step 2.3: Import to Drizzle**
-- Run migration script to insert data into Drizzle tables
-- Use transactions to ensure atomicity
-- Handle errors gracefully (rollback on failure)
+**Execution prerequisite (manual task):**
+- Organizations must have `internalId` populated in Strapi admin before running script
+- Use format: ^[A-Z0-9_-]+$ (uppercase alphanumeric, underscores, hyphens)
+- Examples: "AMF", "GD", "EV", "GOOD_FOOD", etc.
 
-**Step 2.4: Validation**
-- **Row count verification**: Compare Strapi vs Drizzle record counts
-- **Amount validation**: Sum of all donations should match between systems
-- **Foreign key integrity**: Verify all `organizationInternalId` values exist in Strapi
-- **Spot checks**: Manually verify 10-20 random donations are correct
+**Validation SQL:**
+```sql
+-- Check organizations missing internalId (run BEFORE populate script)
+SELECT id, title FROM organizations WHERE internal_id IS NULL;
+
+-- Check junction tables (run AFTER populate script)
+SELECT COUNT(*) FROM organization_donations WHERE organization_internal_id IS NULL;
+SELECT COUNT(*) FROM organization_recurring_donations WHERE organization_internal_id IS NULL;
+```
+
+---
+
+**Step 2.1: Export Data from Strapi** ✅
+- ✅ Created export script (`01-export-strapi-data.js`)
+- ✅ Uses Strapi API `/donations/export` endpoint with authentication
+- ✅ Saves to timestamped JSON file in `exported-data/` directory
+- ✅ Includes validation and error handling
+
+**Usage:**
+```bash
+STRAPI_API_TOKEN=your-token node src/db/migrations/01-export-strapi-data.js
+```
+
+---
+
+**Step 2.2: Transform and Import Script** ✅
+- ✅ Created transformation script (`02-migrate-to-drizzle.ts`)
+- ✅ Key transformations implemented:
+  1. Maps organization numeric IDs → `internalId` strings
+  2. Converts camelCase field names → snake_case
+  3. Preserves `createdAt`/`updatedAt` timestamps
+  4. Handles Strapi relation format → foreign key IDs
+  5. **Handles nullable `donorId`** (discovered during implementation)
+  6. **Skips records with null foreign key references** (safety measure)
+- ✅ Transaction support with automatic rollback on failure
+- ✅ Progress logging for each table
+- ✅ Automatic validation:
+  - Row count verification (Strapi export vs Drizzle tables)
+  - Amount validation (sum of donations matches)
+  - Foreign key integrity (all `organizationInternalId` exist in Strapi)
+
+**Usage:**
+```bash
+npx ts-node src/db/migrations/02-migrate-to-drizzle.ts
+```
+
+---
+
+**Production Migration Checklist** (execute scripts in order when ready):
+- [ ] Manually populate `organization.internalId` in Strapi admin
+- [ ] Run `00-populate-organization-internal-ids-db.js`
+- [ ] Run `01-export-strapi-data.js` with API token
+- [ ] Run `02-migrate-to-drizzle.ts` to import to Drizzle
+- [ ] Manual spot checks (10-20 random donations)
+- [ ] Verify no data loss during migration
 
 ### Phase 3: API Endpoint Migration (Day 8-11)
 
@@ -349,8 +445,10 @@ Compare query performance Strapi vs Drizzle:
 
 **Step 5.4: Cleanup (After 2 Weeks)**
 - If everything is stable, remove Strapi donation content types
-- Remove old service code
+- Remove `organization` relation from junction table schemas (keep only `organizationInternalId`)
+- Remove old Strapi service code (donation.js service methods)
 - Delete exported migration JSON files (keep backups elsewhere)
+- Consider removing donation-related routes from Strapi admin UI
 
 ## Rollback Plan
 
@@ -368,17 +466,42 @@ Compare query performance Strapi vs Drizzle:
 
 ## Verification Checklist
 
-**Pre-Migration (Phase 0):**
+**Phase 0 (Test Infrastructure):**
 - [x] All tests passing (green) before migration starts
 - [x] Test coverage: utilities (89%)
 - [x] Vitest infrastructure ready
 - [x] Baseline coverage report saved
 
-**Post-Migration:**
-- [ ] **All existing tests still passing (CRITICAL!)** - Drizzle implementation must match Strapi behavior
-- [ ] All organizations have `internalId` populated
+**Phase 1 (Drizzle Infrastructure):**
+- [x] Drizzle ORM installed (drizzle-orm, pg, drizzle-kit)
+- [x] Schema definitions created for 6 tables
+- [x] Database client with connection pooling configured
+- [x] Initial migration generated and applied
+- [x] 6 repository classes implemented with CRUD methods
+- [x] Organization schema updated with `internalId` field
+- [x] Junction tables updated with `organizationInternalId` field
+- [x] TypeScript type definitions generated
+
+**Phase 2 (Migration Scripts):**
+- [x] Populate script created (00-populate-organization-internal-ids-db.js)
+- [x] Export script created (01-export-strapi-data.js)
+- [x] Migration script created (02-migrate-to-drizzle.ts)
+- [x] Nullable donorId handling implemented
+- [x] Schema updates for organizationInternalId field
+- [x] Export service null-safety checks added
+
+**Phase 2 Execution (Before Production Deployment):**
+- [ ] All organizations have `internalId` populated in Strapi admin
+- [ ] Population script run (00-populate-organization-internal-ids-db.js)
+- [ ] Export script run (01-export-strapi-data.js)
+- [ ] Migration script run successfully (02-migrate-to-drizzle.ts)
 - [ ] Row counts match: Strapi export vs Drizzle tables
 - [ ] Sum of donation amounts matches pre-migration total
+- [ ] No errors during migration (transaction succeeded)
+- [ ] Spot checks verified (10-20 random donations correct)
+
+**Phase 3-5 (Post-Migration):**
+- [ ] **All existing tests still passing (CRITICAL!)** - Drizzle implementation must match Strapi behavior
 - [ ] Test payment flow works end-to-end
 - [ ] Confirmation emails sent correctly with organization details
 - [ ] Stats dashboard shows correct totals
@@ -433,15 +556,20 @@ Compare query performance Strapi vs Drizzle:
 - Enables Strapi v5 upgrade (without migrating donation UUIDs)
 - Prepares for TypeScript migration (type-safe Drizzle queries)
 
-## Estimated Timeline
+## Timeline
 
-- **Phase 0** (Test Infrastructure): 4 days ✅ **COMPLETED**
-- **Phase 1** (Setup): 2 days
-- **Phase 2** (Migration): 1 day
-- **Phase 3** (API endpoints): 4 days
-- **Phase 4** (Post-Migration Testing): 2 days
-- **Phase 5** (Deployment): 1 day
-- **Total**: ~14 days of focused work
+- **Phase 0** (Test Infrastructure): ✅ **COMPLETED**
+- **Phase 1** (Drizzle Setup): ✅ **COMPLETED**
+- **Phase 2** (Migration Scripts): ✅ **COMPLETED**
+- **Phase 3** (API endpoints): 🚀 **READY TO START** - 4 days estimated
+- **Phase 4** (Post-Migration Testing): 2 days (estimated)
+- **Phase 5** (Deployment): 1 day (estimated)
+- **Remaining**: ~7 days of focused work
+
+**Note on production migration:**
+- Migration scripts execution (Phase 2) can happen anytime before/during Phase 5 deployment
+- ⚠️ Requires manual task: Populate `organization.internalId` in Strapi admin first
+- Estimated execution time: 1-2 hours once organizations have internalId values
 
 ## Success Criteria
 
