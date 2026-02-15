@@ -27,9 +27,10 @@ export class DonationTransfersRepository {
   /**
    * Get all donation transfers, ordered by date (newest first)
    */
-  async findAll() {
+  async findAll(options?: { withDonations?: boolean }) {
     return db.query.donationTransfers.findMany({
       orderBy: [desc(donationTransfers.datetime)],
+      with: options?.withDonations ? { donations: true } : undefined,
     });
   }
 

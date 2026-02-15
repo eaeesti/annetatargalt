@@ -784,6 +784,16 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   },
 
   async export() {
+    const {
+      donorsRepository,
+      donationsRepository,
+      recurringDonationsRepository,
+      organizationDonationsRepository,
+      organizationRecurringDonationsRepository,
+      donationTransfersRepository,
+    } = require("../../../db/repositories");
+
+    // Causes and organizations stay in Strapi (content)
     const causes = await strapi.entityService.findMany("api::cause.cause", {
       sort: "id",
     });
@@ -798,31 +808,18 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       cause: organization.cause ? organization.cause.id : null,
     }));
 
-    const donors = await strapi.entityService.findMany("api::donor.donor", {
-      sort: "id",
-    });
+    // Donation data comes from Drizzle
+    const donors = await donorsRepository.findAll();
 
     const recurringDonations = (
-      await strapi.entityService.findMany(
-        "api::recurring-donation.recurring-donation",
-        {
-          sort: "id",
-          populate: ["donor"],
-        }
-      )
+      await recurringDonationsRepository.findAll()
     ).map((recurringDonation) => ({
       ...recurringDonation,
       donor: recurringDonation.donor ? recurringDonation.donor.id : null,
     }));
 
     const organizationRecurringDonations = (
-      await strapi.entityService.findMany(
-        "api::organization-recurring-donation.organization-recurring-donation",
-        {
-          sort: "id",
-          populate: ["recurringDonation"],
-        }
-      )
+      await organizationRecurringDonationsRepository.findAll()
     ).map((organizationRecurringDonation) => ({
       ...organizationRecurringDonation,
       recurringDonation: organizationRecurringDonation.recurringDonation
@@ -832,29 +829,16 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     }));
 
     const donations = (
-      await strapi.entityService.findMany("api::donation.donation", {
-        sort: "id",
-        populate: ["donor", "recurringDonation", "donationTransfer"],
-      })
+      await donationsRepository.findAll()
     ).map((donation) => ({
       ...donation,
       donor: donation.donor ? donation.donor.id : null,
-      recurringDonation: donation.recurringDonation
-        ? donation.recurringDonation.id
-        : null,
-      donationTransfer: donation.donationTransfer
-        ? donation.donationTransfer.id
-        : null,
+      recurringDonation: donation.recurringDonationId,
+      donationTransfer: donation.donationTransferId,
     }));
 
     const organizationDonations = (
-      await strapi.entityService.findMany(
-        "api::organization-donation.organization-donation",
-        {
-          sort: "id",
-          populate: ["donation"],
-        }
-      )
+      await organizationDonationsRepository.findAll()
     ).map((organizationDonation) => ({
       ...organizationDonation,
       donation: organizationDonation.donation
@@ -864,16 +848,10 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     }));
 
     const donationTransfers = (
-      await strapi.entityService.findMany(
-        "api::donation-transfer.donation-transfer",
-        {
-          sort: "id",
-          populate: ["donations"],
-        }
-      )
+      await donationTransfersRepository.findAll({ withDonations: true })
     ).map((donationTransfer) => ({
       ...donationTransfer,
-      donations: donationTransfer.donations.map((donation) => donation.id),
+      donations: donationTransfer.donations?.map((donation) => donation.id) || [],
     }));
 
     return {
@@ -969,7 +947,9 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   },
 
   async findTransactionDonation({ idCode, date, amount }) {
-    const donor = await strapi.service("api::donor.donor").findDonor(idCode);
+    const { donorsRepository, donationsRepository } = require("../../../db/repositories");
+
+    const donor = await donorsRepository.findByIdCode(idCode);
 
     if (!donor) {
       throw new Error("Donor not found");
@@ -982,19 +962,13 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     endDate.setHours(23, 59, 59, 999);
     endDate.setHours(endDate.getHours() + 2);
 
-    const donations = await strapi.entityService.findMany(
-      "api::donation.donation",
-      {
-        filters: {
-          donor: donor.id,
-          amount: Math.round(amount * 100),
-          datetime: {
-            $gte: startDate,
-            $lte: endDate,
-          },
-        },
-      }
-    );
+    const donations = await donationsRepository.findByDonorAndAmount({
+      donorId: donor.id,
+      amount: Math.round(amount * 100),
+      dateFrom: startDate,
+      dateTo: endDate,
+      idCode, // Optional filter by idCode
+    });
 
     if (donations.length === 0) {
       return null;

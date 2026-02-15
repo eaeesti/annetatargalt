@@ -4,6 +4,18 @@ import { organizationRecurringDonations } from '../schema';
 
 export class OrganizationRecurringDonationsRepository {
   /**
+   * Find all organization recurring donations (for export)
+   */
+  async findAll() {
+    return db.query.organizationRecurringDonations.findMany({
+      orderBy: (organizationRecurringDonations, { asc }) => [asc(organizationRecurringDonations.id)],
+      with: {
+        recurringDonation: true,
+      },
+    });
+  }
+
+  /**
    * Find organization recurring donations by recurring donation ID
    */
   async findByRecurringDonationId(recurringDonationId: number) {

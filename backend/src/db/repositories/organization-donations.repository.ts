@@ -4,6 +4,18 @@ import { organizationDonations } from '../schema';
 
 export class OrganizationDonationsRepository {
   /**
+   * Find all organization donations (for export)
+   */
+  async findAll() {
+    return db.query.organizationDonations.findMany({
+      orderBy: (organizationDonations, { asc }) => [asc(organizationDonations.id)],
+      with: {
+        donation: true,
+      },
+    });
+  }
+
+  /**
    * Find organization donations by donation ID
    */
   async findByDonationId(donationId: number) {
