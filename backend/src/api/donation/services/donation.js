@@ -812,7 +812,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       )
     ).map((recurringDonation) => ({
       ...recurringDonation,
-      donor: recurringDonation.donor.id,
+      donor: recurringDonation.donor ? recurringDonation.donor.id : null,
     }));
 
     const organizationRecurringDonations = (
@@ -820,13 +820,15 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
         "api::organization-recurring-donation.organization-recurring-donation",
         {
           sort: "id",
-          populate: ["recurringDonation", "organization"],
+          populate: ["recurringDonation"],
         }
       )
     ).map((organizationRecurringDonation) => ({
       ...organizationRecurringDonation,
-      recurringDonation: organizationRecurringDonation.recurringDonation.id,
-      organization: organizationRecurringDonation.organization.id,
+      recurringDonation: organizationRecurringDonation.recurringDonation
+        ? organizationRecurringDonation.recurringDonation.id
+        : null,
+      // organizationInternalId is already in the spread
     }));
 
     const donations = (
@@ -836,7 +838,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       })
     ).map((donation) => ({
       ...donation,
-      donor: donation.donor.id,
+      donor: donation.donor ? donation.donor.id : null,
       recurringDonation: donation.recurringDonation
         ? donation.recurringDonation.id
         : null,
@@ -850,13 +852,15 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
         "api::organization-donation.organization-donation",
         {
           sort: "id",
-          populate: ["donation", "organization"],
+          populate: ["donation"],
         }
       )
     ).map((organizationDonation) => ({
       ...organizationDonation,
-      donation: organizationDonation.donation.id,
-      organization: organizationDonation.organization.id,
+      donation: organizationDonation.donation
+        ? organizationDonation.donation.id
+        : null,
+      // organizationInternalId is already in the spread
     }));
 
     const donationTransfers = (

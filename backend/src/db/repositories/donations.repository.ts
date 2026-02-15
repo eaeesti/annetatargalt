@@ -108,7 +108,7 @@ export class DonationsRepository {
    * Create a new donation
    */
   async create(data: {
-    donorId: number;
+    donorId: number | null;
     amount: number;
     datetime: Date | string;
     finalized?: boolean;

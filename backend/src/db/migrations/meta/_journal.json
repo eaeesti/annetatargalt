@@ -8,6 +8,13 @@
       "when": 1770932626123,
       "tag": "0000_smart_master_chief",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1771175994674,
+      "tag": "0001_skinny_white_queen",
+      "breakpoints": true
     }
   ]
 }
