@@ -41,7 +41,7 @@ export const donationTransfers = pgTable('donation_transfers', {
 // Donations table (one-time donations)
 export const donations = pgTable('donations', {
   id: serial('id').primaryKey(),
-  donorId: integer('donor_id').references(() => donors.id).notNull(),
+  donorId: integer('donor_id').references(() => donors.id), // Can be null for old legacy donations
   recurringDonationId: integer('recurring_donation_id').references(() => recurringDonations.id),
   donationTransferId: integer('donation_transfer_id').references(() => donationTransfers.id),
   datetime: timestamp('datetime').notNull(),
