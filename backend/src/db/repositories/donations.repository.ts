@@ -209,7 +209,7 @@ export class DonationsRepository {
    * This is used for statistics
    */
   async sumFinalizedDonations(params?: {
-    excludeOrganizationInternalId?: string; // e.g., "TIP" for tips
+    excludeOrganizationInternalIds?: string[]; // e.g., ["TIP", "EXTERNAL"] to exclude multiple
     externalDonation?: boolean;
   }) {
     // Build the WHERE conditions
@@ -227,13 +227,13 @@ export class DonationsRepository {
       },
     });
 
-    // If we need to exclude a specific organization, sum only the amounts
-    // that don't go to that organization
-    if (params?.excludeOrganizationInternalId) {
+    // If we need to exclude specific organizations, sum only the amounts
+    // that don't go to those organizations
+    if (params?.excludeOrganizationInternalIds && params.excludeOrganizationInternalIds.length > 0) {
       let total = 0;
       for (const donation of matchingDonations) {
         const orgDonationsFiltered = donation.organizationDonations.filter(
-          od => od.organizationInternalId !== params.excludeOrganizationInternalId
+          od => !params.excludeOrganizationInternalIds!.includes(od.organizationInternalId)
         );
         total += orgDonationsFiltered.reduce((sum, od) => sum + od.amount, 0);
       }
@@ -250,7 +250,7 @@ export class DonationsRepository {
   async sumFinalizedDonationsInRange(params: {
     dateFrom: Date | string;
     dateTo: Date | string;
-    excludeOrganizationInternalId?: string;
+    excludeOrganizationInternalIds?: string[];
     externalDonation?: boolean;
   }) {
     const dateFrom = typeof params.dateFrom === 'string' ? new Date(params.dateFrom) : params.dateFrom;
@@ -273,11 +273,11 @@ export class DonationsRepository {
       },
     });
 
-    if (params.excludeOrganizationInternalId) {
+    if (params.excludeOrganizationInternalIds && params.excludeOrganizationInternalIds.length > 0) {
       let total = 0;
       for (const donation of matchingDonations) {
         const orgDonationsFiltered = donation.organizationDonations.filter(
-          od => od.organizationInternalId !== params.excludeOrganizationInternalId
+          od => !params.excludeOrganizationInternalIds!.includes(od.organizationInternalId)
         );
         total += orgDonationsFiltered.reduce((sum, od) => sum + od.amount, 0);
       }

@@ -905,38 +905,66 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   },
 
   async sumOfFinalizedDonations() {
+    const { donationsRepository } = require("../../../db/repositories");
     const global = await strapi.db.query("api::global.global").findOne();
 
-    const result = await strapi.db.connection.raw(
-      `SELECT SUM(organization_donations.amount) AS total_amount
-       FROM organization_donations
-       INNER JOIN organization_donations_donation_links ON organization_donations.id = organization_donations_donation_links.organization_donation_id
-       INNER JOIN donations ON organization_donations_donation_links.donation_id = donations.id
-       INNER JOIN organization_donations_organization_links ON organization_donations.id = organization_donations_organization_links.organization_donation_id
-       WHERE donations.finalized = true
-       AND organization_donations_organization_links.organization_id NOT IN (?, ?)`,
-      [global.tipOrganizationId, global.externalOrganizationId]
+    // Get organization internalIds for tip and external organizations
+    const tipOrg = await strapi.entityService.findOne(
+      "api::organization.organization",
+      global.tipOrganizationId,
+      { fields: ["internalId"] }
     );
-    const totalAmount = Number(result.rows[0].total_amount);
+
+    const externalOrg = await strapi.entityService.findOne(
+      "api::organization.organization",
+      global.externalOrganizationId,
+      { fields: ["internalId"] }
+    );
+
+    // Build list of organizations to exclude
+    const excludeInternalIds = [];
+    if (tipOrg?.internalId) excludeInternalIds.push(tipOrg.internalId);
+    if (externalOrg?.internalId) excludeInternalIds.push(externalOrg.internalId);
+
+    // Sum using Drizzle repository
+    const totalAmount = await donationsRepository.sumFinalizedDonations({
+      excludeOrganizationInternalIds: excludeInternalIds,
+      externalDonation: false,
+    });
+
     return totalAmount;
   },
 
   async sumOfFinalizedCampaignDonations() {
+    const { donationsRepository } = require("../../../db/repositories");
     const global = await strapi.db.query("api::global.global").findOne();
 
-    const result = await strapi.db.connection.raw(
-      `SELECT SUM(organization_donations.amount) AS total_amount
-       FROM organization_donations
-       INNER JOIN organization_donations_donation_links ON organization_donations.id = organization_donations_donation_links.organization_donation_id
-       INNER JOIN donations ON organization_donations_donation_links.donation_id = donations.id
-       INNER JOIN organization_donations_organization_links ON organization_donations.id = organization_donations_organization_links.organization_donation_id
-       WHERE donations.finalized = true
-       AND donations.datetime >= '2025-12-08 00:00:00'
-       AND donations.datetime <= '2025-12-31 23:59:59'
-       AND organization_donations_organization_links.organization_id NOT IN (?, ?)`,
-      [global.tipOrganizationId, global.externalOrganizationId]
+    // Get organization internalIds for tip and external organizations
+    const tipOrg = await strapi.entityService.findOne(
+      "api::organization.organization",
+      global.tipOrganizationId,
+      { fields: ["internalId"] }
     );
-    const totalAmount = Number(result.rows[0].total_amount);
+
+    const externalOrg = await strapi.entityService.findOne(
+      "api::organization.organization",
+      global.externalOrganizationId,
+      { fields: ["internalId"] }
+    );
+
+    // Build list of organizations to exclude
+    const excludeInternalIds = [];
+    if (tipOrg?.internalId) excludeInternalIds.push(tipOrg.internalId);
+    if (externalOrg?.internalId) excludeInternalIds.push(externalOrg.internalId);
+
+    // Sum using Drizzle repository with date range
+    const totalAmount = await donationsRepository.sumFinalizedDonationsInRange({
+      dateFrom: '2025-12-08 00:00:00',
+      dateTo: '2025-12-31 23:59:59',
+      excludeOrganizationInternalIds: excludeInternalIds,
+      externalDonation: false,
+    });
+
     return totalAmount;
   },
 
