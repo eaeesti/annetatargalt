@@ -24,6 +24,10 @@
       "target": "api::organization.organization",
       "inversedBy": "organizationDonations"
     },
+    "organizationInternalId": {
+      "type": "string",
+      "maxLength": 64
+    },
     "amount": {
       "type": "integer"
     }
