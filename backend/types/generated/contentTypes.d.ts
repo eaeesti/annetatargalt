@@ -1279,6 +1279,12 @@ export interface ApiOrganizationOrganization extends Schema.CollectionType {
     >;
     logo: Attribute.Media;
     active: Attribute.Boolean & Attribute.DefaultTo<true>;
+    internalId: Attribute.String &
+      Attribute.Required &
+      Attribute.Unique &
+      Attribute.SetMinMaxLength<{
+        maxLength: 64;
+      }>;
     organizationDonations: Attribute.Relation<
       'api::organization.organization',
       'oneToMany',
@@ -1329,6 +1335,10 @@ export interface ApiOrganizationDonationOrganizationDonation
       'manyToOne',
       'api::organization.organization'
     >;
+    organizationInternalId: Attribute.String &
+      Attribute.SetMinMaxLength<{
+        maxLength: 64;
+      }>;
     amount: Attribute.Integer;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
@@ -1370,6 +1380,10 @@ export interface ApiOrganizationRecurringDonationOrganizationRecurringDonation
       'manyToOne',
       'api::organization.organization'
     >;
+    organizationInternalId: Attribute.String &
+      Attribute.SetMinMaxLength<{
+        maxLength: 64;
+      }>;
     amount: Attribute.Integer;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
