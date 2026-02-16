@@ -5,48 +5,34 @@
  */
 
 const { createCoreService } = require("@strapi/strapi").factories;
+const { DonorsRepository } = require("../../../db/repositories/donors.repository");
+const { RecurringDonationsRepository } = require("../../../db/repositories/recurring-donations.repository");
+
+const donorsRepo = new DonorsRepository();
+const recurringDonationsRepo = new RecurringDonationsRepository();
 
 module.exports = createCoreService("api::donor.donor", ({ strapi }) => ({
   async findDonor(idCode) {
-    const existingDonorEntries = await strapi.entityService.findMany(
-      "api::donor.donor",
-      { filters: { idCode: idCode } }
-    );
+    // First, try to find donor by ID code in Drizzle
+    const existingDonor = await donorsRepo.findByIdCode(idCode);
 
-    if (existingDonorEntries.length > 0) {
-      return existingDonorEntries[0];
+    if (existingDonor) {
+      return existingDonor;
     }
 
-    const recurringDonations = await strapi.entityService.findMany(
-      "api::recurring-donation.recurring-donation",
-      {
-        filters: {
-          companyCode: idCode,
-        },
-        populate: ["donor"],
-        sort: "datetime:desc",
-        limit: 1,
-      }
-    );
+    // Fallback: check if recurring donation with this company code exists
+    const recurringDonation = await recurringDonationsRepo.findByCompanyCode(idCode);
 
-    if (recurringDonations.length > 0) {
-      return recurringDonations[0].donor;
+    if (recurringDonation) {
+      // Fetch the donor associated with this recurring donation
+      return donorsRepo.findById(recurringDonation.donorId);
     }
 
     return null;
   },
 
   async findDonorByEmail(email) {
-    const existingDonorEntries = await strapi.entityService.findMany(
-      "api::donor.donor",
-      { filters: { email } }
-    );
-
-    if (existingDonorEntries.length > 0) {
-      return existingDonorEntries[0];
-    }
-
-    return null;
+    return donorsRepo.findByEmail(email);
   },
 
   async findOrCreateDonor(donor) {
@@ -56,17 +42,12 @@ module.exports = createCoreService("api::donor.donor", ({ strapi }) => ({
       return donorEntry;
     }
 
-    const newDonorEntry = await strapi.entityService.create(
-      "api::donor.donor",
-      {
-        data: {
-          firstName: donor.firstName,
-          lastName: donor.lastName,
-          email: donor.email,
-          idCode: donor.idCode,
-        },
-      }
-    );
+    const newDonorEntry = await donorsRepo.create({
+      firstName: donor.firstName,
+      lastName: donor.lastName,
+      email: donor.email,
+      idCode: donor.idCode,
+    });
 
     return newDonorEntry;
   },
@@ -76,16 +57,11 @@ module.exports = createCoreService("api::donor.donor", ({ strapi }) => ({
 
     if (donorEntry) return donorEntry;
 
-    const newDonorEntry = await strapi.entityService.create(
-      "api::donor.donor",
-      {
-        data: {
-          firstName: donor.firstName,
-          lastName: donor.lastName,
-          email: donor.email,
-        },
-      }
-    );
+    const newDonorEntry = await donorsRepo.create({
+      firstName: donor.firstName,
+      lastName: donor.lastName,
+      email: donor.email,
+    });
 
     return newDonorEntry;
   },
@@ -99,18 +75,12 @@ module.exports = createCoreService("api::donor.donor", ({ strapi }) => ({
       donorEntry = await this.findOrCreateDonorByEmail(donor);
     }
 
-    const updatedDonor = await strapi.entityService.update(
-      "api::donor.donor",
-      donorEntry.id,
-      {
-        data: {
-          firstName: donor.firstName,
-          lastName: donor.lastName,
-          email: donor.email,
-          idCode: donorEntry.idCode || donor.idCode,
-        },
-      }
-    );
+    const updatedDonor = await donorsRepo.update(donorEntry.id, {
+      firstName: donor.firstName,
+      lastName: donor.lastName,
+      email: donor.email,
+      idCode: donorEntry.idCode || donor.idCode,
+    });
 
     return updatedDonor;
   },
@@ -118,18 +88,12 @@ module.exports = createCoreService("api::donor.donor", ({ strapi }) => ({
   async updateOrCreateDonorByEmail(donor) {
     const donorEntry = await this.findOrCreateDonorByEmail(donor);
 
-    const updatedDonor = await strapi.entityService.update(
-      "api::donor.donor",
-      donorEntry.id,
-      {
-        data: {
-          firstName: donor.firstName,
-          lastName: donor.lastName,
-        },
-      }
-    );
+    const updatedDonor = await donorsRepo.update(donorEntry.id, {
+      firstName: donor.firstName,
+      lastName: donor.lastName,
+    });
 
-    return donorEntry;
+    return updatedDonor;
   },
 
   async donorsWithFinalizedDonationCount() {
