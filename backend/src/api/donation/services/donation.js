@@ -982,31 +982,30 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   },
 
   async insertFromTransaction({ idCode, date, amount, iban }) {
+    const {
+      donationsRepository,
+      recurringDonationsRepository,
+      organizationDonationsRepository,
+      organizationRecurringDonationsRepository,
+    } = require("../../../db/repositories");
+    const { resizeOrganizationDonations } = require("../../../utils/donation");
+
+    // Find donor (still using Strapi donor service for now)
     let donor = await strapi.service("api::donor.donor").findDonor(idCode);
 
     if (!donor) {
       throw new Error(`Donor not found for ID code ${idCode}`);
     }
 
-    const filters = {
-      donor: donor.id,
-    };
+    // Find recurring donations by donor ID from Drizzle
+    let latestRecurringDonations = await recurringDonationsRepository.findByDonorId(donor.id);
 
+    // Filter by company code if idCode is not a personal ID (11 chars)
     if (idCode.length !== 11) {
-      filters.companyCode = idCode;
+      latestRecurringDonations = latestRecurringDonations.filter(
+        (rd) => rd.companyCode === idCode
+      );
     }
-
-    const latestRecurringDonations = await strapi.entityService.findMany(
-      "api::recurring-donation.recurring-donation",
-      {
-        filters,
-        populate: [
-          "organizationRecurringDonations",
-          "organizationRecurringDonations.organization",
-        ],
-        sort: "datetime:desc",
-      }
-    );
 
     if (latestRecurringDonations.length === 0) {
       throw new Error("No recurring donations found");
@@ -1014,66 +1013,105 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
 
     // Find the latest recurring donation that is before the date of the transaction
     // Add 24 hours because the recurring donation includes a time but the bank transaction only includes a date
+    const transactionDateLimit = new Date(date).getTime() + 24 * 60 * 60 * 1000;
     const recurringDonation = latestRecurringDonations.find(
-      (recurringDonation) =>
-        new Date(recurringDonation.datetime).getTime() <=
-        new Date(date).getTime() + 24 * 60 * 60 * 1000
+      (rd) => new Date(rd.datetime).getTime() <= transactionDateLimit
     );
 
     if (!recurringDonation) {
       throw new Error("No recurring donation found for this date");
     }
 
+    // Get organization recurring donations for this template
+    const organizationRecurringDonations =
+      await organizationRecurringDonationsRepository.findByRecurringDonationId(
+        recurringDonation.id
+      );
+
     const datetime = new Date(date);
     datetime.setHours(12, 0, 0, 0);
 
-    const donation = await strapi.entityService.create(
-      "api::donation.donation",
-      {
-        data: {
-          donor: donor.id,
-          recurringDonation: recurringDonation.id,
-          amount: Math.round(amount * 100),
-          datetime,
-          finalized: true,
-          companyName: recurringDonation.companyName,
-          companyCode: recurringDonation.companyCode,
-          iban,
-          paymentMethod: recurringDonation.bank,
-        },
-      }
+    // Create donation in Drizzle
+    const donation = await donationsRepository.create({
+      donorId: donor.id,
+      recurringDonationId: recurringDonation.id,
+      amount: Math.round(amount * 100),
+      datetime,
+      finalized: true,
+      companyName: recurringDonation.companyName,
+      companyCode: recurringDonation.companyCode,
+      iban,
+      paymentMethod: recurringDonation.bank,
+    });
+
+    // Resize organization donations based on actual amount
+    const donationAmount = Math.round(amount * 100);
+    const donationMultiplier = donationAmount / recurringDonation.amount;
+
+    const resizedOrganizationDonations = resizeOrganizationDonations(
+      organizationRecurringDonations,
+      donationMultiplier,
+      donationAmount
     );
 
-    await strapi
-      .service("api::organization-donation.organization-donation")
-      .createFromOrganizationRecurringDonations({
-        donationId: donation.id,
-        donationAmount: Math.round(amount * 100),
-        recurringDonationAmount: recurringDonation.amount,
-        organizationRecurringDonations:
-          recurringDonation.organizationRecurringDonations,
-      });
+    // Create organization donations
+    const orgDonationsData = resizedOrganizationDonations.map((orgRecurring) => ({
+      donationId: donation.id,
+      organizationInternalId: orgRecurring.organizationInternalId,
+      amount: orgRecurring.amount,
+    }));
+
+    await organizationDonationsRepository.createMany(orgDonationsData);
+
+    return donation;
   },
 
   async insertDonation(donationData) {
+    const {
+      donationsRepository,
+      organizationDonationsRepository,
+    } = require("../../../db/repositories");
+
     const {
       organizationDonations,
       ...donationDataWithoutOrganizationDonations
     } = donationData;
 
-    const donation = await strapi.entityService.create(
-      "api::donation.donation",
-      {
-        data: donationDataWithoutOrganizationDonations,
-      }
-    );
+    // Create donation in Drizzle
+    const donation = await donationsRepository.create({
+      ...donationDataWithoutOrganizationDonations,
+      // Ensure datetime is a Date object
+      datetime: donationDataWithoutOrganizationDonations.datetime
+        ? new Date(donationDataWithoutOrganizationDonations.datetime)
+        : new Date(),
+    });
 
-    await strapi
-      .service("api::organization-donation.organization-donation")
-      .createFromArray({
+    // Create organization donations
+    // Handle both old format (organization: numeric ID) and new format (organizationInternalId: string)
+    const orgDonationsData = [];
+    for (const orgDonation of organizationDonations) {
+      let organizationInternalId = orgDonation.organizationInternalId;
+
+      // If organizationInternalId is not provided, convert from numeric organization ID
+      if (!organizationInternalId && orgDonation.organization) {
+        const org = await strapi.entityService.findOne(
+          "api::organization.organization",
+          orgDonation.organization,
+          { fields: ["internalId"] }
+        );
+        organizationInternalId = org.internalId;
+      }
+
+      orgDonationsData.push({
         donationId: donation.id,
-        organizationDonations,
+        organizationInternalId,
+        amount: orgDonation.amount,
       });
+    }
+
+    await organizationDonationsRepository.createMany(orgDonationsData);
+
+    return donation;
   },
 
   /**
@@ -1177,30 +1215,21 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   },
 
   async getDonationsInDateRange(startDate, endDate) {
-    const donations = await strapi.entityService.findMany(
-      "api::donation.donation",
-      {
-        filters: {
-          datetime: {
-            $gte: startDate,
-            $lte: endDate,
-          },
-          finalized: true,
-        },
-        populate: ["donor"],
-      }
-    );
+    const { donationsRepository } = require("../../../db/repositories");
+
+    // Get donations in date range from Drizzle
+    const allDonations = await donationsRepository.findByDateRange(startDate, endDate);
+
+    // Filter for finalized donations only (matching original behavior)
+    const donations = allDonations.filter((donation) => donation.finalized);
 
     return donations;
   },
 
   async addDonationsToTransfer(donationIds, transferId) {
-    donationIds.forEach(async (donationId) => {
-      await strapi.entityService.update("api::donation.donation", donationId, {
-        data: {
-          donationTransfer: transferId,
-        },
-      });
-    });
+    const { donationsRepository } = require("../../../db/repositories");
+
+    // Use repository's batch update method (more efficient than forEach)
+    await donationsRepository.addToTransfer(donationIds, transferId);
   },
 }));
