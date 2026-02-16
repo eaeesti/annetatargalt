@@ -1,6 +1,6 @@
-import { eq, and, or, gte, lte, between, desc, asc, sql } from 'drizzle-orm';
-import { db } from '../client';
-import { donations, organizationDonations } from '../schema';
+import { eq, and, gte, lte, desc, sql, inArray } from "drizzle-orm";
+import { db } from "../client";
+import { donations } from "../schema";
 
 export class DonationsRepository {
   /**
@@ -81,15 +81,21 @@ export class DonationsRepository {
     dateFrom: Date | string;
     dateTo: Date | string;
   }) {
-    const dateFrom = typeof params.dateFrom === 'string' ? new Date(params.dateFrom) : params.dateFrom;
-    const dateTo = typeof params.dateTo === 'string' ? new Date(params.dateTo) : params.dateTo;
+    const dateFrom =
+      typeof params.dateFrom === "string"
+        ? new Date(params.dateFrom)
+        : params.dateFrom;
+    const dateTo =
+      typeof params.dateTo === "string"
+        ? new Date(params.dateTo)
+        : params.dateTo;
 
     // Find donations matching amount and date range
     const matchingDonations = await db.query.donations.findMany({
       where: and(
         eq(donations.amount, params.amount),
         gte(donations.datetime, dateFrom),
-        lte(donations.datetime, dateTo),
+        lte(donations.datetime, dateTo)
       ),
       with: {
         donor: true,
@@ -98,7 +104,7 @@ export class DonationsRepository {
 
     // If idCode provided, filter by donor's idCode
     if (params.idCode) {
-      return matchingDonations.filter(d => d.donor?.idCode === params.idCode);
+      return matchingDonations.filter((d) => d.donor?.idCode === params.idCode);
     }
 
     return matchingDonations;
@@ -125,39 +131,53 @@ export class DonationsRepository {
     recurringDonationId?: number | null;
     donationTransferId?: number | null;
   }) {
-    const [donation] = await db.insert(donations).values({
-      donorId: data.donorId,
-      amount: data.amount,
-      datetime: typeof data.datetime === 'string' ? new Date(data.datetime) : data.datetime,
-      finalized: data.finalized !== undefined ? data.finalized : false,
-      paymentMethod: data.paymentMethod || null,
-      iban: data.iban || null,
-      comment: data.comment || null,
-      companyName: data.companyName || null,
-      companyCode: data.companyCode || null,
-      sentToOrganization: data.sentToOrganization !== undefined ? data.sentToOrganization : false,
-      dedicationName: data.dedicationName || null,
-      dedicationEmail: data.dedicationEmail || null,
-      dedicationMessage: data.dedicationMessage || null,
-      externalDonation: data.externalDonation !== undefined ? data.externalDonation : false,
-      recurringDonationId: data.recurringDonationId || null,
-      donationTransferId: data.donationTransferId || null,
-    }).returning();
+    const [donation] = await db
+      .insert(donations)
+      .values({
+        donorId: data.donorId,
+        amount: data.amount,
+        datetime:
+          typeof data.datetime === "string"
+            ? new Date(data.datetime)
+            : data.datetime,
+        finalized: data.finalized !== undefined ? data.finalized : false,
+        paymentMethod: data.paymentMethod || null,
+        iban: data.iban || null,
+        comment: data.comment || null,
+        companyName: data.companyName || null,
+        companyCode: data.companyCode || null,
+        sentToOrganization:
+          data.sentToOrganization !== undefined
+            ? data.sentToOrganization
+            : false,
+        dedicationName: data.dedicationName || null,
+        dedicationEmail: data.dedicationEmail || null,
+        dedicationMessage: data.dedicationMessage || null,
+        externalDonation:
+          data.externalDonation !== undefined ? data.externalDonation : false,
+        recurringDonationId: data.recurringDonationId || null,
+        donationTransferId: data.donationTransferId || null,
+      })
+      .returning();
     return donation;
   }
 
   /**
    * Update a donation
    */
-  async update(id: number, data: Partial<{
-    finalized: boolean;
-    paymentMethod: string | null;
-    iban: string | null;
-    comment: string | null;
-    sentToOrganization: boolean;
-    donationTransferId: number | null;
-  }>) {
-    const [donation] = await db.update(donations)
+  async update(
+    id: number,
+    data: Partial<{
+      finalized: boolean;
+      paymentMethod: string | null;
+      iban: string | null;
+      comment: string | null;
+      sentToOrganization: boolean;
+      donationTransferId: number | null;
+    }>
+  ) {
+    const [donation] = await db
+      .update(donations)
       .set({
         ...data,
         updatedAt: new Date(),
@@ -180,12 +200,13 @@ export class DonationsRepository {
   async markAsSentToOrganization(ids: number[]) {
     if (ids.length === 0) return [];
 
-    return db.update(donations)
+    return db
+      .update(donations)
       .set({
         sentToOrganization: true,
         updatedAt: new Date(),
       })
-      .where(sql`${donations.id} = ANY(${ids})`)
+      .where(inArray(donations.id, ids))
       .returning();
   }
 
@@ -195,12 +216,13 @@ export class DonationsRepository {
   async addToTransfer(donationIds: number[], transferId: number) {
     if (donationIds.length === 0) return [];
 
-    return db.update(donations)
+    return db
+      .update(donations)
       .set({
         donationTransferId: transferId,
         updatedAt: new Date(),
       })
-      .where(sql`${donations.id} = ANY(${donationIds})`)
+      .where(inArray(donations.id, donationIds))
       .returning();
   }
 
@@ -229,11 +251,17 @@ export class DonationsRepository {
 
     // If we need to exclude specific organizations, sum only the amounts
     // that don't go to those organizations
-    if (params?.excludeOrganizationInternalIds && params.excludeOrganizationInternalIds.length > 0) {
+    if (
+      params?.excludeOrganizationInternalIds &&
+      params.excludeOrganizationInternalIds.length > 0
+    ) {
       let total = 0;
       for (const donation of matchingDonations) {
         const orgDonationsFiltered = donation.organizationDonations.filter(
-          od => !params.excludeOrganizationInternalIds!.includes(od.organizationInternalId)
+          (od) =>
+            !params.excludeOrganizationInternalIds!.includes(
+              od.organizationInternalId
+            )
         );
         total += orgDonationsFiltered.reduce((sum, od) => sum + od.amount, 0);
       }
@@ -253,8 +281,14 @@ export class DonationsRepository {
     excludeOrganizationInternalIds?: string[];
     externalDonation?: boolean;
   }) {
-    const dateFrom = typeof params.dateFrom === 'string' ? new Date(params.dateFrom) : params.dateFrom;
-    const dateTo = typeof params.dateTo === 'string' ? new Date(params.dateTo) : params.dateTo;
+    const dateFrom =
+      typeof params.dateFrom === "string"
+        ? new Date(params.dateFrom)
+        : params.dateFrom;
+    const dateTo =
+      typeof params.dateTo === "string"
+        ? new Date(params.dateTo)
+        : params.dateTo;
 
     const conditions = [
       eq(donations.finalized, true),
@@ -273,11 +307,17 @@ export class DonationsRepository {
       },
     });
 
-    if (params.excludeOrganizationInternalIds && params.excludeOrganizationInternalIds.length > 0) {
+    if (
+      params.excludeOrganizationInternalIds &&
+      params.excludeOrganizationInternalIds.length > 0
+    ) {
       let total = 0;
       for (const donation of matchingDonations) {
         const orgDonationsFiltered = donation.organizationDonations.filter(
-          od => !params.excludeOrganizationInternalIds!.includes(od.organizationInternalId)
+          (od) =>
+            !params.excludeOrganizationInternalIds!.includes(
+              od.organizationInternalId
+            )
         );
         total += orgDonationsFiltered.reduce((sum, od) => sum + od.amount, 0);
       }
@@ -312,22 +352,18 @@ export class DonationsRepository {
    * Delete a donation (and its organization_donations via cascade)
    */
   async delete(id: number) {
-    await db.delete(donations)
-      .where(eq(donations.id, id));
+    await db.delete(donations).where(eq(donations.id, id));
   }
 
   /**
    * Find donations by date range
    */
   async findByDateRange(dateFrom: Date | string, dateTo: Date | string) {
-    const from = typeof dateFrom === 'string' ? new Date(dateFrom) : dateFrom;
-    const to = typeof dateTo === 'string' ? new Date(dateTo) : dateTo;
+    const from = typeof dateFrom === "string" ? new Date(dateFrom) : dateFrom;
+    const to = typeof dateTo === "string" ? new Date(dateTo) : dateTo;
 
     return db.query.donations.findMany({
-      where: and(
-        gte(donations.datetime, from),
-        lte(donations.datetime, to)
-      ),
+      where: and(gte(donations.datetime, from), lte(donations.datetime, to)),
       orderBy: [desc(donations.datetime)],
       with: {
         donor: true,
