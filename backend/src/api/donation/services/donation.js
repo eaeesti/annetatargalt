@@ -1266,4 +1266,54 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     // Use repository's batch update method (more efficient than forEach)
     await donationsRepository.addToTransfer(donationIds, transferId);
   },
+
+  /**
+   * Get donation with full details (donor, organizations with causes)
+   * Used for thank-you page after payment
+   */
+  async getDonationWithDetails(donationId) {
+    const { DonorsRepository } = require("../../../db/repositories/donors.repository");
+    const donorsRepo = new DonorsRepository();
+
+    // Fetch donation with organization donations from Drizzle
+    const donation = await donationsRepo.findByIdWithRelations(donationId);
+
+    if (!donation) {
+      return null;
+    }
+
+    // Fetch donor details from Drizzle
+    const donor = await donorsRepo.findById(donation.donorId);
+
+    // Fetch organization details from Strapi for each organizationDonation
+    const organizationDonations = await Promise.all(
+      donation.organizationDonations.map(async (orgDonation) => {
+        // Fetch organization from Strapi
+        const organizations = await strapi.entityService.findMany(
+          "api::organization.organization",
+          {
+            filters: { internalId: orgDonation.organizationInternalId },
+            populate: ["cause"],
+            limit: 1,
+          }
+        );
+
+        const organization = organizations[0] || null;
+
+        return {
+          id: orgDonation.id,
+          amount: orgDonation.amount,
+          organization,
+        };
+      })
+    );
+
+    // Return in format matching old Strapi response
+    return {
+      id: donation.id,
+      amount: donation.amount,
+      donor,
+      organizationDonations,
+    };
+  },
 }));

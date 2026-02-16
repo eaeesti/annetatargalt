@@ -2,6 +2,9 @@
 
 const { createCoreController } = require("@strapi/strapi").factories;
 const { decodeOrderToken } = require("../../../utils/montonio");
+const { DonationsRepository } = require("../../../db/repositories/donations.repository");
+
+const donationsRepo = new DonationsRepository();
 
 module.exports = createCoreController(
   "api::donation.donation",
@@ -83,10 +86,8 @@ module.exports = createCoreController(
 
       const id = Number(decoded.merchant_reference.split(" ").at(-1));
 
-      const donation = await strapi.entityService.findOne(
-        "api::donation.donation",
-        id
-      );
+      // Find donation using Drizzle
+      const donation = await donationsRepo.findById(id);
 
       if (!donation) {
         return ctx.badRequest("Donation not found");
@@ -96,13 +97,12 @@ module.exports = createCoreController(
         return ctx.badRequest("Donation already finalized");
       }
 
+      // Update donation to finalized using Drizzle
       try {
-        await strapi.entityService.update("api::donation.donation", id, {
-          data: {
-            finalized: true,
-            iban: decoded.customer_iban || "",
-            paymentMethod: decoded.payment_method_name || "",
-          },
+        await donationsRepo.update(id, {
+          finalized: true,
+          iban: decoded.customer_iban || "",
+          paymentMethod: decoded.payment_method_name || "",
         });
       } catch (error) {
         console.error(error);
@@ -147,19 +147,10 @@ module.exports = createCoreController(
 
       const id = Number(decoded.merchant_reference.split(" ").at(-1));
 
-      const donation = await strapi.entityService.findOne(
-        "api::donation.donation",
-        id,
-        {
-          fields: ["amount"],
-          populate: [
-            "donor",
-            "organizationDonations",
-            "organizationDonations.organization",
-            "organizationDonations.organization.cause",
-          ],
-        }
-      );
+      // Fetch donation with details using Drizzle + Strapi cross-system query
+      const donation = await strapi
+        .service("api::donation.donation")
+        .getDonationWithDetails(id);
 
       if (!donation) {
         return ctx.badRequest("Donation not found");
