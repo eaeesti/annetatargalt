@@ -15,6 +15,15 @@ const {
   textIntoParagraphs,
   sanitize,
 } = require("../../../utils/string");
+const { DonationsRepository } = require("../../../db/repositories/donations.repository");
+const { OrganizationDonationsRepository } = require("../../../db/repositories/organization-donations.repository");
+const { RecurringDonationsRepository } = require("../../../db/repositories/recurring-donations.repository");
+const { OrganizationRecurringDonationsRepository } = require("../../../db/repositories/organization-recurring-donations.repository");
+
+const donationsRepo = new DonationsRepository();
+const organizationDonationsRepo = new OrganizationDonationsRepository();
+const recurringDonationsRepo = new RecurringDonationsRepository();
+const organizationRecurringDonationsRepo = new OrganizationRecurringDonationsRepository();
 
 module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   async validateDonation(donation) {
@@ -269,29 +278,32 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       .service("api::donor.donor")
       .updateOrCreateDonorByEmail(donation);
 
-    const donationEntry = await strapi.entityService.create(
-      "api::donation.donation",
-      {
-        data: {
-          amount: donation.amount,
-          donor: donor.id,
-          datetime: new Date(),
-          comment: "Foreign donation",
-        },
-      }
+    // Create donation in Drizzle
+    const donationEntry = await donationsRepo.create({
+      donorId: donor.id,
+      amount: donation.amount,
+      datetime: new Date(),
+      comment: "Foreign donation",
+    });
+
+    // Get tip organization from global settings
+    const global = await strapi.db.query("api::global.global").findOne();
+    const tipOrganization = await strapi.entityService.findOne(
+      "api::organization.organization",
+      global.tipOrganizationId,
+      { fields: ["internalId"] }
     );
 
-    const global = await strapi.db.query("api::global.global").findOne();
+    if (!tipOrganization || !tipOrganization.internalId) {
+      throw new Error("Tip organization not found or missing internalId");
+    }
 
-    await strapi
-      .service("api::organization-donation.organization-donation")
-      .createOrganizationDonations({
-        donationId: donationEntry.id,
-        amounts: [{
-          organizationId: global.tipOrganizationId,
-          amount: donation.amount,
-        }]
-      });
+    // Create organization donation for tip organization
+    await organizationDonationsRepo.create({
+      donationId: donationEntry.id,
+      organizationInternalId: tipOrganization.internalId,
+      amount: donation.amount,
+    });
 
     const payload = await this.createMontonioPayload(donationEntry, {
       paymentMethod: "cardPayments",
@@ -308,30 +320,42 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     customReturnUrl,
     externalDonation,
   }) {
-    const donationEntry = await strapi.entityService.create(
-      "api::donation.donation",
-      {
-        data: {
-          amount: donation.amount,
-          donor: donor.id,
-          datetime: new Date(),
-          companyName: donation.companyName,
-          companyCode: donation.companyCode,
-          dedicationName: donation.dedicationName,
-          dedicationEmail: donation.dedicationEmail,
-          dedicationMessage: donation.dedicationMessage,
-          comment: donation.comment,
-          externalDonation,
-        },
-      }
+    // Create donation in Drizzle
+    const donationEntry = await donationsRepo.create({
+      donorId: donor.id,
+      amount: donation.amount,
+      datetime: new Date(),
+      companyName: donation.companyName,
+      companyCode: donation.companyCode,
+      dedicationName: donation.dedicationName,
+      dedicationEmail: donation.dedicationEmail,
+      dedicationMessage: donation.dedicationMessage,
+      comment: donation.comment,
+      externalDonation: externalDonation || false,
+    });
+
+    // Map organization IDs to internal IDs and create organization donations
+    const organizationDonationsData = await Promise.all(
+      donation.amounts.map(async ({ organizationId, amount }) => {
+        const organization = await strapi.entityService.findOne(
+          "api::organization.organization",
+          organizationId,
+          { fields: ["internalId"] }
+        );
+
+        if (!organization || !organization.internalId) {
+          throw new Error(`Organization ${organizationId} not found or missing internalId`);
+        }
+
+        return {
+          donationId: donationEntry.id,
+          organizationInternalId: organization.internalId,
+          amount,
+        };
+      })
     );
 
-    await strapi
-      .service("api::organization-donation.organization-donation")
-      .createOrganizationDonations({
-        donationId: donationEntry.id,
-        amounts: donation.amounts,
-      });
+    await organizationDonationsRepo.createMany(organizationDonationsData);
 
     const payload = await this.createMontonioPayload(donationEntry, {
       paymentMethod: donation.paymentMethod,
@@ -344,29 +368,39 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   },
 
   async createRecurringDonation({ donation, donor, externalDonation }) {
-    const recurringDonationEntry = await strapi.entityService.create(
-      "api::recurring-donation.recurring-donation",
-      {
-        data: {
-          amount: donation.amount,
-          donor: donor.id,
-          bank: donation.bank,
-          datetime: new Date(),
-          companyName: donation.companyName,
-          companyCode: donation.companyCode,
-          comment: donation.comment,
-        },
-      }
+    // Create recurring donation in Drizzle
+    const recurringDonationEntry = await recurringDonationsRepo.create({
+      donorId: donor.id,
+      amount: donation.amount,
+      bank: donation.bank,
+      datetime: new Date(),
+      companyName: donation.companyName,
+      companyCode: donation.companyCode,
+      comment: donation.comment,
+    });
+
+    // Map organization IDs to internal IDs and create organization recurring donations
+    const organizationRecurringDonationsData = await Promise.all(
+      donation.amounts.map(async ({ organizationId, amount }) => {
+        const organization = await strapi.entityService.findOne(
+          "api::organization.organization",
+          organizationId,
+          { fields: ["internalId"] }
+        );
+
+        if (!organization || !organization.internalId) {
+          throw new Error(`Organization ${organizationId} not found or missing internalId`);
+        }
+
+        return {
+          recurringDonationId: recurringDonationEntry.id,
+          organizationInternalId: organization.internalId,
+          amount,
+        };
+      })
     );
 
-    await strapi
-      .service(
-        "api::organization-recurring-donation.organization-recurring-donation"
-      )
-      .createOrganizationDonations({
-        recurringDonationId: recurringDonationEntry.id,
-        amounts: donation.amounts,
-      });
+    await organizationRecurringDonationsRepo.createMany(organizationRecurringDonationsData);
 
     const donationInfo = await strapi.db
       .query("api::donation-info.donation-info")

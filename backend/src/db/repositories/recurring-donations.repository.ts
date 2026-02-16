@@ -76,6 +76,16 @@ export class RecurringDonationsRepository {
   }
 
   /**
+   * Find recurring donation by company code
+   */
+  async findByCompanyCode(companyCode: string) {
+    return db.query.recurringDonations.findFirst({
+      where: eq(recurringDonations.companyCode, companyCode),
+      orderBy: [desc(recurringDonations.datetime)],
+    });
+  }
+
+  /**
    * Create a new recurring donation
    */
   async create(data: {
