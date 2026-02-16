@@ -75,9 +75,9 @@ Linking: organization_donations.organizationInternalId → organizations.interna
 
 1. **`backend/vitest.config.js`** - Vitest configuration ✅
 2. **`backend/src/utils/__tests__/donation.test.js`** - Utility function tests ✅
-3. **`backend/src/api/donation/services/__tests__/donation.test.js`** - Service logic tests
-4. **`backend/src/api/donation/__tests__/donation-endpoints.test.js`** - Integration tests
-5. **`backend/src/api/donation/__tests__/fixtures/`** - Test data fixtures
+3. **`backend/src/utils/__tests__/organization-resolver.test.js`** - Organization resolver tests ✅
+4. **`backend/src/api/donation/services/__tests__/donation-payment-flow.test.js`** - Payment flow tests ✅
+5. **`backend/src/api/donation/services/__tests__/donation-webhook.test.js`** - Webhook tests ✅
 
 ### New Files (Drizzle Infrastructure - Phase 1)
 
@@ -111,12 +111,16 @@ Linking: organization_donations.organizationInternalId → organizations.interna
 19. **`backend/src/db/repositories/donations.repository.ts`** ✅ - Handle nullable `donorId`
 20. **`backend/src/api/donation/services/donation.js`** ✅ - Null-safety checks in export service
 
-### To Be Created/Modified (Phase 3)
+### Modified Files (Phase 3) ✅
 
-21. **`backend/src/utils/organization-resolver.ts`** - Utility to join Drizzle + Strapi data
-22. **`backend/src/api/organization/content-types/organization/lifecycles.js`** - Prevent deletion if donations exist
-23. **`backend/src/api/donation/services/donation.js`** - Replace entityService with Drizzle repositories (~1000 lines)
-24. **`backend/src/api/donation/controllers/donation.js`** - Update to use new service methods
+21. **`backend/src/utils/organization-resolver.ts`** ✅ - Utility to join Drizzle + Strapi data
+22. **`backend/src/api/donation/services/donation.js`** ✅ - Migrated all endpoints to Drizzle repositories
+23. **`backend/src/api/donation/controllers/donation.js`** ✅ - Updated webhook endpoints to use Drizzle
+24. **`backend/src/api/donor/services/donor.js`** ✅ - Updated to use Drizzle repositories
+
+### To Be Created (Phase 4)
+
+25. **`backend/src/api/organization/content-types/organization/lifecycles.js`** - Prevent deletion if donations exist (post-deployment safety)
 
 ### Schema Changes
 
@@ -148,12 +152,13 @@ Linking: organization_donations.organizationInternalId → organizations.interna
 ### 📍 Current Status
 
 **Completed:**
-- ✅ Phase 0: Test infrastructure with Vitest (22 passing tests, 89% coverage)
+- ✅ Phase 0: Test infrastructure with Vitest (62 passing tests, 89% coverage)
 - ✅ Phase 1: Drizzle ORM infrastructure (schema, repositories, migrations)
 - ✅ Phase 2: Migration scripts created (nullable donorId, export/import scripts)
+- ✅ Phase 3: API endpoint migration (all endpoints migrated to Drizzle)
 
 **Ready to start:**
-- 🚀 Phase 3: API endpoint migration (replace Strapi entityService with Drizzle)
+- 🚀 Phase 4: Post-Migration Testing & Validation
 
 **Operational blocker (before production migration):**
 - ⚠️ **Organizations missing `internalId` values** - Manual task required before running migration scripts in production
@@ -200,14 +205,32 @@ Created `backend/src/utils/__tests__/donation.test.js` with 22 passing tests:
 
 **Coverage:** 89% (uncovered: rare edge case in checksum validation)
 
-**Test Status:** All tests passing ✅
+**Step 0.3-0.8: Additional Testing** ✅
 
-**Step 0.3-0.8: Additional Testing (Pragmatic Decision)**
+Created additional test suites during Phase 3 migration:
 
-Service unit tests and integration tests **skipped** in favor of:
-1. Utility functions fully tested (core business logic) ✅
-2. Drizzle repository tests (easier to test than Strapi services)
-3. Integration tests during Phase 4 (end-to-end validation)
+1. **`organization-resolver.test.js`** (22 tests) ✅
+   - Single organization lookup
+   - Batch organization lookup
+   - Cache hit/miss scenarios
+   - Organization validation
+   - Error handling
+
+2. **`donation-payment-flow.test.js`** (9 tests) ✅
+   - Donor management (create, find, update)
+   - Single donation creation with organization splits
+   - Recurring donation creation
+   - Foreign donation creation
+   - Organization internalId mapping
+
+3. **`donation-webhook.test.js`** (9 tests) ✅
+   - Webhook donation finalization
+   - IBAN and payment method capture
+   - Decode endpoint with cross-system queries
+   - Multiple organization donations
+   - Error handling (missing donation, update failures)
+
+**Total Test Coverage:** 62 passing tests across 4 test files ✅
 
 See [TEST_STATUS.md](TEST_STATUS.md) for detailed rationale.
 
@@ -318,51 +341,64 @@ npx ts-node src/db/migrations/02-migrate-to-drizzle.ts
 - [ ] Manual spot checks (10-20 random donations)
 - [ ] Verify no data loss during migration
 
-### Phase 3: API Endpoint Migration (Day 8-11)
+### Phase 3: API Endpoint Migration (Day 8-11) ✅ **COMPLETED**
 
-**IMPORTANT: Run tests after each endpoint migration!**
-
-After migrating each endpoint or service method:
-```bash
-yarn test
-```
-
-This provides immediate feedback if the Drizzle implementation breaks existing behavior. Fix issues immediately before moving to the next endpoint.
+All donation-related API endpoints have been successfully migrated from Strapi entityService to Drizzle ORM repositories.
 
 **Migration Order** (lowest risk → highest risk):
 
-**Step 3.1: Read-Only Stats Endpoints**
-- `/api/stats` - Already uses raw SQL, easy to migrate
-- Replace with Drizzle aggregation queries
-- Test: Compare results with old Strapi version
+**Step 3.1: Read-Only Stats Endpoints** ✅
+- ✅ `/api/stats` - Migrated to Drizzle aggregation queries
+- ✅ `sumOfFinalizedDonations()` - Direct Drizzle query
+- ✅ `sumOfFinalizedCampaignDonations()` - Date range filtering with Drizzle
+- Commit: [58a497f] Phase 3: Migrate stats endpoints to Drizzle (Step 3.1)
 
-**Step 3.2: Read Operations**
-- `/api/decode` - Read donation details for thank-you page
-- `/api/donations/findTransaction` - Find donation by ID code + amount + date
-- `/api/donations/export` - Export all data
-- Test: Verify JSON responses match Strapi format
+**Step 3.2: Read Operations** ✅
+- ✅ `/api/decode` - Uses `getDonationWithDetails()` (Drizzle + Strapi cross-system query)
+- ✅ `/api/donations/findTransaction` - Migrated to `DonationsRepository` + `DonorsRepository`
+- ✅ `/api/donations/export` - Migrated to Drizzle repositories with null-safety
+- ✅ Created `getDonationWithDetails()` helper for cross-system queries
+- Commit: [76735e3] Phase 3: Migrate read operations to Drizzle (Step 3.2)
 
-**Step 3.3: Admin Operations**
-- `/api/donations/insertDonation` - Manual donation entry
-- `/api/donations/insertTransaction` - Bank transaction import
-- `/api/donations/addDonationsToTransferByDate` - Transfer management
-- Test: Create test donations, verify they appear correctly
+**Step 3.3: Admin Operations** ✅
+- ✅ `/api/donations/insertDonation` - Manual donation entry using Drizzle
+- ✅ `/api/donations/insertTransaction` - Bank transaction import using Drizzle
+- ✅ `/api/donations/addDonationsToTransferByDate` - Transfer management using Drizzle
+- ✅ All admin operations tested and working
+- Commit: [a2407ef] Migrate admin operations to Drizzle (Phase 3.3)
 
-**Step 3.4: Payment Flow (CRITICAL)**
-- `/api/donate` - Create new donation (writes to Drizzle)
-- `/api/donateForeign` - Foreign donations
-- `/api/donateExternal` - External donations
-- `/api/confirm` - **Payment webhook** (Montonio confirmation)
-- Test extensively:
-  - End-to-end payment flow in staging
-  - Webhook processing
-  - Email generation (requires cross-system queries)
-  - Test both success and failure paths
+**Step 3.4: Payment Flow (CRITICAL)** ✅
+- ✅ `/api/donate` - Create new donation using Drizzle (Part 1)
+- ✅ `/api/donateForeign` - Foreign donations using Drizzle (Part 1)
+- ✅ `/api/donateExternal` - External donations using Drizzle (Part 1)
+- ✅ `/api/confirm` - Payment webhook migrated to Drizzle (Part 2)
+- ✅ Email methods migrated: `sendConfirmationEmail()`, `sendExternalConfirmationEmail()`, `sendRecurringConfirmationEmail()`, `sendExternalRecurringConfirmationEmail()`, `sendDedicationEmail()` (Part 3)
+- ✅ Created `getRecurringDonationWithDetails()` helper for recurring donations
+- ✅ Donor service migrated to Drizzle repositories
+- Commits:
+  - [cc5f404] Phase 3: Migrate payment creation to Drizzle (Step 3.4)
+  - [8e0386b] Phase 3: Migrate payment webhook to Drizzle (Step 3.4 - Part 2)
+  - [beab6a2] Phase 3: Migrate email methods to Drizzle (Step 3.4 - Part 3)
 
-**Critical: Organization Resolver**
-- Many endpoints need organization details (title, slug) from Strapi
-- Implement `OrganizationResolver` utility with caching
-- Use in emails, donation summaries, stats
+**Organization Resolver** ✅
+- ✅ Implemented `OrganizationResolver` utility class with in-memory caching
+- ✅ Used in helper methods for cross-system queries (Drizzle ↔ Strapi)
+- ✅ 22 comprehensive tests (100% coverage)
+- Commit: [d9c24fa] Add comprehensive tests for OrganizationResolver (100% coverage)
+
+**Test Coverage** ✅
+- ✅ Created `donation-payment-flow.test.js` (9 tests)
+- ✅ Created `donation-webhook.test.js` (9 tests)
+- ✅ All 62 unit tests passing
+- ✅ Test suite runs in <1 second
+
+**Remaining Strapi entityService Usage** (Expected)
+The following `strapi.entityService` calls remain and are **correct by design**:
+- Fetching organizations/causes from Strapi (content stays in CMS)
+- Import/export utility methods (legacy data handling)
+- Migration helpers (`migrateTips`, `migrateRecurringTips`)
+
+These calls are part of the cross-system architecture where transactional data lives in Drizzle and content data stays in Strapi.
 
 ### Phase 4: Post-Migration Testing & Validation (Day 12-13)
 
@@ -468,9 +504,10 @@ Compare query performance Strapi vs Drizzle:
 
 **Phase 0 (Test Infrastructure):**
 - [x] All tests passing (green) before migration starts
-- [x] Test coverage: utilities (89%)
+- [x] Test coverage: utilities (89%), organization resolver (100%)
 - [x] Vitest infrastructure ready
 - [x] Baseline coverage report saved
+- [x] Test suite expanded to 62 tests during Phase 3
 
 **Phase 1 (Drizzle Infrastructure):**
 - [x] Drizzle ORM installed (drizzle-orm, pg, drizzle-kit)
@@ -500,7 +537,19 @@ Compare query performance Strapi vs Drizzle:
 - [ ] No errors during migration (transaction succeeded)
 - [ ] Spot checks verified (10-20 random donations correct)
 
-**Phase 3-5 (Post-Migration):**
+**Phase 3 (API Endpoint Migration):**
+- [x] Stats endpoints migrated to Drizzle
+- [x] Read operations migrated (decode, findTransaction, export)
+- [x] Admin operations migrated (insertDonation, insertTransaction, transfer management)
+- [x] Payment flow migrated (donate, donateForeign, donateExternal)
+- [x] Payment webhook migrated (confirm endpoint)
+- [x] Email methods migrated (all 5 confirmation email methods)
+- [x] OrganizationResolver utility created and tested
+- [x] Cross-system query helpers created (getDonationWithDetails, getRecurringDonationWithDetails)
+- [x] Donor service migrated to Drizzle
+- [x] All 62 unit tests passing
+
+**Phase 4-5 (Post-Migration Testing & Deployment):**
 - [ ] **All existing tests still passing (CRITICAL!)** - Drizzle implementation must match Strapi behavior
 - [ ] Test payment flow works end-to-end
 - [ ] Confirmation emails sent correctly with organization details
@@ -561,10 +610,10 @@ Compare query performance Strapi vs Drizzle:
 - **Phase 0** (Test Infrastructure): ✅ **COMPLETED**
 - **Phase 1** (Drizzle Setup): ✅ **COMPLETED**
 - **Phase 2** (Migration Scripts): ✅ **COMPLETED**
-- **Phase 3** (API endpoints): 🚀 **READY TO START** - 4 days estimated
-- **Phase 4** (Post-Migration Testing): 2 days (estimated)
+- **Phase 3** (API endpoints): ✅ **COMPLETED**
+- **Phase 4** (Post-Migration Testing): 🚀 **READY TO START** - 2 days estimated
 - **Phase 5** (Deployment): 1 day (estimated)
-- **Remaining**: ~7 days of focused work
+- **Remaining**: ~3 days of focused work
 
 **Note on production migration:**
 - Migration scripts execution (Phase 2) can happen anytime before/during Phase 5 deployment
@@ -575,11 +624,11 @@ Compare query performance Strapi vs Drizzle:
 
 Migration is successful when:
 1. **All Phase 0 tests passing (100%)** - This is the primary success indicator ✅
-2. Test coverage maintained: utilities (89%) ✅
-3. All donations accessible via Drizzle APIs
-4. Payment flow works without errors
-5. Confirmation emails sent correctly
-6. Stats dashboard shows accurate totals
-7. No errors in production logs for 1 week
-8. Montonio webhook success rate unchanged
-9. Organization soft delete protection works
+2. Test coverage maintained: utilities (89%), organization resolver (100%), payment flow & webhook tests ✅
+3. All donations accessible via Drizzle APIs ✅
+4. Payment flow works without errors (pending end-to-end testing)
+5. Confirmation emails sent correctly (pending end-to-end testing)
+6. Stats dashboard shows accurate totals (pending end-to-end testing)
+7. No errors in production logs for 1 week (pending deployment)
+8. Montonio webhook success rate unchanged (pending deployment)
+9. Organization soft delete protection works (to be implemented in Phase 4/5)
