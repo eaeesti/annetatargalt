@@ -1,8 +1,10 @@
-import { eq } from 'drizzle-orm';
-import { db } from '../client';
-import { organizationRecurringDonations } from '../schema';
+'use strict';
 
-export class OrganizationRecurringDonationsRepository {
+const { eq } = require('drizzle-orm');
+const { db } = require('../client');
+const { organizationRecurringDonations } = require('../schema');
+
+class OrganizationRecurringDonationsRepository {
   /**
    * Find all organization recurring donations (for export)
    */
@@ -18,7 +20,7 @@ export class OrganizationRecurringDonationsRepository {
   /**
    * Find organization recurring donations by recurring donation ID
    */
-  async findByRecurringDonationId(recurringDonationId: number) {
+  async findByRecurringDonationId(recurringDonationId) {
     return db.query.organizationRecurringDonations.findMany({
       where: eq(organizationRecurringDonations.recurringDonationId, recurringDonationId),
     });
@@ -27,7 +29,7 @@ export class OrganizationRecurringDonationsRepository {
   /**
    * Find organization recurring donations by organization internal ID
    */
-  async findByOrganizationInternalId(organizationInternalId: string) {
+  async findByOrganizationInternalId(organizationInternalId) {
     return db.query.organizationRecurringDonations.findMany({
       where: eq(organizationRecurringDonations.organizationInternalId, organizationInternalId),
     });
@@ -36,11 +38,7 @@ export class OrganizationRecurringDonationsRepository {
   /**
    * Create organization recurring donations (junction records)
    */
-  async createMany(data: Array<{
-    recurringDonationId: number;
-    organizationInternalId: string;
-    amount: number;
-  }>) {
+  async createMany(data) {
     if (data.length === 0) return [];
 
     return db.insert(organizationRecurringDonations)
@@ -51,11 +49,7 @@ export class OrganizationRecurringDonationsRepository {
   /**
    * Create a single organization recurring donation
    */
-  async create(data: {
-    recurringDonationId: number;
-    organizationInternalId: string;
-    amount: number;
-  }) {
+  async create(data) {
     const [orgRecurringDonation] = await db.insert(organizationRecurringDonations)
       .values(data)
       .returning();
@@ -66,10 +60,7 @@ export class OrganizationRecurringDonationsRepository {
    * Update organization recurring donations for a specific recurring donation
    * (Delete old ones and create new ones)
    */
-  async updateForRecurringDonation(recurringDonationId: number, data: Array<{
-    organizationInternalId: string;
-    amount: number;
-  }>) {
+  async updateForRecurringDonation(recurringDonationId, data) {
     // Delete existing
     await db.delete(organizationRecurringDonations)
       .where(eq(organizationRecurringDonations.recurringDonationId, recurringDonationId));
@@ -86,7 +77,7 @@ export class OrganizationRecurringDonationsRepository {
   /**
    * Delete organization recurring donations by recurring donation ID
    */
-  async deleteByRecurringDonationId(recurringDonationId: number) {
+  async deleteByRecurringDonationId(recurringDonationId) {
     await db.delete(organizationRecurringDonations)
       .where(eq(organizationRecurringDonations.recurringDonationId, recurringDonationId));
   }
@@ -94,7 +85,7 @@ export class OrganizationRecurringDonationsRepository {
   /**
    * Check if an organization has any recurring donations
    */
-  async organizationHasRecurringDonations(organizationInternalId: string) {
+  async organizationHasRecurringDonations(organizationInternalId) {
     const result = await db.query.organizationRecurringDonations.findFirst({
       where: eq(organizationRecurringDonations.organizationInternalId, organizationInternalId),
     });
@@ -102,4 +93,6 @@ export class OrganizationRecurringDonationsRepository {
   }
 }
 
-export const organizationRecurringDonationsRepository = new OrganizationRecurringDonationsRepository();
+const organizationRecurringDonationsRepository = new OrganizationRecurringDonationsRepository();
+
+module.exports = { OrganizationRecurringDonationsRepository, organizationRecurringDonationsRepository };

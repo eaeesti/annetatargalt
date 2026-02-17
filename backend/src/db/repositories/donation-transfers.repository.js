@@ -1,12 +1,14 @@
-import { eq, desc } from 'drizzle-orm';
-import { db } from '../client';
-import { donationTransfers } from '../schema';
+'use strict';
 
-export class DonationTransfersRepository {
+const { eq, desc } = require('drizzle-orm');
+const { db } = require('../client');
+const { donationTransfers } = require('../schema');
+
+class DonationTransfersRepository {
   /**
    * Find a donation transfer by ID
    */
-  async findById(id: number) {
+  async findById(id) {
     return db.query.donationTransfers.findFirst({
       where: eq(donationTransfers.id, id),
     });
@@ -15,7 +17,7 @@ export class DonationTransfersRepository {
   /**
    * Find a donation transfer by ID with related donations
    */
-  async findByIdWithDonations(id: number) {
+  async findByIdWithDonations(id) {
     return db.query.donationTransfers.findFirst({
       where: eq(donationTransfers.id, id),
       with: {
@@ -27,7 +29,7 @@ export class DonationTransfersRepository {
   /**
    * Get all donation transfers, ordered by date (newest first)
    */
-  async findAll(options?: { withDonations?: boolean }) {
+  async findAll(options) {
     return db.query.donationTransfers.findMany({
       orderBy: [desc(donationTransfers.datetime)],
       with: options?.withDonations ? { donations: true } : undefined,
@@ -37,11 +39,7 @@ export class DonationTransfersRepository {
   /**
    * Create a new donation transfer
    */
-  async create(data: {
-    datetime: Date | string;
-    recipient?: string | null;
-    notes?: string | null;
-  }) {
+  async create(data) {
     const [transfer] = await db.insert(donationTransfers).values({
       datetime: typeof data.datetime === 'string'
         ? data.datetime
@@ -55,12 +53,8 @@ export class DonationTransfersRepository {
   /**
    * Update a donation transfer
    */
-  async update(id: number, data: Partial<{
-    datetime: Date | string;
-    recipient: string | null;
-    notes: string | null;
-  }>) {
-    const updateData: any = {
+  async update(id, data) {
+    const updateData = {
       updatedAt: new Date(),
     };
 
@@ -84,10 +78,12 @@ export class DonationTransfersRepository {
   /**
    * Delete a donation transfer (only if no donations are linked)
    */
-  async delete(id: number) {
+  async delete(id) {
     await db.delete(donationTransfers)
       .where(eq(donationTransfers.id, id));
   }
 }
 
-export const donationTransfersRepository = new DonationTransfersRepository();
+const donationTransfersRepository = new DonationTransfersRepository();
+
+module.exports = { DonationTransfersRepository, donationTransfersRepository };

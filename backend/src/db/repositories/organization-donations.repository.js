@@ -1,8 +1,10 @@
-import { eq, and, inArray } from 'drizzle-orm';
-import { db } from '../client';
-import { organizationDonations } from '../schema';
+'use strict';
 
-export class OrganizationDonationsRepository {
+const { eq } = require('drizzle-orm');
+const { db } = require('../client');
+const { organizationDonations } = require('../schema');
+
+class OrganizationDonationsRepository {
   /**
    * Find all organization donations (for export)
    */
@@ -18,7 +20,7 @@ export class OrganizationDonationsRepository {
   /**
    * Find organization donations by donation ID
    */
-  async findByDonationId(donationId: number) {
+  async findByDonationId(donationId) {
     return db.query.organizationDonations.findMany({
       where: eq(organizationDonations.donationId, donationId),
     });
@@ -27,7 +29,7 @@ export class OrganizationDonationsRepository {
   /**
    * Find organization donations by organization internal ID
    */
-  async findByOrganizationInternalId(organizationInternalId: string) {
+  async findByOrganizationInternalId(organizationInternalId) {
     return db.query.organizationDonations.findMany({
       where: eq(organizationDonations.organizationInternalId, organizationInternalId),
     });
@@ -36,11 +38,7 @@ export class OrganizationDonationsRepository {
   /**
    * Create organization donations (junction records)
    */
-  async createMany(data: Array<{
-    donationId: number;
-    organizationInternalId: string;
-    amount: number;
-  }>) {
+  async createMany(data) {
     if (data.length === 0) return [];
 
     return db.insert(organizationDonations)
@@ -51,11 +49,7 @@ export class OrganizationDonationsRepository {
   /**
    * Create a single organization donation
    */
-  async create(data: {
-    donationId: number;
-    organizationInternalId: string;
-    amount: number;
-  }) {
+  async create(data) {
     const [orgDonation] = await db.insert(organizationDonations)
       .values(data)
       .returning();
@@ -66,10 +60,7 @@ export class OrganizationDonationsRepository {
    * Update organization donations for a specific donation
    * (Delete old ones and create new ones)
    */
-  async updateForDonation(donationId: number, data: Array<{
-    organizationInternalId: string;
-    amount: number;
-  }>) {
+  async updateForDonation(donationId, data) {
     // Delete existing
     await db.delete(organizationDonations)
       .where(eq(organizationDonations.donationId, donationId));
@@ -86,7 +77,7 @@ export class OrganizationDonationsRepository {
   /**
    * Delete organization donations by donation ID
    */
-  async deleteByDonationId(donationId: number) {
+  async deleteByDonationId(donationId) {
     await db.delete(organizationDonations)
       .where(eq(organizationDonations.donationId, donationId));
   }
@@ -94,7 +85,7 @@ export class OrganizationDonationsRepository {
   /**
    * Check if an organization has any donations
    */
-  async organizationHasDonations(organizationInternalId: string) {
+  async organizationHasDonations(organizationInternalId) {
     const result = await db.query.organizationDonations.findFirst({
       where: eq(organizationDonations.organizationInternalId, organizationInternalId),
     });
@@ -102,4 +93,6 @@ export class OrganizationDonationsRepository {
   }
 }
 
-export const organizationDonationsRepository = new OrganizationDonationsRepository();
+const organizationDonationsRepository = new OrganizationDonationsRepository();
+
+module.exports = { OrganizationDonationsRepository, organizationDonationsRepository };

@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * OrganizationResolver - Utility for fetching organization data from Strapi
  *
@@ -11,33 +13,16 @@
  * - Error handling for missing organizations
  */
 
-interface Organization {
-  id: number;
-  internalId: string;
-  title: string;
-  slug: string;
-  active: boolean;
-  homepage?: string;
-  introduction?: string;
-  content?: string;
-}
-
-interface OrganizationCache {
-  [internalId: string]: Organization;
-}
-
 class OrganizationResolver {
-  private cache: OrganizationCache = {};
-  private strapi: any;
-
-  constructor(strapi: any) {
+  constructor(strapi) {
+    this.cache = {};
     this.strapi = strapi;
   }
 
   /**
    * Fetch a single organization by internalId from Strapi
    */
-  async findByInternalId(internalId: string): Promise<Organization | null> {
+  async findByInternalId(internalId) {
     // Check cache first
     if (this.cache[internalId]) {
       return this.cache[internalId];
@@ -45,7 +30,7 @@ class OrganizationResolver {
 
     // Fetch from Strapi
     const organizations = await this.strapi.entityService.findMany(
-      "api::organization.organization",
+      'api::organization.organization',
       {
         filters: { internalId },
         limit: 1,
@@ -63,13 +48,11 @@ class OrganizationResolver {
 
   /**
    * Fetch multiple organizations by internalIds (batch operation)
-   * Returns a map of internalId → organization
+   * Returns a Map of internalId → organization
    */
-  async findManyByInternalIds(
-    internalIds: string[]
-  ): Promise<Map<string, Organization>> {
-    const result = new Map<string, Organization>();
-    const uncachedIds: string[] = [];
+  async findManyByInternalIds(internalIds) {
+    const result = new Map();
+    const uncachedIds = [];
 
     // Check cache first
     for (const internalId of internalIds) {
@@ -83,7 +66,7 @@ class OrganizationResolver {
     // Fetch uncached organizations from Strapi
     if (uncachedIds.length > 0) {
       const organizations = await this.strapi.entityService.findMany(
-        "api::organization.organization",
+        'api::organization.organization',
         {
           filters: { internalId: { $in: uncachedIds } },
         }
@@ -103,7 +86,7 @@ class OrganizationResolver {
    * Verify that an organization exists and is active
    * Useful for validation
    */
-  async isValidOrganization(internalId: string): Promise<boolean> {
+  async isValidOrganization(internalId) {
     const organization = await this.findByInternalId(internalId);
     return organization !== null && organization.active === true;
   }
@@ -111,7 +94,7 @@ class OrganizationResolver {
   /**
    * Clear the cache (useful for testing or when organizations are updated)
    */
-  clearCache(): void {
+  clearCache() {
     this.cache = {};
   }
 }
@@ -122,9 +105,8 @@ class OrganizationResolver {
  *   const resolver = createOrganizationResolver(strapi);
  *   const org = await resolver.findByInternalId('AMF');
  */
-export function createOrganizationResolver(strapi: any): OrganizationResolver {
+function createOrganizationResolver(strapi) {
   return new OrganizationResolver(strapi);
 }
 
-// Export the class as well for typing purposes
-export type { Organization, OrganizationResolver };
+module.exports = { createOrganizationResolver, OrganizationResolver };

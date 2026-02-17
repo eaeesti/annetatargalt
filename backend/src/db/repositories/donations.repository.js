@@ -1,12 +1,14 @@
-import { eq, and, gte, lte, desc, sql, inArray } from "drizzle-orm";
-import { db } from "../client";
-import { donations } from "../schema";
+'use strict';
 
-export class DonationsRepository {
+const { eq, and, gte, lte, desc, sql, inArray } = require('drizzle-orm');
+const { db } = require('../client');
+const { donations } = require('../schema');
+
+class DonationsRepository {
   /**
    * Find a donation by ID
    */
-  async findById(id: number) {
+  async findById(id) {
     return db.query.donations.findFirst({
       where: eq(donations.id, id),
     });
@@ -15,7 +17,7 @@ export class DonationsRepository {
   /**
    * Find a donation by ID with all relations
    */
-  async findByIdWithRelations(id: number) {
+  async findByIdWithRelations(id) {
     return db.query.donations.findFirst({
       where: eq(donations.id, id),
       with: {
@@ -30,7 +32,7 @@ export class DonationsRepository {
   /**
    * Find donations by donor ID
    */
-  async findByDonorId(donorId: number) {
+  async findByDonorId(donorId) {
     return db.query.donations.findMany({
       where: eq(donations.donorId, donorId),
       orderBy: [desc(donations.datetime)],
@@ -60,7 +62,7 @@ export class DonationsRepository {
   /**
    * Find all donations (with pagination)
    */
-  async findAll(options?: { limit?: number; offset?: number }) {
+  async findAll(options) {
     return db.query.donations.findMany({
       orderBy: [desc(donations.datetime)],
       limit: options?.limit,
@@ -75,18 +77,13 @@ export class DonationsRepository {
   /**
    * Find donation by transaction details (for matching bank transactions)
    */
-  async findByTransaction(params: {
-    idCode?: string | null;
-    amount: number;
-    dateFrom: Date | string;
-    dateTo: Date | string;
-  }) {
+  async findByTransaction(params) {
     const dateFrom =
-      typeof params.dateFrom === "string"
+      typeof params.dateFrom === 'string'
         ? new Date(params.dateFrom)
         : params.dateFrom;
     const dateTo =
-      typeof params.dateTo === "string"
+      typeof params.dateTo === 'string'
         ? new Date(params.dateTo)
         : params.dateTo;
 
@@ -113,31 +110,14 @@ export class DonationsRepository {
   /**
    * Create a new donation
    */
-  async create(data: {
-    donorId: number | null;
-    amount: number;
-    datetime: Date | string;
-    finalized?: boolean;
-    paymentMethod?: string | null;
-    iban?: string | null;
-    comment?: string | null;
-    companyName?: string | null;
-    companyCode?: string | null;
-    sentToOrganization?: boolean;
-    dedicationName?: string | null;
-    dedicationEmail?: string | null;
-    dedicationMessage?: string | null;
-    externalDonation?: boolean;
-    recurringDonationId?: number | null;
-    donationTransferId?: number | null;
-  }) {
+  async create(data) {
     const [donation] = await db
       .insert(donations)
       .values({
         donorId: data.donorId,
         amount: data.amount,
         datetime:
-          typeof data.datetime === "string"
+          typeof data.datetime === 'string'
             ? new Date(data.datetime)
             : data.datetime,
         finalized: data.finalized !== undefined ? data.finalized : false,
@@ -165,17 +145,7 @@ export class DonationsRepository {
   /**
    * Update a donation
    */
-  async update(
-    id: number,
-    data: Partial<{
-      finalized: boolean;
-      paymentMethod: string | null;
-      iban: string | null;
-      comment: string | null;
-      sentToOrganization: boolean;
-      donationTransferId: number | null;
-    }>
-  ) {
+  async update(id, data) {
     const [donation] = await db
       .update(donations)
       .set({
@@ -190,14 +160,14 @@ export class DonationsRepository {
   /**
    * Finalize a donation (mark as completed)
    */
-  async finalize(id: number) {
+  async finalize(id) {
     return this.update(id, { finalized: true });
   }
 
   /**
    * Mark donations as sent to organization
    */
-  async markAsSentToOrganization(ids: number[]) {
+  async markAsSentToOrganization(ids) {
     if (ids.length === 0) return [];
 
     return db
@@ -213,7 +183,7 @@ export class DonationsRepository {
   /**
    * Add donations to a transfer batch
    */
-  async addToTransfer(donationIds: number[], transferId: number) {
+  async addToTransfer(donationIds, transferId) {
     if (donationIds.length === 0) return [];
 
     return db
@@ -230,10 +200,7 @@ export class DonationsRepository {
    * Sum of all finalized donations (excluding external donations and tips)
    * This is used for statistics
    */
-  async sumFinalizedDonations(params?: {
-    excludeOrganizationInternalIds?: string[]; // e.g., ["TIP", "EXTERNAL"] to exclude multiple
-    externalDonation?: boolean;
-  }) {
+  async sumFinalizedDonations(params) {
     // Build the WHERE conditions
     const conditions = [eq(donations.finalized, true)];
 
@@ -259,7 +226,7 @@ export class DonationsRepository {
       for (const donation of matchingDonations) {
         const orgDonationsFiltered = donation.organizationDonations.filter(
           (od) =>
-            !params.excludeOrganizationInternalIds!.includes(
+            !params.excludeOrganizationInternalIds.includes(
               od.organizationInternalId
             )
         );
@@ -275,18 +242,13 @@ export class DonationsRepository {
   /**
    * Sum of finalized donations within a date range (for campaigns)
    */
-  async sumFinalizedDonationsInRange(params: {
-    dateFrom: Date | string;
-    dateTo: Date | string;
-    excludeOrganizationInternalIds?: string[];
-    externalDonation?: boolean;
-  }) {
+  async sumFinalizedDonationsInRange(params) {
     const dateFrom =
-      typeof params.dateFrom === "string"
+      typeof params.dateFrom === 'string'
         ? new Date(params.dateFrom)
         : params.dateFrom;
     const dateTo =
-      typeof params.dateTo === "string"
+      typeof params.dateTo === 'string'
         ? new Date(params.dateTo)
         : params.dateTo;
 
@@ -315,7 +277,7 @@ export class DonationsRepository {
       for (const donation of matchingDonations) {
         const orgDonationsFiltered = donation.organizationDonations.filter(
           (od) =>
-            !params.excludeOrganizationInternalIds!.includes(
+            !params.excludeOrganizationInternalIds.includes(
               od.organizationInternalId
             )
         );
@@ -332,7 +294,7 @@ export class DonationsRepository {
    */
   async count() {
     const result = await db
-      .select({ count: sql<number>`count(*)` })
+      .select({ count: sql`count(*)` })
       .from(donations);
     return Number(result[0].count);
   }
@@ -342,7 +304,7 @@ export class DonationsRepository {
    */
   async countFinalized() {
     const result = await db
-      .select({ count: sql<number>`count(*)` })
+      .select({ count: sql`count(*)` })
       .from(donations)
       .where(eq(donations.finalized, true));
     return Number(result[0].count);
@@ -351,16 +313,16 @@ export class DonationsRepository {
   /**
    * Delete a donation (and its organization_donations via cascade)
    */
-  async delete(id: number) {
+  async delete(id) {
     await db.delete(donations).where(eq(donations.id, id));
   }
 
   /**
    * Find donations by date range
    */
-  async findByDateRange(dateFrom: Date | string, dateTo: Date | string) {
-    const from = typeof dateFrom === "string" ? new Date(dateFrom) : dateFrom;
-    const to = typeof dateTo === "string" ? new Date(dateTo) : dateTo;
+  async findByDateRange(dateFrom, dateTo) {
+    const from = typeof dateFrom === 'string' ? new Date(dateFrom) : dateFrom;
+    const to = typeof dateTo === 'string' ? new Date(dateTo) : dateTo;
 
     return db.query.donations.findMany({
       where: and(gte(donations.datetime, from), lte(donations.datetime, to)),
@@ -390,4 +352,6 @@ export class DonationsRepository {
   }
 }
 
-export const donationsRepository = new DonationsRepository();
+const donationsRepository = new DonationsRepository();
+
+module.exports = { DonationsRepository, donationsRepository };
