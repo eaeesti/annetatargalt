@@ -76,6 +76,8 @@ describe('validateIdCode', () => {
     expect(validateIdCode('abcdefghijk')).toBe(false); // Non-numeric
     expect(validateIdCode('02345678901')).toBe(false); // First digit must be 1-6
     expect(validateIdCode('71234567890')).toBe(false); // First digit must be 1-6
+    expect(validateIdCode('038207162722')).toBe(false); // Valid ID embedded in longer string (leading digit)
+    expect(validateIdCode('x38207162722')).toBe(false); // Valid ID with leading non-digit
   });
 
   it('should reject ID codes with invalid date components', () => {
