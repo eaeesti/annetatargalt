@@ -1,8 +1,10 @@
-import { pgTable, serial, text, varchar, integer, boolean, timestamp, date } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+'use strict';
+
+const { pgTable, serial, text, varchar, integer, boolean, timestamp, date } = require('drizzle-orm/pg-core');
+const { relations } = require('drizzle-orm');
 
 // Donors table
-export const donors = pgTable('donors', {
+const donors = pgTable('donors', {
   id: serial('id').primaryKey(),
   idCode: varchar('id_code', { length: 11 }),
   firstName: varchar('first_name', { length: 128 }),
@@ -14,7 +16,7 @@ export const donors = pgTable('donors', {
 });
 
 // Recurring donations table (subscription templates)
-export const recurringDonations = pgTable('recurring_donations', {
+const recurringDonations = pgTable('recurring_donations', {
   id: serial('id').primaryKey(),
   donorId: integer('donor_id').references(() => donors.id).notNull(),
   active: boolean('active').default(true).notNull(),
@@ -29,7 +31,7 @@ export const recurringDonations = pgTable('recurring_donations', {
 });
 
 // Donation transfers table (batch transfer tracking)
-export const donationTransfers = pgTable('donation_transfers', {
+const donationTransfers = pgTable('donation_transfers', {
   id: serial('id').primaryKey(),
   datetime: date('datetime').notNull(),
   recipient: varchar('recipient', { length: 256 }),
@@ -39,7 +41,7 @@ export const donationTransfers = pgTable('donation_transfers', {
 });
 
 // Donations table (one-time donations)
-export const donations = pgTable('donations', {
+const donations = pgTable('donations', {
   id: serial('id').primaryKey(),
   donorId: integer('donor_id').references(() => donors.id), // Can be null for old legacy donations
   recurringDonationId: integer('recurring_donation_id').references(() => recurringDonations.id),
@@ -62,7 +64,7 @@ export const donations = pgTable('donations', {
 });
 
 // Organization donations junction table (splits donations across organizations)
-export const organizationDonations = pgTable('organization_donations', {
+const organizationDonations = pgTable('organization_donations', {
   id: serial('id').primaryKey(),
   donationId: integer('donation_id').references(() => donations.id).notNull(),
   organizationInternalId: varchar('organization_internal_id', { length: 64 }).notNull(), // Links to Strapi organization.internalId
@@ -72,7 +74,7 @@ export const organizationDonations = pgTable('organization_donations', {
 });
 
 // Organization recurring donations junction table
-export const organizationRecurringDonations = pgTable('organization_recurring_donations', {
+const organizationRecurringDonations = pgTable('organization_recurring_donations', {
   id: serial('id').primaryKey(),
   recurringDonationId: integer('recurring_donation_id').references(() => recurringDonations.id).notNull(),
   organizationInternalId: varchar('organization_internal_id', { length: 64 }).notNull(), // Links to Strapi organization.internalId
@@ -82,12 +84,12 @@ export const organizationRecurringDonations = pgTable('organization_recurring_do
 });
 
 // Relations for better query experience
-export const donorsRelations = relations(donors, ({ many }) => ({
+const donorsRelations = relations(donors, ({ many }) => ({
   donations: many(donations),
   recurringDonations: many(recurringDonations),
 }));
 
-export const donationsRelations = relations(donations, ({ one, many }) => ({
+const donationsRelations = relations(donations, ({ one, many }) => ({
   donor: one(donors, {
     fields: [donations.donorId],
     references: [donors.id],
@@ -103,7 +105,7 @@ export const donationsRelations = relations(donations, ({ one, many }) => ({
   organizationDonations: many(organizationDonations),
 }));
 
-export const recurringDonationsRelations = relations(recurringDonations, ({ one, many }) => ({
+const recurringDonationsRelations = relations(recurringDonations, ({ one, many }) => ({
   donor: one(donors, {
     fields: [recurringDonations.donorId],
     references: [donors.id],
@@ -112,20 +114,35 @@ export const recurringDonationsRelations = relations(recurringDonations, ({ one,
   organizationRecurringDonations: many(organizationRecurringDonations),
 }));
 
-export const donationTransfersRelations = relations(donationTransfers, ({ many }) => ({
+const donationTransfersRelations = relations(donationTransfers, ({ many }) => ({
   donations: many(donations),
 }));
 
-export const organizationDonationsRelations = relations(organizationDonations, ({ one }) => ({
+const organizationDonationsRelations = relations(organizationDonations, ({ one }) => ({
   donation: one(donations, {
     fields: [organizationDonations.donationId],
     references: [donations.id],
   }),
 }));
 
-export const organizationRecurringDonationsRelations = relations(organizationRecurringDonations, ({ one }) => ({
+const organizationRecurringDonationsRelations = relations(organizationRecurringDonations, ({ one }) => ({
   recurringDonation: one(recurringDonations, {
     fields: [organizationRecurringDonations.recurringDonationId],
     references: [recurringDonations.id],
   }),
 }));
+
+module.exports = {
+  donors,
+  recurringDonations,
+  donationTransfers,
+  donations,
+  organizationDonations,
+  organizationRecurringDonations,
+  donorsRelations,
+  donationsRelations,
+  recurringDonationsRelations,
+  donationTransfersRelations,
+  organizationDonationsRelations,
+  organizationRecurringDonationsRelations,
+};

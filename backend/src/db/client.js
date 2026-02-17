@@ -1,13 +1,15 @@
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
-import * as schema from './schema';
+'use strict';
+
+const { drizzle } = require('drizzle-orm/node-postgres');
+const { Pool } = require('pg');
+const schema = require('./schema');
 
 // Database configuration from environment variables
 // NOTE: Drizzle uses a SEPARATE database from Strapi for clean separation
 const connectionString = process.env.DRIZZLE_DATABASE_URL;
 const sslEnabled = process.env.DATABASE_SSL === 'true';
 
-const poolConfig: any = {
+const poolConfig = {
   host: process.env.DATABASE_HOST || 'localhost',
   port: parseInt(process.env.DATABASE_PORT || '5432'),
   database: process.env.DRIZZLE_DATABASE_NAME || 'annetatargalt_donations',
@@ -30,12 +32,11 @@ const pool = connectionString
   : new Pool(poolConfig);
 
 // Create Drizzle instance with schema for relational queries
-export const db = drizzle(pool, { schema });
-
-// Export pool for manual queries if needed
-export { pool };
+const db = drizzle(pool, { schema });
 
 // Graceful shutdown handler
-export const closeDatabase = async () => {
+const closeDatabase = async () => {
   await pool.end();
 };
+
+module.exports = { db, pool, closeDatabase };
