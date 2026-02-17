@@ -1,9 +1,10 @@
-import type { Config } from 'drizzle-kit';
+'use strict';
 
 const sslEnabled = process.env.DATABASE_SSL === 'true';
 
-export default {
-  schema: './src/db/schema.ts',
+/** @type {import('drizzle-kit').Config} */
+module.exports = {
+  schema: './src/db/schema.js',
   out: './src/db/migrations',
   dialect: 'postgresql',
   dbCredentials: {
@@ -16,4 +17,4 @@ export default {
       rejectUnauthorized: process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== 'false',
     } : false,
   },
-} satisfies Config;
+};
