@@ -898,19 +898,23 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   },
 
   async deleteAll() {
-    await strapi.db
-      .query("api::organization-donation.organization-donation")
-      .deleteMany({});
-    await strapi.db.query("api::donation.donation").deleteMany({});
-    await strapi.db
-      .query(
-        "api::organization-recurring-donation.organization-recurring-donation"
-      )
-      .deleteMany({});
-    await strapi.db
-      .query("api::recurring-donation.recurring-donation")
-      .deleteMany({});
-    await strapi.db.query("api::donor.donor").deleteMany({});
+    const { db } = require("../../../db/client");
+    const {
+      organizationDonations,
+      donations,
+      organizationRecurringDonations,
+      recurringDonations,
+      donationTransfers,
+      donors,
+    } = require("../../../db/schema");
+
+    // Delete in FK-safe order: dependents before parents
+    await db.delete(organizationDonations);
+    await db.delete(donations);
+    await db.delete(organizationRecurringDonations);
+    await db.delete(recurringDonations);
+    await db.delete(donationTransfers);
+    await db.delete(donors);
   },
 
   async sumOfFinalizedDonations() {
@@ -993,12 +997,11 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     endDate.setHours(23, 59, 59, 999);
     endDate.setHours(endDate.getHours() + 2);
 
-    const donations = await donationsRepository.findByDonorAndAmount({
-      donorId: donor.id,
+    const donations = await donationsRepository.findByTransaction({
+      idCode,
       amount: Math.round(amount * 100),
       dateFrom: startDate,
       dateTo: endDate,
-      idCode, // Optional filter by idCode
     });
 
     if (donations.length === 0) {
