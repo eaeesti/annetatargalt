@@ -990,12 +990,26 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       throw new Error("Donor not found");
     }
 
-    const startDate = new Date(date);
-    startDate.setHours(0, 0, 0, 0);
-    startDate.setHours(startDate.getHours() + 2);
-    const endDate = new Date(date);
-    endDate.setHours(23, 59, 59, 999);
-    endDate.setHours(endDate.getHours() + 2);
+    // Determine the UTC offset for Europe/Tallinn on this date (EET=+2, EEST=+3).
+    // Formatting UTC noon to Tallinn local time gives hour 14 (EET) or 15 (EEST),
+    // so offset = tallinnNoonHour - 12.
+    const noonUtc = new Date(`${date}T12:00:00.000Z`);
+    const noonParts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Europe/Tallinn",
+      hour: "numeric",
+      hour12: false,
+    }).formatToParts(noonUtc);
+    const tallinnNoonHour = parseInt(
+      noonParts.find((p) => p.type === "hour")?.value
+    );
+    const offsetMs = (tallinnNoonHour - 12) * 3600 * 1000;
+
+    const startDate = new Date(
+      new Date(`${date}T00:00:00.000Z`).getTime() - offsetMs
+    );
+    const endDate = new Date(
+      new Date(`${date}T23:59:59.999Z`).getTime() - offsetMs
+    );
 
     const donations = await donationsRepository.findByTransaction({
       idCode,
