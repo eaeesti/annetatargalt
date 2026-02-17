@@ -9,121 +9,28 @@
  * 5. Validates the migration
  *
  * Usage:
- *   ts-node src/db/migrations/02-migrate-to-drizzle.ts
+ *   node src/db/migrations/02-migrate-to-drizzle.js
  */
 
-// Load environment variables
-import * as dotenv from 'dotenv';
-dotenv.config();
+'use strict';
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { pool, closeDatabase } from '../client';
-import {
+// Load environment variables
+require('dotenv').config();
+
+const fs = require('fs');
+const path = require('path');
+const { pool, closeDatabase } = require('../client');
+const {
   donorsRepository,
   donationsRepository,
   recurringDonationsRepository,
   organizationDonationsRepository,
   organizationRecurringDonationsRepository,
   donationTransfersRepository,
-} from '../repositories';
-
-// Types for Strapi export data
-interface StrapiExport {
-  causes: any[];
-  organizations: StrapiOrganization[];
-  donors: StrapiDonor[];
-  donations: StrapiDonation[];
-  organizationDonations: StrapiOrganizationDonation[];
-  recurringDonations: StrapiRecurringDonation[];
-  organizationRecurringDonations: StrapiOrganizationRecurringDonation[];
-  donationTransfers: StrapiDonationTransfer[];
-}
-
-interface StrapiOrganization {
-  id: number;
-  internalId: string;
-  title: string;
-  [key: string]: any;
-}
-
-interface StrapiDonor {
-  id: number;
-  idCode: string | null;
-  firstName: string;
-  lastName: string;
-  email: string;
-  recurringDonor: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface StrapiDonation {
-  id: number;
-  datetime: string;
-  amount: number;
-  finalized: boolean;
-  paymentMethod: string | null;
-  iban: string | null;
-  comment: string | null;
-  companyName: string | null;
-  companyCode: string | null;
-  sentToOrganization: boolean;
-  dedicationName: string | null;
-  dedicationEmail: string | null;
-  dedicationMessage: string | null;
-  externalDonation: boolean | null;
-  donor: number | null;
-  recurringDonation: number | null;
-  donationTransfer: number | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface StrapiOrganizationDonation {
-  id: number;
-  amount: number;
-  organizationInternalId: string | null;
-  donation: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface StrapiRecurringDonation {
-  id: number;
-  active: boolean | null;
-  companyName: string | null;
-  companyCode: string | null;
-  comment: string | null;
-  bank: string | null;
-  amount: number;
-  datetime: string;
-  donor: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface StrapiOrganizationRecurringDonation {
-  id: number;
-  amount: number;
-  organizationInternalId: string | null;
-  recurringDonation: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface StrapiDonationTransfer {
-  id: number;
-  datetime: string;
-  recipient: string | null;
-  notes: string | null;
-  donations: number[];
-  createdAt: string;
-  updatedAt: string;
-}
+} = require('../repositories');
 
 // Find the latest export file
-function findLatestExport(): string {
+function findLatestExport() {
   const exportDir = path.join(__dirname, 'exported-data');
   const files = fs.readdirSync(exportDir).filter(f => f.startsWith('strapi-export-'));
 
@@ -137,8 +44,8 @@ function findLatestExport(): string {
 }
 
 // Build mapping of organization numeric ID → internalId
-function buildOrganizationMapping(organizations: StrapiOrganization[]): Map<number, string> {
-  const mapping = new Map<number, string>();
+function buildOrganizationMapping(organizations) {
+  const mapping = new Map();
 
   for (const org of organizations) {
     if (!org.internalId) {
@@ -159,7 +66,7 @@ async function migrate() {
     const exportFile = findLatestExport();
     console.log(`  Reading: ${exportFile}`);
 
-    const data: StrapiExport = JSON.parse(fs.readFileSync(exportFile, 'utf-8'));
+    const data = JSON.parse(fs.readFileSync(exportFile, 'utf-8'));
 
     console.log('  Statistics:');
     console.log(`    - Donors: ${data.donors.length}`);
@@ -179,9 +86,7 @@ async function migrate() {
     let fixedOrgDonations = 0;
     let fixedOrgRecurringDonations = 0;
 
-    // For organizationDonations, we need to find the organization via the old export format
-    // Unfortunately, the current export doesn't include the numeric organization ID
-    // We'll skip records with null organizationInternalId for now
+    // Skip records with null organizationInternalId or null donation reference
     const validOrgDonations = data.organizationDonations.filter(od => {
       if (!od.organizationInternalId) {
         fixedOrgDonations++;
@@ -213,7 +118,7 @@ async function migrate() {
 
     // Step 4: Migrate donors
     console.log('Step 4: Migrating donors...');
-    const donorIdMapping = new Map<number, number>();
+    const donorIdMapping = new Map();
 
     for (const strapiDonor of data.donors) {
       const drizzleDonor = await donorsRepository.create({
@@ -230,7 +135,7 @@ async function migrate() {
 
     // Step 5: Migrate donation transfers
     console.log('Step 5: Migrating donation transfers...');
-    const transferIdMapping = new Map<number, number>();
+    const transferIdMapping = new Map();
 
     for (const strapiTransfer of data.donationTransfers) {
       const drizzleTransfer = await donationTransfersRepository.create({
@@ -245,11 +150,11 @@ async function migrate() {
 
     // Step 6: Migrate recurring donations
     console.log('Step 6: Migrating recurring donations...');
-    const recurringDonationIdMapping = new Map<number, number>();
+    const recurringDonationIdMapping = new Map();
 
     for (const strapiRecurring of data.recurringDonations) {
       const drizzleRecurring = await recurringDonationsRepository.create({
-        donorId: donorIdMapping.get(strapiRecurring.donor)!,
+        donorId: donorIdMapping.get(strapiRecurring.donor),
         active: strapiRecurring.active ?? false,
         companyName: strapiRecurring.companyName,
         companyCode: strapiRecurring.companyCode,
@@ -268,8 +173,8 @@ async function migrate() {
 
     for (const strapiOrgRecurring of validOrgRecurringDonations) {
       await organizationRecurringDonationsRepository.create({
-        recurringDonationId: recurringDonationIdMapping.get(strapiOrgRecurring.recurringDonation)!,
-        organizationInternalId: strapiOrgRecurring.organizationInternalId!,
+        recurringDonationId: recurringDonationIdMapping.get(strapiOrgRecurring.recurringDonation),
+        organizationInternalId: strapiOrgRecurring.organizationInternalId,
         amount: strapiOrgRecurring.amount,
       });
     }
@@ -277,16 +182,16 @@ async function migrate() {
 
     // Step 8: Migrate donations
     console.log('Step 8: Migrating donations...');
-    const donationIdMapping = new Map<number, number>();
+    const donationIdMapping = new Map();
 
     for (const strapiDonation of data.donations) {
       const drizzleDonation = await donationsRepository.create({
-        donorId: strapiDonation.donor ? donorIdMapping.get(strapiDonation.donor)! : null,
+        donorId: strapiDonation.donor ? donorIdMapping.get(strapiDonation.donor) : null,
         recurringDonationId: strapiDonation.recurringDonation
-          ? recurringDonationIdMapping.get(strapiDonation.recurringDonation)!
+          ? recurringDonationIdMapping.get(strapiDonation.recurringDonation)
           : null,
         donationTransferId: strapiDonation.donationTransfer
-          ? transferIdMapping.get(strapiDonation.donationTransfer)!
+          ? transferIdMapping.get(strapiDonation.donationTransfer)
           : null,
         datetime: new Date(strapiDonation.datetime),
         amount: strapiDonation.amount,
@@ -312,8 +217,8 @@ async function migrate() {
 
     for (const strapiOrgDonation of validOrgDonations) {
       await organizationDonationsRepository.create({
-        donationId: donationIdMapping.get(strapiOrgDonation.donation)!,
-        organizationInternalId: strapiOrgDonation.organizationInternalId!,
+        donationId: donationIdMapping.get(strapiOrgDonation.donation),
+        organizationInternalId: strapiOrgDonation.organizationInternalId,
         amount: strapiOrgDonation.amount,
       });
     }
