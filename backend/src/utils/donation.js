@@ -15,7 +15,7 @@ function validateAmount(amount) {
  * @return {boolean} - Whether the idCode is valid or not.
  */
 function validateIdCode(idCode) {
-  if (!/[1-6]\d{2}[0-1]\d[0-3]\d{5}/.test(idCode)) return false;
+  if (!/^[1-6]\d{2}[0-1]\d[0-3]\d{5}$/.test(idCode)) return false;
 
   const digits = Array.from(idCode).map(Number);
   const lastDigit = digits.slice(-1)[0];
