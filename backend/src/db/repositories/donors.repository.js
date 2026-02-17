@@ -1,8 +1,10 @@
-import { eq, and, or } from 'drizzle-orm';
-import { db } from '../client';
-import { donors } from '../schema';
+'use strict';
 
-export class DonorsRepository {
+const { eq, or } = require('drizzle-orm');
+const { db } = require('../client');
+const { donors } = require('../schema');
+
+class DonorsRepository {
   /**
    * Find all donors (for export)
    */
@@ -15,7 +17,7 @@ export class DonorsRepository {
   /**
    * Find a donor by ID
    */
-  async findById(id: number) {
+  async findById(id) {
     return db.query.donors.findFirst({
       where: eq(donors.id, id),
     });
@@ -24,7 +26,7 @@ export class DonorsRepository {
   /**
    * Find a donor by ID code
    */
-  async findByIdCode(idCode: string) {
+  async findByIdCode(idCode) {
     return db.query.donors.findFirst({
       where: eq(donors.idCode, idCode),
     });
@@ -33,7 +35,7 @@ export class DonorsRepository {
   /**
    * Find a donor by email
    */
-  async findByEmail(email: string) {
+  async findByEmail(email) {
     return db.query.donors.findFirst({
       where: eq(donors.email, email),
     });
@@ -42,7 +44,7 @@ export class DonorsRepository {
   /**
    * Find a donor by ID code or email
    */
-  async findByIdCodeOrEmail(idCode: string | null, email: string) {
+  async findByIdCodeOrEmail(idCode, email) {
     if (idCode) {
       return db.query.donors.findFirst({
         where: or(
@@ -57,13 +59,7 @@ export class DonorsRepository {
   /**
    * Create a new donor
    */
-  async create(data: {
-    idCode?: string | null;
-    firstName: string;
-    lastName: string;
-    email: string;
-    recurringDonor?: boolean;
-  }) {
+  async create(data) {
     const [donor] = await db.insert(donors).values({
       idCode: data.idCode || null,
       firstName: data.firstName,
@@ -77,13 +73,7 @@ export class DonorsRepository {
   /**
    * Update a donor
    */
-  async update(id: number, data: Partial<{
-    idCode: string | null;
-    firstName: string;
-    lastName: string;
-    email: string;
-    recurringDonor: boolean;
-  }>) {
+  async update(id, data) {
     const [donor] = await db.update(donors)
       .set({
         ...data,
@@ -97,20 +87,14 @@ export class DonorsRepository {
   /**
    * Mark donor as recurring donor
    */
-  async markAsRecurring(id: number) {
+  async markAsRecurring(id) {
     return this.update(id, { recurringDonor: true });
   }
 
   /**
    * Find or create a donor by ID code or email
    */
-  async findOrCreate(data: {
-    idCode?: string | null;
-    firstName: string;
-    lastName: string;
-    email: string;
-    recurringDonor?: boolean;
-  }) {
+  async findOrCreate(data) {
     const existing = await this.findByIdCodeOrEmail(data.idCode || null, data.email);
     if (existing) {
       return existing;
@@ -119,4 +103,6 @@ export class DonorsRepository {
   }
 }
 
-export const donorsRepository = new DonorsRepository();
+const donorsRepository = new DonorsRepository();
+
+module.exports = { DonorsRepository, donorsRepository };
