@@ -1,9 +1,9 @@
-'use strict';
+"use strict";
 
 /**
  * donor router
  */
 
-const { createCoreRouter } = require('@strapi/strapi').factories;
+const { createCoreRouter } = require("@strapi/strapi").factories;
 
-module.exports = createCoreRouter('api::donor.donor');
+module.exports = createCoreRouter("api::donor.donor");

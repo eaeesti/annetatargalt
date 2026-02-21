@@ -2,7 +2,9 @@
 
 const { createCoreController } = require("@strapi/strapi").factories;
 const { decodeOrderToken } = require("../../../utils/montonio");
-const { DonationsRepository } = require("../../../db/repositories/donations.repository");
+const {
+  DonationsRepository,
+} = require("../../../db/repositories/donations.repository");
 
 const donationsRepo = new DonationsRepository();
 
