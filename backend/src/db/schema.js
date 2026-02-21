@@ -19,7 +19,7 @@ const donors = pgTable('donors', {
 const recurringDonations = pgTable('recurring_donations', {
   id: serial('id').primaryKey(),
   donorId: integer('donor_id').references(() => donors.id).notNull(),
-  active: boolean('active').default(true).notNull(),
+  active: boolean('active').default(false).notNull(),
   companyName: varchar('company_name', { length: 128 }),
   companyCode: varchar('company_code', { length: 128 }),
   comment: text('comment'),

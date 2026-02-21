@@ -15,15 +15,24 @@ const {
   textIntoParagraphs,
   sanitize,
 } = require("../../../utils/string");
-const { DonationsRepository } = require("../../../db/repositories/donations.repository");
-const { OrganizationDonationsRepository } = require("../../../db/repositories/organization-donations.repository");
-const { RecurringDonationsRepository } = require("../../../db/repositories/recurring-donations.repository");
-const { OrganizationRecurringDonationsRepository } = require("../../../db/repositories/organization-recurring-donations.repository");
+const {
+  DonationsRepository,
+} = require("../../../db/repositories/donations.repository");
+const {
+  OrganizationDonationsRepository,
+} = require("../../../db/repositories/organization-donations.repository");
+const {
+  RecurringDonationsRepository,
+} = require("../../../db/repositories/recurring-donations.repository");
+const {
+  OrganizationRecurringDonationsRepository,
+} = require("../../../db/repositories/organization-recurring-donations.repository");
 
 const donationsRepo = new DonationsRepository();
 const organizationDonationsRepo = new OrganizationDonationsRepository();
 const recurringDonationsRepo = new RecurringDonationsRepository();
-const organizationRecurringDonationsRepo = new OrganizationRecurringDonationsRepository();
+const organizationRecurringDonationsRepo =
+  new OrganizationRecurringDonationsRepository();
 
 module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   async validateDonation(donation) {
@@ -344,7 +353,9 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
         );
 
         if (!organization || !organization.internalId) {
-          throw new Error(`Organization ${organizationId} not found or missing internalId`);
+          throw new Error(
+            `Organization ${organizationId} not found or missing internalId`
+          );
         }
 
         return {
@@ -371,6 +382,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     // Create recurring donation in Drizzle
     const recurringDonationEntry = await recurringDonationsRepo.create({
       donorId: donor.id,
+      active: false,
       amount: donation.amount,
       bank: donation.bank,
       datetime: new Date(),
@@ -389,7 +401,9 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
         );
 
         if (!organization || !organization.internalId) {
-          throw new Error(`Organization ${organizationId} not found or missing internalId`);
+          throw new Error(
+            `Organization ${organizationId} not found or missing internalId`
+          );
         }
 
         return {
@@ -400,7 +414,9 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       })
     );
 
-    await organizationRecurringDonationsRepo.createMany(organizationRecurringDonationsData);
+    await organizationRecurringDonationsRepo.createMany(
+      organizationRecurringDonationsData
+    );
 
     const donationInfo = await strapi.db
       .query("api::donation-info.donation-info")
@@ -488,7 +504,9 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
 
     const global = await strapi.db.query("api::global.global").findOne();
 
-    const { DonorsRepository } = require("../../../db/repositories/donors.repository");
+    const {
+      DonorsRepository,
+    } = require("../../../db/repositories/donors.repository");
     const donorsRepo = new DonorsRepository();
 
     // Fetch donation and donor from Drizzle
@@ -535,7 +553,9 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     const global = await strapi.db.query("api::global.global").findOne();
 
     // Fetch recurring donation with details using Drizzle + Strapi cross-system query
-    const recurringDonation = await this.getRecurringDonationWithDetails(recurringDonationId);
+    const recurringDonation = await this.getRecurringDonationWithDetails(
+      recurringDonationId
+    );
 
     if (!recurringDonation) {
       throw new Error(`Recurring donation ${recurringDonationId} not found`);
@@ -582,11 +602,15 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       .findOne();
     const global = await strapi.db.query("api::global.global").findOne();
 
-    const { DonorsRepository } = require("../../../db/repositories/donors.repository");
+    const {
+      DonorsRepository,
+    } = require("../../../db/repositories/donors.repository");
     const donorsRepo = new DonorsRepository();
 
     // Fetch recurring donation and donor from Drizzle
-    const recurringDonation = await recurringDonationsRepo.findById(recurringDonationId);
+    const recurringDonation = await recurringDonationsRepo.findById(
+      recurringDonationId
+    );
     if (!recurringDonation) {
       throw new Error(`Recurring donation ${recurringDonationId} not found`);
     }
@@ -859,9 +883,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       // organizationInternalId is already in the spread
     }));
 
-    const donations = (
-      await donationsRepository.findAll()
-    ).map((donation) => ({
+    const donations = (await donationsRepository.findAll()).map((donation) => ({
       ...donation,
       donor: donation.donor ? donation.donor.id : null,
       recurringDonation: donation.recurringDonationId,
@@ -882,7 +904,8 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       await donationTransfersRepository.findAll({ withDonations: true })
     ).map((donationTransfer) => ({
       ...donationTransfer,
-      donations: donationTransfer.donations?.map((donation) => donation.id) || [],
+      donations:
+        donationTransfer.donations?.map((donation) => donation.id) || [],
     }));
 
     return {
@@ -937,7 +960,8 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     // Build list of organizations to exclude
     const excludeInternalIds = [];
     if (tipOrg?.internalId) excludeInternalIds.push(tipOrg.internalId);
-    if (externalOrg?.internalId) excludeInternalIds.push(externalOrg.internalId);
+    if (externalOrg?.internalId)
+      excludeInternalIds.push(externalOrg.internalId);
 
     // Sum using Drizzle repository
     const totalAmount = await donationsRepository.sumFinalizedDonations({
@@ -968,12 +992,13 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     // Build list of organizations to exclude
     const excludeInternalIds = [];
     if (tipOrg?.internalId) excludeInternalIds.push(tipOrg.internalId);
-    if (externalOrg?.internalId) excludeInternalIds.push(externalOrg.internalId);
+    if (externalOrg?.internalId)
+      excludeInternalIds.push(externalOrg.internalId);
 
     // Sum using Drizzle repository with date range
     const totalAmount = await donationsRepository.sumFinalizedDonationsInRange({
-      dateFrom: '2025-12-08 00:00:00',
-      dateTo: '2025-12-31 23:59:59',
+      dateFrom: "2025-12-08 00:00:00",
+      dateTo: "2025-12-31 23:59:59",
       excludeOrganizationInternalIds: excludeInternalIds,
       externalDonation: false,
     });
@@ -982,7 +1007,10 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   },
 
   async findTransactionDonation({ idCode, date, amount }) {
-    const { donorsRepository, donationsRepository } = require("../../../db/repositories");
+    const {
+      donorsRepository,
+      donationsRepository,
+    } = require("../../../db/repositories");
 
     const donor = await donorsRepository.findByIdCode(idCode);
 
@@ -1046,7 +1074,8 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     }
 
     // Find recurring donations by donor ID from Drizzle
-    let latestRecurringDonations = await recurringDonationsRepository.findByDonorId(donor.id);
+    let latestRecurringDonations =
+      await recurringDonationsRepository.findByDonorId(donor.id);
 
     // Filter by company code if idCode is not a personal ID (11 chars)
     if (idCode.length !== 11) {
@@ -1103,11 +1132,13 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     );
 
     // Create organization donations
-    const orgDonationsData = resizedOrganizationDonations.map((orgRecurring) => ({
-      donationId: donation.id,
-      organizationInternalId: orgRecurring.organizationInternalId,
-      amount: orgRecurring.amount,
-    }));
+    const orgDonationsData = resizedOrganizationDonations.map(
+      (orgRecurring) => ({
+        donationId: donation.id,
+        organizationInternalId: orgRecurring.organizationInternalId,
+        amount: orgRecurring.amount,
+      })
+    );
 
     await organizationDonationsRepository.createMany(orgDonationsData);
 
@@ -1266,7 +1297,10 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     const { donationsRepository } = require("../../../db/repositories");
 
     // Get donations in date range from Drizzle
-    const allDonations = await donationsRepository.findByDateRange(startDate, endDate);
+    const allDonations = await donationsRepository.findByDateRange(
+      startDate,
+      endDate
+    );
 
     // Filter for finalized donations only (matching original behavior)
     const donations = allDonations.filter((donation) => donation.finalized);
@@ -1286,7 +1320,9 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
    * Used for thank-you page after payment
    */
   async getDonationWithDetails(donationId) {
-    const { DonorsRepository } = require("../../../db/repositories/donors.repository");
+    const {
+      DonorsRepository,
+    } = require("../../../db/repositories/donors.repository");
     const donorsRepo = new DonorsRepository();
 
     // Fetch donation with organization donations from Drizzle
@@ -1336,14 +1372,21 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
    * Used for recurring donation confirmation emails
    */
   async getRecurringDonationWithDetails(recurringDonationId) {
-    const { DonorsRepository } = require("../../../db/repositories/donors.repository");
-    const { OrganizationRecurringDonationsRepository } = require("../../../db/repositories/organization-recurring-donations.repository");
+    const {
+      DonorsRepository,
+    } = require("../../../db/repositories/donors.repository");
+    const {
+      OrganizationRecurringDonationsRepository,
+    } = require("../../../db/repositories/organization-recurring-donations.repository");
 
     const donorsRepo = new DonorsRepository();
-    const orgRecurringDonationsRepo = new OrganizationRecurringDonationsRepository();
+    const orgRecurringDonationsRepo =
+      new OrganizationRecurringDonationsRepository();
 
     // Fetch recurring donation from Drizzle
-    const recurringDonation = await recurringDonationsRepo.findById(recurringDonationId);
+    const recurringDonation = await recurringDonationsRepo.findById(
+      recurringDonationId
+    );
 
     if (!recurringDonation) {
       return null;
@@ -1353,7 +1396,10 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     const donor = await donorsRepo.findById(recurringDonation.donorId);
 
     // Fetch organization recurring donations from Drizzle
-    const organizationRecurringDonations = await orgRecurringDonationsRepo.findByRecurringDonationId(recurringDonationId);
+    const organizationRecurringDonations =
+      await orgRecurringDonationsRepo.findByRecurringDonationId(
+        recurringDonationId
+      );
 
     // Fetch organization details from Strapi for each organizationRecurringDonation
     const organizationRecurringDonationsWithOrgs = await Promise.all(
@@ -1362,7 +1408,9 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
         const organizations = await strapi.entityService.findMany(
           "api::organization.organization",
           {
-            filters: { internalId: orgRecurringDonation.organizationInternalId },
+            filters: {
+              internalId: orgRecurringDonation.organizationInternalId,
+            },
             limit: 1,
           }
         );
