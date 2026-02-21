@@ -5,8 +5,12 @@
  */
 
 const { createCoreService } = require("@strapi/strapi").factories;
-const { DonorsRepository } = require("../../../db/repositories/donors.repository");
-const { RecurringDonationsRepository } = require("../../../db/repositories/recurring-donations.repository");
+const {
+  DonorsRepository,
+} = require("../../../db/repositories/donors.repository");
+const {
+  RecurringDonationsRepository,
+} = require("../../../db/repositories/recurring-donations.repository");
 
 const donorsRepo = new DonorsRepository();
 const recurringDonationsRepo = new RecurringDonationsRepository();
@@ -21,7 +25,9 @@ module.exports = createCoreService("api::donor.donor", ({ strapi }) => ({
     }
 
     // Fallback: check if recurring donation with this company code exists
-    const recurringDonation = await recurringDonationsRepo.findByCompanyCode(idCode);
+    const recurringDonation = await recurringDonationsRepo.findByCompanyCode(
+      idCode
+    );
 
     if (recurringDonation) {
       // Fetch the donor associated with this recurring donation

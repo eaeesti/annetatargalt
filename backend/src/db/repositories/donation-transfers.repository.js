@@ -1,8 +1,8 @@
-'use strict';
+"use strict";
 
-const { eq, desc } = require('drizzle-orm');
-const { db } = require('../client');
-const { donationTransfers } = require('../schema');
+const { eq, desc } = require("drizzle-orm");
+const { db } = require("../client");
+const { donationTransfers } = require("../schema");
 
 class DonationTransfersRepository {
   /**
@@ -40,13 +40,17 @@ class DonationTransfersRepository {
    * Create a new donation transfer
    */
   async create(data) {
-    const [transfer] = await db.insert(donationTransfers).values({
-      datetime: typeof data.datetime === 'string'
-        ? data.datetime
-        : data.datetime.toISOString().split('T')[0], // Convert Date to YYYY-MM-DD
-      recipient: data.recipient || null,
-      notes: data.notes || null,
-    }).returning();
+    const [transfer] = await db
+      .insert(donationTransfers)
+      .values({
+        datetime:
+          typeof data.datetime === "string"
+            ? data.datetime
+            : data.datetime.toISOString().split("T")[0], // Convert Date to YYYY-MM-DD
+        recipient: data.recipient || null,
+        notes: data.notes || null,
+      })
+      .returning();
     return transfer;
   }
 
@@ -63,12 +67,14 @@ class DonationTransfersRepository {
     if (data.notes !== undefined) updateData.notes = data.notes;
 
     if (data.datetime) {
-      updateData.datetime = typeof data.datetime === 'string'
-        ? data.datetime
-        : data.datetime.toISOString().split('T')[0]; // Convert Date to YYYY-MM-DD
+      updateData.datetime =
+        typeof data.datetime === "string"
+          ? data.datetime
+          : data.datetime.toISOString().split("T")[0]; // Convert Date to YYYY-MM-DD
     }
 
-    const [transfer] = await db.update(donationTransfers)
+    const [transfer] = await db
+      .update(donationTransfers)
       .set(updateData)
       .where(eq(donationTransfers.id, id))
       .returning();
@@ -79,8 +85,7 @@ class DonationTransfersRepository {
    * Delete a donation transfer (only if no donations are linked)
    */
   async delete(id) {
-    await db.delete(donationTransfers)
-      .where(eq(donationTransfers.id, id));
+    await db.delete(donationTransfers).where(eq(donationTransfers.id, id));
   }
 }
 

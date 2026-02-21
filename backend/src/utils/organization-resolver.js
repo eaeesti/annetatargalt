@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 /**
  * OrganizationResolver - Utility for fetching organization data from Strapi
@@ -30,7 +30,7 @@ class OrganizationResolver {
 
     // Fetch from Strapi
     const organizations = await this.strapi.entityService.findMany(
-      'api::organization.organization',
+      "api::organization.organization",
       {
         filters: { internalId },
         limit: 1,
@@ -66,7 +66,7 @@ class OrganizationResolver {
     // Fetch uncached organizations from Strapi
     if (uncachedIds.length > 0) {
       const organizations = await this.strapi.entityService.findMany(
-        'api::organization.organization',
+        "api::organization.organization",
         {
           filters: { internalId: { $in: uncachedIds } },
         }

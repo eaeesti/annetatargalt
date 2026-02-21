@@ -1,8 +1,8 @@
-'use strict';
+"use strict";
 
-const { eq, or } = require('drizzle-orm');
-const { db } = require('../client');
-const { donors } = require('../schema');
+const { eq, or } = require("drizzle-orm");
+const { db } = require("../client");
+const { donors } = require("../schema");
 
 class DonorsRepository {
   /**
@@ -47,10 +47,7 @@ class DonorsRepository {
   async findByIdCodeOrEmail(idCode, email) {
     if (idCode) {
       return db.query.donors.findFirst({
-        where: or(
-          eq(donors.idCode, idCode),
-          eq(donors.email, email)
-        ),
+        where: or(eq(donors.idCode, idCode), eq(donors.email, email)),
       });
     }
     return this.findByEmail(email);
@@ -60,13 +57,16 @@ class DonorsRepository {
    * Create a new donor
    */
   async create(data) {
-    const [donor] = await db.insert(donors).values({
-      idCode: data.idCode || null,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email,
-      recurringDonor: data.recurringDonor || false,
-    }).returning();
+    const [donor] = await db
+      .insert(donors)
+      .values({
+        idCode: data.idCode || null,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        recurringDonor: data.recurringDonor || false,
+      })
+      .returning();
     return donor;
   }
 
@@ -74,7 +74,8 @@ class DonorsRepository {
    * Update a donor
    */
   async update(id, data) {
-    const [donor] = await db.update(donors)
+    const [donor] = await db
+      .update(donors)
       .set({
         ...data,
         updatedAt: new Date(),
@@ -95,7 +96,10 @@ class DonorsRepository {
    * Find or create a donor by ID code or email
    */
   async findOrCreate(data) {
-    const existing = await this.findByIdCodeOrEmail(data.idCode || null, data.email);
+    const existing = await this.findByIdCodeOrEmail(
+      data.idCode || null,
+      data.email
+    );
     if (existing) {
       return existing;
     }
