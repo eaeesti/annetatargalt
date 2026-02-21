@@ -1,8 +1,8 @@
-'use strict';
+"use strict";
 
-const { eq, and, desc } = require('drizzle-orm');
-const { db } = require('../client');
-const { recurringDonations } = require('../schema');
+const { eq, and, desc } = require("drizzle-orm");
+const { db } = require("../client");
+const { recurringDonations } = require("../schema");
 
 class RecurringDonationsRepository {
   /**
@@ -91,16 +91,22 @@ class RecurringDonationsRepository {
    * Create a new recurring donation
    */
   async create(data) {
-    const [recurringDonation] = await db.insert(recurringDonations).values({
-      donorId: data.donorId,
-      amount: data.amount,
-      active: data.active !== undefined ? data.active : true,
-      companyName: data.companyName || null,
-      companyCode: data.companyCode || null,
-      comment: data.comment || null,
-      bank: data.bank || null,
-      datetime: typeof data.datetime === 'string' ? new Date(data.datetime) : data.datetime,
-    }).returning();
+    const [recurringDonation] = await db
+      .insert(recurringDonations)
+      .values({
+        donorId: data.donorId,
+        amount: data.amount,
+        active: data.active !== undefined ? data.active : true,
+        companyName: data.companyName || null,
+        companyCode: data.companyCode || null,
+        comment: data.comment || null,
+        bank: data.bank || null,
+        datetime:
+          typeof data.datetime === "string"
+            ? new Date(data.datetime)
+            : data.datetime,
+      })
+      .returning();
     return recurringDonation;
   }
 
@@ -108,7 +114,8 @@ class RecurringDonationsRepository {
    * Update a recurring donation
    */
   async update(id, data) {
-    const [recurringDonation] = await db.update(recurringDonations)
+    const [recurringDonation] = await db
+      .update(recurringDonations)
       .set({
         ...data,
         updatedAt: new Date(),
@@ -136,8 +143,7 @@ class RecurringDonationsRepository {
    * Delete a recurring donation
    */
   async delete(id) {
-    await db.delete(recurringDonations)
-      .where(eq(recurringDonations.id, id));
+    await db.delete(recurringDonations).where(eq(recurringDonations.id, id));
   }
 }
 

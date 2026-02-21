@@ -1,8 +1,8 @@
-'use strict';
+"use strict";
 
-const { eq, and, gte, lte, desc, sql, inArray } = require('drizzle-orm');
-const { db } = require('../client');
-const { donations } = require('../schema');
+const { eq, and, gte, lte, desc, sql, inArray } = require("drizzle-orm");
+const { db } = require("../client");
+const { donations } = require("../schema");
 
 class DonationsRepository {
   /**
@@ -79,11 +79,11 @@ class DonationsRepository {
    */
   async findByTransaction(params) {
     const dateFrom =
-      typeof params.dateFrom === 'string'
+      typeof params.dateFrom === "string"
         ? new Date(params.dateFrom)
         : params.dateFrom;
     const dateTo =
-      typeof params.dateTo === 'string'
+      typeof params.dateTo === "string"
         ? new Date(params.dateTo)
         : params.dateTo;
 
@@ -117,7 +117,7 @@ class DonationsRepository {
         donorId: data.donorId,
         amount: data.amount,
         datetime:
-          typeof data.datetime === 'string'
+          typeof data.datetime === "string"
             ? new Date(data.datetime)
             : data.datetime,
         finalized: data.finalized !== undefined ? data.finalized : false,
@@ -244,11 +244,11 @@ class DonationsRepository {
    */
   async sumFinalizedDonationsInRange(params) {
     const dateFrom =
-      typeof params.dateFrom === 'string'
+      typeof params.dateFrom === "string"
         ? new Date(params.dateFrom)
         : params.dateFrom;
     const dateTo =
-      typeof params.dateTo === 'string'
+      typeof params.dateTo === "string"
         ? new Date(params.dateTo)
         : params.dateTo;
 
@@ -293,9 +293,7 @@ class DonationsRepository {
    * Count total donations
    */
   async count() {
-    const result = await db
-      .select({ count: sql`count(*)` })
-      .from(donations);
+    const result = await db.select({ count: sql`count(*)` }).from(donations);
     return Number(result[0].count);
   }
 
@@ -321,8 +319,8 @@ class DonationsRepository {
    * Find donations by date range
    */
   async findByDateRange(dateFrom, dateTo) {
-    const from = typeof dateFrom === 'string' ? new Date(dateFrom) : dateFrom;
-    const to = typeof dateTo === 'string' ? new Date(dateTo) : dateTo;
+    const from = typeof dateFrom === "string" ? new Date(dateFrom) : dateFrom;
+    const to = typeof dateTo === "string" ? new Date(dateTo) : dateTo;
 
     return db.query.donations.findMany({
       where: and(gte(donations.datetime, from), lte(donations.datetime, to)),

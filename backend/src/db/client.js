@@ -1,28 +1,29 @@
-'use strict';
+"use strict";
 
-const { drizzle } = require('drizzle-orm/node-postgres');
-const { Pool } = require('pg');
-const schema = require('./schema');
+const { drizzle } = require("drizzle-orm/node-postgres");
+const { Pool } = require("pg");
+const schema = require("./schema");
 
 // Database configuration from environment variables
 // NOTE: Drizzle uses a SEPARATE database from Strapi for clean separation
 const connectionString = process.env.DRIZZLE_DATABASE_URL;
-const sslEnabled = process.env.DATABASE_SSL === 'true';
+const sslEnabled = process.env.DATABASE_SSL === "true";
 
 const poolConfig = {
-  host: process.env.DATABASE_HOST || 'localhost',
-  port: parseInt(process.env.DATABASE_PORT || '5432'),
-  database: process.env.DRIZZLE_DATABASE_NAME || 'annetatargalt_donations',
-  user: process.env.DATABASE_USERNAME || 'strapi',
-  password: process.env.DATABASE_PASSWORD || 'strapi',
-  min: parseInt(process.env.DATABASE_POOL_MIN || '2'),
-  max: parseInt(process.env.DATABASE_POOL_MAX || '10'),
+  host: process.env.DATABASE_HOST || "localhost",
+  port: parseInt(process.env.DATABASE_PORT || "5432"),
+  database: process.env.DRIZZLE_DATABASE_NAME || "annetatargalt_donations",
+  user: process.env.DATABASE_USERNAME || "strapi",
+  password: process.env.DATABASE_PASSWORD || "strapi",
+  min: parseInt(process.env.DATABASE_POOL_MIN || "2"),
+  max: parseInt(process.env.DATABASE_POOL_MAX || "10"),
 };
 
 // Add SSL configuration if enabled (matching Strapi's config)
 if (sslEnabled) {
   poolConfig.ssl = {
-    rejectUnauthorized: process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== 'false',
+    rejectUnauthorized:
+      process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== "false",
   };
 }
 

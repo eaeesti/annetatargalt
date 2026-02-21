@@ -1,9 +1,11 @@
-'use strict';
+"use strict";
 
 /**
  * contact-submission service
  */
 
-const { createCoreService } = require('@strapi/strapi').factories;
+const { createCoreService } = require("@strapi/strapi").factories;
 
-module.exports = createCoreService('api::contact-submission.contact-submission');
+module.exports = createCoreService(
+  "api::contact-submission.contact-submission"
+);

@@ -1,8 +1,8 @@
-'use strict';
+"use strict";
 
-const { eq } = require('drizzle-orm');
-const { db } = require('../client');
-const { organizationRecurringDonations } = require('../schema');
+const { eq } = require("drizzle-orm");
+const { db } = require("../client");
+const { organizationRecurringDonations } = require("../schema");
 
 class OrganizationRecurringDonationsRepository {
   /**
@@ -10,7 +10,9 @@ class OrganizationRecurringDonationsRepository {
    */
   async findAll() {
     return db.query.organizationRecurringDonations.findMany({
-      orderBy: (organizationRecurringDonations, { asc }) => [asc(organizationRecurringDonations.id)],
+      orderBy: (organizationRecurringDonations, { asc }) => [
+        asc(organizationRecurringDonations.id),
+      ],
       with: {
         recurringDonation: true,
       },
@@ -22,7 +24,10 @@ class OrganizationRecurringDonationsRepository {
    */
   async findByRecurringDonationId(recurringDonationId) {
     return db.query.organizationRecurringDonations.findMany({
-      where: eq(organizationRecurringDonations.recurringDonationId, recurringDonationId),
+      where: eq(
+        organizationRecurringDonations.recurringDonationId,
+        recurringDonationId
+      ),
     });
   }
 
@@ -31,7 +36,10 @@ class OrganizationRecurringDonationsRepository {
    */
   async findByOrganizationInternalId(organizationInternalId) {
     return db.query.organizationRecurringDonations.findMany({
-      where: eq(organizationRecurringDonations.organizationInternalId, organizationInternalId),
+      where: eq(
+        organizationRecurringDonations.organizationInternalId,
+        organizationInternalId
+      ),
     });
   }
 
@@ -41,16 +49,15 @@ class OrganizationRecurringDonationsRepository {
   async createMany(data) {
     if (data.length === 0) return [];
 
-    return db.insert(organizationRecurringDonations)
-      .values(data)
-      .returning();
+    return db.insert(organizationRecurringDonations).values(data).returning();
   }
 
   /**
    * Create a single organization recurring donation
    */
   async create(data) {
-    const [orgRecurringDonation] = await db.insert(organizationRecurringDonations)
+    const [orgRecurringDonation] = await db
+      .insert(organizationRecurringDonations)
       .values(data)
       .returning();
     return orgRecurringDonation;
@@ -62,24 +69,38 @@ class OrganizationRecurringDonationsRepository {
    */
   async updateForRecurringDonation(recurringDonationId, data) {
     // Delete existing
-    await db.delete(organizationRecurringDonations)
-      .where(eq(organizationRecurringDonations.recurringDonationId, recurringDonationId));
+    await db
+      .delete(organizationRecurringDonations)
+      .where(
+        eq(
+          organizationRecurringDonations.recurringDonationId,
+          recurringDonationId
+        )
+      );
 
     // Create new ones
     if (data.length === 0) return [];
 
-    return this.createMany(data.map(item => ({
-      recurringDonationId,
-      ...item,
-    })));
+    return this.createMany(
+      data.map((item) => ({
+        recurringDonationId,
+        ...item,
+      }))
+    );
   }
 
   /**
    * Delete organization recurring donations by recurring donation ID
    */
   async deleteByRecurringDonationId(recurringDonationId) {
-    await db.delete(organizationRecurringDonations)
-      .where(eq(organizationRecurringDonations.recurringDonationId, recurringDonationId));
+    await db
+      .delete(organizationRecurringDonations)
+      .where(
+        eq(
+          organizationRecurringDonations.recurringDonationId,
+          recurringDonationId
+        )
+      );
   }
 
   /**
@@ -87,12 +108,19 @@ class OrganizationRecurringDonationsRepository {
    */
   async organizationHasRecurringDonations(organizationInternalId) {
     const result = await db.query.organizationRecurringDonations.findFirst({
-      where: eq(organizationRecurringDonations.organizationInternalId, organizationInternalId),
+      where: eq(
+        organizationRecurringDonations.organizationInternalId,
+        organizationInternalId
+      ),
     });
     return !!result;
   }
 }
 
-const organizationRecurringDonationsRepository = new OrganizationRecurringDonationsRepository();
+const organizationRecurringDonationsRepository =
+  new OrganizationRecurringDonationsRepository();
 
-module.exports = { OrganizationRecurringDonationsRepository, organizationRecurringDonationsRepository };
+module.exports = {
+  OrganizationRecurringDonationsRepository,
+  organizationRecurringDonationsRepository,
+};

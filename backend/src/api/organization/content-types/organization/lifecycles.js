@@ -1,17 +1,17 @@
-'use strict';
+"use strict";
 
-const { eq, sql } = require('drizzle-orm');
+const { eq, sql } = require("drizzle-orm");
 
 /**
  * Prevent deletion of an organization that has donation records in Drizzle.
  * Callers should deactivate the organization (set active=false) instead.
  */
 async function guardAgainstDelete(internalId) {
-  const { db } = require('../../../../db/client');
+  const { db } = require("../../../../db/client");
   const {
     organizationDonations,
     organizationRecurringDonations,
-  } = require('../../../../db/schema');
+  } = require("../../../../db/schema");
 
   const [odResult] = await db
     .select({ count: sql`count(*)::int` })
@@ -41,9 +41,9 @@ async function guardAgainstDelete(internalId) {
 module.exports = {
   async beforeDelete(event) {
     const organization = await strapi.entityService.findOne(
-      'api::organization.organization',
+      "api::organization.organization",
       event.params.where.id,
-      { fields: ['internalId'] }
+      { fields: ["internalId"] }
     );
 
     if (organization?.internalId) {
@@ -53,10 +53,10 @@ module.exports = {
 
   async beforeDeleteMany(event) {
     const organizations = await strapi.entityService.findMany(
-      'api::organization.organization',
+      "api::organization.organization",
       {
         filters: event.params.where,
-        fields: ['internalId'],
+        fields: ["internalId"],
       }
     );
 

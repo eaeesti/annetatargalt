@@ -1,9 +1,9 @@
-'use strict';
+"use strict";
 
 /**
  * cause controller
  */
 
-const { createCoreController } = require('@strapi/strapi').factories;
+const { createCoreController } = require("@strapi/strapi").factories;
 
-module.exports = createCoreController('api::cause.cause');
+module.exports = createCoreController("api::cause.cause");
