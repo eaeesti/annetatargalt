@@ -719,6 +719,16 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     organizationDonations,
     donationTransfers,
   }) {
+    const {
+      donorsRepository,
+      donationsRepository,
+      recurringDonationsRepository,
+      organizationDonationsRepository,
+      organizationRecurringDonationsRepository,
+      donationTransfersRepository,
+    } = require("../../../db/repositories");
+
+    // Causes and organizations stay in Strapi (content)
     const causeMap = {};
     for (let cause of causes) {
       const causeEntry = await strapi
@@ -728,6 +738,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     }
 
     const organizationMap = {};
+    const organizationInternalIdMap = {};
     for (let organization of organizations) {
       const organizationEntry = await strapi
         .service("api::organization.organization")
@@ -736,8 +747,11 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
           cause: organization.cause ? causeMap[organization.cause] : null,
         });
       organizationMap[organization.id] = organizationEntry.id;
+      organizationInternalIdMap[organization.id] =
+        organizationEntry.internalId;
     }
 
+    // Donors - use Drizzle repository
     const donorMap = {};
     for (let donor of donors) {
       const donorEntry = await strapi
@@ -746,95 +760,88 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       donorMap[donor.id] = donorEntry.id;
     }
 
+    // Recurring donations - use Drizzle repository
     const recurringDonationMap = {};
     for (let recurringDonation of recurringDonations) {
-      const recurringDonationEntry = await strapi.entityService.create(
-        "api::recurring-donation.recurring-donation",
-        {
-          data: {
-            amount: recurringDonation.amount,
-            donor: donorMap[recurringDonation.donor],
-            bank: recurringDonation.bank,
-            datetime: recurringDonation.datetime,
-            companyName: recurringDonation.companyName,
-            companyCode: recurringDonation.companyCode,
-          },
-        }
-      );
+      const recurringDonationEntry = await recurringDonationsRepository.create({
+        donorId: donorMap[recurringDonation.donor],
+        active: recurringDonation.active ?? false,
+        amount: recurringDonation.amount,
+        bank: recurringDonation.bank,
+        datetime: new Date(recurringDonation.datetime),
+        companyName: recurringDonation.companyName,
+        companyCode: recurringDonation.companyCode,
+        comment: recurringDonation.comment,
+      });
       recurringDonationMap[recurringDonation.id] = recurringDonationEntry.id;
     }
 
+    // Organization recurring donations - use Drizzle repository
     for (let organizationRecurringDonation of organizationRecurringDonations) {
-      await strapi.entityService.create(
-        "api::organization-recurring-donation.organization-recurring-donation",
-        {
-          data: {
-            recurringDonation:
-              recurringDonationMap[
-                organizationRecurringDonation.recurringDonation
-              ],
-            organization:
-              organizationMap[organizationRecurringDonation.organization],
-            amount: organizationRecurringDonation.amount,
-          },
-        }
-      );
+      await organizationRecurringDonationsRepository.create({
+        recurringDonationId:
+          recurringDonationMap[
+            organizationRecurringDonation.recurringDonation
+          ],
+        organizationInternalId:
+          organizationInternalIdMap[
+            organizationRecurringDonation.organization
+          ],
+        amount: organizationRecurringDonation.amount,
+      });
     }
 
+    // Donations - use Drizzle repository
     const donationMap = {};
     for (let donation of donations) {
-      const donationEntry = await strapi.entityService.create(
-        "api::donation.donation",
-        {
-          data: {
-            amount: donation.amount,
-            donor: donorMap[donation.donor],
-            datetime: donation.datetime,
-            companyName: donation.companyName,
-            companyCode: donation.companyCode,
-            paymentMethod: donation.paymentMethod,
-            iban: donation.iban,
-            finalized: donation.finalized,
-            dedicationName: donation.dedicationName,
-            dedicationEmail: donation.dedicationEmail,
-            dedicationMessage: donation.dedicationMessage,
-            recurringDonation: donation.recurringDonation
-              ? recurringDonationMap[donation.recurringDonation]
-              : null,
-          },
-        }
-      );
+      const donationEntry = await donationsRepository.create({
+        donorId: donorMap[donation.donor],
+        recurringDonationId: donation.recurringDonation
+          ? recurringDonationMap[donation.recurringDonation]
+          : null,
+        amount: donation.amount,
+        datetime: new Date(donation.datetime),
+        finalized: donation.finalized ?? false,
+        paymentMethod: donation.paymentMethod,
+        iban: donation.iban,
+        comment: donation.comment,
+        companyName: donation.companyName,
+        companyCode: donation.companyCode,
+        dedicationName: donation.dedicationName,
+        dedicationEmail: donation.dedicationEmail,
+        dedicationMessage: donation.dedicationMessage,
+        externalDonation: donation.externalDonation ?? false,
+        sentToOrganization: donation.sentToOrganization ?? false,
+      });
 
       donationMap[donation.id] = donationEntry.id;
     }
 
+    // Organization donations - use Drizzle repository
     for (let organizationDonation of organizationDonations) {
-      await strapi.entityService.create(
-        "api::organization-donation.organization-donation",
-        {
-          data: {
-            donation: donationMap[organizationDonation.donation],
-            organization: organizationMap[organizationDonation.organization],
-            amount: organizationDonation.amount,
-          },
-        }
-      );
+      await organizationDonationsRepository.create({
+        donationId: donationMap[organizationDonation.donation],
+        organizationInternalId:
+          organizationInternalIdMap[organizationDonation.organization],
+        amount: organizationDonation.amount,
+      });
     }
 
+    // Donation transfers - use Drizzle repository
     for (let donationTransfer of donationTransfers) {
-      await strapi.entityService.create(
-        "api::donation-transfer.donation-transfer",
-        {
-          data: {
-            donations: donationTransfer.donations.map(
-              (donationId) => donationMap[donationId]
-            ),
-            datetime: donationTransfer.datetime,
-            recipient: donationTransfer.recipient,
-            notes: donationTransfer.notes,
-          },
-        }
+      const transfer = await donationTransfersRepository.create({
+        datetime: donationTransfer.datetime,
+        recipient: donationTransfer.recipient,
+        notes: donationTransfer.notes,
+      });
+
+      // Link donations to transfer
+      const donationIds = donationTransfer.donations.map(
+        (donationId) => donationMap[donationId]
       );
+      if (donationIds.length > 0) {
+        await donationsRepository.addToTransfer(donationIds, transfer.id);
+      }
     }
   },
 
@@ -1193,105 +1200,6 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     return donation;
   },
 
-  /**
-   * Migrate tips from fields in the donation model to OrganizationDonations to
-   * our organization.
-   *
-   * Strapi supports database migrations, but they don't seem to work very well, so
-   * we're doing this through an API endpoint.
-   */
-  async migrateTips() {
-    const donations = await strapi.entityService.findMany(
-      "api::donation.donation",
-      {
-        filters: {
-          tipAmount: { $gt: 0 },
-          finalized: true,
-        },
-        populate: ["donor"],
-      }
-    );
-
-    const global = await strapi.db.query("api::global.global").findOne();
-    const tipOrganizationId = global.tipOrganizationId;
-
-    await Promise.all(
-      donations.map(async (donation) => {
-        await strapi.entityService.create(
-          "api::organization-donation.organization-donation",
-          {
-            data: {
-              donation: donation.id,
-              organization: tipOrganizationId,
-              amount: donation.tipAmount,
-            },
-          }
-        );
-      })
-    );
-
-    await Promise.all(
-      donations.map(async (donation) => {
-        await strapi.entityService.update(
-          "api::donation.donation",
-          donation.id,
-          {
-            data: {
-              tipAmount: null,
-            },
-          }
-        );
-      })
-    );
-
-    return donations.length;
-  },
-
-  async migrateRecurringTips() {
-    const recurringDonations = await strapi.entityService.findMany(
-      "api::recurring-donation.recurring-donation",
-      {
-        filters: {
-          tipAmount: { $gt: 0 },
-        },
-        populate: ["donor"],
-      }
-    );
-
-    const global = await strapi.db.query("api::global.global").findOne();
-    const tipOrganizationId = global.tipOrganizationId;
-
-    await Promise.all(
-      recurringDonations.map(async (recurringDonation) => {
-        await strapi.entityService.create(
-          "api::organization-recurring-donation.organization-recurring-donation",
-          {
-            data: {
-              recurringDonation: recurringDonation.id,
-              organization: tipOrganizationId,
-              amount: recurringDonation.tipAmount,
-            },
-          }
-        );
-      })
-    );
-
-    await Promise.all(
-      recurringDonations.map(async (recurringDonation) => {
-        await strapi.entityService.update(
-          "api::recurring-donation.recurring-donation",
-          recurringDonation.id,
-          {
-            data: {
-              tipAmount: null,
-            },
-          }
-        );
-      })
-    );
-
-    return recurringDonations.length;
-  },
 
   async getDonationsInDateRange(startDate, endDate) {
     const { donationsRepository } = require("../../../db/repositories");
