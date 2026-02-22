@@ -2,24 +2,40 @@
 
 const { createCoreService } = require("@strapi/strapi").factories;
 const { resizeOrganizationDonations } = require("../../../utils/donation");
+const {
+  organizationDonationsRepository,
+} = require("../../../db/repositories");
 
 module.exports = createCoreService(
   "api::organization-donation.organization-donation",
   ({ strapi }) => ({
     async createOrganizationDonations({ donationId, amounts }) {
-      return Promise.all(
+      // Convert organization IDs to internalIds and create organization donations
+      const organizationDonationsData = await Promise.all(
         amounts.map(async ({ organizationId, amount }) => {
-          await strapi.entityService.create(
-            "api::organization-donation.organization-donation",
-            {
-              data: {
-                donation: donationId,
-                organization: organizationId,
-                amount,
-              },
-            }
+          const organization = await strapi.entityService.findOne(
+            "api::organization.organization",
+            organizationId,
+            { fields: ["internalId"] }
           );
+
+          if (!organization || !organization.internalId) {
+            throw new Error(
+              `Organization ${organizationId} not found or missing internalId`
+            );
+          }
+
+          return {
+            donationId,
+            organizationInternalId: organization.internalId,
+            amount,
+          };
         })
+      );
+
+      // Create organization donations in Drizzle
+      return organizationDonationsRepository.createMany(
+        organizationDonationsData
       );
     },
 
@@ -37,38 +53,49 @@ module.exports = createCoreService(
         donationAmount
       );
 
-      return Promise.all(
-        resizedOrganizationDonations.map(
-          async (organizationRecurringDonation) => {
-            await strapi.entityService.create(
-              "api::organization-donation.organization-donation",
-              {
-                data: {
-                  donation: donationId,
-                  organization: organizationRecurringDonation.organization.id,
-                  amount: organizationRecurringDonation.amount,
-                },
-              }
-            );
-          }
-        )
+      // Map resized organization donations to Drizzle format
+      // The resized donations should already have organizationInternalId
+      const organizationDonationsData = resizedOrganizationDonations.map(
+        (orgDonation) => ({
+          donationId,
+          organizationInternalId: orgDonation.organizationInternalId,
+          amount: orgDonation.amount,
+        })
+      );
+
+      // Create organization donations in Drizzle
+      return organizationDonationsRepository.createMany(
+        organizationDonationsData
       );
     },
 
     async createFromArray({ donationId, organizationDonations }) {
-      return Promise.all(
+      // Convert organization IDs to internalIds and create organization donations
+      const organizationDonationsData = await Promise.all(
         organizationDonations.map(async (organizationDonation) => {
-          await strapi.entityService.create(
-            "api::organization-donation.organization-donation",
-            {
-              data: {
-                donation: donationId,
-                organization: organizationDonation.organization,
-                amount: organizationDonation.amount,
-              },
-            }
+          const organization = await strapi.entityService.findOne(
+            "api::organization.organization",
+            organizationDonation.organization,
+            { fields: ["internalId"] }
           );
+
+          if (!organization || !organization.internalId) {
+            throw new Error(
+              `Organization ${organizationDonation.organization} not found or missing internalId`
+            );
+          }
+
+          return {
+            donationId,
+            organizationInternalId: organization.internalId,
+            amount: organizationDonation.amount,
+          };
         })
+      );
+
+      // Create organization donations in Drizzle
+      return organizationDonationsRepository.createMany(
+        organizationDonationsData
       );
     },
   })
