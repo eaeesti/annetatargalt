@@ -1,0 +1,25 @@
+{
+  "name": "donations",
+  "version": "1.0.0",
+  "description": "Donation management plugin for Annetusplatvorm",
+  "strapi": {
+    "name": "donations",
+    "displayName": "Donations",
+    "description": "Manages donations, donors, and donation transfers via Drizzle ORM",
+    "kind": "plugin"
+  },
+  "dependencies": {},
+  "author": {
+    "name": "Annetusplatvorm"
+  },
+  "maintainers": [
+    {
+      "name": "Annetusplatvorm"
+    }
+  ],
+  "engines": {
+    "node": ">=18.0.0 <=20.x.x",
+    "npm": ">=6.0.0"
+  },
+  "license": "MIT"
+}

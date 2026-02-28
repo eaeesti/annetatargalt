@@ -4,71 +4,127 @@ module.exports = {
       method: "POST",
       path: "/donate",
       handler: "donation.donate",
+      config: {
+        policies: [],
+        auth: false,
+      },
     },
     {
       method: "POST",
       path: "/donateExternal",
       handler: "donation.donateExternal",
+      config: {
+        policies: [],
+        auth: false,
+      },
     },
     {
       method: "POST",
       path: "/donateForeign",
       handler: "donation.donateForeign",
+      config: {
+        policies: [],
+        auth: false,
+      },
     },
     {
       method: "POST",
       path: "/confirm",
       handler: "donation.confirm",
+      config: {
+        policies: [],
+        auth: false,
+      },
     },
     {
       method: "GET",
       path: "/decode",
       handler: "donation.decode",
+      config: {
+        policies: [],
+        auth: false,
+      },
     },
     {
       method: "POST",
-      path: "/donations/import",
+      path: "/import",
       handler: "donation.import",
+      config: {
+        policies: [],
+        auth: false, // TODO: Add admin auth
+      },
     },
     {
       method: "GET",
-      path: "/donations/export",
+      path: "/export",
       handler: "donation.export",
+      config: {
+        policies: [],
+        auth: false, // TODO: Add admin auth
+      },
     },
     {
       method: "POST",
-      path: "/donations/deleteAll",
+      path: "/deleteAll",
       handler: "donation.deleteAll",
+      config: {
+        policies: [],
+        auth: false, // TODO: Add admin auth
+      },
     },
     {
       method: "GET",
-      path: "/donations/findTransaction",
+      path: "/findTransaction",
       handler: "donation.findTransaction",
+      config: {
+        policies: [],
+        auth: false, // TODO: Add admin auth
+      },
     },
     {
       method: "POST",
-      path: "/donations/insertTransaction",
+      path: "/insertTransaction",
       handler: "donation.insertTransaction",
+      config: {
+        policies: [],
+        auth: false, // TODO: Add admin auth
+      },
     },
     {
       method: "POST",
-      path: "/donations/insertDonation",
+      path: "/insertDonation",
       handler: "donation.insertDonation",
+      config: {
+        policies: [],
+        auth: false, // TODO: Add admin auth
+      },
     },
     {
       method: "GET",
       path: "/stats",
       handler: "donation.stats",
+      config: {
+        policies: [],
+        auth: false,
+      },
     },
     {
       method: "POST",
-      path: "/donations/migrateTips",
+      path: "/migrateTips",
       handler: "donation.migrateTips",
+      config: {
+        policies: [],
+        auth: false, // TODO: Add admin auth
+      },
     },
     {
       method: "PUT",
-      path: "/donations/addDonationsToTransferByDate",
+      path: "/addDonationsToTransferByDate",
       handler: "donation.addDonationsToTransferByDate",
+      config: {
+        policies: [],
+        auth: false, // TODO: Add admin auth
+      },
     },
   ],
 };

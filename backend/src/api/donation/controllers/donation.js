@@ -1,304 +1,68 @@
-"use strict";
+/**
+ * Donation controller proxy
+ *
+ * This is a thin wrapper that delegates all calls to the donations plugin.
+ * Routes are defined here for backward compatibility (/api/* URLs),
+ * but the actual logic lives in src/plugins/donations/
+ *
+ * Note: Uses global.strapi for delegation only. All actual business logic
+ * in the plugin uses proper dependency injection.
+ */
 
-const { createCoreController } = require("@strapi/strapi").factories;
-const { decodeOrderToken } = require("../../../utils/montonio");
-const {
-  DonationsRepository,
-} = require("../../../db/repositories/donations.repository");
+module.exports = {
+  async donate(ctx) {
+    return global.strapi.plugin('donations').controller('donation').donate(ctx);
+  },
 
-const donationsRepo = new DonationsRepository();
+  async donateExternal(ctx) {
+    return global.strapi.plugin('donations').controller('donation').donateExternal(ctx);
+  },
 
-module.exports = createCoreController(
-  "api::donation.donation",
-  ({ strapi }) => ({
-    async donate(ctx) {
-      const donation = ctx.request.body;
+  async donateForeign(ctx) {
+    return global.strapi.plugin('donations').controller('donation').donateForeign(ctx);
+  },
 
-      try {
-        const { redirectURL } = await strapi
-          .service("api::donation.donation")
-          .createDonation(donation);
-        return ctx.send({ redirectURL });
-      } catch (error) {
-        return ctx.badRequest(error.message);
-      }
-    },
+  async confirm(ctx) {
+    return global.strapi.plugin('donations').controller('donation').confirm(ctx);
+  },
 
-    async donateExternal(ctx) {
-      const returnUrl = ctx.request.body.returnUrl;
-      if (!returnUrl) {
-        return ctx.badRequest("No return URL provided");
-      }
+  async decode(ctx) {
+    return global.strapi.plugin('donations').controller('donation').decode(ctx);
+  },
 
-      const global = await strapi.db.query("api::global.global").findOne();
+  async import(ctx) {
+    return global.strapi.plugin('donations').controller('donation').import(ctx);
+  },
 
-      const donation = {
-        ...ctx.request.body,
-        comment: `Return URL: ${returnUrl}`,
-        // External donations always go to the specified organization
-        amounts: [
-          {
-            amount: ctx.request.body.amount,
-            organizationId: global.externalOrganizationId,
-          },
-        ],
-      };
+  async export(ctx) {
+    return global.strapi.plugin('donations').controller('donation').export(ctx);
+  },
 
-      try {
-        const { redirectURL } = await strapi
-          .service("api::donation.donation")
-          .createDonation(donation, returnUrl, true);
-        return ctx.send({ redirectURL });
-      } catch (error) {
-        return ctx.badRequest(error.message);
-      }
-    },
+  async deleteAll(ctx) {
+    return global.strapi.plugin('donations').controller('donation').deleteAll(ctx);
+  },
 
-    async donateForeign(ctx) {
-      const donation = ctx.request.body;
+  async findTransaction(ctx) {
+    return global.strapi.plugin('donations').controller('donation').findTransaction(ctx);
+  },
 
-      try {
-        const { redirectURL } = await strapi
-          .service("api::donation.donation")
-          .createForeignDonation(donation);
-        return ctx.send({ redirectURL });
-      } catch (error) {
-        return ctx.badRequest(error.message);
-      }
-    },
+  async insertTransaction(ctx) {
+    return global.strapi.plugin('donations').controller('donation').insertTransaction(ctx);
+  },
 
-    async confirm(ctx) {
-      const orderToken = ctx.request.query["order-token"];
+  async insertDonation(ctx) {
+    return global.strapi.plugin('donations').controller('donation').insertDonation(ctx);
+  },
 
-      if (!orderToken) {
-        return ctx.badRequest("No order token provided");
-      }
+  async stats(ctx) {
+    return global.strapi.plugin('donations').controller('donation').stats(ctx);
+  },
 
-      let decoded;
-      try {
-        decoded = decodeOrderToken(orderToken);
-      } catch (error) {
-        console.error(error);
-        return ctx.badRequest("Invalid payment token");
-      }
+  async migrateTips(ctx) {
+    return global.strapi.plugin('donations').controller('donation').migrateTips(ctx);
+  },
 
-      if (decoded.paymentStatus !== "PAID") {
-        return ctx.badRequest("Payment not paid");
-      }
-
-      const id = Number(decoded.merchant_reference.split(" ").at(-1));
-
-      // Find donation using Drizzle
-      const donation = await donationsRepo.findById(id);
-
-      if (!donation) {
-        return ctx.badRequest("Donation not found");
-      }
-
-      if (donation.finalized) {
-        return ctx.badRequest("Donation already finalized");
-      }
-
-      // Update donation to finalized using Drizzle
-      try {
-        await donationsRepo.update(id, {
-          finalized: true,
-          iban: decoded.customer_iban || "",
-          paymentMethod: decoded.payment_method_name || "",
-        });
-      } catch (error) {
-        console.error(error);
-        return ctx.badRequest("Failed to update donation");
-      }
-
-      if (donation.externalDonation) {
-        await strapi
-          .service("api::donation.donation")
-          .sendExternalConfirmationEmail(id);
-      } else {
-        await strapi
-          .service("api::donation.donation")
-          .sendConfirmationEmail(id);
-      }
-
-      if (donation.dedicationEmail) {
-        await strapi.service("api::donation.donation").sendDedicationEmail(id);
-      }
-
-      return ctx.send();
-    },
-
-    async decode(ctx) {
-      const orderToken = ctx.request.query["order-token"];
-
-      if (!orderToken) {
-        return ctx.badRequest("No payment token provided");
-      }
-
-      let decoded;
-      try {
-        decoded = decodeOrderToken(orderToken);
-      } catch (error) {
-        console.error(error);
-        return ctx.badRequest("Invalid payment token");
-      }
-
-      if (decoded.paymentStatus !== "PAID") {
-        return ctx.badRequest("Payment not paid");
-      }
-
-      const id = Number(decoded.merchant_reference.split(" ").at(-1));
-
-      // Fetch donation with details using Drizzle + Strapi cross-system query
-      const donation = await strapi
-        .service("api::donation.donation")
-        .getDonationWithDetails(id);
-
-      if (!donation) {
-        return ctx.badRequest("Donation not found");
-      }
-
-      return ctx.send({ donation });
-    },
-
-    async import(ctx) {
-      const fullData = ctx.request.body;
-
-      await strapi.service("api::donation.donation").import(fullData);
-
-      return ctx.send();
-    },
-
-    async export(ctx) {
-      const fullData = await strapi.service("api::donation.donation").export();
-
-      return ctx.send(fullData);
-    },
-
-    async deleteAll(ctx) {
-      const confirmation = ctx.request.body.confirmation;
-
-      const currentDateTime = new Date().toISOString().slice(0, 16);
-
-      if (confirmation !== currentDateTime) {
-        return ctx.badRequest(
-          `Confirmation must be the current date and time in the format 'YYYY-MM-DDTHH:MM' (${currentDateTime}). Instead got: '${confirmation}'`
-        );
-      }
-
-      await strapi.service("api::donation.donation").deleteAll();
-
-      return ctx.send();
-    },
-
-    async stats(ctx) {
-      // let donorCount;
-      // try {
-      //   donorCount = await strapi
-      //     .service("api::donor.donor")
-      //     .donorsWithFinalizedDonationCount();
-      // } catch (error) {
-      //   console.error(error);
-      //   return ctx.badRequest("Failed to get donor count");
-      // }
-
-      let donationSum;
-      try {
-        donationSum = await strapi
-          .service("api::donation.donation")
-          .sumOfFinalizedDonations();
-      } catch (error) {
-        console.error(error);
-        return ctx.badRequest("Failed to get donation count");
-      }
-
-      let campaignSum;
-      try {
-        campaignSum = await strapi
-          .service("api::donation.donation")
-          .sumOfFinalizedCampaignDonations();
-      } catch (error) {
-        console.error(error);
-        return ctx.badRequest("Failed to get campaign donation count");
-      }
-
-      return ctx.send({
-        // donorCount,
-        donationSum,
-        campaignSum,
-      });
-    },
-
-    async findTransaction(ctx) {
-      const { idCode, amount, date } = ctx.request.query;
-
-      let donation;
-      try {
-        donation = await strapi
-          .service("api::donation.donation")
-          .findTransactionDonation({ idCode, amount, date });
-      } catch (error) {
-        console.error(error);
-        return ctx.badRequest(error.message);
-      }
-
-      return ctx.send({ donation });
-    },
-
-    async insertTransaction(ctx) {
-      const { idCode, amount, date, iban } = ctx.request.body;
-
-      await strapi.service("api::donation.donation").insertFromTransaction({
-        idCode,
-        amount,
-        date,
-        iban,
-      });
-
-      return ctx.send();
-    },
-
-    async insertDonation(ctx) {
-      const donation = { ...ctx.request.body };
-      await strapi.service("api::donation.donation").insertDonation(donation);
-
-      return ctx.send();
-    },
-
-    async migrateTips(ctx) {
-      const migratedCount = await strapi
-        .service("api::donation.donation")
-        .migrateTips();
-
-      const migratedRecurringCount = await strapi
-        .service("api::donation.donation")
-        .migrateRecurringTips();
-
-      return ctx.send({ migratedCount, migratedRecurringCount });
-    },
-
-    async addDonationsToTransferByDate(ctx) {
-      const { startDate, endDate, transferId } = ctx.request.body;
-
-      if (!startDate || !endDate || !transferId) {
-        return ctx.badRequest(
-          "Missing required fields (startDate, endDate, transferId)"
-        );
-      }
-
-      const donations = await strapi
-        .service("api::donation.donation")
-        .getDonationsInDateRange(startDate, endDate);
-
-      const donationIds = donations.map((donation) => donation.id);
-
-      await strapi
-        .service("api::donation.donation")
-        .addDonationsToTransfer(donationIds, transferId);
-
-      return ctx.send({
-        message: `Added ${donationIds.length} donations to transfer ${transferId}`,
-      });
-    },
-  })
-);
+  async addDonationsToTransferByDate(ctx) {
+    return global.strapi.plugin('donations').controller('donation').addDonationsToTransferByDate(ctx);
+  },
+};

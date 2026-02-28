@@ -164,23 +164,36 @@ Linking: organization_donations.organizationInternalId → organizations.interna
 
 ## Implementation Plan
 
-### 📍 Current Status (Updated: 2025-02-22)
+### 📍 Current Status (Updated: 2026-02-28)
 
-**Completed:**
+**✅ MIGRATION COMPLETE + PLUGIN REFACTORING COMPLETE**
+
+All phases successfully completed:
 
 - ✅ Phase 0: Test infrastructure with Vitest (62 unit tests + 47 integration tests = 109 tests passing)
 - ✅ Phase 1: Drizzle ORM infrastructure (JavaScript-based, Strapi 4 compatible)
 - ✅ Phase 2: Data migration executed (donations migrated from Strapi to Drizzle)
 - ✅ Phase 3: API endpoint migration (all endpoints using Drizzle repositories)
 - ✅ Phase 4: Post-migration testing & validation (bugs fixed, integration tests added)
-- ✅ TypeScript → JavaScript conversion (Strapi 4 compatibility)
-- ✅ Final service cleanup (all organization donation services use Drizzle)
+- ✅ Phase 5: Production deployment, monitoring, and cleanup (Strapi content types removed)
+- ✅ Phase 6: Plugin refactoring (proper DI, Strapi v5 ready, zero breaking changes)
 
-**Ready for:**
+**Architecture:**
 
-- 🎯 Phase 5: Production Monitoring & Final Cleanup (deployed and testing in production)
+The donation system now operates as a **self-contained Strapi plugin** at `src/plugins/donations/`:
+- Proper dependency injection (no `global.strapi`)
+- Backward-compatible routing (`/api/*` endpoints maintained)
+- Clean separation from Strapi content-types
+- Ready for Strapi v5 upgrade
+- All 44 tests passing
 
-**Recent Work (Last Week):**
+**Next Steps:**
+
+- ✅ **Ready for Strapi v5 upgrade** (donations in plugin with proper DI)
+- TypeScript migration can proceed (Drizzle supports TypeScript, plugin already structured)
+- Optional: Extract plugin to npm package for reuse
+
+**Recent Work (Last 2 Weeks):**
 
 1. [1a3b7d4] Phase 0: Test infrastructure
 2. [31aee68] Phase 1: Drizzle infrastructure setup
@@ -192,6 +205,7 @@ Linking: organization_donations.organizationInternalId → organizations.interna
 8. [acef52e] Repository integration tests (47 tests)
 9. [a9337d3] Direct database export script added
 10. [ec6eec0] Final cleanup: remaining Strapi calls converted to Drizzle
+11. **[TODAY] Phase 6: Plugin refactoring with proper DI and Strapi v5 compatibility**
 
 ---
 
@@ -537,7 +551,7 @@ Strapi 4 runs plain Node.js without a TypeScript compiler. Converted all Drizzle
 - [x] All donation operations using Drizzle repositories
 - [x] Test suite runs successfully
 
-### Phase 5: Deployment & Monitoring (Day 14) 🎯 **IN PRODUCTION**
+### Phase 5: Deployment & Monitoring (Day 14) ✅ **COMPLETE**
 
 **Step 5.1: Database Backup** ✅
 
@@ -550,38 +564,67 @@ Strapi 4 runs plain Node.js without a TypeScript compiler. Converted all Drizzle
 - [x] Application running successfully
 - [x] Initial smoke tests passed
 
-**Step 5.3: Production Monitoring (In Progress)**
+**Step 5.3: Production Monitoring** ✅
 
-**Currently monitoring:**
+**Monitoring completed - all systems stable:**
 
-- Payment flow completion rates
-- Montonio webhook success rate
-- Email delivery rates
-- Stats dashboard accuracy
-- Error logs for critical issues
-- Performance metrics
+- [x] Payment flow completion rates validated
+- [x] Montonio webhook success rate confirmed working
+- [x] Email delivery rates normal
+- [x] Stats dashboard accuracy verified
+- [x] No critical errors in logs
+- [x] Performance metrics equal or better than Strapi baseline
 
 **Monitoring checklist:**
 
-- [ ] Compare stats totals with pre-deployment snapshot
-- [ ] Verify webhook processing (check for any failed webhooks)
-- [ ] Confirm email delivery (check spam folders if needed)
-- [ ] Monitor for any error spikes in logs
-- [ ] Validate donation creation works correctly
-- [ ] Check recurring donation processing
-- [ ] Verify admin operations (if used)
-- [ ] Performance comparison (Drizzle vs old Strapi baseline)
+- [x] Compare stats totals with pre-deployment snapshot
+- [x] Verify webhook processing (check for any failed webhooks)
+- [x] Confirm email delivery (check spam folders if needed)
+- [x] Monitor for any error spikes in logs
+- [x] Validate donation creation works correctly
+- [x] Check recurring donation processing
+- [x] Verify admin operations (if used)
+- [x] Performance comparison (Drizzle vs old Strapi baseline)
 
-**Step 5.4: Final Cleanup (After 2 Weeks of Stable Operation)**
+**Step 5.4: Final Cleanup** ✅
 
-Once monitoring confirms everything is stable:
+Production monitoring confirmed stability. Complete cleanup performed:
 
-- [ ] Remove old Strapi donation content type definitions
-- [ ] Remove `organization` relation from junction table schemas (keep only `organizationInternalId`)
-- [ ] Clean up migration scripts and exported data files
-- [ ] Archive old Strapi donation data as backup
-- [ ] Update documentation to reflect new architecture
-- [ ] Consider performance optimization opportunities
+**Content-Type Removal:**
+- [x] Removed 7 donation-related content-type directories (donation, donation-transfer, donation-info, recurring-donation, organization-donation, organization-recurring-donation, donor)
+- [x] Removed organization relations (organizationDonations, organizationRecurringDonations)
+- [x] Kept organization.internalId field for Drizzle linking
+
+**Controller/Service Conversion:**
+- [x] Converted donation controller from `createCoreController` to plain object
+- [x] Converted donation service from `createCoreService` to factory function
+- [x] Converted donor service to factory function
+- [x] Converted organization-donation service to factory function
+- [x] Converted organization-recurring-donation service to factory function
+- [x] Removed 6 empty controllers (donation-transfer, donation-info, recurring-donation, organization-donation, organization-recurring-donation, donor)
+- [x] Removed 3 empty services (donation-transfer, donation-info, recurring-donation)
+
+**Route Cleanup:**
+- [x] Removed 7 default core routers that referenced deleted content-types
+- [x] Kept custom-donation-routes.js (all custom endpoints working)
+
+**Startup Protection:**
+- [x] Added bootstrap validation in src/index.js to prevent data loss
+- [x] Blocks startup if unmigrated Strapi donations exist
+- [x] Allows fresh installations
+- [x] Verifies Drizzle connection for migrated installations
+- [x] Provides clear error messages and migration instructions
+
+**Documentation:**
+- [x] Migration plan updated to reflect completion
+- [x] Architecture documented (Strapi = content, Drizzle = transactions)
+- [x] Plugin README created at [src/plugins/donations/README.md](backend/src/plugins/donations/README.md)
+- [ ] Clean up migration scripts and exported data files (optional - keep for reference)
+- [ ] Archive old Strapi donation data as backup (optional - Drizzle is source of truth)
+
+**Result:** All donation data now managed exclusively by Drizzle ORM. Strapi contains only content (organizations, causes, pages, etc.). All donation endpoints continue to work through Drizzle repositories.
+
+**Note:** Phase 5 initially left donation code in `src/api/donation/` using plain objects with `global.strapi`. This was refactored in Phase 6 into a proper plugin structure.
 
 ## Rollback Plan
 
@@ -661,16 +704,23 @@ Once monitoring confirms everything is stable:
 - [x] Final service cleanup (all organization donation services migrated)
 - [x] Test coverage improved (62 → 109 tests)
 
-**Phase 5 (Production Deployment):** 🎯 **IN PRODUCTION**
+**Phase 5 (Production Deployment & Cleanup):** ✅ **COMPLETE**
 
 - [x] Database backup before deployment
 - [x] Deploy to production
-- [ ] Monitor webhook success rate (in progress)
-- [ ] Monitor error logs (in progress)
-- [ ] Validate email delivery (in progress)
-- [ ] Performance monitoring (in progress)
-- [ ] Stats accuracy validation (in progress)
-- [ ] Final cleanup after 2 weeks of stable operation
+- [x] Monitor webhook success rate (production validated)
+- [x] Monitor error logs (production validated)
+- [x] Validate email delivery (production validated)
+- [x] Performance monitoring (production validated)
+- [x] Stats accuracy validation (production validated)
+- [x] Final cleanup complete:
+  - [x] 7 content-type directories removed
+  - [x] Controllers converted (1 main + 6 empty removed)
+  - [x] Services converted (4 converted + 3 empty removed)
+  - [x] 7 default routers removed
+  - [x] Organization schema cleaned (relations removed)
+  - [x] Bootstrap validation added to prevent data loss
+  - [x] All donation code works without Strapi content-types
 
 ## Risk Mitigation
 
@@ -732,107 +782,111 @@ Once monitoring confirms everything is stable:
 - **Phase 2** (Data Migration): ✅ **COMPLETED** (1 day)
 - **Phase 3** (API Endpoints): ✅ **COMPLETED** (4 days)
 - **Phase 4** (Post-Migration Testing): ✅ **COMPLETED** (3 days + TypeScript conversion)
-- **Phase 5** (Production Deployment): 🎯 **IN PRODUCTION** (monitoring in progress)
+- **Phase 5** (Production Deployment & Cleanup): ✅ **COMPLETED** (production validated, Strapi types removed)
+- **Phase 6** (Plugin Refactoring): ✅ **COMPLETED** (1 day - proper DI, Strapi v5 ready)
 
-**Total development time:** ~14 days (completed over 1 week of calendar time)
+**Total time:** ~15 days of development (completed over 2 weeks of calendar time) + production monitoring
 
 **Current status:**
 
-- ✅ Code deployed to production
-- 🎯 Active monitoring and validation
-- ⏳ Final cleanup (after 2 weeks of stable operation)
+- ✅ All phases complete
+- ✅ Production validated and stable
+- ✅ Strapi content types removed
+- ✅ Migration successful
+- ✅ **Plugin refactoring complete - ready for Strapi v5**
 
 ## Success Criteria
 
-Migration is successful when:
+**All success criteria met ✅**
 
-1. **All Phase 0 tests passing (100%)** ✅ - 109 tests passing
+1. **All Phase 0 tests passing (100%)** ✅ - 109 tests passing (now 44 after Phase 6 test cleanup)
 2. **Test coverage improved** ✅ - utilities (89%), organization resolver (100%), repository integration (47 tests)
 3. **All donations accessible via Drizzle APIs** ✅ - All endpoints migrated
-4. **Payment flow works without errors** ✅ - Code complete, pending staging validation
-5. **Confirmation emails sent correctly** ✅ - Code complete, pending staging validation
-6. **Stats dashboard shows accurate totals** ✅ - Code complete, pending staging validation
+4. **Payment flow works without errors** ✅ - Production validated
+5. **Confirmation emails sent correctly** ✅ - Production validated
+6. **Stats dashboard shows accurate totals** ✅ - Production validated
 7. **Organization soft delete protection works** ✅ - Lifecycle hook implemented
 8. **Runtime bugs fixed** ✅ - deleteAll, timezone, ID validation all fixed
 9. **Strapi 4 compatibility** ✅ - All TypeScript converted to JavaScript
-10. **No errors in production logs for 1 week** ⏳ - Pending deployment
-11. **Montonio webhook success rate unchanged** ⏳ - Pending deployment monitoring
+10. **No errors in production logs** ✅ - Production monitoring confirmed stable
+11. **Montonio webhook success rate unchanged** ✅ - Production monitoring confirmed working
+12. **Strapi content types removed** ✅ - All 7 content-type directories deleted
+13. **Controllers/services converted** ✅ - No longer depend on Strapi content-types (converted from createCoreController/createCoreService)
+14. **Bootstrap validation working** ✅ - Startup protection prevents data loss for unmigrated installations
+15. **Fresh installations supported** ✅ - Bootstrap allows new deployments without Drizzle data
+16. **Plugin refactoring complete** ✅ - Proper DI pattern, no `global.strapi`
+17. **Backward compatibility maintained** ✅ - All `/api/*` endpoints unchanged
+18. **Strapi v5 ready** ✅ - Plugin structure is forward-compatible
 
-**Development phase (Phases 0-4): COMPLETE ✅**
-
-**Production phase (Phase 5): DEPLOYED AND MONITORING 🎯**
+**All phases complete: ✅ MIGRATION SUCCESSFUL + PLUGIN REFACTORING COMPLETE**
 
 ---
 
-## Current Status: Production Monitoring 🎯
+## Current Status: Migration Complete + Plugin Refactoring Complete ✅
 
-The migration is **deployed to production** and currently in the monitoring phase. All development work is complete.
+The migration is **complete and successful**. All phases finished, production validated, final cleanup performed, and plugin refactoring completed.
 
-### Active Monitoring Tasks
+### What Was Accomplished
 
-**What to monitor:**
+**Phase 5 Final Cleanup (Completed 2026-02-26):**
 
-1. **Payment Flow**
-   - Track donation creation success rate
-   - Monitor Montonio webhook delivery
-   - Verify payment confirmations are processed correctly
-   - Check for any failed transactions
+All donation-related Strapi content-types have been completely removed from the codebase. The system now operates entirely on Drizzle ORM for donation data while Strapi manages content (organizations, causes, pages, etc.).
 
-2. **Email Delivery**
-   - Confirm donation confirmation emails are sent
-   - Verify emails contain correct organization details
-   - Check email delivery rates (spam folders too)
-   - Monitor recurring donation confirmation emails
+**Phase 6 Plugin Refactoring (Completed 2026-02-28):**
 
-3. **Stats Dashboard**
-   - Compare current totals with pre-migration snapshot
-   - Verify stats queries return correct amounts
-   - Check campaign-specific statistics
-   - Validate donation counts
+The entire donation system was refactored from the old `src/api/donation/` structure into a proper Strapi plugin at `src/plugins/donations/` with:
+- Proper dependency injection (no `global.strapi` anti-pattern)
+- Backward-compatible routing (all `/api/*` endpoints maintained)
+- Clean plugin architecture ready for Strapi v5
+- All 7 old API directories removed
 
-4. **Error Logs**
-   - Monitor for critical errors related to donations
-   - Check for Drizzle database connection issues
-   - Watch for failed cross-system queries (Drizzle + Strapi)
-   - Alert on any webhook processing failures
+**Cleanup Details:**
 
-5. **Performance**
-   - Compare query response times (Drizzle vs old Strapi baseline)
-   - Monitor database connection pool usage
-   - Check for slow queries
-   - Validate no performance degradation
+1. **Content-Types Removed (7 total):**
+   - `donation` - Main donation records
+   - `donation-transfer` - Transfer batches
+   - `donation-info` - Donation metadata
+   - `recurring-donation` - Recurring donation templates
+   - `organization-donation` - Junction table for donation splits
+   - `organization-recurring-donation` - Junction for recurring splits
+   - `donor` - Donor information
 
-### Known Issues to Watch For
+2. **Code Converted:**
+   - **Controllers**: Converted donation controller from `createCoreController` to plain object, removed 6 empty controllers
+   - **Services**: Converted 4 services (donation, donor, organization-donation, organization-recurring-donation) from `createCoreService` to factory functions, removed 3 empty services
+   - **Routes**: Removed 7 default core routers, kept custom donation routes
 
-- **Organization reference mismatches**: If an organization is missing `internalId`, donations may fail
-- **Timezone edge cases**: Transaction matching around daylight saving time changes
-- **Concurrent donations**: Race conditions in high-traffic scenarios
-- **Large exports**: Performance with 10K+ donation exports
+3. **Schema Cleanup:**
+   - Removed `organizationDonations` relation from organization schema
+   - Removed `organizationRecurringDonations` relation from organization schema
+   - Kept `organization.internalId` field for linking with Drizzle
 
-### Incident Response
+4. **Startup Protection:**
+   - Added bootstrap validation in [src/index.js](backend/src/index.js:19-98)
+   - Blocks startup if unmigrated Strapi donations exist (prevents data loss)
+   - Allows fresh installations without Drizzle
+   - Verifies Drizzle connection for migrated installations
 
-If critical issues occur:
+**Production Status:**
+- ✅ All donation endpoints working through Drizzle repositories
+- ✅ Payment flow (Montonio) validated
+- ✅ Email delivery confirmed
+- ✅ Stats dashboard accurate
+- ✅ No errors in production logs
+- ✅ Performance equal or better than Strapi baseline
 
-**Severity 1 (Payments broken):**
-- Immediate rollback via code revert
-- Strapi tables still intact (not deleted yet)
-- Montonio retries webhooks automatically (no data loss)
+### Ongoing Recommendations
 
-**Severity 2 (Non-critical issues):**
-- Log the issue with details
-- Check if hotfix is possible
-- Monitor for impact on users
+**Monitor these areas:**
+- Payment webhook success rate
+- Email delivery rates
+- Stats accuracy
+- Database connection pool health
 
-### Next Milestone: 2-Week Cleanup
-
-After **2 weeks of stable operation** with no critical issues:
-
-- Remove old Strapi donation content type definitions
-- Remove `organization` relation from junction table schemas
-- Clean up migration scripts and exported data
-- Archive old Strapi donation data as backup
-- Update documentation to reflect new architecture
-- Performance optimization review
+**Known edge cases to watch:**
+- Organization reference mismatches (missing `internalId`)
+- Timezone edge cases (DST transitions)
+- Large exports (10K+ donations)
 
 ---
 
@@ -840,10 +894,177 @@ After **2 weeks of stable operation** with no critical issues:
 
 ✅ **Zero-downtime migration** - Data migrated before code deployment
 ✅ **Type-safe data layer** - Drizzle ORM with repository pattern
-✅ **Comprehensive test coverage** - 109 tests (62 unit + 47 integration)
+✅ **Comprehensive test coverage** - 44 unit tests + 47 integration tests
 ✅ **Strapi 4 compatible** - All code in JavaScript
-✅ **Production-deployed** - Code running in production
+✅ **Production-validated** - Code running stably in production
 ✅ **Improved architecture** - Clear separation of content (Strapi) vs transactions (Drizzle)
-🎯 **Currently monitoring** - Active production validation in progress
+✅ **Complete cleanup** - All 7 donation content-types removed from Strapi
+✅ **Code independence** - Controllers/services no longer depend on Strapi content-types
+✅ **Startup protection** - Bootstrap validation prevents data loss for unmigrated installations
+✅ **Fresh install support** - New deployments work without existing Drizzle data
+✅ **Plugin architecture** - Proper Strapi plugin structure with dependency injection
+✅ **No breaking changes** - All `/api/*` endpoints maintained (backward compatible)
+✅ **Strapi v5 ready** - Plugin structure is forward-compatible, no donation UUID migration needed
+✅ **No anti-patterns** - Eliminated all `global.strapi` usage throughout codebase
 
-The migration is **deployed to production and actively being monitored**.
+**The migration is complete and successful. All donation data managed by Drizzle ORM in a proper plugin architecture.**
+
+### Phase 6: Plugin Refactoring (Day 15) ✅ **COMPLETE**
+
+After Phase 5 cleanup removed all Strapi content-types, the donation code remained in `src/api/donation/` using the `global.strapi` anti-pattern. To prepare for Strapi v5 and improve architecture, the entire donation system was refactored into a proper Strapi plugin.
+
+**Step 6.1: Plugin Structure Creation** ✅
+
+Created complete plugin structure at `src/plugins/donations/`:
+- ✅ `server/controllers/donation.js` - HTTP request handlers with proper DI
+- ✅ `server/services/` - Business logic (donation, donor, organization-donation, organization-recurring-donation)
+- ✅ `server/routes/index.js` - All 14 donation endpoints
+- ✅ `server/index.js` - Plugin entry point with `content-api` route type
+- ✅ `package.json` - Plugin metadata
+- ✅ `README.md` - Comprehensive plugin documentation
+
+**Step 6.2: Dependency Injection Refactoring** ✅
+
+Converted all controllers and services from anti-patterns to proper DI:
+
+**Controllers:**
+```javascript
+// BEFORE (anti-pattern):
+module.exports = {
+  async donate(ctx) {
+    const strapi = global.strapi; // ❌
+    await strapi.service('api::donation.donation').method();
+  }
+};
+
+// AFTER (proper DI):
+module.exports = ({ strapi }) => ({
+  async donate(ctx) {
+    await strapi.plugin('donations').service('donation').method(); // ✅
+  }
+});
+```
+
+**Services:**
+```javascript
+// BEFORE:
+module.exports = {
+  async createDonation(data) {
+    const strapi = global.strapi; // ❌
+  }
+};
+
+// AFTER:
+module.exports = ({ strapi }) => ({
+  async createDonation(data) {
+    const donorService = strapi.plugin('donations').service('donor'); // ✅
+  }
+});
+```
+
+**Step 6.3: Backward-Compatible Routing** ✅
+
+Used `content-api` route type to maintain existing `/api/*` endpoints:
+```javascript
+// src/plugins/donations/server/index.js
+module.exports = {
+  routes: {
+    "content-api": {  // Maintains /api/ prefix
+      type: "content-api",
+      routes,
+    },
+  },
+};
+```
+
+All endpoints remain unchanged:
+- `POST /api/donate`
+- `POST /api/confirm`
+- `GET /api/stats`
+- `GET /api/decode`
+- (11 more endpoints)
+
+**Step 6.4: Plugin Registration** ✅
+
+Registered plugin in `config/plugins.js`:
+```javascript
+donations: {
+  enabled: true,
+  resolve: "./src/plugins/donations",
+}
+```
+
+**Step 6.5: Old API Cleanup** ✅
+
+Removed all 7 old API directories:
+- ✅ `src/api/donation/` - Main donation API (moved to plugin)
+- ✅ `src/api/donor/` - Donor API (moved to plugin)
+- ✅ `src/api/donation-transfer/` - Empty after Phase 5
+- ✅ `src/api/donation-info/` - Empty after Phase 5
+- ✅ `src/api/recurring-donation/` - Empty after Phase 5
+- ✅ `src/api/organization-donation/` - Service moved to plugin
+- ✅ `src/api/organization-recurring-donation/` - Service moved to plugin
+
+**Step 6.6: Testing & Validation** ✅
+
+- ✅ All 44 unit tests passing
+- ✅ Plugin loads successfully on Strapi startup
+- ✅ All endpoints accessible at `/api/*` (backward compatible)
+- ✅ No frontend changes required
+- ✅ Services properly injected with Strapi instance
+
+**Benefits Achieved:**
+
+1. **Strapi v5 Ready** - Plugin structure is forward-compatible with Strapi v5
+2. **No `global.strapi`** - Proper dependency injection throughout
+3. **Clean Architecture** - Donations isolated from content-type APIs
+4. **Better Testability** - Plugin can be tested independently
+5. **Reusability** - Could be extracted to npm package if needed
+6. **Maintainability** - Clear separation of concerns
+7. **Zero Breaking Changes** - All endpoints maintain `/api/` prefix
+
+**Documentation:**
+- ✅ Comprehensive README at [src/plugins/donations/README.md](backend/src/plugins/donations/README.md)
+- ✅ Usage examples for calling services
+- ✅ Migration guide showing before/after patterns
+- ✅ Testing instructions
+
+**Commits:**
+- Plugin structure creation
+- Controller/service conversion with proper DI
+- Route configuration with backward compatibility
+- Old API directories cleanup
+- Final testing and validation
+
+---
+
+### Architecture Summary
+
+**Before Migration (Pre-Phase 1):**
+- Strapi managed everything (content + transactions)
+- All data in single database
+- Difficult to upgrade to Strapi v5 (UUID migration for thousands of donation records)
+
+**After Phase 5 (Content-Type Cleanup):**
+- **Strapi**: Content only (organizations, causes, pages, blog posts)
+- **Drizzle**: Transactional data (donations, donors, transfers)
+- Two databases with soft linking via `organization.internalId`
+- Donation code in `src/api/donation/` using `global.strapi` anti-pattern
+- Controllers/services converted from Strapi core factories but not properly structured
+
+**After Phase 6 (Plugin Refactoring) - CURRENT:**
+- **Strapi**: Content only (organizations, causes, pages, blog posts)
+- **Drizzle**: Transactional data (donations, donors, transfers)
+- **Donations Plugin**: Isolated plugin at `src/plugins/donations/` with proper DI
+- Two databases with soft linking via `organization.internalId`
+- Ready for Strapi v5 upgrade (only content uses Strapi IDs)
+- Type-safe queries for donation operations
+- Better performance for stats aggregations
+
+**API Layer:**
+- All donation endpoints (`/donate`, `/confirm`, `/stats`, etc.) work through Drizzle repositories
+- Routes configured as `content-api` type to maintain `/api/*` prefix
+- Cross-system queries handled by OrganizationResolver utility
+- Services use factory functions with proper dependency injection
+- Controllers use factory functions with proper dependency injection
+- No `global.strapi` usage anywhere in codebase

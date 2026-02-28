@@ -1,32 +1,31 @@
 "use strict";
 
-const { createCoreService } = require("@strapi/strapi").factories;
 const {
   amountToCents,
   validateIdCode,
   validateEmail,
   validateAmount,
-} = require("../../../utils/donation");
-const { createRecurringPaymentLink } = require("../../../utils/banks");
-const { fetchRedirectUrl } = require("../../../utils/montonio");
-const { formatEstonianAmount } = require("../../../utils/estonia");
+} = require("../../../../utils/donation");
+const { createRecurringPaymentLink } = require("../../../../utils/banks");
+const { fetchRedirectUrl } = require("../../../../utils/montonio");
+const { formatEstonianAmount } = require("../../../../utils/estonia");
 const {
   format,
   textIntoParagraphs,
   sanitize,
-} = require("../../../utils/string");
+} = require("../../../../utils/string");
 const {
   DonationsRepository,
-} = require("../../../db/repositories/donations.repository");
+} = require("../../../../db/repositories/donations.repository");
 const {
   OrganizationDonationsRepository,
-} = require("../../../db/repositories/organization-donations.repository");
+} = require("../../../../db/repositories/organization-donations.repository");
 const {
   RecurringDonationsRepository,
-} = require("../../../db/repositories/recurring-donations.repository");
+} = require("../../../../db/repositories/recurring-donations.repository");
 const {
   OrganizationRecurringDonationsRepository,
-} = require("../../../db/repositories/organization-recurring-donations.repository");
+} = require("../../../../db/repositories/organization-recurring-donations.repository");
 
 const donationsRepo = new DonationsRepository();
 const organizationDonationsRepo = new OrganizationDonationsRepository();
@@ -34,7 +33,7 @@ const recurringDonationsRepo = new RecurringDonationsRepository();
 const organizationRecurringDonationsRepo =
   new OrganizationRecurringDonationsRepository();
 
-module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
+module.exports = ({ strapi }) => ({
   async validateDonation(donation) {
     if (!donation) {
       return { valid: false, reason: "No donation provided" };
@@ -244,7 +243,8 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     }
 
     const donor = await strapi
-      .service("api::donor.donor")
+      .plugin("donations")
+      .service("donor")
       .updateOrCreateDonor(donation);
 
     if (donation.type === "recurring") {
@@ -284,7 +284,8 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     }
 
     const donor = await strapi
-      .service("api::donor.donor")
+      .plugin("donations")
+      .service("donor")
       .updateOrCreateDonorByEmail(donation);
 
     // Create donation in Drizzle
@@ -506,7 +507,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
 
     const {
       DonorsRepository,
-    } = require("../../../db/repositories/donors.repository");
+    } = require("../../../../db/repositories/donors.repository");
     const donorsRepo = new DonorsRepository();
 
     // Fetch donation and donor from Drizzle
@@ -604,7 +605,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
 
     const {
       DonorsRepository,
-    } = require("../../../db/repositories/donors.repository");
+    } = require("../../../../db/repositories/donors.repository");
     const donorsRepo = new DonorsRepository();
 
     // Fetch recurring donation and donor from Drizzle
@@ -726,7 +727,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       organizationDonationsRepository,
       organizationRecurringDonationsRepository,
       donationTransfersRepository,
-    } = require("../../../db/repositories");
+    } = require("../../../../db/repositories");
 
     // Causes and organizations stay in Strapi (content)
     const causeMap = {};
@@ -755,7 +756,8 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     const donorMap = {};
     for (let donor of donors) {
       const donorEntry = await strapi
-        .service("api::donor.donor")
+        .plugin("donations")
+        .service("donor")
         .findOrCreateDonor(donor);
       donorMap[donor.id] = donorEntry.id;
     }
@@ -853,7 +855,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       organizationDonationsRepository,
       organizationRecurringDonationsRepository,
       donationTransfersRepository,
-    } = require("../../../db/repositories");
+    } = require("../../../../db/repositories");
 
     // Causes and organizations stay in Strapi (content)
     const causes = await strapi.entityService.findMany("api::cause.cause", {
@@ -928,7 +930,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   },
 
   async deleteAll() {
-    const { db } = require("../../../db/client");
+    const { db } = require("../../../../db/client");
     const {
       organizationDonations,
       donations,
@@ -936,7 +938,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       recurringDonations,
       donationTransfers,
       donors,
-    } = require("../../../db/schema");
+    } = require("../../../../db/schema");
 
     // Delete in FK-safe order: dependents before parents
     await db.delete(organizationDonations);
@@ -948,7 +950,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   },
 
   async sumOfFinalizedDonations() {
-    const { donationsRepository } = require("../../../db/repositories");
+    const { donationsRepository } = require("../../../../db/repositories");
     const global = await strapi.db.query("api::global.global").findOne();
 
     // Get organization internalIds for tip and external organizations
@@ -980,7 +982,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   },
 
   async sumOfFinalizedCampaignDonations() {
-    const { donationsRepository } = require("../../../db/repositories");
+    const { donationsRepository } = require("../../../../db/repositories");
     const global = await strapi.db.query("api::global.global").findOne();
 
     // Get organization internalIds for tip and external organizations
@@ -1017,7 +1019,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     const {
       donorsRepository,
       donationsRepository,
-    } = require("../../../db/repositories");
+    } = require("../../../../db/repositories");
 
     const donor = await donorsRepository.findByIdCode(idCode);
 
@@ -1070,11 +1072,11 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       recurringDonationsRepository,
       organizationDonationsRepository,
       organizationRecurringDonationsRepository,
-    } = require("../../../db/repositories");
-    const { resizeOrganizationDonations } = require("../../../utils/donation");
+    } = require("../../../../db/repositories");
+    const { resizeOrganizationDonations } = require("../../../../utils/donation");
 
     // Find donor (still using Strapi donor service for now)
-    let donor = await strapi.service("api::donor.donor").findDonor(idCode);
+    let donor = await strapi.plugin("donations").service("donor").findDonor(idCode);
 
     if (!donor) {
       throw new Error(`Donor not found for ID code ${idCode}`);
@@ -1156,7 +1158,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
     const {
       donationsRepository,
       organizationDonationsRepository,
-    } = require("../../../db/repositories");
+    } = require("../../../../db/repositories");
 
     const {
       organizationDonations,
@@ -1202,7 +1204,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
 
 
   async getDonationsInDateRange(startDate, endDate) {
-    const { donationsRepository } = require("../../../db/repositories");
+    const { donationsRepository } = require("../../../../db/repositories");
 
     // Get donations in date range from Drizzle
     const allDonations = await donationsRepository.findByDateRange(
@@ -1217,7 +1219,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   },
 
   async addDonationsToTransfer(donationIds, transferId) {
-    const { donationsRepository } = require("../../../db/repositories");
+    const { donationsRepository } = require("../../../../db/repositories");
 
     // Use repository's batch update method (more efficient than forEach)
     await donationsRepository.addToTransfer(donationIds, transferId);
@@ -1230,7 +1232,7 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   async getDonationWithDetails(donationId) {
     const {
       DonorsRepository,
-    } = require("../../../db/repositories/donors.repository");
+    } = require("../../../../db/repositories/donors.repository");
     const donorsRepo = new DonorsRepository();
 
     // Fetch donation with organization donations from Drizzle
@@ -1282,10 +1284,10 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
   async getRecurringDonationWithDetails(recurringDonationId) {
     const {
       DonorsRepository,
-    } = require("../../../db/repositories/donors.repository");
+    } = require("../../../../db/repositories/donors.repository");
     const {
       OrganizationRecurringDonationsRepository,
-    } = require("../../../db/repositories/organization-recurring-donations.repository");
+    } = require("../../../../db/repositories/organization-recurring-donations.repository");
 
     const donorsRepo = new DonorsRepository();
     const orgRecurringDonationsRepo =
@@ -1341,4 +1343,4 @@ module.exports = createCoreService("api::donation.donation", ({ strapi }) => ({
       organizationRecurringDonations: organizationRecurringDonationsWithOrgs,
     };
   },
-}));
+});

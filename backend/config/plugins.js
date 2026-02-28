@@ -26,4 +26,8 @@ module.exports = ({ env }) => ({
       },
     },
   },
+  donations: {
+    enabled: true,
+    resolve: "./src/plugins/donations",
+  },
 });
