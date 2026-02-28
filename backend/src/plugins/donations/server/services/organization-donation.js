@@ -1,14 +1,11 @@
 "use strict";
 
-const { createCoreService } = require("@strapi/strapi").factories;
-const { resizeOrganizationDonations } = require("../../../utils/donation");
+const { resizeOrganizationDonations } = require("../../../../utils/donation");
 const {
   organizationDonationsRepository,
-} = require("../../../db/repositories");
+} = require("../../../../db/repositories");
 
-module.exports = createCoreService(
-  "api::organization-donation.organization-donation",
-  ({ strapi }) => ({
+module.exports = ({ strapi }) => ({
     async createOrganizationDonations({ donationId, amounts }) {
       // Convert organization IDs to internalIds and create organization donations
       const organizationDonationsData = await Promise.all(
@@ -98,5 +95,4 @@ module.exports = createCoreService(
         organizationDonationsData
       );
     },
-  })
-);
+  });

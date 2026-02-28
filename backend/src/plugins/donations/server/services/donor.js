@@ -4,18 +4,17 @@
  * donor service
  */
 
-const { createCoreService } = require("@strapi/strapi").factories;
 const {
   DonorsRepository,
-} = require("../../../db/repositories/donors.repository");
+} = require("../../../../db/repositories/donors.repository");
 const {
   RecurringDonationsRepository,
-} = require("../../../db/repositories/recurring-donations.repository");
+} = require("../../../../db/repositories/recurring-donations.repository");
 
 const donorsRepo = new DonorsRepository();
 const recurringDonationsRepo = new RecurringDonationsRepository();
 
-module.exports = createCoreService("api::donor.donor", ({ strapi }) => ({
+module.exports = () => ({
   async findDonor(idCode) {
     // First, try to find donor by ID code in Drizzle
     const existingDonor = await donorsRepo.findByIdCode(idCode);
@@ -103,6 +102,7 @@ module.exports = createCoreService("api::donor.donor", ({ strapi }) => ({
   },
 
   async donorsWithFinalizedDonationCount() {
+    const strapi = global.strapi;
     const result = await strapi.db.connection.raw(
       `SELECT COUNT(DISTINCT donations_donor_links.donor_id)
        FROM donations
@@ -113,4 +113,4 @@ module.exports = createCoreService("api::donor.donor", ({ strapi }) => ({
     const count = Number(result.rows[0].count);
     return count;
   },
-}));
+});

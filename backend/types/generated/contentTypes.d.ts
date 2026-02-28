@@ -943,83 +943,6 @@ export interface ApiContactSubmissionContactSubmission
   };
 }
 
-export interface ApiDonationDonation extends Schema.CollectionType {
-  collectionName: 'donations';
-  info: {
-    singularName: 'donation';
-    pluralName: 'donations';
-    displayName: 'Donation';
-    description: '';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    donor: Attribute.Relation<
-      'api::donation.donation',
-      'manyToOne',
-      'api::donor.donor'
-    >;
-    recurringDonation: Attribute.Relation<
-      'api::donation.donation',
-      'manyToOne',
-      'api::recurring-donation.recurring-donation'
-    >;
-    datetime: Attribute.DateTime;
-    amount: Attribute.Integer;
-    finalized: Attribute.Boolean & Attribute.DefaultTo<false>;
-    paymentMethod: Attribute.String;
-    iban: Attribute.String;
-    comment: Attribute.Text;
-    companyName: Attribute.String &
-      Attribute.SetMinMaxLength<{
-        maxLength: 128;
-      }>;
-    companyCode: Attribute.String &
-      Attribute.SetMinMaxLength<{
-        maxLength: 128;
-      }>;
-    organizationDonations: Attribute.Relation<
-      'api::donation.donation',
-      'oneToMany',
-      'api::organization-donation.organization-donation'
-    >;
-    sentToOrganization: Attribute.Boolean & Attribute.DefaultTo<false>;
-    dedicationName: Attribute.String &
-      Attribute.SetMinMaxLength<{
-        maxLength: 128;
-      }>;
-    dedicationEmail: Attribute.String &
-      Attribute.SetMinMaxLength<{
-        maxLength: 256;
-      }>;
-    dedicationMessage: Attribute.Text &
-      Attribute.SetMinMaxLength<{
-        maxLength: 1024;
-      }>;
-    externalDonation: Attribute.Boolean & Attribute.DefaultTo<false>;
-    donationTransfer: Attribute.Relation<
-      'api::donation.donation',
-      'manyToOne',
-      'api::donation-transfer.donation-transfer'
-    >;
-    createdAt: Attribute.DateTime;
-    updatedAt: Attribute.DateTime;
-    createdBy: Attribute.Relation<
-      'api::donation.donation',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-    updatedBy: Attribute.Relation<
-      'api::donation.donation',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-  };
-}
-
 export interface ApiDonationInfoDonationInfo extends Schema.SingleType {
   collectionName: 'donation_infos';
   info: {
@@ -1051,97 +974,6 @@ export interface ApiDonationInfoDonationInfo extends Schema.SingleType {
       Attribute.Private;
     updatedBy: Attribute.Relation<
       'api::donation-info.donation-info',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-  };
-}
-
-export interface ApiDonationTransferDonationTransfer
-  extends Schema.CollectionType {
-  collectionName: 'donation_transfers';
-  info: {
-    singularName: 'donation-transfer';
-    pluralName: 'donation-transfers';
-    displayName: 'DonationTransfer';
-    description: '';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    datetime: Attribute.Date;
-    donations: Attribute.Relation<
-      'api::donation-transfer.donation-transfer',
-      'oneToMany',
-      'api::donation.donation'
-    >;
-    recipient: Attribute.String;
-    notes: Attribute.Text;
-    createdAt: Attribute.DateTime;
-    updatedAt: Attribute.DateTime;
-    createdBy: Attribute.Relation<
-      'api::donation-transfer.donation-transfer',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-    updatedBy: Attribute.Relation<
-      'api::donation-transfer.donation-transfer',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-  };
-}
-
-export interface ApiDonorDonor extends Schema.CollectionType {
-  collectionName: 'donors';
-  info: {
-    singularName: 'donor';
-    pluralName: 'donors';
-    displayName: 'Donor';
-    description: '';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    idCode: Attribute.String;
-    firstName: Attribute.String &
-      Attribute.SetMinMaxLength<{
-        maxLength: 128;
-      }>;
-    lastName: Attribute.String &
-      Attribute.SetMinMaxLength<{
-        maxLength: 128;
-      }>;
-    email: Attribute.Email &
-      Attribute.SetMinMaxLength<{
-        maxLength: 256;
-      }>;
-    recurringDonor: Attribute.Boolean;
-    donations: Attribute.Relation<
-      'api::donor.donor',
-      'oneToMany',
-      'api::donation.donation'
-    >;
-    recurringDonations: Attribute.Relation<
-      'api::donor.donor',
-      'oneToMany',
-      'api::recurring-donation.recurring-donation'
-    >;
-    createdAt: Attribute.DateTime;
-    updatedAt: Attribute.DateTime;
-    createdBy: Attribute.Relation<
-      'api::donor.donor',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-    updatedBy: Attribute.Relation<
-      'api::donor.donor',
       'oneToOne',
       'admin::user'
     > &
@@ -1285,16 +1117,6 @@ export interface ApiOrganizationOrganization extends Schema.CollectionType {
       Attribute.SetMinMaxLength<{
         maxLength: 64;
       }>;
-    organizationDonations: Attribute.Relation<
-      'api::organization.organization',
-      'oneToMany',
-      'api::organization-donation.organization-donation'
-    >;
-    organizationRecurringDonations: Attribute.Relation<
-      'api::organization.organization',
-      'oneToMany',
-      'api::organization-recurring-donation.organization-recurring-donation'
-    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -1305,96 +1127,6 @@ export interface ApiOrganizationOrganization extends Schema.CollectionType {
       Attribute.Private;
     updatedBy: Attribute.Relation<
       'api::organization.organization',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-  };
-}
-
-export interface ApiOrganizationDonationOrganizationDonation
-  extends Schema.CollectionType {
-  collectionName: 'organization_donations';
-  info: {
-    singularName: 'organization-donation';
-    pluralName: 'organization-donations';
-    displayName: 'OrganizationDonation';
-    description: '';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    donation: Attribute.Relation<
-      'api::organization-donation.organization-donation',
-      'manyToOne',
-      'api::donation.donation'
-    >;
-    organization: Attribute.Relation<
-      'api::organization-donation.organization-donation',
-      'manyToOne',
-      'api::organization.organization'
-    >;
-    organizationInternalId: Attribute.String &
-      Attribute.SetMinMaxLength<{
-        maxLength: 64;
-      }>;
-    amount: Attribute.Integer;
-    createdAt: Attribute.DateTime;
-    updatedAt: Attribute.DateTime;
-    createdBy: Attribute.Relation<
-      'api::organization-donation.organization-donation',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-    updatedBy: Attribute.Relation<
-      'api::organization-donation.organization-donation',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-  };
-}
-
-export interface ApiOrganizationRecurringDonationOrganizationRecurringDonation
-  extends Schema.CollectionType {
-  collectionName: 'organization_recurring_donations';
-  info: {
-    singularName: 'organization-recurring-donation';
-    pluralName: 'organization-recurring-donations';
-    displayName: 'OrganizationRecurringDonation';
-    description: '';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    recurringDonation: Attribute.Relation<
-      'api::organization-recurring-donation.organization-recurring-donation',
-      'manyToOne',
-      'api::recurring-donation.recurring-donation'
-    >;
-    organization: Attribute.Relation<
-      'api::organization-recurring-donation.organization-recurring-donation',
-      'manyToOne',
-      'api::organization.organization'
-    >;
-    organizationInternalId: Attribute.String &
-      Attribute.SetMinMaxLength<{
-        maxLength: 64;
-      }>;
-    amount: Attribute.Integer;
-    createdAt: Attribute.DateTime;
-    updatedAt: Attribute.DateTime;
-    createdBy: Attribute.Relation<
-      'api::organization-recurring-donation.organization-recurring-donation',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-    updatedBy: Attribute.Relation<
-      'api::organization-recurring-donation.organization-recurring-donation',
       'oneToOne',
       'admin::user'
     > &
@@ -1445,58 +1177,6 @@ export interface ApiPagePage extends Schema.CollectionType {
     createdBy: Attribute.Relation<'api::page.page', 'oneToOne', 'admin::user'> &
       Attribute.Private;
     updatedBy: Attribute.Relation<'api::page.page', 'oneToOne', 'admin::user'> &
-      Attribute.Private;
-  };
-}
-
-export interface ApiRecurringDonationRecurringDonation
-  extends Schema.CollectionType {
-  collectionName: 'recurring_donations';
-  info: {
-    singularName: 'recurring-donation';
-    pluralName: 'recurring-donations';
-    displayName: 'RecurringDonation';
-    description: '';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    active: Attribute.Boolean;
-    companyName: Attribute.String;
-    companyCode: Attribute.String;
-    comment: Attribute.Text;
-    bank: Attribute.String;
-    amount: Attribute.Integer;
-    organizationRecurringDonations: Attribute.Relation<
-      'api::recurring-donation.recurring-donation',
-      'oneToMany',
-      'api::organization-recurring-donation.organization-recurring-donation'
-    >;
-    datetime: Attribute.DateTime;
-    donations: Attribute.Relation<
-      'api::recurring-donation.recurring-donation',
-      'oneToMany',
-      'api::donation.donation'
-    >;
-    donor: Attribute.Relation<
-      'api::recurring-donation.recurring-donation',
-      'manyToOne',
-      'api::donor.donor'
-    >;
-    createdAt: Attribute.DateTime;
-    updatedAt: Attribute.DateTime;
-    createdBy: Attribute.Relation<
-      'api::recurring-donation.recurring-donation',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-    updatedBy: Attribute.Relation<
-      'api::recurring-donation.recurring-donation',
-      'oneToOne',
-      'admin::user'
-    > &
       Attribute.Private;
   };
 }
@@ -1570,17 +1250,11 @@ declare module '@strapi/types' {
       'api::blog-post.blog-post': ApiBlogPostBlogPost;
       'api::cause.cause': ApiCauseCause;
       'api::contact-submission.contact-submission': ApiContactSubmissionContactSubmission;
-      'api::donation.donation': ApiDonationDonation;
       'api::donation-info.donation-info': ApiDonationInfoDonationInfo;
-      'api::donation-transfer.donation-transfer': ApiDonationTransferDonationTransfer;
-      'api::donor.donor': ApiDonorDonor;
       'api::email-config.email-config': ApiEmailConfigEmailConfig;
       'api::global.global': ApiGlobalGlobal;
       'api::organization.organization': ApiOrganizationOrganization;
-      'api::organization-donation.organization-donation': ApiOrganizationDonationOrganizationDonation;
-      'api::organization-recurring-donation.organization-recurring-donation': ApiOrganizationRecurringDonationOrganizationRecurringDonation;
       'api::page.page': ApiPagePage;
-      'api::recurring-donation.recurring-donation': ApiRecurringDonationRecurringDonation;
       'api::special-page.special-page': ApiSpecialPageSpecialPage;
     }
   }

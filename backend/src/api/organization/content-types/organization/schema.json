@@ -65,18 +65,6 @@
       "required": true,
       "maxLength": 64,
       "regex": "^[A-Z0-9_-]+$"
-    },
-    "organizationDonations": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::organization-donation.organization-donation",
-      "mappedBy": "organization"
-    },
-    "organizationRecurringDonations": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::organization-recurring-donation.organization-recurring-donation",
-      "mappedBy": "organization"
     }
   }
 }
