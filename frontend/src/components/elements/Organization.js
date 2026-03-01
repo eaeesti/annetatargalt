@@ -28,7 +28,7 @@ export default function Organization({
       <div className="mt-4 flex w-full flex-col flex-wrap items-stretch gap-4 xs:flex-row xs:items-center">
         <Button
           text={donateButtonText}
-          href={`${donateLink}?org=${id}`}
+          href={`${donateLink}?org=${organization.internalId}`}
           type="primary"
           size="md"
         />

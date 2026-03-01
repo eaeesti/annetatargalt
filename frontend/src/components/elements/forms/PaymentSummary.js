@@ -25,14 +25,14 @@ export default function PaymentSummary({
       cause.attributes.organizations.data
         .filter((organization) =>
           organizationAmounts.some(
-            ({ organizationId }) => organizationId === organization.id,
+            ({ organizationInternalId }) => organizationInternalId === organization.attributes.internalId,
           ),
         )
         .map((organization) => ({
           title: organization.attributes.title,
           href: `/${cause.attributes.slug}/${organization.attributes.slug}`,
           amount: organizationAmounts.find(
-            ({ organizationId }) => organizationId === organization.id,
+            ({ organizationInternalId }) => organizationInternalId === organization.attributes.internalId,
           ).amount,
         })),
     )

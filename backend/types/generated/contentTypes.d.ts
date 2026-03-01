@@ -1067,6 +1067,14 @@ export interface ApiGlobalGlobal extends Schema.SingleType {
     readMoreText: Attribute.String;
     tipOrganizationId: Attribute.Integer;
     externalOrganizationId: Attribute.Integer;
+    tipOrganizationInternalId: Attribute.String &
+      Attribute.SetMinMaxLength<{
+        maxLength: 64;
+      }>;
+    externalOrganizationInternalId: Attribute.String &
+      Attribute.SetMinMaxLength<{
+        maxLength: 64;
+      }>;
     topBannerText: Attribute.RichText;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
