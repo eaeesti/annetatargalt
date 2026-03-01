@@ -19,7 +19,7 @@ export default function OrganizationCtaSection({
       buttons={[
         {
           text: buttonText,
-          href: `${global.donateLink}?org=${entity.id}`,
+          href: `${global.donateLink}?org=${entity.internalId}`,
           type: "white",
           size: "lg",
         },

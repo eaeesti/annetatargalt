@@ -36,7 +36,12 @@ module.exports = ({ strapi }) => ({
       amounts: [
         {
           amount: ctx.request.body.amount,
-          organizationId: globalConfig.externalOrganizationId,
+          // NEW: Support both legacy numeric ID and new internalId
+          organizationInternalId: globalConfig.externalOrganizationInternalId,
+          // LEGACY FALLBACK: If internalId not set, use numeric ID
+          ...(globalConfig.externalOrganizationInternalId ? {} : {
+            organizationId: globalConfig.externalOrganizationId
+          })
         },
       ],
     };

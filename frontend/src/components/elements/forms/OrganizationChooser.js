@@ -134,7 +134,7 @@ export default function OrganizationChooser({
                         >
                           <div className="flex flex-row items-center gap-3">
                             <label
-                              id={`organization${organization.id}`}
+                              id={`organization${organization.attributes.internalId}`}
                               className="cursor-text text-sm font-medium"
                             >
                               {organization.attributes.title}
@@ -156,26 +156,26 @@ export default function OrganizationChooser({
                             lockText={lockText}
                             proportion={proportions.getSubProportion(
                               cause.id,
-                              organization.id,
+                              organization.attributes.internalId,
                             )}
                             setProportion={(value) =>
                               setProportions(
                                 proportions.updateSubProportion(
                                   cause.id,
-                                  organization.id,
+                                  organization.attributes.internalId,
                                   value,
                                 ),
                               )
                             }
                             isLocked={proportions.isSubLocked(
                               cause.id,
-                              organization.id,
+                              organization.attributes.internalId,
                             )}
                             lock={() =>
                               setProportions(
                                 proportions.lockSubProportion(
                                   cause.id,
-                                  organization.id,
+                                  organization.attributes.internalId,
                                 ),
                               )
                             }
@@ -183,11 +183,11 @@ export default function OrganizationChooser({
                               setProportions(
                                 proportions.toggleSubProportionLock(
                                   cause.id,
-                                  organization.id,
+                                  organization.attributes.internalId,
                                 ),
                               )
                             }
-                            aria-labelledby={`organization${organization.id}`}
+                            aria-labelledby={`organization${organization.attributes.internalId}`}
                             disabled={proportions.goesToFund(cause.id)}
                           />
                         </div>

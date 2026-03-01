@@ -118,6 +118,14 @@
     "externalOrganizationId": {
       "type": "integer"
     },
+    "tipOrganizationInternalId": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "externalOrganizationInternalId": {
+      "type": "string",
+      "maxLength": 64
+    },
     "topBannerText": {
       "type": "richtext"
     }

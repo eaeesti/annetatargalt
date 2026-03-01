@@ -1,3 +1,5 @@
+import { OrganizationResolver } from "./organizationResolver";
+
 export default class Proportions {
   constructor(entries) {
     const preparedEntries = entries.map(([key, value]) => [
@@ -240,14 +242,14 @@ export default class Proportions {
       cause.attributes.organizations.data.forEach((organization) => {
         const organizationProportion = this.getSubProportion(
           cause.id,
-          organization.id,
+          organization.attributes.internalId,
         );
         const proportion = (causeProportion * organizationProportion) / 10000;
         const amount = totalAmount * proportion;
         const roundedAmount = Math.round(amount * 100) / 100;
         if (roundedAmount > 0) {
           amounts.push({
-            organizationId: organization.id,
+            organizationInternalId: organization.attributes.internalId,
             amount: roundedAmount,
           });
         }
@@ -285,7 +287,7 @@ export default class Proportions {
           toFund: true,
           proportions: new Proportions(
             cause.attributes.organizations.data.map((organization) => [
-              organization.id,
+              organization.attributes.internalId,
               {
                 proportion: organization.attributes.fund ? 100 : 0,
                 fund: organization.attributes.fund,
@@ -303,9 +305,18 @@ export default class Proportions {
       return Proportions.fromStrapiDataWithEqualProportions(data);
     }
 
+    // Resolve chosen organization to internalId (supports both numeric IDs and internalIds)
+    const resolver = new OrganizationResolver({ data });
+    const chosenInternalId = resolver.resolveToInternalId(chosenOrganization);
+
+    if (!chosenInternalId) {
+      // Organization not found, fall back to equal proportions
+      return Proportions.fromStrapiDataWithEqualProportions(data);
+    }
+
     const preChosenProportions = data.map((cause) =>
       cause.attributes.organizations.data.find(
-        (organization) => organization.id === chosenOrganization,
+        (organization) => organization.attributes.internalId === chosenInternalId,
       )
         ? 100
         : 0,
@@ -330,11 +341,11 @@ export default class Proportions {
           toFund: preChosenProportions[causeIndex] === 100 ? false : true,
           proportions: new Proportions(
             cause.attributes.organizations.data.map((organization) => [
-              organization.id,
+              organization.attributes.internalId,
               {
                 proportion: calculateProportion(
                   preChosenProportions[causeIndex] === 100,
-                  organization.id === chosenOrganization,
+                  organization.attributes.internalId === chosenInternalId,
                   organization.attributes.fund,
                 ),
                 fund: organization.attributes.fund,
