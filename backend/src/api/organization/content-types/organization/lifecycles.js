@@ -40,11 +40,13 @@ async function guardAgainstDelete(internalId) {
 
 module.exports = {
   async beforeDelete(event) {
-    const organization = await strapi.entityService.findOne(
-      "api::organization.organization",
-      event.params.where.id,
-      { fields: ["internalId"] }
-    );
+    // In Strapi v5, event.params.where uses documentId instead of id
+    const organization = await strapi.documents(
+      "api::organization.organization"
+    ).findOne({
+      documentId: event.params.where.documentId || event.params.where.id,
+      fields: ["internalId"],
+    });
 
     if (organization?.internalId) {
       await guardAgainstDelete(organization.internalId);
@@ -52,13 +54,12 @@ module.exports = {
   },
 
   async beforeDeleteMany(event) {
-    const organizations = await strapi.entityService.findMany(
-      "api::organization.organization",
-      {
-        filters: event.params.where,
-        fields: ["internalId"],
-      }
-    );
+    const organizations = await strapi.documents(
+      "api::organization.organization"
+    ).findMany({
+      filters: event.params.where,
+      fields: ["internalId"],
+    });
 
     for (const org of organizations) {
       if (org.internalId) {

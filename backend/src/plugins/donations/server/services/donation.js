@@ -135,14 +135,13 @@ module.exports = ({ strapi }) => ({
         };
       }
 
-      const organizations = await strapi.entityService.findMany(
-        "api::organization.organization",
-        {
-          filters: { internalId: organizationInternalId },
-          fields: ["id", "active", "internalId"],
-          limit: 1,
-        }
-      );
+      const organizations = await strapi.documents(
+        "api::organization.organization"
+      ).findMany({
+        filters: { internalId: organizationInternalId },
+        fields: ["id", "active", "internalId"],
+        limit: 1,
+      });
       const organization = organizations[0];
 
       if (!organization || !organization.active) {
@@ -836,12 +835,12 @@ module.exports = ({ strapi }) => ({
     } = require("../../../../db/repositories");
 
     // Causes and organizations stay in Strapi (content)
-    const causes = await strapi.entityService.findMany("api::cause.cause", {
+    const causes = await strapi.documents("api::cause.cause").findMany({
       sort: "id",
     });
 
     const organizations = (
-      await strapi.entityService.findMany("api::organization.organization", {
+      await strapi.documents("api::organization.organization").findMany({
         sort: "id",
         populate: ["cause"],
       })
@@ -1144,11 +1143,12 @@ module.exports = ({ strapi }) => ({
 
       // If organizationInternalId is not provided, convert from numeric organization ID
       if (!organizationInternalId && orgDonation.organization) {
-        const org = await strapi.entityService.findOne(
-          "api::organization.organization",
-          orgDonation.organization,
-          { fields: ["internalId"] }
-        );
+        const org = await strapi.documents(
+          "api::organization.organization"
+        ).findOne({
+          documentId: orgDonation.organization,
+          fields: ["internalId"],
+        });
         organizationInternalId = org.internalId;
       }
 
@@ -1211,14 +1211,13 @@ module.exports = ({ strapi }) => ({
     const organizationDonations = await Promise.all(
       donation.organizationDonations.map(async (orgDonation) => {
         // Fetch organization from Strapi
-        const organizations = await strapi.entityService.findMany(
-          "api::organization.organization",
-          {
-            filters: { internalId: orgDonation.organizationInternalId },
-            populate: ["cause"],
-            limit: 1,
-          }
-        );
+        const organizations = await strapi.documents(
+          "api::organization.organization"
+        ).findMany({
+          filters: { internalId: orgDonation.organizationInternalId },
+          populate: ["cause"],
+          limit: 1,
+        });
 
         const organization = organizations[0] || null;
 
@@ -1277,15 +1276,14 @@ module.exports = ({ strapi }) => ({
     const organizationRecurringDonationsWithOrgs = await Promise.all(
       organizationRecurringDonations.map(async (orgRecurringDonation) => {
         // Fetch organization from Strapi
-        const organizations = await strapi.entityService.findMany(
-          "api::organization.organization",
-          {
-            filters: {
-              internalId: orgRecurringDonation.organizationInternalId,
-            },
-            limit: 1,
-          }
-        );
+        const organizations = await strapi.documents(
+          "api::organization.organization"
+        ).findMany({
+          filters: {
+            internalId: orgRecurringDonation.organizationInternalId,
+          },
+          limit: 1,
+        });
 
         const organization = organizations[0] || null;
 

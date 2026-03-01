@@ -238,17 +238,17 @@ export default class Proportions {
 
     causes.data.forEach((cause) => {
       const causeProportion = this.getProportion(cause.id);
-      cause.attributes.organizations.data.forEach((organization) => {
+      cause.organizations.forEach((organization) => {
         const organizationProportion = this.getSubProportion(
           cause.id,
-          organization.attributes.internalId,
+          organization.internalId,
         );
         const proportion = (causeProportion * organizationProportion) / 10000;
         const amount = totalAmount * proportion;
         const roundedAmount = Math.round(amount * 100) / 100;
         if (roundedAmount > 0) {
           amounts.push({
-            organizationInternalId: organization.attributes.internalId,
+            organizationInternalId: organization.internalId,
             amount: roundedAmount,
           });
         }
@@ -285,11 +285,11 @@ export default class Proportions {
           locked: false,
           toFund: true,
           proportions: new Proportions(
-            cause.attributes.organizations.data.map((organization) => [
-              organization.attributes.internalId,
+            cause.organizations.map((organization) => [
+              organization.internalId,
               {
-                proportion: organization.attributes.fund ? 100 : 0,
-                fund: organization.attributes.fund,
+                proportion: organization.fund ? 100 : 0,
+                fund: organization.fund,
                 locked: false,
               },
             ]),
@@ -306,8 +306,8 @@ export default class Proportions {
 
     // Check if organization exists
     const organizationExists = data.some((cause) =>
-      cause.attributes.organizations.data.some(
-        (organization) => organization.attributes.internalId === chosenOrganizationInternalId,
+      cause.organizations.some(
+        (organization) => organization.internalId === chosenOrganizationInternalId,
       ),
     );
 
@@ -317,8 +317,8 @@ export default class Proportions {
     }
 
     const preChosenProportions = data.map((cause) =>
-      cause.attributes.organizations.data.find(
-        (organization) => organization.attributes.internalId === chosenOrganizationInternalId,
+      cause.organizations.find(
+        (organization) => organization.internalId === chosenOrganizationInternalId,
       )
         ? 100
         : 0,
@@ -342,15 +342,15 @@ export default class Proportions {
           locked: false,
           toFund: preChosenProportions[causeIndex] === 100 ? false : true,
           proportions: new Proportions(
-            cause.attributes.organizations.data.map((organization) => [
-              organization.attributes.internalId,
+            cause.organizations.map((organization) => [
+              organization.internalId,
               {
                 proportion: calculateProportion(
                   preChosenProportions[causeIndex] === 100,
-                  organization.attributes.internalId === chosenOrganizationInternalId,
-                  organization.attributes.fund,
+                  organization.internalId === chosenOrganizationInternalId,
+                  organization.fund,
                 ),
-                fund: organization.attributes.fund,
+                fund: organization.fund,
                 locked: false,
               },
             ]),

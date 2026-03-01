@@ -1,5 +1,15 @@
 # Strapi v4 → v5 Upgrade Plan
 
+> **⚠️ THIS UPGRADE IS COMPLETE ✅**
+>
+> **Completion Date:** March 1, 2026
+> **Status:** All 91 tests passing, all features working
+> **See:** [STRAPI_V5_UPGRADE_STATUS.md](./STRAPI_V5_UPGRADE_STATUS.md) for completion details
+>
+> This document is the original planning document and is kept for reference.
+
+---
+
 ## Executive Summary
 
 Upgrade the annetatargalt backend from Strapi v4.21.1 to Strapi v5, migrating from Entity Service API to Document Service API and transitioning from numeric IDs to UUIDs (`documentId`).
