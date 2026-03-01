@@ -1,6 +1,6 @@
 # Organization ID Migration: Numeric IDs → InternalIds
 
-**Status**: ✅ Phases 1 & 2 Complete (2026-03-01)
+**Status**: ✅ All Phases Complete (2026-03-01)
 **Prerequisite for**: Strapi v5 Upgrade
 
 ---
@@ -54,15 +54,19 @@ Updated frontend to:
 - Generate `?org=AMF` URLs for new links
 - Support legacy `?org=14` URLs via OrganizationResolver utility
 
-### Phase 3: Global Config (Optional)
+### Phase 3: Global Config ✅ Complete
 
-Populate `tipOrganizationInternalId` and `externalOrganizationInternalId` in Strapi admin to eliminate remaining numeric ID lookups. System works without this via fallback mechanism.
+Populated `tipOrganizationInternalId` and `externalOrganizationInternalId` via migration script:
+- `tipOrganizationInternalId`: "AT" (Anneta Targalt)
+- `externalOrganizationInternalId`: "EAE" (MTÜ Efektiivne Altruism Eesti)
+- Eliminates all remaining numeric ID lookups
+- System now 100% uses internalIds throughout
 
 ---
 
 ## Files Modified
 
-### Backend (3 files)
+### Backend (5 files)
 
 #### 1. `backend/src/api/global/content-types/global/schema.json`
 
@@ -113,9 +117,27 @@ Updated 5 sections with dual-path support:
 - NEW PATH: Use `global.externalOrganizationInternalId` if available
 - LEGACY FALLBACK: Use `global.externalOrganizationId`
 
+#### 4. `backend/src/db/migrations/03-populate-global-internal-ids.js` ⭐ NEW FILE (Phase 3)
+
+Reusable migration function for Phase 3:
+- Can be called via Strapi console: `migrate(strapi)`
+- Looks up organizations by numeric ID
+- Populates `tipOrganizationInternalId` and `externalOrganizationInternalId`
+- Validates and confirms updates
+
+#### 5. `backend/scripts/populate-global-internal-ids.js` ⭐ NEW FILE (Phase 3)
+
+Standalone migration script:
+- Bootstraps Strapi environment
+- Executes Phase 3 migration
+- Run via: `node backend/scripts/populate-global-internal-ids.js`
+- Successfully populated:
+  - `tipOrganizationInternalId`: "AT"
+  - `externalOrganizationInternalId`: "EAE"
+
 ### Frontend (8 files)
 
-#### 4. `frontend/src/utils/organizationResolver.js` ⭐ NEW FILE
+#### 6. `frontend/src/utils/organizationResolver.js` ⭐ NEW FILE
 
 Backward compatibility utility that resolves both formats to `internalId`:
 
@@ -126,7 +148,7 @@ Backward compatibility utility that resolves both formats to `internalId`:
 
 Builds internal lookup maps from causes data for O(1) resolution.
 
-#### 5. `frontend/src/utils/proportions.js`
+#### 7. `frontend/src/utils/proportions.js`
 
 **Changes:**
 - Added `OrganizationResolver` import
@@ -136,7 +158,7 @@ Builds internal lookup maps from causes data for O(1) resolution.
 
 **Lines affected**: ~50 lines (calculation and initialization logic)
 
-#### 6. `frontend/src/components/elements/forms/OrganizationChooser.js`
+#### 8. `frontend/src/components/elements/forms/OrganizationChooser.js`
 
 **Changes:**
 - All references: `organization.id` → `organization.attributes.internalId`
@@ -145,7 +167,7 @@ Builds internal lookup maps from causes data for O(1) resolution.
 
 **Lines affected**: 96-196
 
-#### 7. `frontend/src/components/sections/DonationSection.js`
+#### 9. `frontend/src/components/sections/DonationSection.js`
 
 **URL Parameter Handling (lines 46-64):**
 ```javascript
@@ -189,7 +211,7 @@ if (tipAmount > 0) {
 }
 ```
 
-#### 8. `frontend/src/components/elements/forms/PaymentSummary.js`
+#### 10. `frontend/src/components/elements/forms/PaymentSummary.js`
 
 **Changes (lines 23-40):**
 - Filter organizations: `organizationId` → `organizationInternalId`
@@ -197,21 +219,21 @@ if (tipAmount > 0) {
 
 This component displays the donation summary on the final step before payment.
 
-#### 9. `frontend/src/components/elements/Organization.js`
+#### 11. `frontend/src/components/elements/Organization.js`
 
 **Donate Button URL (line 31):**
 ```javascript
 href={`${donateLink}?org=${organization.internalId}`}
 ```
 
-#### 10. `frontend/src/components/sections/OrganizationCtaSection.js`
+#### 12. `frontend/src/components/sections/OrganizationCtaSection.js`
 
 **Donate Button URL (line 22):**
 ```javascript
 href={`${global.donateLink}?org=${entity.internalId}`}
 ```
 
-#### 11. `frontend/src/components/sections/OrgHeaderSection.js`
+#### 13. `frontend/src/components/sections/OrgHeaderSection.js`
 
 **Donate Button URL (line 53):**
 ```javascript
@@ -389,26 +411,65 @@ documentId: "aB1cD2eF3g...", internalId: "AMF", title: "Against Malaria Foundati
 
 ---
 
+## Phase 3 Execution Results
+
+### Migration Execution (2026-03-01)
+
+Successfully executed migration script:
+```bash
+node backend/scripts/populate-global-internal-ids.js
+```
+
+**Output:**
+```
+Found tip organization (ID 17):
+  Title: Anneta Targalt
+  InternalId: AT
+
+Found external organization (ID 22):
+  Title: MTÜ Efektiivne Altruism Eesti
+  InternalId: EAE
+
+✅ Global config updated successfully!
+```
+
+### Verification
+
+**Database Confirmed:**
+- `tipOrganizationInternalId`: "AT"
+- `externalOrganizationInternalId`: "EAE"
+
+**API Confirmed:**
+```bash
+curl http://localhost:1337/api/global?populate=deep
+```
+Returns both internalId fields correctly.
+
+**Frontend Confirmed:**
+After dev server restart (to clear Next.js cache), donation payloads now send:
+```json
+{"organizationInternalId": "AT", "amount": 250}
+```
+
+Instead of the previous fallback:
+```json
+{"organizationId": 17, "amount": 250}
+```
+
+### Migration Scripts Created
+
+**1. `backend/src/db/migrations/03-populate-global-internal-ids.js`**
+- Reusable migration function for Strapi console
+- Can be called via: `migrate(strapi)`
+
+**2. `backend/scripts/populate-global-internal-ids.js`**
+- Standalone executable script
+- Bootstraps Strapi and runs migration
+- Used for initial execution
+
+---
+
 ## Next Steps
-
-### Phase 3: Global Config Population (Optional)
-
-To eliminate the last numeric ID lookups:
-
-1. Login to Strapi admin
-2. Navigate to Content Manager → Global (singleton)
-3. Find `tipOrganizationId` value (e.g., 17)
-4. Look up organization #17 to get its `internalId` (e.g., "AT")
-5. Enter "AT" in `tipOrganizationInternalId` field
-6. Repeat for `externalOrganizationId` → `externalOrganizationInternalId`
-7. Save
-
-**Benefits:**
-- Eliminates final 2 numeric ID lookups per donation (tip/external)
-- Slight performance improvement
-- Full semantic consistency
-
-**Note:** System works fine without this via fallback mechanism.
 
 ### Strapi v5 Upgrade
 
@@ -485,6 +546,6 @@ Frontend requires **zero changes** for v5 thanks to this migration.
 ---
 
 **Migration Completed**: 2026-03-01
-**Phases Complete**: 1 & 2
-**Status**: ✅ Production Ready
-**Next**: Phase 3 (optional) or Strapi v5 Upgrade
+**Phases Complete**: All (1, 2, & 3)
+**Status**: ✅ 100% Complete - Ready for Strapi v5
+**Next**: Strapi v5 Upgrade (see STRAPI_V5_UPGRADE_PLAN.md)
