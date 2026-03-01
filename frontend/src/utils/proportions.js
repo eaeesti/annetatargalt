@@ -1,4 +1,3 @@
-import { OrganizationResolver } from "./organizationResolver";
 
 export default class Proportions {
   constructor(entries) {
@@ -300,23 +299,26 @@ export default class Proportions {
     );
   }
 
-  static fromStrapiData(data, chosenOrganization) {
-    if (!chosenOrganization) {
+  static fromStrapiData(data, chosenOrganizationInternalId) {
+    if (!chosenOrganizationInternalId) {
       return Proportions.fromStrapiDataWithEqualProportions(data);
     }
 
-    // Resolve chosen organization to internalId (supports both numeric IDs and internalIds)
-    const resolver = new OrganizationResolver({ data });
-    const chosenInternalId = resolver.resolveToInternalId(chosenOrganization);
+    // Check if organization exists
+    const organizationExists = data.some((cause) =>
+      cause.attributes.organizations.data.some(
+        (organization) => organization.attributes.internalId === chosenOrganizationInternalId,
+      ),
+    );
 
-    if (!chosenInternalId) {
+    if (!organizationExists) {
       // Organization not found, fall back to equal proportions
       return Proportions.fromStrapiDataWithEqualProportions(data);
     }
 
     const preChosenProportions = data.map((cause) =>
       cause.attributes.organizations.data.find(
-        (organization) => organization.attributes.internalId === chosenInternalId,
+        (organization) => organization.attributes.internalId === chosenOrganizationInternalId,
       )
         ? 100
         : 0,
@@ -345,7 +347,7 @@ export default class Proportions {
               {
                 proportion: calculateProportion(
                   preChosenProportions[causeIndex] === 100,
-                  organization.attributes.internalId === chosenInternalId,
+                  organization.attributes.internalId === chosenOrganizationInternalId,
                   organization.attributes.fund,
                 ),
                 fund: organization.attributes.fund,
