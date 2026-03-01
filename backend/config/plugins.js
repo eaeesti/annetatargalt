@@ -15,13 +15,18 @@ module.exports = ({ env }) => ({
   },
   email: {
     config: {
-      provider: "strapi-provider-email-brevo",
+      provider: "nodemailer",
       providerOptions: {
-        apiKey: env("BREVO_API_KEY"),
+        host: env("SMTP_HOST", "smtp-relay.brevo.com"),
+        port: env.int("SMTP_PORT", 587),
+        secure: false,
+        auth: {
+          user: env("SMTP_USERNAME"),
+          pass: env("SMTP_PASSWORD"),
+        },
       },
       settings: {
-        defaultSenderEmail: env("BREVO_DEFAULT_SENDER_EMAIL"),
-        defaultSenderName: env("BREVO_DEFAULT_SENDER_NAME"),
+        defaultFrom: env("BREVO_DEFAULT_SENDER_EMAIL"),
         defaultReplyTo: env("BREVO_DEFAULT_REPLY_TO"),
       },
     },
@@ -29,5 +34,12 @@ module.exports = ({ env }) => ({
   donations: {
     enabled: true,
     resolve: "./src/plugins/donations",
+  },
+  "deep-populate": {
+    enabled: true,
+    config: {
+      useCache: false,
+      replaceWildcard: true, // default
+    },
   },
 });

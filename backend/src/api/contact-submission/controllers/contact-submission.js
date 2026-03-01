@@ -9,12 +9,11 @@ module.exports = createCoreController(
       const submission = ctx.request.body;
 
       try {
-        await strapi.entityService.create(
-          "api::contact-submission.contact-submission",
-          {
-            data: submission,
-          }
-        );
+        await strapi.documents(
+          "api::contact-submission.contact-submission"
+        ).create({
+          data: submission,
+        });
       } catch (error) {
         console.error(error);
         return ctx.badRequest("Failed to create contact submission");

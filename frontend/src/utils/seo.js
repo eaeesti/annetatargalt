@@ -7,24 +7,25 @@ export function buildMetadata(global, pageMetadata) {
   if (pageMetadata.title) title = `${pageMetadata.title} • ${title}`;
 
   const icons = {};
-  if (global.favicon16?.data?.attributes?.url && global.favicon32?.data?.attributes?.url) {
+  // In Strapi v5, media is returned flat (not nested under data.attributes)
+  if (global.favicon16?.url && global.favicon32?.url) {
     icons.icon = [
       {
-        url: global.favicon16.data.attributes.url,
+        url: global.favicon16.url,
         sizes: "16x16",
         type: "image/png",
       },
       {
-        url: global.favicon32.data.attributes.url,
+        url: global.favicon32.url,
         sizes: "32x32",
         type: "image/png",
       },
     ];
   }
-  if (global.appleTouchIcon?.data?.attributes?.url) {
+  if (global.appleTouchIcon?.url) {
     icons.apple = [
       {
-        url: global.appleTouchIcon.data.attributes.url,
+        url: global.appleTouchIcon.url,
         sizes: "180x180",
         type: "image/png",
       },
@@ -32,8 +33,8 @@ export function buildMetadata(global, pageMetadata) {
   }
 
   const ogImage =
-    pageMetadata.shareImage?.data?.attributes ||
-    globalMetadata.shareImage?.data?.attributes;
+    pageMetadata.shareImage ||
+    globalMetadata.shareImage;
 
   const openGraph = {};
   if (ogImage) {

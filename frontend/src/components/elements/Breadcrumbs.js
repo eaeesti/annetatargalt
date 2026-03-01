@@ -46,7 +46,7 @@ export default function Breadcrumbs({
   backWord,
   className = "",
 }) {
-  if (!breadcrumbs.length) return;
+  if (!breadcrumbs || !breadcrumbs.length) return;
 
   return (
     <div className={classes("text-sm text-slate-600", className)}>

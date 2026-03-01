@@ -16,7 +16,7 @@ export default async function SpecialOrganizationsSection({ global }) {
               donateButtonText={global.donateText}
               donateLink={global.donateLink}
               readMoreText={global.readMoreText}
-              organizationLink={`/${organization.cause.data.attributes.slug}/${organization.slug}`}
+              organizationLink={`/${organization.cause.slug}/${organization.slug}`}
             />
           ))}
         </div>

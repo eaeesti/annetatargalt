@@ -5,9 +5,10 @@ export default async function manifest() {
 
   const icons = [];
 
+  // In Strapi v5, media is returned flat (not nested under data.attributes)
   if (global.chromeIcon192) {
     icons.push({
-      src: global.chromeIcon192.data.attributes.url,
+      src: global.chromeIcon192.url,
       sizes: "192x192",
       type: "image/png",
     });
@@ -15,7 +16,7 @@ export default async function manifest() {
 
   if (global.chromeIcon512) {
     icons.push({
-      src: global.chromeIcon512.data.attributes.url,
+      src: global.chromeIcon512.url,
       sizes: "512x512",
       type: "image/png",
     });
