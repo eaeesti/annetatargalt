@@ -1065,8 +1065,6 @@ export interface ApiGlobalGlobal extends Schema.SingleType {
     blogSlug: Attribute.String;
     donateText: Attribute.String;
     readMoreText: Attribute.String;
-    tipOrganizationId: Attribute.Integer;
-    externalOrganizationId: Attribute.Integer;
     tipOrganizationInternalId: Attribute.String &
       Attribute.SetMinMaxLength<{
         maxLength: 64;

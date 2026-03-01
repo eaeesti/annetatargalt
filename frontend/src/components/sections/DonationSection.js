@@ -18,7 +18,6 @@ import Markdown from "../elements/Markdown";
 import { format } from "@/utils/string";
 import OrganizationChooser from "../elements/forms/OrganizationChooser";
 import Proportions from "@/utils/proportions";
-import { OrganizationResolver } from "@/utils/organizationResolver";
 import PaymentSummary from "../elements/forms/PaymentSummary";
 import Modal from "../Modal";
 import CompanyInput from "../elements/forms/CompanyInput";
@@ -47,18 +46,6 @@ export default function DonationSection(props) {
   const typeParam = searchParams.get("type");
   const orgParam = searchParams.get("org");
 
-  // Resolve org parameter to internalId (supports both formats)
-  let resolvedOrgParam = null;
-  if (orgParam && props.causes?.data) {
-    const resolver = new OrganizationResolver(props.causes);
-    resolvedOrgParam = resolver.resolveToInternalId(orgParam);
-
-    // If resolution failed, orgParam is invalid - ignore it
-    if (!resolvedOrgParam) {
-      console.warn(`Organization reference '${orgParam}' not found`);
-    }
-  }
-
   const [donation, setDonation] = useState({
     amount: amountOptions[1].value,
     type: typeParam === "onetime" ? "onetime" : "recurring",
@@ -74,7 +61,7 @@ export default function DonationSection(props) {
     dedicationName: "",
     dedicationEmail: "",
     dedicationMessage: "",
-    proportions: Proportions.fromStrapiData(props.causes.data, resolvedOrgParam),
+    proportions: Proportions.fromStrapiData(props.causes.data, orgParam),
     addTip: false,
     paymentMethod: "paymentInitiation",
     acceptTerms: false,
@@ -122,20 +109,10 @@ export default function DonationSection(props) {
         amount: Math.round(amount * 100),
       }));
     if (tipAmount > 0) {
-      const tipAmountData = {
+      donationData.amounts.push({
+        organizationInternalId: props.global.tipOrganizationInternalId,
         amount: Math.round(tipAmount * 100),
-      };
-
-      // NEW PATH: Use internalId if available
-      if (props.global.tipOrganizationInternalId) {
-        tipAmountData.organizationInternalId = props.global.tipOrganizationInternalId;
-      }
-      // LEGACY FALLBACK: Use numeric ID if internalId not set
-      else if (props.global.tipOrganizationId) {
-        tipAmountData.organizationId = props.global.tipOrganizationId;
-      }
-
-      donationData.amounts.push(tipAmountData);
+      });
     }
 
     donationData.amount = Math.round(totalAmount * 100);

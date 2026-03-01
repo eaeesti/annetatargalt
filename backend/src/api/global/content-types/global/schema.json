@@ -112,12 +112,6 @@
     "readMoreText": {
       "type": "string"
     },
-    "tipOrganizationId": {
-      "type": "integer"
-    },
-    "externalOrganizationId": {
-      "type": "integer"
-    },
     "tipOrganizationInternalId": {
       "type": "string",
       "maxLength": 64

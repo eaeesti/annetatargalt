@@ -120,7 +120,7 @@ module.exports = ({ strapi }) => ({
       }
     }
 
-    for (let { organizationId, organizationInternalId, amount } of donation.amounts) {
+    for (let { organizationInternalId, amount } of donation.amounts) {
       if (amount <= 0) {
         return {
           valid: false,
@@ -128,38 +128,27 @@ module.exports = ({ strapi }) => ({
         };
       }
 
-      let organization;
-
-      // NEW PATH: Validate by internalId
-      if (organizationInternalId) {
-        const organizations = await strapi.entityService.findMany(
-          "api::organization.organization",
-          {
-            filters: { internalId: organizationInternalId },
-            fields: ["id", "active", "internalId"],
-            limit: 1,
-          }
-        );
-        organization = organizations[0];
-      }
-      // LEGACY PATH: Validate by numeric ID
-      else if (organizationId) {
-        organization = await strapi.entityService.findOne(
-          "api::organization.organization",
-          organizationId,
-          { fields: ["id", "active", "internalId"] }
-        );
-      } else {
+      if (!organizationInternalId) {
         return {
           valid: false,
-          reason: "Either organizationId or organizationInternalId must be provided",
+          reason: "organizationInternalId is required",
         };
       }
+
+      const organizations = await strapi.entityService.findMany(
+        "api::organization.organization",
+        {
+          filters: { internalId: organizationInternalId },
+          fields: ["id", "active", "internalId"],
+          limit: 1,
+        }
+      );
+      const organization = organizations[0];
 
       if (!organization || !organization.active) {
         return {
           valid: false,
-          reason: `Not a valid organization: ${organizationInternalId || organizationId}`,
+          reason: `Not a valid organization: ${organizationInternalId}`,
         };
       }
     }
@@ -323,26 +312,11 @@ module.exports = ({ strapi }) => ({
     // Get tip organization from global settings
     const global = await strapi.db.query("api::global.global").findOne();
 
-    let tipInternalId = global.tipOrganizationInternalId;
-
-    // LEGACY FALLBACK: If internalId not in global config, fetch from organization
-    if (!tipInternalId && global.tipOrganizationId) {
-      const tipOrganization = await strapi.entityService.findOne(
-        "api::organization.organization",
-        global.tipOrganizationId,
-        { fields: ["internalId"] }
-      );
-
-      if (!tipOrganization || !tipOrganization.internalId) {
-        throw new Error("Tip organization not found or missing internalId");
-      }
-
-      tipInternalId = tipOrganization.internalId;
-    }
-
-    if (!tipInternalId) {
+    if (!global.tipOrganizationInternalId) {
       throw new Error("Tip organization internalId not configured");
     }
+
+    const tipInternalId = global.tipOrganizationInternalId;
 
     // Create organization donation for tip organization
     await organizationDonationsRepo.create({
@@ -380,39 +354,12 @@ module.exports = ({ strapi }) => ({
       externalDonation: externalDonation || false,
     });
 
-    // Map organization IDs to internal IDs and create organization donations
-    const organizationDonationsData = await Promise.all(
-      donation.amounts.map(async ({ organizationId, organizationInternalId, amount }) => {
-        let finalInternalId = organizationInternalId;
-
-        // LEGACY PATH: Convert numeric ID to internalId if needed
-        if (!finalInternalId && organizationId) {
-          const organization = await strapi.entityService.findOne(
-            "api::organization.organization",
-            organizationId,
-            { fields: ["internalId"] }
-          );
-
-          if (!organization || !organization.internalId) {
-            throw new Error(
-              `Organization ${organizationId} not found or missing internalId`
-            );
-          }
-
-          finalInternalId = organization.internalId;
-        }
-
-        if (!finalInternalId) {
-          throw new Error("Organization internalId could not be determined");
-        }
-
-        return {
-          donationId: donationEntry.id,
-          organizationInternalId: finalInternalId,
-          amount,
-        };
-      })
-    );
+    // Create organization donations with internalIds
+    const organizationDonationsData = donation.amounts.map(({ organizationInternalId, amount }) => ({
+      donationId: donationEntry.id,
+      organizationInternalId,
+      amount,
+    }));
 
     await organizationDonationsRepo.createMany(organizationDonationsData);
 
@@ -439,39 +386,12 @@ module.exports = ({ strapi }) => ({
       comment: donation.comment,
     });
 
-    // Map organization IDs to internal IDs and create organization recurring donations
-    const organizationRecurringDonationsData = await Promise.all(
-      donation.amounts.map(async ({ organizationId, organizationInternalId, amount }) => {
-        let finalInternalId = organizationInternalId;
-
-        // LEGACY PATH: Convert numeric ID to internalId if needed
-        if (!finalInternalId && organizationId) {
-          const organization = await strapi.entityService.findOne(
-            "api::organization.organization",
-            organizationId,
-            { fields: ["internalId"] }
-          );
-
-          if (!organization || !organization.internalId) {
-            throw new Error(
-              `Organization ${organizationId} not found or missing internalId`
-            );
-          }
-
-          finalInternalId = organization.internalId;
-        }
-
-        if (!finalInternalId) {
-          throw new Error("Organization internalId could not be determined");
-        }
-
-        return {
-          recurringDonationId: recurringDonationEntry.id,
-          organizationInternalId: finalInternalId,
-          amount,
-        };
-      })
-    );
+    // Create organization recurring donations with internalIds
+    const organizationRecurringDonationsData = donation.amounts.map(({ organizationInternalId, amount }) => ({
+      recurringDonationId: recurringDonationEntry.id,
+      organizationInternalId,
+      amount,
+    }));
 
     await organizationRecurringDonationsRepo.createMany(
       organizationRecurringDonationsData
@@ -1014,29 +934,12 @@ module.exports = ({ strapi }) => ({
     // Build list of organizations to exclude
     const excludeInternalIds = [];
 
-    // NEW PATH: Use internalIds from global config if available
     if (global.tipOrganizationInternalId) {
       excludeInternalIds.push(global.tipOrganizationInternalId);
-    } else if (global.tipOrganizationId) {
-      // LEGACY FALLBACK: Fetch from organization
-      const tipOrg = await strapi.entityService.findOne(
-        "api::organization.organization",
-        global.tipOrganizationId,
-        { fields: ["internalId"] }
-      );
-      if (tipOrg?.internalId) excludeInternalIds.push(tipOrg.internalId);
     }
 
     if (global.externalOrganizationInternalId) {
       excludeInternalIds.push(global.externalOrganizationInternalId);
-    } else if (global.externalOrganizationId) {
-      // LEGACY FALLBACK: Fetch from organization
-      const externalOrg = await strapi.entityService.findOne(
-        "api::organization.organization",
-        global.externalOrganizationId,
-        { fields: ["internalId"] }
-      );
-      if (externalOrg?.internalId) excludeInternalIds.push(externalOrg.internalId);
     }
 
     // Sum using Drizzle repository
@@ -1055,29 +958,12 @@ module.exports = ({ strapi }) => ({
     // Build list of organizations to exclude
     const excludeInternalIds = [];
 
-    // NEW PATH: Use internalIds from global config if available
     if (global.tipOrganizationInternalId) {
       excludeInternalIds.push(global.tipOrganizationInternalId);
-    } else if (global.tipOrganizationId) {
-      // LEGACY FALLBACK: Fetch from organization
-      const tipOrg = await strapi.entityService.findOne(
-        "api::organization.organization",
-        global.tipOrganizationId,
-        { fields: ["internalId"] }
-      );
-      if (tipOrg?.internalId) excludeInternalIds.push(tipOrg.internalId);
     }
 
     if (global.externalOrganizationInternalId) {
       excludeInternalIds.push(global.externalOrganizationInternalId);
-    } else if (global.externalOrganizationId) {
-      // LEGACY FALLBACK: Fetch from organization
-      const externalOrg = await strapi.entityService.findOne(
-        "api::organization.organization",
-        global.externalOrganizationId,
-        { fields: ["internalId"] }
-      );
-      if (externalOrg?.internalId) excludeInternalIds.push(externalOrg.internalId);
     }
 
     // Sum using Drizzle repository with date range
