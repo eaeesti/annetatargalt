@@ -6,7 +6,8 @@ export default function Image({
   fill = false,
   priority = false,
 }) {
-  const image = data.data?.attributes;
+  // In Strapi v5, media is returned flat (not nested under data.attributes)
+  const image = data;
 
   if (!image) {
     return (

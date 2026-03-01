@@ -22,17 +22,17 @@ export default function PaymentSummary({
 
   const summary = causes.data
     .map((cause) =>
-      cause.attributes.organizations.data
+      cause.organizations
         .filter((organization) =>
           organizationAmounts.some(
-            ({ organizationInternalId }) => organizationInternalId === organization.attributes.internalId,
+            ({ organizationInternalId }) => organizationInternalId === organization.internalId,
           ),
         )
         .map((organization) => ({
-          title: organization.attributes.title,
-          href: `/${cause.attributes.slug}/${organization.attributes.slug}`,
+          title: organization.title,
+          href: `/${cause.slug}/${organization.slug}`,
           amount: organizationAmounts.find(
-            ({ organizationInternalId }) => organizationInternalId === organization.attributes.internalId,
+            ({ organizationInternalId }) => organizationInternalId === organization.internalId,
           ).amount,
         })),
     )

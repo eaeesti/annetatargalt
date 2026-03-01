@@ -10,10 +10,11 @@ module.exports = createCoreService(
   "api::organization.organization",
   ({ strapi }) => ({
     async findOrganization(organizationTitle) {
-      const organizationEntries = await strapi.entityService.findMany(
-        "api::organization.organization",
-        { filters: { title: organizationTitle } }
-      );
+      const organizationEntries = await strapi.documents(
+        "api::organization.organization"
+      ).findMany({
+        filters: { title: organizationTitle },
+      });
 
       if (organizationEntries.length > 0) {
         return organizationEntries[0];
@@ -29,12 +30,11 @@ module.exports = createCoreService(
         return organizationEntry;
       }
 
-      const newOrganizationEntry = await strapi.entityService.create(
-        "api::organization.organization",
-        {
-          data: organization,
-        }
-      );
+      const newOrganizationEntry = await strapi.documents(
+        "api::organization.organization"
+      ).create({
+        data: organization,
+      });
 
       return newOrganizationEntry;
     },

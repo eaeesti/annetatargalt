@@ -6,7 +6,8 @@ import Image from "../elements/Image";
 // how long a postgres relation can be and Strapi said it was creating a
 // duplicate relation.
 export default function OrgHeaderSection({ breadcrumbs, entity, global }) {
-  const cause = entity.cause.data.attributes;
+  // In Strapi v5, relations are returned flat (not wrapped in data)
+  const cause = entity.cause;
 
   const breadcrumbsWithCause = [
     ...breadcrumbs,

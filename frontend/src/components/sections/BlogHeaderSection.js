@@ -3,7 +3,8 @@ import Anchor from "../elements/Anchor";
 import Image from "../elements/Image";
 
 export default function SpecialHeaderSection({ entity, backButton, global }) {
-  const author = entity.author.data.attributes;
+  // In Strapi v5, relations are returned flat (not wrapped in data)
+  const author = entity.author;
 
   return (
     <header className="relative px-4">

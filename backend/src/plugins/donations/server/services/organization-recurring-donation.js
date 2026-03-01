@@ -9,11 +9,12 @@ module.exports = ({ strapi }) => ({
     // Convert organization IDs to internalIds and create organization recurring donations
     const organizationRecurringDonationsData = await Promise.all(
       amounts.map(async ({ organizationId, amount }) => {
-        const organization = await strapi.entityService.findOne(
-          "api::organization.organization",
-          organizationId,
-          { fields: ["internalId"] }
-        );
+        const organization = await strapi.documents(
+          "api::organization.organization"
+        ).findOne({
+          documentId: organizationId,
+          fields: ["internalId"],
+        });
 
         if (!organization || !organization.internalId) {
           throw new Error(

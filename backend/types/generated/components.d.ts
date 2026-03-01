@@ -1,120 +1,123 @@
-import type { Schema, Attribute } from '@strapi/strapi';
+import type { Schema, Struct } from '@strapi/strapi';
 
-export interface ElementsBankIcon extends Schema.Component {
+export interface ElementsBankIcon extends Struct.ComponentSchema {
   collectionName: 'components_elements_bank_icons';
   info: {
-    displayName: 'BankIcon';
     description: '';
+    displayName: 'BankIcon';
   };
   attributes: {
-    bank: Attribute.String;
-    icon: Attribute.Media;
+    bank: Schema.Attribute.String;
+    icon: Schema.Attribute.Media<'images'>;
   };
 }
 
-export interface ElementsBreadcrumb extends Schema.Component {
+export interface ElementsBreadcrumb extends Struct.ComponentSchema {
   collectionName: 'components_elements_breadcrumbs';
   info: {
-    displayName: 'Breadcrumb';
     description: '';
+    displayName: 'Breadcrumb';
   };
   attributes: {
-    title: Attribute.String;
-    href: Attribute.String;
+    href: Schema.Attribute.String;
+    title: Schema.Attribute.String;
   };
 }
 
-export interface ElementsButton extends Schema.Component {
+export interface ElementsButton extends Struct.ComponentSchema {
   collectionName: 'components_elements_buttons';
   info: {
-    displayName: 'Button';
     description: '';
+    displayName: 'Button';
   };
   attributes: {
-    text: Attribute.String;
-    type: Attribute.Enumeration<['primary', 'secondary', 'white', 'text']>;
-    arrow: Attribute.Boolean & Attribute.DefaultTo<false>;
-    href: Attribute.String;
-    newTab: Attribute.Boolean & Attribute.DefaultTo<false>;
-    size: Attribute.Enumeration<['text', 'sm', 'md', 'lg']> &
-      Attribute.DefaultTo<'md'>;
-    plausibleEvent: Attribute.String;
+    arrow: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    href: Schema.Attribute.String;
+    newTab: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    plausibleEvent: Schema.Attribute.String;
+    size: Schema.Attribute.Enumeration<['text', 'sm', 'md', 'lg']> &
+      Schema.Attribute.DefaultTo<'md'>;
+    text: Schema.Attribute.String;
+    type: Schema.Attribute.Enumeration<
+      ['primary', 'secondary', 'white', 'text']
+    >;
   };
 }
 
-export interface ElementsFooterColumn extends Schema.Component {
+export interface ElementsFooterColumn extends Struct.ComponentSchema {
   collectionName: 'components_elements_footer_columns';
   info: {
     displayName: 'FooterColumn';
   };
   attributes: {
-    title: Attribute.String;
-    links: Attribute.Component<'elements.link', true>;
+    links: Schema.Attribute.Component<'elements.link', true>;
+    title: Schema.Attribute.String;
   };
 }
 
-export interface ElementsLink extends Schema.Component {
+export interface ElementsLink extends Struct.ComponentSchema {
   collectionName: 'components_elements_links';
   info: {
+    description: '';
     displayName: 'Link';
     icon: 'link';
-    description: '';
   };
   attributes: {
-    text: Attribute.String;
-    href: Attribute.String;
-    newTab: Attribute.Boolean & Attribute.DefaultTo<false>;
+    href: Schema.Attribute.String;
+    newTab: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    text: Schema.Attribute.String;
   };
 }
 
-export interface ElementsPerson extends Schema.Component {
+export interface ElementsPerson extends Struct.ComponentSchema {
   collectionName: 'components_elements_people';
   info: {
     displayName: 'Person';
   };
   attributes: {
-    name: Attribute.String;
-    role: Attribute.String;
-    text: Attribute.RichText;
-    image: Attribute.Media;
+    image: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    name: Schema.Attribute.String;
+    role: Schema.Attribute.String;
+    text: Schema.Attribute.RichText;
   };
 }
 
-export interface ElementsPowerColumn extends Schema.Component {
+export interface ElementsPowerColumn extends Struct.ComponentSchema {
   collectionName: 'components_elements_power_columns';
   info: {
-    displayName: 'PowerColumn';
     description: '';
+    displayName: 'PowerColumn';
   };
   attributes: {
-    title: Attribute.String;
-    image: Attribute.Media;
-    description: Attribute.RichText;
-    button: Attribute.Component<'elements.button'>;
-    source: Attribute.String;
+    button: Schema.Attribute.Component<'elements.button', false>;
+    description: Schema.Attribute.RichText;
+    image: Schema.Attribute.Media<'images'>;
+    source: Schema.Attribute.String;
+    title: Schema.Attribute.String;
   };
 }
 
-export interface ElementsQuestion extends Schema.Component {
+export interface ElementsQuestion extends Struct.ComponentSchema {
   collectionName: 'components_elements_questions';
   info: {
-    displayName: 'Question';
     description: '';
+    displayName: 'Question';
   };
   attributes: {
-    question: Attribute.String;
-    answer: Attribute.RichText;
-    plausibleEvent: Attribute.String;
+    answer: Schema.Attribute.RichText;
+    plausibleEvent: Schema.Attribute.String;
+    question: Schema.Attribute.String;
   };
 }
 
-export interface ElementsSocialMediaLink extends Schema.Component {
+export interface ElementsSocialMediaLink extends Struct.ComponentSchema {
   collectionName: 'components_elements_social_media_links';
   info: {
     displayName: 'SocialMediaLink';
   };
   attributes: {
-    type: Attribute.Enumeration<
+    href: Schema.Attribute.String;
+    type: Schema.Attribute.Enumeration<
       [
         'facebook',
         'instagram',
@@ -122,82 +125,87 @@ export interface ElementsSocialMediaLink extends Schema.Component {
         'youtube',
         'tiktok',
         'github',
-        'linkedin'
+        'linkedin',
       ]
     >;
-    href: Attribute.String;
   };
 }
 
-export interface ElementsTeamMember extends Schema.Component {
+export interface ElementsTeamMember extends Struct.ComponentSchema {
   collectionName: 'components_elements_team_members';
   info: {
-    displayName: 'TeamMember';
     description: '';
+    displayName: 'TeamMember';
   };
   attributes: {
-    name: Attribute.String & Attribute.Required;
-    role: Attribute.String;
-    image: Attribute.Media;
-    bio: Attribute.RichText;
-    email: Attribute.String;
-    socialMediaLinks: Attribute.Component<'elements.social-media-link', true>;
+    bio: Schema.Attribute.RichText;
+    email: Schema.Attribute.String;
+    image: Schema.Attribute.Media<'images'>;
+    name: Schema.Attribute.String & Schema.Attribute.Required;
+    role: Schema.Attribute.String;
+    socialMediaLinks: Schema.Attribute.Component<
+      'elements.social-media-link',
+      true
+    >;
   };
 }
 
-export interface MetaFooter extends Schema.Component {
+export interface MetaFooter extends Struct.ComponentSchema {
   collectionName: 'components_meta_footers';
   info: {
-    displayName: 'Footer';
     description: '';
+    displayName: 'Footer';
   };
   attributes: {
-    logo: Attribute.Media;
-    text: Attribute.Text;
-    socialMediaLinks: Attribute.Component<'elements.social-media-link', true>;
-    columns: Attribute.Component<'elements.footer-column', true>;
+    columns: Schema.Attribute.Component<'elements.footer-column', true>;
+    logo: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    socialMediaLinks: Schema.Attribute.Component<
+      'elements.social-media-link',
+      true
+    >;
+    text: Schema.Attribute.Text;
   };
 }
 
-export interface MetaMetadata extends Schema.Component {
+export interface MetaMetadata extends Struct.ComponentSchema {
   collectionName: 'components_meta_metadata';
   info: {
     displayName: 'Metadata';
     icon: 'medium';
   };
   attributes: {
-    title: Attribute.String;
-    description: Attribute.Text;
-    shareImage: Attribute.Media;
+    description: Schema.Attribute.Text;
+    shareImage: Schema.Attribute.Media<'images'>;
+    title: Schema.Attribute.String;
   };
 }
 
-export interface MetaNavbar extends Schema.Component {
+export interface MetaNavbar extends Struct.ComponentSchema {
   collectionName: 'components_elements_navbars';
   info: {
-    displayName: 'Navbar';
     description: '';
+    displayName: 'Navbar';
   };
   attributes: {
-    logo: Attribute.Media;
-    ctaButton: Attribute.Component<'elements.button'>;
-    links: Attribute.Component<'elements.link', true>;
+    ctaButton: Schema.Attribute.Component<'elements.button', false>;
+    links: Schema.Attribute.Component<'elements.link', true>;
+    logo: Schema.Attribute.Media<'images'>;
   };
 }
 
-export interface MetaNotFoundPage extends Schema.Component {
+export interface MetaNotFoundPage extends Struct.ComponentSchema {
   collectionName: 'components_meta_not_found_pages';
   info: {
     displayName: 'NotFoundPage';
   };
   attributes: {
-    title: Attribute.String;
-    description: Attribute.RichText;
-    buttons: Attribute.Component<'elements.button', true>;
+    buttons: Schema.Attribute.Component<'elements.button', true>;
+    description: Schema.Attribute.RichText;
+    title: Schema.Attribute.String;
   };
 }
 
-export interface SectionsBlogPostsSection extends Schema.Component {
+export interface SectionsBlogPostsSection extends Struct.ComponentSchema {
   collectionName: 'components_sections_blog_posts_sections';
   info: {
     displayName: 'BlogPostsSection';
@@ -205,205 +213,209 @@ export interface SectionsBlogPostsSection extends Schema.Component {
   attributes: {};
 }
 
-export interface SectionsCampaignSection extends Schema.Component {
+export interface SectionsCampaignSection extends Struct.ComponentSchema {
   collectionName: 'components_sections_campaign_sections';
   info: {
-    displayName: 'CampaignSection';
     description: '';
+    displayName: 'CampaignSection';
   };
   attributes: {
-    title: Attribute.String & Attribute.DefaultTo<'J\u00F5ulukampaania 2025'>;
-    topText: Attribute.RichText &
-      Attribute.DefaultTo<'**<%= amount %>\u20AC** on annetatud **<%= goal %>\u20AC** eesm\u00E4rgist.  Eesm\u00E4rgi saavutamiseks on puudu vaid **<%= remainingUntilGoal %>\u20AC**!'>;
-    bottomText: Attribute.RichText &
-      Attribute.DefaultTo<'**Sinu annetusel on topeltm\u00F5ju!** Suurannetajad Martin ja Mari-Liis Villig kahekordistavad k\u00F5ik annetused 10 000 \u20AC ulatuses.'>;
-    goals: Attribute.JSON;
-    decoration: Attribute.Media;
-    endDate: Attribute.DateTime &
-      Attribute.DefaultTo<'2026-11-30T22:00:00.000Z'>;
-    countdownText: Attribute.RichText &
-      Attribute.DefaultTo<'Kampaania l\u00F5puni on j\u00E4\u00E4nud **<%= days %>** p\u00E4eva, **<%= hours %>** tundi, **<%= minutes %>** minutit ja **<%= seconds %>** sekundit.'>;
-    ctaButtonText: Attribute.String &
-      Attribute.DefaultTo<'Anneta kahekordse m\u00F5juga'>;
-    ctaButtonHref: Attribute.String & Attribute.DefaultTo<'/anneta'>;
+    bottomText: Schema.Attribute.RichText &
+      Schema.Attribute.DefaultTo<'**Sinu annetusel on topeltm\u00F5ju!** Suurannetajad Martin ja Mari-Liis Villig kahekordistavad k\u00F5ik annetused 10 000 \u20AC ulatuses.'>;
+    countdownText: Schema.Attribute.RichText &
+      Schema.Attribute.DefaultTo<'Kampaania l\u00F5puni on j\u00E4\u00E4nud **<%= days %>** p\u00E4eva, **<%= hours %>** tundi, **<%= minutes %>** minutit ja **<%= seconds %>** sekundit.'>;
+    ctaButtonHref: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'/anneta'>;
+    ctaButtonText: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'Anneta kahekordse m\u00F5juga'>;
+    decoration: Schema.Attribute.Media<'images'>;
+    endDate: Schema.Attribute.DateTime &
+      Schema.Attribute.DefaultTo<'2026-11-30T22:00:00.000Z'>;
+    goals: Schema.Attribute.JSON;
+    title: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'J\u00F5ulukampaania 2025'>;
+    topText: Schema.Attribute.RichText &
+      Schema.Attribute.DefaultTo<'**<%= amount %>\u20AC** on annetatud **<%= goal %>\u20AC** eesm\u00E4rgist.  Eesm\u00E4rgi saavutamiseks on puudu vaid **<%= remainingUntilGoal %>\u20AC**!'>;
   };
 }
 
-export interface SectionsCausesSection extends Schema.Component {
+export interface SectionsCausesSection extends Struct.ComponentSchema {
   collectionName: 'components_sections_causes_sections';
   info: {
-    displayName: 'CausesSection';
     description: '';
+    displayName: 'CausesSection';
   };
   attributes: {
-    title: Attribute.String;
-    description: Attribute.RichText;
-    anchor: Attribute.String;
-    readAboutOrganizationsText: Attribute.String;
-    causes: Attribute.Relation<
-      'sections.causes-section',
-      'oneToMany',
-      'api::cause.cause'
-    >;
+    anchor: Schema.Attribute.String;
+    causes: Schema.Attribute.Relation<'oneToMany', 'api::cause.cause'>;
+    description: Schema.Attribute.RichText;
+    readAboutOrganizationsText: Schema.Attribute.String;
+    title: Schema.Attribute.String;
   };
 }
 
-export interface SectionsContactSection extends Schema.Component {
+export interface SectionsContactSection extends Struct.ComponentSchema {
   collectionName: 'components_sections_contact_sections';
   info: {
     displayName: 'ContactSection';
   };
   attributes: {
-    title: Attribute.String;
-    description: Attribute.RichText;
-    contactEmail: Attribute.String;
-    nameLabel: Attribute.String;
-    emailLabel: Attribute.String;
-    messageLabel: Attribute.String;
-    sendLabel: Attribute.String;
-    successTitle: Attribute.String;
-    successDescription: Attribute.RichText;
+    contactEmail: Schema.Attribute.String;
+    description: Schema.Attribute.RichText;
+    emailLabel: Schema.Attribute.String;
+    messageLabel: Schema.Attribute.String;
+    nameLabel: Schema.Attribute.String;
+    sendLabel: Schema.Attribute.String;
+    successDescription: Schema.Attribute.RichText;
+    successTitle: Schema.Attribute.String;
+    title: Schema.Attribute.String;
   };
 }
 
-export interface SectionsCtaSection extends Schema.Component {
+export interface SectionsCtaSection extends Struct.ComponentSchema {
   collectionName: 'components_sections_cta_sections';
   info: {
-    displayName: 'CtaSection';
     description: '';
+    displayName: 'CtaSection';
   };
   attributes: {
-    title: Attribute.String;
-    description: Attribute.RichText;
-    buttons: Attribute.Component<'elements.button', true>;
+    buttons: Schema.Attribute.Component<'elements.button', true>;
+    description: Schema.Attribute.RichText;
+    title: Schema.Attribute.String;
   };
 }
 
-export interface SectionsDonationSection extends Schema.Component {
+export interface SectionsDonationSection extends Struct.ComponentSchema {
   collectionName: 'components_sections_donation_sections';
   info: {
-    displayName: 'DonationSection';
     description: '';
+    displayName: 'DonationSection';
   };
   attributes: {
-    title: Attribute.String;
-    firstNameText: Attribute.String;
-    lastNameText: Attribute.String;
-    emailText: Attribute.String;
-    idCodeText: Attribute.String;
-    idCodeDescription: Attribute.String;
-    otherAmountText: Attribute.String;
-    amount1: Attribute.Integer;
-    amount2: Attribute.Integer;
-    amount3: Attribute.Integer;
-    singleDonationText: Attribute.String;
-    recurringDonationText: Attribute.String;
-    amountText: Attribute.String;
-    nextButtonText: Attribute.String;
-    donateButtonText: Attribute.String;
-    termsText: Attribute.RichText;
-    chooseAmountText: Attribute.String;
-    otherAmountOptionText: Attribute.String;
-    donationTypeText: Attribute.String;
-    stepText: Attribute.String;
-    backButtonText: Attribute.String;
-    detailsText: Attribute.String;
-    confirmText: Attribute.String;
-    banks: Attribute.Component<'elements.bank-icon', true>;
-    bankText: Attribute.String;
-    otherBankText: Attribute.String;
-    oneTimeDonationSummary: Attribute.RichText;
-    recurringDonationSummary: Attribute.RichText;
-    recurringDonationGuide: Attribute.RichText;
-    causes: Attribute.Relation<
-      'sections.donation-section',
-      'oneToMany',
-      'api::cause.cause'
-    >;
-    chooseOrganizationsText: Attribute.String;
-    informationText: Attribute.String;
-    lockText: Attribute.String;
-    letExpertsChooseText: Attribute.String;
-    tipTitle: Attribute.String;
-    tipText: Attribute.RichText;
-    tipCheckboxText: Attribute.String;
-    donateAsCompanyText: Attribute.String;
-    companyNameText: Attribute.String;
-    companyCodeText: Attribute.String;
-    dedicateDonationText: Attribute.String;
-    dedicationNameText: Attribute.String;
-    dedicationEmailText: Attribute.String;
-    dedicationMessageText: Attribute.String;
-    paymentMethodText: Attribute.String & Attribute.DefaultTo<'Makseviis'>;
-    paymentInitiationText: Attribute.String & Attribute.DefaultTo<'Pangalink'>;
-    cardPaymentsText: Attribute.String & Attribute.DefaultTo<'Kaardimakse'>;
+    amount1: Schema.Attribute.Integer;
+    amount2: Schema.Attribute.Integer;
+    amount3: Schema.Attribute.Integer;
+    amountText: Schema.Attribute.String;
+    backButtonText: Schema.Attribute.String;
+    banks: Schema.Attribute.Component<'elements.bank-icon', true>;
+    bankText: Schema.Attribute.String;
+    cardPaymentsText: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'Kaardimakse'>;
+    causes: Schema.Attribute.Relation<'oneToMany', 'api::cause.cause'>;
+    chooseAmountText: Schema.Attribute.String;
+    chooseOrganizationsText: Schema.Attribute.String;
+    companyCodeText: Schema.Attribute.String;
+    companyNameText: Schema.Attribute.String;
+    confirmText: Schema.Attribute.String;
+    dedicateDonationText: Schema.Attribute.String;
+    dedicationEmailText: Schema.Attribute.String;
+    dedicationMessageText: Schema.Attribute.String;
+    dedicationNameText: Schema.Attribute.String;
+    detailsText: Schema.Attribute.String;
+    donateAsCompanyText: Schema.Attribute.String;
+    donateButtonText: Schema.Attribute.String;
+    donationTypeText: Schema.Attribute.String;
+    emailText: Schema.Attribute.String;
+    firstNameText: Schema.Attribute.String;
+    idCodeDescription: Schema.Attribute.String;
+    idCodeText: Schema.Attribute.String;
+    informationText: Schema.Attribute.String;
+    lastNameText: Schema.Attribute.String;
+    letExpertsChooseText: Schema.Attribute.String;
+    lockText: Schema.Attribute.String;
+    nextButtonText: Schema.Attribute.String;
+    oneTimeDonationSummary: Schema.Attribute.RichText;
+    otherAmountOptionText: Schema.Attribute.String;
+    otherAmountText: Schema.Attribute.String;
+    otherBankText: Schema.Attribute.String;
+    paymentInitiationText: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'Pangalink'>;
+    paymentMethodText: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'Makseviis'>;
+    recurringDonationGuide: Schema.Attribute.RichText;
+    recurringDonationSummary: Schema.Attribute.RichText;
+    recurringDonationText: Schema.Attribute.String;
+    singleDonationText: Schema.Attribute.String;
+    stepText: Schema.Attribute.String;
+    termsText: Schema.Attribute.RichText;
+    tipCheckboxText: Schema.Attribute.String;
+    tipText: Schema.Attribute.RichText;
+    tipTitle: Schema.Attribute.String;
+    title: Schema.Attribute.String;
   };
 }
 
-export interface SectionsFaqSection extends Schema.Component {
+export interface SectionsFaqSection extends Struct.ComponentSchema {
   collectionName: 'components_sections_faq_sections';
   info: {
     displayName: 'FAQSection';
   };
   attributes: {
-    questions: Attribute.Component<'elements.question', true>;
+    questions: Schema.Attribute.Component<'elements.question', true>;
   };
 }
 
-export interface SectionsForeignDonationSection extends Schema.Component {
+export interface SectionsForeignDonationSection extends Struct.ComponentSchema {
   collectionName: 'components_sections_foreign_donation_sections';
   info: {
     displayName: 'ForeignDonationSection';
   };
   attributes: {
-    title: Attribute.String & Attribute.DefaultTo<'Donate'>;
-    description: Attribute.RichText &
-      Attribute.DefaultTo<'On this page you can donate directly to Anneta Targalt using a card payment.\n\nThank you for supporting our platform!'>;
-    firstNameText: Attribute.String & Attribute.DefaultTo<'First name'>;
-    lastNameText: Attribute.String & Attribute.DefaultTo<'Last name'>;
-    emailText: Attribute.String & Attribute.DefaultTo<'Email address'>;
-    amountText: Attribute.String & Attribute.DefaultTo<'Amount'>;
-    amount1: Attribute.Integer & Attribute.DefaultTo<20>;
-    amount2: Attribute.Integer & Attribute.DefaultTo<50>;
-    amount3: Attribute.Integer & Attribute.DefaultTo<100>;
-    otherAmountText: Attribute.String & Attribute.DefaultTo<'Other amount'>;
-    otherAmountOptionText: Attribute.String & Attribute.DefaultTo<'Other'>;
-    nextButtonText: Attribute.String & Attribute.DefaultTo<'Next'>;
-    donateButtonText: Attribute.String & Attribute.DefaultTo<'Donate'>;
-    termsText: Attribute.RichText &
-      Attribute.DefaultTo<'I agree with the [terms and conditions](/annetustingimused).'>;
+    amount1: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<20>;
+    amount2: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<50>;
+    amount3: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<100>;
+    amountText: Schema.Attribute.String & Schema.Attribute.DefaultTo<'Amount'>;
+    description: Schema.Attribute.RichText &
+      Schema.Attribute.DefaultTo<'On this page you can donate directly to Anneta Targalt using a card payment.\n\nThank you for supporting our platform!'>;
+    donateButtonText: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'Donate'>;
+    emailText: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'Email address'>;
+    firstNameText: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'First name'>;
+    lastNameText: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'Last name'>;
+    nextButtonText: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'Next'>;
+    otherAmountOptionText: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'Other'>;
+    otherAmountText: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'Other amount'>;
+    termsText: Schema.Attribute.RichText &
+      Schema.Attribute.DefaultTo<'I agree with the [terms and conditions](/annetustingimused).'>;
+    title: Schema.Attribute.String & Schema.Attribute.DefaultTo<'Donate'>;
   };
 }
 
-export interface SectionsHeaderSection extends Schema.Component {
+export interface SectionsHeaderSection extends Struct.ComponentSchema {
   collectionName: 'components_sections_header_sections';
   info: {
-    displayName: 'HeaderSection';
     description: '';
+    displayName: 'HeaderSection';
   };
   attributes: {
-    title: Attribute.String;
-    subtitle: Attribute.RichText;
-    breadcrumbs: Attribute.Component<'elements.breadcrumb', true>;
+    breadcrumbs: Schema.Attribute.Component<'elements.breadcrumb', true>;
+    subtitle: Schema.Attribute.RichText;
+    title: Schema.Attribute.String;
   };
 }
 
-export interface SectionsHeroSection extends Schema.Component {
+export interface SectionsHeroSection extends Struct.ComponentSchema {
   collectionName: 'components_sections_hero_sections';
   info: {
-    displayName: 'HeroSection';
     description: '';
+    displayName: 'HeroSection';
   };
   attributes: {
-    title: Attribute.String;
-    subtitle: Attribute.Text;
-    image: Attribute.Media;
-    mobileImage: Attribute.Media;
-    buttons: Attribute.Component<'elements.button', true>;
+    buttons: Schema.Attribute.Component<'elements.button', true>;
+    image: Schema.Attribute.Media<'images'>;
+    mobileImage: Schema.Attribute.Media<'images'>;
+    subtitle: Schema.Attribute.Text;
+    title: Schema.Attribute.String;
   };
 }
 
-export interface SectionsOrganizationsSection extends Schema.Component {
+export interface SectionsOrganizationsSection extends Struct.ComponentSchema {
   collectionName: 'components_sections_organizations_sections';
   info: {
     displayName: 'OrganizationsSection';
@@ -411,183 +423,187 @@ export interface SectionsOrganizationsSection extends Schema.Component {
   attributes: {};
 }
 
-export interface SectionsPartnerSection extends Schema.Component {
+export interface SectionsPartnerSection extends Struct.ComponentSchema {
   collectionName: 'components_sections_partner_sections';
   info: {
     displayName: 'PartnerSection';
   };
   attributes: {
-    text: Attribute.RichText;
-    image: Attribute.Media;
+    image: Schema.Attribute.Media<'images'>;
+    text: Schema.Attribute.RichText;
   };
 }
 
-export interface SectionsPowerSection extends Schema.Component {
+export interface SectionsPowerSection extends Struct.ComponentSchema {
   collectionName: 'components_sections_power_sections';
   info: {
-    displayName: 'PowerSection';
     description: '';
+    displayName: 'PowerSection';
   };
   attributes: {
-    title: Attribute.String;
-    column1: Attribute.Component<'elements.power-column'>;
-    column2: Attribute.Component<'elements.power-column'>;
+    column1: Schema.Attribute.Component<'elements.power-column', false>;
+    column2: Schema.Attribute.Component<'elements.power-column', false>;
+    title: Schema.Attribute.String;
   };
 }
 
-export interface SectionsRedirectSection extends Schema.Component {
+export interface SectionsRedirectSection extends Struct.ComponentSchema {
   collectionName: 'components_sections_redirect_sections';
   info: {
     displayName: 'RedirectSection';
   };
   attributes: {
-    destination: Attribute.String;
+    destination: Schema.Attribute.String;
   };
 }
 
-export interface SectionsStatsSection extends Schema.Component {
+export interface SectionsStatsSection extends Struct.ComponentSchema {
   collectionName: 'components_sections_stats_sections';
   info: {
-    displayName: 'StatsSection';
     description: '';
+    displayName: 'StatsSection';
   };
   attributes: {
-    title: Attribute.String;
-    donationAmountText: Attribute.String;
-    donationAmountCurrency: Attribute.String;
-    transactionFeeText: Attribute.String;
-    transactionFeeValue: Attribute.String;
-    operatingSinceText: Attribute.String;
-    operatingSinceValue: Attribute.String;
+    donationAmountCurrency: Schema.Attribute.String;
+    donationAmountText: Schema.Attribute.String;
+    operatingSinceText: Schema.Attribute.String;
+    operatingSinceValue: Schema.Attribute.String;
+    title: Schema.Attribute.String;
+    transactionFeeText: Schema.Attribute.String;
+    transactionFeeValue: Schema.Attribute.String;
   };
 }
 
-export interface SectionsTeamSection extends Schema.Component {
+export interface SectionsTeamSection extends Struct.ComponentSchema {
   collectionName: 'components_sections_team_sections';
   info: {
-    displayName: 'TeamSection';
     description: '';
+    displayName: 'TeamSection';
   };
   attributes: {
-    title: Attribute.String;
-    emailCopiedText: Attribute.String &
-      Attribute.Required &
-      Attribute.DefaultTo<'Email copied to clipboard!'>;
-    teamMembers: Attribute.Component<'elements.team-member', true>;
+    emailCopiedText: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'Email copied to clipboard!'>;
+    teamMembers: Schema.Attribute.Component<'elements.team-member', true>;
+    title: Schema.Attribute.String;
   };
 }
 
-export interface SectionsTestimonialsSection extends Schema.Component {
+export interface SectionsTestimonialsSection extends Struct.ComponentSchema {
   collectionName: 'components_sections_testimonials_sections';
   info: {
-    displayName: 'TestimonialsSection';
     description: '';
+    displayName: 'TestimonialsSection';
   };
   attributes: {
-    title: Attribute.String;
-    testimonials: Attribute.Component<'elements.person', true>;
+    testimonials: Schema.Attribute.Component<'elements.person', true>;
+    title: Schema.Attribute.String;
   };
 }
 
-export interface SectionsTextSection extends Schema.Component {
+export interface SectionsTextSection extends Struct.ComponentSchema {
   collectionName: 'components_sections_text_sections';
   info: {
     displayName: 'TextSection';
     icon: 'bulletList';
   };
   attributes: {
-    text: Attribute.RichText;
+    text: Schema.Attribute.RichText;
   };
 }
 
-export interface SectionsThankYouSection extends Schema.Component {
+export interface SectionsThankYouSection extends Struct.ComponentSchema {
   collectionName: 'components_sections_thank_you_sections';
   info: {
     displayName: 'ThankYouSection';
   };
   attributes: {
-    title: Attribute.String;
-    text1: Attribute.RichText;
-    text2: Attribute.RichText;
-    text3: Attribute.RichText;
+    text1: Schema.Attribute.RichText;
+    text2: Schema.Attribute.RichText;
+    text3: Schema.Attribute.RichText;
+    title: Schema.Attribute.String;
   };
 }
 
-export interface SpecialSectionsBlogHeaderSection extends Schema.Component {
+export interface SpecialSectionsBlogHeaderSection
+  extends Struct.ComponentSchema {
   collectionName: 'components_special_sections_blog_header_sections';
   info: {
-    displayName: 'BlogHeaderSection';
     description: '';
+    displayName: 'BlogHeaderSection';
   };
   attributes: {
-    backButton: Attribute.Component<'elements.button'>;
+    backButton: Schema.Attribute.Component<'elements.button', false>;
   };
 }
 
 export interface SpecialSectionsCauseOrganizationsSection
-  extends Schema.Component {
+  extends Struct.ComponentSchema {
   collectionName: 'components_special_sections_cause_organizations_sections';
   info: {
-    displayName: 'CauseOrganizationsSection';
     description: '';
+    displayName: 'CauseOrganizationsSection';
   };
   attributes: {
-    recommendedFundTitle: Attribute.String;
-    recommendedOrganizationsTitle: Attribute.String;
+    recommendedFundTitle: Schema.Attribute.String;
+    recommendedOrganizationsTitle: Schema.Attribute.String;
   };
 }
 
-export interface SpecialSectionsEntityTextSection extends Schema.Component {
+export interface SpecialSectionsEntityTextSection
+  extends Struct.ComponentSchema {
   collectionName: 'components_special_sections_entity_text_sections';
   info: {
     displayName: 'EntityTextSection';
   };
   attributes: {
-    field: Attribute.String;
+    field: Schema.Attribute.String;
   };
 }
 
-export interface SpecialSectionsOrgHeaderSection extends Schema.Component {
+export interface SpecialSectionsOrgHeaderSection
+  extends Struct.ComponentSchema {
   collectionName: 'components_special_sections_org_header_sections';
   info: {
-    displayName: 'OrgHeaderSection';
     description: '';
+    displayName: 'OrgHeaderSection';
   };
   attributes: {
-    breadcrumbs: Attribute.Component<'elements.breadcrumb', true>;
-    donateText: Attribute.String;
-    websiteText: Attribute.String;
+    breadcrumbs: Schema.Attribute.Component<'elements.breadcrumb', true>;
+    donateText: Schema.Attribute.String;
+    websiteText: Schema.Attribute.String;
   };
 }
 
 export interface SpecialSectionsOrganizationCtaSection
-  extends Schema.Component {
+  extends Struct.ComponentSchema {
   collectionName: 'components_special_sections_organization_cta_sections';
   info: {
     displayName: 'OrganizationCtaSection';
   };
   attributes: {
-    title: Attribute.String;
-    description: Attribute.RichText;
-    donateText: Attribute.String;
+    description: Schema.Attribute.RichText;
+    donateText: Schema.Attribute.String;
+    title: Schema.Attribute.String;
   };
 }
 
-export interface SpecialSectionsSpecialHeaderSection extends Schema.Component {
+export interface SpecialSectionsSpecialHeaderSection
+  extends Struct.ComponentSchema {
   collectionName: 'components_special_sections_special_header_sections';
   info: {
-    displayName: 'SpecialHeaderSection';
     description: '';
+    displayName: 'SpecialHeaderSection';
   };
   attributes: {
-    descriptionField: Attribute.String;
-    breadcrumbs: Attribute.Component<'elements.breadcrumb', true>;
+    breadcrumbs: Schema.Attribute.Component<'elements.breadcrumb', true>;
+    descriptionField: Schema.Attribute.String;
   };
 }
 
-declare module '@strapi/types' {
-  export module Shared {
-    export interface Components {
+declare module '@strapi/strapi' {
+  export module Public {
+    export interface ComponentSchemas {
       'elements.bank-icon': ElementsBankIcon;
       'elements.breadcrumb': ElementsBreadcrumb;
       'elements.button': ElementsButton;

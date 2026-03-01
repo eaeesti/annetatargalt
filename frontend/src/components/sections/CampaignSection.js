@@ -158,7 +158,7 @@ export default function CampaignSection({
       <div
         className="h-16 w-full bg-top bg-repeat-x xs:h-20 sm:h-24 md:h-32"
         style={{
-          backgroundImage: `url(${decoration.data?.attributes.url})`,
+          backgroundImage: `url(${decoration?.url})`,
           backgroundSize: "auto 100%",
         }}
       />

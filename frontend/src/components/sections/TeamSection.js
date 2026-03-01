@@ -18,12 +18,12 @@ export default function TeamSection({
           {title}
         </h2>
         <ul role="list" className="flex flex-col gap-12">
-          {teamMembers.map((teamMember) => (
+          {teamMembers?.map((teamMember) => (
             <li
               key={teamMember.name}
               className="flex flex-col gap-8 sm:flex-row sm:gap-10"
             >
-              {teamMember.image?.data?.attributes && (
+              {teamMember.image && (
                 <Image
                   className="aspect-[4/5] w-52 flex-none rounded-2xl object-cover"
                   data={teamMember.image}
@@ -53,12 +53,11 @@ export default function TeamSection({
                         size="link"
                         type="text"
                         className="text-slate-400"
-                        noIcon={true}
                       >
                         <EnvelopeIcon className="h-6 w-6" />
                       </CopyButton>
                     )}
-                    {teamMember.socialMediaLinks.map((socialMediaLink) => (
+                    {teamMember.socialMediaLinks?.map((socialMediaLink) => (
                       <Button
                         key={socialMediaLink.id}
                         id={socialMediaLink.id}
@@ -67,7 +66,6 @@ export default function TeamSection({
                         size="link"
                         type="text"
                         className="text-slate-400"
-                        noIcon={true}
                       >
                         <SocialMediaIcon type={socialMediaLink.type} />
                       </Button>

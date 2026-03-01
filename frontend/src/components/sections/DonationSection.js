@@ -46,6 +46,10 @@ export default function DonationSection(props) {
   const typeParam = searchParams.get("type");
   const orgParam = searchParams.get("org");
 
+  // In Strapi v5 without v4 compatibility, relations are returned as arrays directly
+  // Wrap it to maintain compatibility with components expecting { data: [...] }
+  const causes = { data: props.causes || [] };
+
   const [donation, setDonation] = useState({
     amount: amountOptions[1].value,
     type: typeParam === "onetime" ? "onetime" : "recurring",
@@ -61,7 +65,7 @@ export default function DonationSection(props) {
     dedicationName: "",
     dedicationEmail: "",
     dedicationMessage: "",
-    proportions: Proportions.fromStrapiData(props.causes.data, orgParam),
+    proportions: Proportions.fromStrapiData(causes.data, orgParam),
     addTip: false,
     paymentMethod: "paymentInitiation",
     acceptTerms: false,
@@ -103,7 +107,7 @@ export default function DonationSection(props) {
       "paymentMethod",
     ]);
     donationData.amounts = donation.proportions
-      .calculateAmounts(donation.amount, props.causes)
+      .calculateAmounts(donation.amount, causes)
       .map(({ organizationInternalId, amount }) => ({
         organizationInternalId,
         amount: Math.round(amount * 100),
@@ -191,7 +195,7 @@ export default function DonationSection(props) {
                 informationText={props.informationText}
                 lockText={props.lockText}
                 letExpertsChooseText={props.letExpertsChooseText}
-                causes={props.causes}
+                causes={causes}
                 proportions={donation.proportions}
                 setProportions={(proportions) =>
                   setDonation({ ...donation, proportions })
@@ -345,7 +349,7 @@ export default function DonationSection(props) {
               </Markdown>
               <PaymentSummary
                 donation={donation}
-                causes={props.causes}
+                causes={causes}
                 currency={props.global.currency}
                 totalText={props.global.totalText}
                 tipOrganization={props.global.tipOrganization}

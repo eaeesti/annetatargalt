@@ -10,11 +10,12 @@ module.exports = ({ strapi }) => ({
       // Convert organization IDs to internalIds and create organization donations
       const organizationDonationsData = await Promise.all(
         amounts.map(async ({ organizationId, amount }) => {
-          const organization = await strapi.entityService.findOne(
-            "api::organization.organization",
-            organizationId,
-            { fields: ["internalId"] }
-          );
+          const organization = await strapi.documents(
+            "api::organization.organization"
+          ).findOne({
+            documentId: organizationId,
+            fields: ["internalId"],
+          });
 
           if (!organization || !organization.internalId) {
             throw new Error(
@@ -70,11 +71,12 @@ module.exports = ({ strapi }) => ({
       // Convert organization IDs to internalIds and create organization donations
       const organizationDonationsData = await Promise.all(
         organizationDonations.map(async (organizationDonation) => {
-          const organization = await strapi.entityService.findOne(
-            "api::organization.organization",
-            organizationDonation.organization,
-            { fields: ["internalId"] }
-          );
+          const organization = await strapi.documents(
+            "api::organization.organization"
+          ).findOne({
+            documentId: organizationDonation.organization,
+            fields: ["internalId"],
+          });
 
           if (!organization || !organization.internalId) {
             throw new Error(

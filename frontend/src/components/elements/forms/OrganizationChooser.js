@@ -75,11 +75,11 @@ export default function OrganizationChooser({
                       id={`cause${cause.id}`}
                       className="text-md cursor-pointer font-medium"
                     >
-                      {cause.attributes.title}
+                      {cause.title}
                     </label>
                   </Disclosure.Button>
                   <Button
-                    href={`/${cause.attributes.slug}`}
+                    href={`/${cause.slug}`}
                     newTab={true}
                     size="link"
                     type="text"
@@ -126,7 +126,7 @@ export default function OrganizationChooser({
                       "flex flex-col gap-6",
                     )}
                   >
-                    {cause.attributes.organizations.data.map(
+                    {cause.organizations.map(
                       (organization, organizationIndex) => (
                         <div
                           key={organizationIndex}
@@ -134,13 +134,13 @@ export default function OrganizationChooser({
                         >
                           <div className="flex flex-row items-center gap-3">
                             <label
-                              id={`organization${organization.attributes.internalId}`}
+                              id={`organization${organization.internalId}`}
                               className="cursor-text text-sm font-medium"
                             >
-                              {organization.attributes.title}
+                              {organization.title}
                             </label>
                             <Button
-                              href={`/${cause.attributes.slug}/${organization.attributes.slug}`}
+                              href={`/${cause.slug}/${organization.slug}`}
                               newTab={true}
                               size="link"
                               type="text"
@@ -156,26 +156,26 @@ export default function OrganizationChooser({
                             lockText={lockText}
                             proportion={proportions.getSubProportion(
                               cause.id,
-                              organization.attributes.internalId,
+                              organization.internalId,
                             )}
                             setProportion={(value) =>
                               setProportions(
                                 proportions.updateSubProportion(
                                   cause.id,
-                                  organization.attributes.internalId,
+                                  organization.internalId,
                                   value,
                                 ),
                               )
                             }
                             isLocked={proportions.isSubLocked(
                               cause.id,
-                              organization.attributes.internalId,
+                              organization.internalId,
                             )}
                             lock={() =>
                               setProportions(
                                 proportions.lockSubProportion(
                                   cause.id,
-                                  organization.attributes.internalId,
+                                  organization.internalId,
                                 ),
                               )
                             }
@@ -183,11 +183,11 @@ export default function OrganizationChooser({
                               setProportions(
                                 proportions.toggleSubProportionLock(
                                   cause.id,
-                                  organization.attributes.internalId,
+                                  organization.internalId,
                                 ),
                               )
                             }
-                            aria-labelledby={`organization${organization.attributes.internalId}`}
+                            aria-labelledby={`organization${organization.internalId}`}
                             disabled={proportions.goesToFund(cause.id)}
                           />
                         </div>

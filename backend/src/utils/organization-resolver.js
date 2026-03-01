@@ -29,13 +29,12 @@ class OrganizationResolver {
     }
 
     // Fetch from Strapi
-    const organizations = await this.strapi.entityService.findMany(
-      "api::organization.organization",
-      {
-        filters: { internalId },
-        limit: 1,
-      }
-    );
+    const organizations = await this.strapi.documents(
+      "api::organization.organization"
+    ).findMany({
+      filters: { internalId },
+      limit: 1,
+    });
 
     if (organizations.length === 0) {
       return null;
@@ -65,12 +64,11 @@ class OrganizationResolver {
 
     // Fetch uncached organizations from Strapi
     if (uncachedIds.length > 0) {
-      const organizations = await this.strapi.entityService.findMany(
-        "api::organization.organization",
-        {
-          filters: { internalId: { $in: uncachedIds } },
-        }
-      );
+      const organizations = await this.strapi.documents(
+        "api::organization.organization"
+      ).findMany({
+        filters: { internalId: { $in: uncachedIds } },
+      });
 
       // Add to cache and result
       for (const organization of organizations) {

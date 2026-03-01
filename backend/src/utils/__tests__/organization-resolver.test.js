@@ -13,11 +13,14 @@ describe("OrganizationResolver", () => {
   let resolver;
 
   beforeEach(() => {
-    // Mock Strapi entityService
+    // Mock Strapi Document Service API (v5)
+    const mockDocuments = {
+      findMany: vi.fn(),
+    };
+
     mockStrapi = {
-      entityService: {
-        findMany: vi.fn(),
-      },
+      documents: vi.fn(() => mockDocuments),
+      _mockDocuments: mockDocuments, // Store reference for easier access in tests
     };
 
     resolver = createOrganizationResolver(mockStrapi);
@@ -33,19 +36,19 @@ describe("OrganizationResolver", () => {
         active: true,
       };
 
-      mockStrapi.entityService.findMany.mockResolvedValue([mockOrg]);
+      mockStrapi._mockDocuments.findMany.mockResolvedValue([mockOrg]);
 
       const result = await resolver.findByInternalId("AMF");
 
       expect(result).toEqual(mockOrg);
-      expect(mockStrapi.entityService.findMany).toHaveBeenCalledWith(
-        "api::organization.organization",
-        {
-          filters: { internalId: "AMF" },
-          limit: 1,
-        }
+      expect(mockStrapi.documents).toHaveBeenCalledWith(
+        "api::organization.organization"
       );
-      expect(mockStrapi.entityService.findMany).toHaveBeenCalledTimes(1);
+      expect(mockStrapi._mockDocuments.findMany).toHaveBeenCalledWith({
+        filters: { internalId: "AMF" },
+        limit: 1,
+      });
+      expect(mockStrapi._mockDocuments.findMany).toHaveBeenCalledTimes(1);
     });
 
     it("should return cached organization on cache hit", async () => {
@@ -57,7 +60,7 @@ describe("OrganizationResolver", () => {
         active: true,
       };
 
-      mockStrapi.entityService.findMany.mockResolvedValue([mockOrg]);
+      mockStrapi._mockDocuments.findMany.mockResolvedValue([mockOrg]);
 
       // First call - cache miss
       const result1 = await resolver.findByInternalId("AMF");
@@ -68,26 +71,26 @@ describe("OrganizationResolver", () => {
       expect(result2).toEqual(mockOrg);
 
       // Should only call Strapi once
-      expect(mockStrapi.entityService.findMany).toHaveBeenCalledTimes(1);
+      expect(mockStrapi._mockDocuments.findMany).toHaveBeenCalledTimes(1);
     });
 
     it("should return null when organization not found", async () => {
-      mockStrapi.entityService.findMany.mockResolvedValue([]);
+      mockStrapi._mockDocuments.findMany.mockResolvedValue([]);
 
       const result = await resolver.findByInternalId("NONEXISTENT");
 
       expect(result).toBeNull();
-      expect(mockStrapi.entityService.findMany).toHaveBeenCalledWith(
-        "api::organization.organization",
-        {
-          filters: { internalId: "NONEXISTENT" },
-          limit: 1,
-        }
+      expect(mockStrapi.documents).toHaveBeenCalledWith(
+        "api::organization.organization"
       );
+      expect(mockStrapi._mockDocuments.findMany).toHaveBeenCalledWith({
+        filters: { internalId: "NONEXISTENT" },
+        limit: 1,
+      });
     });
 
     it("should cache null results to prevent repeated queries", async () => {
-      mockStrapi.entityService.findMany.mockResolvedValue([]);
+      mockStrapi._mockDocuments.findMany.mockResolvedValue([]);
 
       // First call
       await resolver.findByInternalId("NONEXISTENT");
@@ -97,7 +100,7 @@ describe("OrganizationResolver", () => {
       // Should not query Strapi again for null results
       // (Current implementation doesn't cache null, so this will call twice)
       // This is actually a potential improvement opportunity
-      expect(mockStrapi.entityService.findMany).toHaveBeenCalledTimes(2);
+      expect(mockStrapi._mockDocuments.findMany).toHaveBeenCalledTimes(2);
     });
 
     it("should handle multiple different organizations", async () => {
@@ -117,7 +120,7 @@ describe("OrganizationResolver", () => {
         active: true,
       };
 
-      mockStrapi.entityService.findMany
+      mockStrapi._mockDocuments.findMany
         .mockResolvedValueOnce([mockOrg1])
         .mockResolvedValueOnce([mockOrg2]);
 
@@ -126,7 +129,7 @@ describe("OrganizationResolver", () => {
 
       expect(result1).toEqual(mockOrg1);
       expect(result2).toEqual(mockOrg2);
-      expect(mockStrapi.entityService.findMany).toHaveBeenCalledTimes(2);
+      expect(mockStrapi._mockDocuments.findMany).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -149,7 +152,7 @@ describe("OrganizationResolver", () => {
         },
       ];
 
-      mockStrapi.entityService.findMany.mockResolvedValue(mockOrgs);
+      mockStrapi._mockDocuments.findMany.mockResolvedValue(mockOrgs);
 
       const result = await resolver.findManyByInternalIds(["AMF", "GD"]);
 
@@ -158,12 +161,12 @@ describe("OrganizationResolver", () => {
       expect(result.get("AMF")).toEqual(mockOrgs[0]);
       expect(result.get("GD")).toEqual(mockOrgs[1]);
 
-      expect(mockStrapi.entityService.findMany).toHaveBeenCalledWith(
-        "api::organization.organization",
-        {
-          filters: { internalId: { $in: ["AMF", "GD"] } },
-        }
+      expect(mockStrapi.documents).toHaveBeenCalledWith(
+        "api::organization.organization"
       );
+      expect(mockStrapi._mockDocuments.findMany).toHaveBeenCalledWith({
+        filters: { internalId: { $in: ["AMF", "GD"] } },
+      });
     });
 
     it("should use cache for already-fetched organizations", async () => {
@@ -184,11 +187,11 @@ describe("OrganizationResolver", () => {
       };
 
       // Pre-populate cache with AMF
-      mockStrapi.entityService.findMany.mockResolvedValueOnce([mockOrg1]);
+      mockStrapi._mockDocuments.findMany.mockResolvedValueOnce([mockOrg1]);
       await resolver.findByInternalId("AMF");
 
       // Now fetch both AMF and GD - should only query for GD
-      mockStrapi.entityService.findMany.mockResolvedValueOnce([mockOrg2]);
+      mockStrapi._mockDocuments.findMany.mockResolvedValueOnce([mockOrg2]);
       const result = await resolver.findManyByInternalIds(["AMF", "GD"]);
 
       expect(result.size).toBe(2);
@@ -196,14 +199,10 @@ describe("OrganizationResolver", () => {
       expect(result.get("GD")).toEqual(mockOrg2);
 
       // First call for AMF, second call for GD only
-      expect(mockStrapi.entityService.findMany).toHaveBeenCalledTimes(2);
-      expect(mockStrapi.entityService.findMany).toHaveBeenNthCalledWith(
-        2,
-        "api::organization.organization",
-        {
-          filters: { internalId: { $in: ["GD"] } },
-        }
-      );
+      expect(mockStrapi._mockDocuments.findMany).toHaveBeenCalledTimes(2);
+      expect(mockStrapi._mockDocuments.findMany).toHaveBeenNthCalledWith(2, {
+        filters: { internalId: { $in: ["GD"] } },
+      });
     });
 
     it("should return empty map when no internalIds provided", async () => {
@@ -211,7 +210,7 @@ describe("OrganizationResolver", () => {
 
       expect(result).toBeInstanceOf(Map);
       expect(result.size).toBe(0);
-      expect(mockStrapi.entityService.findMany).not.toHaveBeenCalled();
+      expect(mockStrapi._mockDocuments.findMany).not.toHaveBeenCalled();
     });
 
     it("should handle partial results from Strapi", async () => {
@@ -224,7 +223,7 @@ describe("OrganizationResolver", () => {
       };
 
       // Only AMF found, GD doesn't exist
-      mockStrapi.entityService.findMany.mockResolvedValue([mockOrg]);
+      mockStrapi._mockDocuments.findMany.mockResolvedValue([mockOrg]);
 
       const result = await resolver.findManyByInternalIds([
         "AMF",
@@ -254,7 +253,7 @@ describe("OrganizationResolver", () => {
         },
       ];
 
-      mockStrapi.entityService.findMany.mockResolvedValue(mockOrgs);
+      mockStrapi._mockDocuments.findMany.mockResolvedValue(mockOrgs);
 
       // First batch fetch
       await resolver.findManyByInternalIds(["AMF", "GD"]);
@@ -267,7 +266,7 @@ describe("OrganizationResolver", () => {
       expect(gd).toEqual(mockOrgs[1]);
 
       // Should only call Strapi once for the batch fetch
-      expect(mockStrapi.entityService.findMany).toHaveBeenCalledTimes(1);
+      expect(mockStrapi._mockDocuments.findMany).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -281,7 +280,7 @@ describe("OrganizationResolver", () => {
         active: true,
       };
 
-      mockStrapi.entityService.findMany.mockResolvedValue([mockOrg]);
+      mockStrapi._mockDocuments.findMany.mockResolvedValue([mockOrg]);
 
       const result = await resolver.isValidOrganization("AMF");
 
@@ -297,7 +296,7 @@ describe("OrganizationResolver", () => {
         active: false,
       };
 
-      mockStrapi.entityService.findMany.mockResolvedValue([mockOrg]);
+      mockStrapi._mockDocuments.findMany.mockResolvedValue([mockOrg]);
 
       const result = await resolver.isValidOrganization("INACTIVE");
 
@@ -305,7 +304,7 @@ describe("OrganizationResolver", () => {
     });
 
     it("should return false for non-existent organization", async () => {
-      mockStrapi.entityService.findMany.mockResolvedValue([]);
+      mockStrapi._mockDocuments.findMany.mockResolvedValue([]);
 
       const result = await resolver.isValidOrganization("NONEXISTENT");
 
@@ -321,7 +320,7 @@ describe("OrganizationResolver", () => {
         active: true,
       };
 
-      mockStrapi.entityService.findMany.mockResolvedValue([mockOrg]);
+      mockStrapi._mockDocuments.findMany.mockResolvedValue([mockOrg]);
 
       // Pre-populate cache
       await resolver.findByInternalId("AMF");
@@ -330,7 +329,7 @@ describe("OrganizationResolver", () => {
       const result = await resolver.isValidOrganization("AMF");
 
       expect(result).toBe(true);
-      expect(mockStrapi.entityService.findMany).toHaveBeenCalledTimes(1);
+      expect(mockStrapi._mockDocuments.findMany).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -344,25 +343,25 @@ describe("OrganizationResolver", () => {
         active: true,
       };
 
-      mockStrapi.entityService.findMany.mockResolvedValue([mockOrg]);
+      mockStrapi._mockDocuments.findMany.mockResolvedValue([mockOrg]);
 
       // Populate cache
       await resolver.findByInternalId("AMF");
-      expect(mockStrapi.entityService.findMany).toHaveBeenCalledTimes(1);
+      expect(mockStrapi._mockDocuments.findMany).toHaveBeenCalledTimes(1);
 
       // Clear cache
       resolver.clearCache();
 
       // Should fetch from Strapi again
       await resolver.findByInternalId("AMF");
-      expect(mockStrapi.entityService.findMany).toHaveBeenCalledTimes(2);
+      expect(mockStrapi._mockDocuments.findMany).toHaveBeenCalledTimes(2);
     });
 
     it("should not affect Strapi entityService", () => {
       resolver.clearCache();
 
       // Should not throw or cause issues
-      expect(mockStrapi.entityService.findMany).not.toHaveBeenCalled();
+      expect(mockStrapi._mockDocuments.findMany).not.toHaveBeenCalled();
     });
   });
 
@@ -377,7 +376,7 @@ describe("OrganizationResolver", () => {
         // No optional fields
       };
 
-      mockStrapi.entityService.findMany.mockResolvedValue([mockOrg]);
+      mockStrapi._mockDocuments.findMany.mockResolvedValue([mockOrg]);
 
       const result = await resolver.findByInternalId("MIN");
 
@@ -399,7 +398,7 @@ describe("OrganizationResolver", () => {
         content: "Long content here...",
       };
 
-      mockStrapi.entityService.findMany.mockResolvedValue([mockOrg]);
+      mockStrapi._mockDocuments.findMany.mockResolvedValue([mockOrg]);
 
       const result = await resolver.findByInternalId("FULL");
 
@@ -410,7 +409,7 @@ describe("OrganizationResolver", () => {
     });
 
     it("should handle Strapi errors gracefully", async () => {
-      mockStrapi.entityService.findMany.mockRejectedValue(
+      mockStrapi._mockDocuments.findMany.mockRejectedValue(
         new Error("Database connection failed")
       );
 
@@ -420,18 +419,18 @@ describe("OrganizationResolver", () => {
     });
 
     it("should handle empty string internalId", async () => {
-      mockStrapi.entityService.findMany.mockResolvedValue([]);
+      mockStrapi._mockDocuments.findMany.mockResolvedValue([]);
 
       const result = await resolver.findByInternalId("");
 
       expect(result).toBeNull();
-      expect(mockStrapi.entityService.findMany).toHaveBeenCalledWith(
-        "api::organization.organization",
-        {
-          filters: { internalId: "" },
-          limit: 1,
-        }
+      expect(mockStrapi.documents).toHaveBeenCalledWith(
+        "api::organization.organization"
       );
+      expect(mockStrapi._mockDocuments.findMany).toHaveBeenCalledWith({
+        filters: { internalId: "" },
+        limit: 1,
+      });
     });
   });
 
@@ -444,7 +443,7 @@ describe("OrganizationResolver", () => {
       ];
 
       // Pre-populate cache with AMF and GD
-      mockStrapi.entityService.findMany
+      mockStrapi._mockDocuments.findMany
         .mockResolvedValueOnce([orgs[0]])
         .mockResolvedValueOnce([orgs[1]]);
 
@@ -452,21 +451,17 @@ describe("OrganizationResolver", () => {
       await resolver.findByInternalId("GD");
 
       // Now fetch all three - should only query for EV
-      mockStrapi.entityService.findMany.mockResolvedValueOnce([orgs[2]]);
+      mockStrapi._mockDocuments.findMany.mockResolvedValueOnce([orgs[2]]);
 
       const result = await resolver.findManyByInternalIds(["AMF", "GD", "EV"]);
 
       expect(result.size).toBe(3);
-      expect(mockStrapi.entityService.findMany).toHaveBeenCalledTimes(3);
+      expect(mockStrapi._mockDocuments.findMany).toHaveBeenCalledTimes(3);
 
       // Last call should only query for EV
-      expect(mockStrapi.entityService.findMany).toHaveBeenNthCalledWith(
-        3,
-        "api::organization.organization",
-        {
-          filters: { internalId: { $in: ["EV"] } },
-        }
-      );
+      expect(mockStrapi._mockDocuments.findMany).toHaveBeenNthCalledWith(3, {
+        filters: { internalId: { $in: ["EV"] } },
+      });
     });
 
     it("should handle duplicate internalIds in batch request", async () => {
@@ -478,7 +473,7 @@ describe("OrganizationResolver", () => {
         active: true,
       };
 
-      mockStrapi.entityService.findMany.mockResolvedValue([mockOrg]);
+      mockStrapi._mockDocuments.findMany.mockResolvedValue([mockOrg]);
 
       // Request same org multiple times
       const result = await resolver.findManyByInternalIds([
@@ -491,7 +486,7 @@ describe("OrganizationResolver", () => {
       expect(result.get("AMF")).toEqual(mockOrg);
 
       // Should deduplicate and only query once
-      expect(mockStrapi.entityService.findMany).toHaveBeenCalledTimes(1);
+      expect(mockStrapi._mockDocuments.findMany).toHaveBeenCalledTimes(1);
     });
   });
 });

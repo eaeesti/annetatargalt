@@ -37,16 +37,18 @@ export default async function BlogPostsSection({ global, page }) {
                     {post.preview}
                   </p>
                 </div>
-                <div className="flex flex-col">
-                  <div className="text-sm leading-6">
-                    <div className="font-semibold text-slate-900">
-                      {post.author.data.attributes.name}
-                    </div>
-                    <div className="text-slate-600">
-                      {post.author.data.attributes.role}
+                {post.author && (
+                  <div className="flex flex-col">
+                    <div className="text-sm leading-6">
+                      <div className="font-semibold text-slate-900">
+                        {post.author.name}
+                      </div>
+                      <div className="text-slate-600">
+                        {post.author.role}
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </article>
             </Anchor>
           ))}

@@ -47,13 +47,18 @@ export async function getPageBySlug(slug) {
   const options = headersWithAuthToken();
   const urlParamsObject = {
     filters: { slug },
-    populate: "deep",
+    populate: "*",
   };
 
   const response = await fetchAPI(path, urlParamsObject, options);
 
+  if (!response.data || response.data.length === 0) {
+    notFound();
+  }
+
   try {
-    return response.data[0].attributes;
+    // In Strapi v5, data is returned flat (not nested under attributes)
+    return response.data[0];
   } catch (error) {
     notFound();
   }
@@ -62,21 +67,27 @@ export async function getPageBySlug(slug) {
 export async function getGlobal() {
   const path = "/global";
   const options = headersWithAuthToken();
-  const urlParamsObject = { populate: "deep" };
+  const urlParamsObject = { populate: "*" };
 
   const response = await fetchAPI(path, urlParamsObject, options);
 
-  return response.data.attributes;
+  // Singleton types return data directly (not in an array)
+  return response.data;
 }
 
 export async function getSpecialPages() {
   const path = "/special-pages";
   const options = headersWithAuthToken();
-  const urlParamsObject = { populate: "deep,3" };
+  const urlParamsObject = { populate: "*" };
 
   const response = await fetchAPI(path, urlParamsObject, options);
 
-  const specialPages = response.data.map(({ attributes }) => attributes);
+  if (!response.data || response.data.length === 0) {
+    return [];
+  }
+
+  // In Strapi v5, data is returned flat (not nested under attributes)
+  const specialPages = response.data.filter((page) => page && page.slugPattern);
 
   return specialPages;
 }
@@ -107,14 +118,18 @@ export async function getEntityBySlug(type, slug) {
   const options = headersWithAuthToken();
   const urlParamsObject = {
     filters: { slug },
-    populate: "deep,3",
+    populate: "*",
   };
 
   const response = await fetchAPI(path, urlParamsObject, options);
-  const { attributes, id } = response.data[0];
+
+  if (!response.data || response.data.length === 0) {
+    notFound();
+  }
 
   try {
-    return { ...attributes, id };
+    // In Strapi v5, data is returned flat (already includes id)
+    return response.data[0];
   } catch (error) {
     notFound();
   }
@@ -123,20 +138,21 @@ export async function getEntityBySlug(type, slug) {
 export async function getAllSlugs() {
   const pagesPath = "/pages";
   const options = headersWithAuthToken();
-  const urlParamsObject = { populate: "deep,2" };
+  const urlParamsObject = { populate: "*" };
 
   const pagesResponse = await fetchAPI(pagesPath, urlParamsObject, options);
-  const pageSlugs = pagesResponse.data.map(({ attributes }) => attributes.slug);
+  // In Strapi v5, data is returned flat (not nested under attributes)
+  const pageSlugs = pagesResponse.data?.map((page) => page.slug) || [];
 
   const causesPath = "/causes";
   const causesResponse = await fetchAPI(causesPath, urlParamsObject, options);
-  const causes = causesResponse.data.map(({ attributes }) => attributes);
+  const causes = causesResponse.data || [];
   const causeSlugs = causes.map((cause) => cause.slug);
 
   const organizationSlugs = causes
     .map((cause) =>
-      cause.organizations.data.map(
-        (organization) => `${cause.slug}/${organization.attributes.slug}`,
+      (cause.organizations || []).map(
+        (organization) => `${cause.slug}/${organization.slug}`,
       ),
     )
     .flat();
@@ -144,7 +160,7 @@ export async function getAllSlugs() {
   const blogPosts = await getBlogPosts();
   const global = await getGlobal();
   const blogPostSlugs = blogPosts.map(
-    (blogPost) => `${global.blogSlug}/${blogPost.slug}`,
+    (blogPost) => `${global?.blogSlug || "blog"}/${blogPost.slug}`,
   );
 
   const allSlugs = [
@@ -160,13 +176,16 @@ export async function getAllSlugs() {
 export async function getBlogPosts() {
   const path = "/blog-posts";
   const options = headersWithAuthToken();
-  const urlParamsObject = { populate: "deep,2", sort: "date:desc" };
+  const urlParamsObject = { populate: "*", sort: "date:desc" };
 
   const response = await fetchAPI(path, urlParamsObject, options);
 
-  const blogPosts = response.data.map(({ attributes }) => attributes);
+  if (!response.data || response.data.length === 0) {
+    return [];
+  }
 
-  return blogPosts;
+  // In Strapi v5, data is returned flat (not nested under attributes)
+  return response.data;
 }
 
 export function strapiSectionNameToReactComponentName(component) {
@@ -184,7 +203,7 @@ export async function getOrganizaitons() {
   const path = "/organizations";
   const options = headersWithAuthToken();
   const urlParamsObject = {
-    populate: "deep,2",
+    populate: "*",
     sort: "title:asc",
     filters: {
       cause: {
@@ -197,9 +216,10 @@ export async function getOrganizaitons() {
 
   const response = await fetchAPI(path, urlParamsObject, options);
 
-  const organizations = response.data.map(({ id, attributes }) => {
-    return { ...attributes, id };
-  });
+  if (!response.data || response.data.length === 0) {
+    return [];
+  }
 
-  return organizations;
+  // In Strapi v5, data is returned flat (already includes id)
+  return response.data;
 }
