@@ -125,7 +125,8 @@ export default function CampaignSection({
     if (!progressBarOnScreen) return;
 
     if (percentage - progress < 0.1) {
-      setProgress(percentage);
+      // Use setTimeout to avoid synchronous setState in effect
+      setTimeout(() => setProgress(percentage), 0);
       return;
     }
 
