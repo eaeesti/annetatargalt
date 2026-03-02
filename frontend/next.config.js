@@ -1,8 +1,20 @@
 /** @type {import('next').NextConfig} */
 
 const nextConfig = {
+  // Enable React Compiler for automatic memoization
+  reactCompiler: true,
+
   images: {
-    domains: ["res.cloudinary.com", "placehold.co"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
+      {
+        protocol: "https",
+        hostname: "placehold.co",
+      },
+    ],
   },
   async rewrites() {
     return [
