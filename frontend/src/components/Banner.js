@@ -1,18 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Markdown from "./elements/Markdown";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 
 const BANNER_DISMISSED_KEY = "topBannerDismissed";
 
 export default function Banner({ topBannerText, closeText }) {
-  const [isDismissed, setIsDismissed] = useState(true);
-
-  useEffect(() => {
-    const dismissed = localStorage.getItem(BANNER_DISMISSED_KEY);
-    setIsDismissed(dismissed === "true");
-  }, []);
+  // Use lazy initializer to read localStorage on mount without useEffect
+  const [isDismissed, setIsDismissed] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem(BANNER_DISMISSED_KEY) === "true";
+  });
 
   const handleDismiss = () => {
     localStorage.setItem(BANNER_DISMISSED_KEY, "true");
