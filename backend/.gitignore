@@ -114,3 +114,6 @@ dist
 build
 .strapi-updater.json
 .strapi
+
+# Local deployment script with server credentials
+deploy-local.sh
