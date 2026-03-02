@@ -10,7 +10,8 @@ function getSlug(params) {
 }
 
 export async function generateMetadata({ params }) {
-  const slug = getSlug(params);
+  const resolvedParams = await params;
+  const slug = getSlug(resolvedParams);
   const global = await getGlobal();
   const specialPage = await findSpecialPage(slug);
 
@@ -24,7 +25,8 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function SlugPage({ params }) {
-  const slug = getSlug(params);
+  const resolvedParams = await params;
+  const slug = getSlug(resolvedParams);
   const global = await getGlobal();
 
   const specialPage = await findSpecialPage(slug);
