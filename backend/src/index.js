@@ -100,5 +100,12 @@ module.exports = {
       console.error("If this persists, check database connectivity\n");
       // Don't exit - let Strapi handle DB connection errors
     }
+
+    // Signal PM2 that Strapi is ready to accept connections
+    // This enables zero-downtime reloads with pm2 reload
+    if (process.send) {
+      process.send("ready");
+      strapi.log.info("✅ PM2 ready signal sent - application fully initialized");
+    }
   },
 };
