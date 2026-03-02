@@ -42,6 +42,19 @@ Upgraded from Strapi v4.21.1 to v5.37.1. Migrated from Entity Service API to Doc
 - Only ~25 content records migrated (not 1000+ donations)
 - Build time 20 minutes in production (memory-constrained server)
 
+### 4. Next.js 16 Upgrade (2026-03-02)
+**Status**: ✅ Complete
+**Documentation**: [NEXTJS_16_UPGRADE_PLAN.md](./NEXTJS_16_UPGRADE_PLAN.md)
+
+Upgraded from Next.js 13.5.5 to 16.1.6, React 18 to 19.2.5, and enabled React Compiler. Major version jump skipping Next.js 14 and 15.
+
+**Key achievements:**
+- Turbopack default bundler (automatic)
+- React Compiler auto-memoization enabled
+- ESLint 9 migration with flat config
+- React Compiler found and fixed 2 performance issues
+- Actual time: 2.5 hours vs 4-5 hour estimate
+
 ## Migration Scripts
 
 One-time migration scripts preserved for historical reference in [`scripts/`](./scripts/).
@@ -59,6 +72,7 @@ One-time migration scripts preserved for historical reference in [`scripts/`](./
 - **Phase 0-6** (Drizzle Migration): Feb 14-28, 2026 (~2 weeks)
 - **Organization ID Migration**: March 1, 2026 (1 day)
 - **Strapi v5 Upgrade**: March 1, 2026 (1 day, after prerequisites)
+- **Next.js 16 Upgrade**: March 2, 2026 (2.5 hours)
 
 ## Lessons Learned
 
@@ -71,6 +85,6 @@ One-time migration scripts preserved for historical reference in [`scripts/`](./
 ## Next Steps
 
 With migrations complete, focus shifts to:
-1. Next.js upgrade to latest version
-2. TypeScript conversion (backend + frontend)
-3. E2E test implementation
+1. ✅ ~~Next.js upgrade to latest version~~ (completed March 2, 2026)
+2. 🔜 TypeScript conversion (backend + frontend)
+3. 🔜 E2E test implementation
