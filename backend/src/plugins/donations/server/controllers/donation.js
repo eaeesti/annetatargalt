@@ -13,7 +13,8 @@ module.exports = ({ strapi }) => ({
 
     try {
       const { redirectURL } = await strapi
-        .plugin("donations").service("donation")
+        .plugin("donations")
+        .service("donation")
         .createDonation(donation);
       return ctx.send({ redirectURL });
     } catch (error) {
@@ -43,7 +44,8 @@ module.exports = ({ strapi }) => ({
 
     try {
       const { redirectURL } = await strapi
-        .plugin("donations").service("donation")
+        .plugin("donations")
+        .service("donation")
         .createDonation(donation, returnUrl, true);
       return ctx.send({ redirectURL });
     } catch (error) {
@@ -56,7 +58,8 @@ module.exports = ({ strapi }) => ({
 
     try {
       const { redirectURL } = await strapi
-        .plugin("donations").service("donation")
+        .plugin("donations")
+        .service("donation")
         .createForeignDonation(donation);
       return ctx.send({ redirectURL });
     } catch (error) {
@@ -110,16 +113,21 @@ module.exports = ({ strapi }) => ({
 
     if (donation.externalDonation) {
       await strapi
-        .plugin("donations").service("donation")
+        .plugin("donations")
+        .service("donation")
         .sendExternalConfirmationEmail(id);
     } else {
       await strapi
-        .plugin("donations").service("donation")
+        .plugin("donations")
+        .service("donation")
         .sendConfirmationEmail(id);
     }
 
     if (donation.dedicationEmail) {
-      await strapi.plugin("donations").service("donation").sendDedicationEmail(id);
+      await strapi
+        .plugin("donations")
+        .service("donation")
+        .sendDedicationEmail(id);
     }
 
     return ctx.send();
@@ -148,7 +156,8 @@ module.exports = ({ strapi }) => ({
 
     // Fetch donation with details using Drizzle + Strapi cross-system query
     const donation = await strapi
-      .plugin("donations").service("donation")
+      .plugin("donations")
+      .service("donation")
       .getDonationWithDetails(id);
 
     if (!donation) {
@@ -167,7 +176,10 @@ module.exports = ({ strapi }) => ({
   },
 
   async export(ctx) {
-    const fullData = await strapi.plugin("donations").service("donation").export();
+    const fullData = await strapi
+      .plugin("donations")
+      .service("donation")
+      .export();
 
     return ctx.send(fullData);
   },
@@ -179,7 +191,7 @@ module.exports = ({ strapi }) => ({
 
     if (confirmation !== currentDateTime) {
       return ctx.badRequest(
-        `Confirmation must be the current date and time in the format 'YYYY-MM-DDTHH:MM' (${currentDateTime}). Instead got: '${confirmation}'`
+        `Confirmation must be the current date and time in the format 'YYYY-MM-DDTHH:MM' (${currentDateTime}). Instead got: '${confirmation}'`,
       );
     }
 
@@ -202,27 +214,29 @@ module.exports = ({ strapi }) => ({
     let donationSum;
     try {
       donationSum = await strapi
-        .plugin("donations").service("donation")
+        .plugin("donations")
+        .service("donation")
         .sumOfFinalizedDonations();
     } catch (error) {
       console.error(error);
       return ctx.badRequest("Failed to get donation count");
     }
 
-    let campaignSum;
-    try {
-      campaignSum = await strapi
-        .plugin("donations").service("donation")
-        .sumOfFinalizedCampaignDonations();
-    } catch (error) {
-      console.error(error);
-      return ctx.badRequest("Failed to get campaign donation count");
-    }
+    // let campaignSum;
+    // try {
+    //   campaignSum = await strapi
+    //     .plugin("donations")
+    //     .service("donation")
+    //     .sumOfFinalizedCampaignDonations();
+    // } catch (error) {
+    //   console.error(error);
+    //   return ctx.badRequest("Failed to get campaign donation count");
+    // }
 
     return ctx.send({
       // donorCount,
       donationSum,
-      campaignSum,
+      // campaignSum,
     });
   },
 
@@ -232,7 +246,8 @@ module.exports = ({ strapi }) => ({
     let donation;
     try {
       donation = await strapi
-        .plugin("donations").service("donation")
+        .plugin("donations")
+        .service("donation")
         .findTransactionDonation({ idCode, amount, date });
     } catch (error) {
       console.error(error);
@@ -257,18 +272,23 @@ module.exports = ({ strapi }) => ({
 
   async insertDonation(ctx) {
     const donation = { ...ctx.request.body };
-    await strapi.plugin("donations").service("donation").insertDonation(donation);
+    await strapi
+      .plugin("donations")
+      .service("donation")
+      .insertDonation(donation);
 
     return ctx.send();
   },
 
   async migrateTips(ctx) {
     const migratedCount = await strapi
-      .plugin("donations").service("donation")
+      .plugin("donations")
+      .service("donation")
       .migrateTips();
 
     const migratedRecurringCount = await strapi
-      .plugin("donations").service("donation")
+      .plugin("donations")
+      .service("donation")
       .migrateRecurringTips();
 
     return ctx.send({ migratedCount, migratedRecurringCount });
@@ -279,18 +299,20 @@ module.exports = ({ strapi }) => ({
 
     if (!startDate || !endDate || !transferId) {
       return ctx.badRequest(
-        "Missing required fields (startDate, endDate, transferId)"
+        "Missing required fields (startDate, endDate, transferId)",
       );
     }
 
     const donations = await strapi
-      .plugin("donations").service("donation")
+      .plugin("donations")
+      .service("donation")
       .getDonationsInDateRange(startDate, endDate);
 
     const donationIds = donations.map((donation) => donation.id);
 
     await strapi
-      .plugin("donations").service("donation")
+      .plugin("donations")
+      .service("donation")
       .addDonationsToTransfer(donationIds, transferId);
 
     return ctx.send({
