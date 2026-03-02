@@ -11,7 +11,7 @@
     "develop": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.1.0",
@@ -19,11 +19,11 @@
     "@heroicons/react": "^2.0.18",
     "@tailwindcss/forms": "^0.5.6",
     "@tailwindcss/typography": "^0.5.10",
-    "next": "13.5.5",
+    "next": "latest",
     "next-plausible": "^3.12.0",
     "qs": "^6.11.2",
-    "react": "^18",
-    "react-dom": "^18",
+    "react": "latest",
+    "react-dom": "latest",
     "react-markdown": "^9.0.0",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.0",
@@ -31,13 +31,17 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "autoprefixer": "^10",
-    "eslint": "^8",
-    "eslint-config-next": "13.5.5",
+    "babel-plugin-react-compiler": "latest",
+    "eslint": "^9",
+    "eslint-config-next": "latest",
     "postcss": "^8",
     "prettier": "^3.0.3",
     "prettier-plugin-tailwindcss": "^0.5.6",
-    "tailwindcss": "^3"
+    "tailwindcss": "^3",
+    "typescript": "^5"
   },
   "prettier": {
     "plugins": [
