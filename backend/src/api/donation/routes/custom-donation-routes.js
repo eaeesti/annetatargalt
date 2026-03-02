@@ -50,8 +50,7 @@ module.exports = {
       path: "/import",
       handler: "donation.import",
       config: {
-        policies: [],
-        auth: false, // TODO: Add admin auth
+        policies: ["admin::isAuthenticatedAdmin"],
       },
     },
     {
@@ -59,8 +58,7 @@ module.exports = {
       path: "/export",
       handler: "donation.export",
       config: {
-        policies: [],
-        auth: false, // TODO: Add admin auth
+        policies: ["admin::isAuthenticatedAdmin"],
       },
     },
     {
@@ -68,8 +66,7 @@ module.exports = {
       path: "/deleteAll",
       handler: "donation.deleteAll",
       config: {
-        policies: [],
-        auth: false, // TODO: Add admin auth
+        policies: ["admin::isAuthenticatedAdmin"],
       },
     },
     {
@@ -77,8 +74,7 @@ module.exports = {
       path: "/findTransaction",
       handler: "donation.findTransaction",
       config: {
-        policies: [],
-        auth: false, // TODO: Add admin auth
+        policies: ["admin::isAuthenticatedAdmin"],
       },
     },
     {
@@ -86,8 +82,7 @@ module.exports = {
       path: "/insertTransaction",
       handler: "donation.insertTransaction",
       config: {
-        policies: [],
-        auth: false, // TODO: Add admin auth
+        policies: ["admin::isAuthenticatedAdmin"],
       },
     },
     {
@@ -95,8 +90,7 @@ module.exports = {
       path: "/insertDonation",
       handler: "donation.insertDonation",
       config: {
-        policies: [],
-        auth: false, // TODO: Add admin auth
+        policies: ["admin::isAuthenticatedAdmin"],
       },
     },
     {
@@ -113,8 +107,7 @@ module.exports = {
       path: "/migrateTips",
       handler: "donation.migrateTips",
       config: {
-        policies: [],
-        auth: false, // TODO: Add admin auth
+        policies: ["admin::isAuthenticatedAdmin"],
       },
     },
     {
@@ -122,8 +115,7 @@ module.exports = {
       path: "/addDonationsToTransferByDate",
       handler: "donation.addDonationsToTransferByDate",
       config: {
-        policies: [],
-        auth: false, // TODO: Add admin auth
+        policies: ["admin::isAuthenticatedAdmin"],
       },
     },
   ],
