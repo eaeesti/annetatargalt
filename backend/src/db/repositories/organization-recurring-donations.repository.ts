@@ -1,15 +1,19 @@
-"use strict";
+import { eq } from "drizzle-orm";
+import { db, type Database } from "../client";
+import {
+  organizationRecurringDonations,
+  type OrganizationRecurringDonation,
+  type NewOrganizationRecurringDonation
+} from "../schema";
 
-const { eq } = require("drizzle-orm");
-const { db } = require("../client");
-const { organizationRecurringDonations } = require("../schema");
+export class OrganizationRecurringDonationsRepository {
+  constructor(private database: Database = db) {}
 
-class OrganizationRecurringDonationsRepository {
   /**
    * Find all organization recurring donations (for export)
    */
   async findAll() {
-    return db.query.organizationRecurringDonations.findMany({
+    return this.database.query.organizationRecurringDonations.findMany({
       orderBy: (organizationRecurringDonations, { asc }) => [
         asc(organizationRecurringDonations.id),
       ],
@@ -22,8 +26,8 @@ class OrganizationRecurringDonationsRepository {
   /**
    * Find organization recurring donations by recurring donation ID
    */
-  async findByRecurringDonationId(recurringDonationId) {
-    return db.query.organizationRecurringDonations.findMany({
+  async findByRecurringDonationId(recurringDonationId: number): Promise<OrganizationRecurringDonation[]> {
+    return this.database.query.organizationRecurringDonations.findMany({
       where: eq(
         organizationRecurringDonations.recurringDonationId,
         recurringDonationId
@@ -34,8 +38,8 @@ class OrganizationRecurringDonationsRepository {
   /**
    * Find organization recurring donations by organization internal ID
    */
-  async findByOrganizationInternalId(organizationInternalId) {
-    return db.query.organizationRecurringDonations.findMany({
+  async findByOrganizationInternalId(organizationInternalId: string): Promise<OrganizationRecurringDonation[]> {
+    return this.database.query.organizationRecurringDonations.findMany({
       where: eq(
         organizationRecurringDonations.organizationInternalId,
         organizationInternalId
@@ -46,30 +50,33 @@ class OrganizationRecurringDonationsRepository {
   /**
    * Create organization recurring donations (junction records)
    */
-  async createMany(data) {
+  async createMany(data: NewOrganizationRecurringDonation[]): Promise<OrganizationRecurringDonation[]> {
     if (data.length === 0) return [];
 
-    return db.insert(organizationRecurringDonations).values(data).returning();
+    return this.database.insert(organizationRecurringDonations).values(data).returning();
   }
 
   /**
    * Create a single organization recurring donation
    */
-  async create(data) {
-    const [orgRecurringDonation] = await db
+  async create(data: NewOrganizationRecurringDonation): Promise<OrganizationRecurringDonation> {
+    const [orgRecurringDonation] = await this.database
       .insert(organizationRecurringDonations)
       .values(data)
       .returning();
-    return orgRecurringDonation;
+    return orgRecurringDonation!;
   }
 
   /**
    * Update organization recurring donations for a specific recurring donation
    * (Delete old ones and create new ones)
    */
-  async updateForRecurringDonation(recurringDonationId, data) {
+  async updateForRecurringDonation(
+    recurringDonationId: number,
+    data: Omit<NewOrganizationRecurringDonation, "recurringDonationId">[]
+  ): Promise<OrganizationRecurringDonation[]> {
     // Delete existing
-    await db
+    await this.database
       .delete(organizationRecurringDonations)
       .where(
         eq(
@@ -92,8 +99,8 @@ class OrganizationRecurringDonationsRepository {
   /**
    * Delete organization recurring donations by recurring donation ID
    */
-  async deleteByRecurringDonationId(recurringDonationId) {
-    await db
+  async deleteByRecurringDonationId(recurringDonationId: number): Promise<void> {
+    await this.database
       .delete(organizationRecurringDonations)
       .where(
         eq(
@@ -106,8 +113,8 @@ class OrganizationRecurringDonationsRepository {
   /**
    * Check if an organization has any recurring donations
    */
-  async organizationHasRecurringDonations(organizationInternalId) {
-    const result = await db.query.organizationRecurringDonations.findFirst({
+  async organizationHasRecurringDonations(organizationInternalId: string): Promise<boolean> {
+    const result = await this.database.query.organizationRecurringDonations.findFirst({
       where: eq(
         organizationRecurringDonations.organizationInternalId,
         organizationInternalId
@@ -117,10 +124,5 @@ class OrganizationRecurringDonationsRepository {
   }
 }
 
-const organizationRecurringDonationsRepository =
+export const organizationRecurringDonationsRepository =
   new OrganizationRecurringDonationsRepository();
-
-module.exports = {
-  OrganizationRecurringDonationsRepository,
-  organizationRecurringDonationsRepository,
-};
