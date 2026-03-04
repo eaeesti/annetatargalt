@@ -1,15 +1,19 @@
-"use strict";
+import { eq, desc } from "drizzle-orm";
+import { db, type Database } from "../client";
+import { donationTransfers, type DonationTransfer, type NewDonationTransfer } from "../schema";
 
-const { eq, desc } = require("drizzle-orm");
-const { db } = require("../client");
-const { donationTransfers } = require("../schema");
+interface FindAllOptions {
+  withDonations?: boolean;
+}
 
-class DonationTransfersRepository {
+export class DonationTransfersRepository {
+  constructor(private database: Database = db) {}
+
   /**
    * Find a donation transfer by ID
    */
-  async findById(id) {
-    return db.query.donationTransfers.findFirst({
+  async findById(id: number): Promise<DonationTransfer | undefined> {
+    return this.database.query.donationTransfers.findFirst({
       where: eq(donationTransfers.id, id),
     });
   }
@@ -17,8 +21,8 @@ class DonationTransfersRepository {
   /**
    * Find a donation transfer by ID with related donations
    */
-  async findByIdWithDonations(id) {
-    return db.query.donationTransfers.findFirst({
+  async findByIdWithDonations(id: number) {
+    return this.database.query.donationTransfers.findFirst({
       where: eq(donationTransfers.id, id),
       with: {
         donations: true,
@@ -29,8 +33,8 @@ class DonationTransfersRepository {
   /**
    * Get all donation transfers, ordered by date (newest first)
    */
-  async findAll(options) {
-    return db.query.donationTransfers.findMany({
+  async findAll(options?: FindAllOptions) {
+    return this.database.query.donationTransfers.findMany({
       orderBy: [desc(donationTransfers.datetime)],
       with: options?.withDonations ? { donations: true } : undefined,
     });
@@ -39,8 +43,8 @@ class DonationTransfersRepository {
   /**
    * Create a new donation transfer
    */
-  async create(data) {
-    const [transfer] = await db
+  async create(data: Omit<NewDonationTransfer, 'datetime'> & { datetime: string | Date }): Promise<DonationTransfer> {
+    const [transfer] = await this.database
       .insert(donationTransfers)
       .values({
         datetime:
@@ -51,14 +55,17 @@ class DonationTransfersRepository {
         notes: data.notes || null,
       })
       .returning();
-    return transfer;
+    return transfer!;
   }
 
   /**
    * Update a donation transfer
    */
-  async update(id, data) {
-    const updateData = {
+  async update(
+    id: number,
+    data: Partial<Omit<NewDonationTransfer, 'datetime'>> & { datetime?: string | Date }
+  ): Promise<DonationTransfer | undefined> {
+    const updateData: Partial<NewDonationTransfer> & { updatedAt: Date } = {
       updatedAt: new Date(),
     };
 
@@ -73,7 +80,7 @@ class DonationTransfersRepository {
           : data.datetime.toISOString().split("T")[0]; // Convert Date to YYYY-MM-DD
     }
 
-    const [transfer] = await db
+    const [transfer] = await this.database
       .update(donationTransfers)
       .set(updateData)
       .where(eq(donationTransfers.id, id))
@@ -84,11 +91,9 @@ class DonationTransfersRepository {
   /**
    * Delete a donation transfer (only if no donations are linked)
    */
-  async delete(id) {
-    await db.delete(donationTransfers).where(eq(donationTransfers.id, id));
+  async delete(id: number): Promise<void> {
+    await this.database.delete(donationTransfers).where(eq(donationTransfers.id, id));
   }
 }
 
-const donationTransfersRepository = new DonationTransfersRepository();
-
-module.exports = { DonationTransfersRepository, donationTransfersRepository };
+export const donationTransfersRepository = new DonationTransfersRepository();

@@ -1,15 +1,15 @@
-"use strict";
+import { eq, and, desc } from "drizzle-orm";
+import { db, type Database } from "../client";
+import { recurringDonations, type RecurringDonation, type NewRecurringDonation } from "../schema";
 
-const { eq, and, desc } = require("drizzle-orm");
-const { db } = require("../client");
-const { recurringDonations } = require("../schema");
+export class RecurringDonationsRepository {
+  constructor(private database: Database = db) {}
 
-class RecurringDonationsRepository {
   /**
    * Find all recurring donations (for export)
    */
   async findAll() {
-    return db.query.recurringDonations.findMany({
+    return this.database.query.recurringDonations.findMany({
       orderBy: (recurringDonations, { asc }) => [asc(recurringDonations.id)],
       with: {
         donor: true,
@@ -20,8 +20,8 @@ class RecurringDonationsRepository {
   /**
    * Find a recurring donation by ID
    */
-  async findById(id) {
-    return db.query.recurringDonations.findFirst({
+  async findById(id: number): Promise<RecurringDonation | undefined> {
+    return this.database.query.recurringDonations.findFirst({
       where: eq(recurringDonations.id, id),
     });
   }
@@ -29,8 +29,8 @@ class RecurringDonationsRepository {
   /**
    * Find a recurring donation by ID with related data
    */
-  async findByIdWithRelations(id) {
-    return db.query.recurringDonations.findFirst({
+  async findByIdWithRelations(id: number) {
+    return this.database.query.recurringDonations.findFirst({
       where: eq(recurringDonations.id, id),
       with: {
         donor: true,
@@ -43,8 +43,8 @@ class RecurringDonationsRepository {
   /**
    * Find recurring donations by donor ID
    */
-  async findByDonorId(donorId) {
-    return db.query.recurringDonations.findMany({
+  async findByDonorId(donorId: number): Promise<RecurringDonation[]> {
+    return this.database.query.recurringDonations.findMany({
       where: eq(recurringDonations.donorId, donorId),
       orderBy: [desc(recurringDonations.datetime)],
     });
@@ -54,7 +54,7 @@ class RecurringDonationsRepository {
    * Find active recurring donations
    */
   async findActive() {
-    return db.query.recurringDonations.findMany({
+    return this.database.query.recurringDonations.findMany({
       where: eq(recurringDonations.active, true),
       orderBy: [desc(recurringDonations.datetime)],
       with: {
@@ -67,8 +67,8 @@ class RecurringDonationsRepository {
   /**
    * Find active recurring donations by donor ID
    */
-  async findActiveByDonorId(donorId) {
-    return db.query.recurringDonations.findMany({
+  async findActiveByDonorId(donorId: number): Promise<RecurringDonation[]> {
+    return this.database.query.recurringDonations.findMany({
       where: and(
         eq(recurringDonations.donorId, donorId),
         eq(recurringDonations.active, true)
@@ -80,8 +80,8 @@ class RecurringDonationsRepository {
   /**
    * Find recurring donation by company code
    */
-  async findByCompanyCode(companyCode) {
-    return db.query.recurringDonations.findFirst({
+  async findByCompanyCode(companyCode: string): Promise<RecurringDonation | undefined> {
+    return this.database.query.recurringDonations.findFirst({
       where: eq(recurringDonations.companyCode, companyCode),
       orderBy: [desc(recurringDonations.datetime)],
     });
@@ -90,8 +90,8 @@ class RecurringDonationsRepository {
   /**
    * Create a new recurring donation
    */
-  async create(data) {
-    const [recurringDonation] = await db
+  async create(data: NewRecurringDonation & { datetime?: string | Date }): Promise<RecurringDonation> {
+    const [recurringDonation] = await this.database
       .insert(recurringDonations)
       .values({
         donorId: data.donorId,
@@ -104,17 +104,17 @@ class RecurringDonationsRepository {
         datetime:
           typeof data.datetime === "string"
             ? new Date(data.datetime)
-            : data.datetime,
+            : data.datetime ?? new Date(),
       })
       .returning();
-    return recurringDonation;
+    return recurringDonation!;
   }
 
   /**
    * Update a recurring donation
    */
-  async update(id, data) {
-    const [recurringDonation] = await db
+  async update(id: number, data: Partial<NewRecurringDonation>): Promise<RecurringDonation | undefined> {
+    const [recurringDonation] = await this.database
       .update(recurringDonations)
       .set({
         ...data,
@@ -128,25 +128,23 @@ class RecurringDonationsRepository {
   /**
    * Deactivate a recurring donation
    */
-  async deactivate(id) {
+  async deactivate(id: number): Promise<RecurringDonation | undefined> {
     return this.update(id, { active: false });
   }
 
   /**
    * Activate a recurring donation
    */
-  async activate(id) {
+  async activate(id: number): Promise<RecurringDonation | undefined> {
     return this.update(id, { active: true });
   }
 
   /**
    * Delete a recurring donation
    */
-  async delete(id) {
-    await db.delete(recurringDonations).where(eq(recurringDonations.id, id));
+  async delete(id: number): Promise<void> {
+    await this.database.delete(recurringDonations).where(eq(recurringDonations.id, id));
   }
 }
 
-const recurringDonationsRepository = new RecurringDonationsRepository();
-
-module.exports = { RecurringDonationsRepository, recurringDonationsRepository };
+export const recurringDonationsRepository = new RecurringDonationsRepository();
