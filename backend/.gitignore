@@ -118,3 +118,15 @@ build
 
 # Local deployment script with server credentials
 deploy-local.sh
+
+############################
+# TypeScript Compiled Output
+############################
+
+# Strapi v5 generates .js files alongside .ts during development
+# These are build artifacts - source of truth is the .ts file
+src/db/schema.js
+src/db/client.js
+src/db/repositories/index.js
+src/db/__tests__/test-db-helper.js
+src/utils/*.js
