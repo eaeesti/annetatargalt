@@ -1,38 +1,21 @@
 "use strict";
-
-const { donorsRepository, DonorsRepository } = require("./donors.repository");
-const {
-  donationsRepository,
-  DonationsRepository,
-} = require("./donations.repository");
-const {
-  recurringDonationsRepository,
-  RecurringDonationsRepository,
-} = require("./recurring-donations.repository");
-const {
-  organizationDonationsRepository,
-  OrganizationDonationsRepository,
-} = require("./organization-donations.repository");
-const {
-  organizationRecurringDonationsRepository,
-  OrganizationRecurringDonationsRepository,
-} = require("./organization-recurring-donations.repository");
-const {
-  donationTransfersRepository,
-  DonationTransfersRepository,
-} = require("./donation-transfers.repository");
-
-module.exports = {
-  donorsRepository,
-  DonorsRepository,
-  donationsRepository,
-  DonationsRepository,
-  recurringDonationsRepository,
-  RecurringDonationsRepository,
-  organizationDonationsRepository,
-  OrganizationDonationsRepository,
-  organizationRecurringDonationsRepository,
-  OrganizationRecurringDonationsRepository,
-  donationTransfersRepository,
-  DonationTransfersRepository,
-};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DonationTransfersRepository = exports.donationTransfersRepository = exports.OrganizationRecurringDonationsRepository = exports.organizationRecurringDonationsRepository = exports.OrganizationDonationsRepository = exports.organizationDonationsRepository = exports.RecurringDonationsRepository = exports.recurringDonationsRepository = exports.DonationsRepository = exports.donationsRepository = exports.DonorsRepository = exports.donorsRepository = void 0;
+var donors_repository_1 = require("./donors.repository");
+Object.defineProperty(exports, "donorsRepository", { enumerable: true, get: function () { return donors_repository_1.donorsRepository; } });
+Object.defineProperty(exports, "DonorsRepository", { enumerable: true, get: function () { return donors_repository_1.DonorsRepository; } });
+var donations_repository_1 = require("./donations.repository");
+Object.defineProperty(exports, "donationsRepository", { enumerable: true, get: function () { return donations_repository_1.donationsRepository; } });
+Object.defineProperty(exports, "DonationsRepository", { enumerable: true, get: function () { return donations_repository_1.DonationsRepository; } });
+var recurring_donations_repository_1 = require("./recurring-donations.repository");
+Object.defineProperty(exports, "recurringDonationsRepository", { enumerable: true, get: function () { return recurring_donations_repository_1.recurringDonationsRepository; } });
+Object.defineProperty(exports, "RecurringDonationsRepository", { enumerable: true, get: function () { return recurring_donations_repository_1.RecurringDonationsRepository; } });
+var organization_donations_repository_1 = require("./organization-donations.repository");
+Object.defineProperty(exports, "organizationDonationsRepository", { enumerable: true, get: function () { return organization_donations_repository_1.organizationDonationsRepository; } });
+Object.defineProperty(exports, "OrganizationDonationsRepository", { enumerable: true, get: function () { return organization_donations_repository_1.OrganizationDonationsRepository; } });
+var organization_recurring_donations_repository_1 = require("./organization-recurring-donations.repository");
+Object.defineProperty(exports, "organizationRecurringDonationsRepository", { enumerable: true, get: function () { return organization_recurring_donations_repository_1.organizationRecurringDonationsRepository; } });
+Object.defineProperty(exports, "OrganizationRecurringDonationsRepository", { enumerable: true, get: function () { return organization_recurring_donations_repository_1.OrganizationRecurringDonationsRepository; } });
+var donation_transfers_repository_1 = require("./donation-transfers.repository");
+Object.defineProperty(exports, "donationTransfersRepository", { enumerable: true, get: function () { return donation_transfers_repository_1.donationTransfersRepository; } });
+Object.defineProperty(exports, "DonationTransfersRepository", { enumerable: true, get: function () { return donation_transfers_repository_1.DonationTransfersRepository; } });
