@@ -55,31 +55,33 @@ Convert the Strapi v5 backend from JavaScript to TypeScript incrementally, start
 
 ## Implementation Strategy
 
-### Phase 0: Infrastructure Setup (2-3 hours)
+### Phase 0: Infrastructure Setup (2-3 hours) ✅ COMPLETED
 
 **Goal:** Configure TypeScript tooling without breaking existing JavaScript code.
+
+**Key Discovery:** Strapi v5 has built-in TypeScript compilation! The `tsconfig.json` is used for type checking only (`noEmit: true`), while Strapi handles the actual compilation during `yarn develop`.
 
 #### Install Dependencies
 
 ```bash
 cd backend
-yarn add -D typescript @types/node ts-node
+yarn add -D typescript @types/node ts-node @tsconfig/node18
 ```
 
 #### Create tsconfig.json
+
+**Critical:** Use `noEmit: true` and exclude `.js` files to enable .js/.ts coexistence:
 
 ```json
 {
   "extends": "@tsconfig/node18/tsconfig.json",
   "compilerOptions": {
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
     "target": "ES2022",
     "allowJs": true,
     "checkJs": false,
-    "declaration": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
+    "noEmit": true,
     "strict": false,
     "noImplicitAny": false,
     "strictNullChecks": false,
@@ -91,13 +93,20 @@ yarn add -D typescript @types/node ts-node
     "paths": {
       "~/*": ["src/*"]
     },
-    "types": ["node", "vitest/globals"],
+    "types": ["node"],
     "typeRoots": ["./node_modules/@types", "./types"]
   },
-  "include": ["src/**/*", "types/**/*"],
-  "exclude": ["node_modules", "dist", ".strapi", "build"]
+  "include": ["src/**/*.ts", "types/**/*"],
+  "exclude": ["node_modules", "dist", ".strapi", "build", "src/**/*.js"]
 }
 ```
+
+**Why these settings:**
+- `noEmit: true` - Type checking only, Strapi compiles TypeScript internally
+- `module: "CommonJS"` - Match Strapi's module system
+- `include: ["src/**/*.ts", ...]` - Only type-check TypeScript files
+- `exclude: [..., "src/**/*.js"]` - Ignore JavaScript files during type checking
+- This allows `.js` and `.ts` files to coexist during incremental migration!
 
 #### Add Scripts
 
@@ -146,15 +155,23 @@ yarn develop     # Strapi should boot
 
 ---
 
-### Phase 1: Database Schema & Client (4-6 hours)
+### Phase 1: Database Schema & Client (4-6 hours) ✅ COMPLETED
 
 **Goal:** Convert foundational data layer to TypeScript.
 
-#### Files to Convert
+**Migration Strategy:** During incremental migration, both `.js` and `.ts` files coexist:
+- `.ts` files contain the TypeScript version with full type exports
+- `.js` files remain for existing code that uses `require()`
+- Strapi compiles both during development
+- Once all dependent files are converted, `.js` files can be deleted
 
-1. `src/db/schema.js` → `src/db/schema.ts` (183 lines)
-2. `src/db/client.js` → `src/db/client.ts` (43 lines)
-3. `src/db/repositories/index.js` → `src/db/repositories/index.ts`
+#### Files Converted
+
+1. ✅ `src/db/schema.ts` - TypeScript version with Drizzle type exports
+2. ✅ `src/db/client.ts` - TypeScript version with typed Pool and Database
+3. ✅ `src/db/repositories/index.ts` - ESM exports
+
+**Note:** Original `.js` files kept temporarily for compatibility with existing code.
 
 #### Example: Schema Conversion
 
@@ -224,6 +241,16 @@ export const db = drizzle(pool, { schema });
 export type Database = typeof db;
 export { pool };
 ```
+
+#### Verification (Phase 0 & 1)
+
+```bash
+yarn type-check  # ✅ Passes (0 errors)
+yarn test:unit   # ✅ All 44 tests passing
+yarn develop     # ✅ Strapi boots successfully (3.5s)
+```
+
+**Status:** Infrastructure ready, database layer has TypeScript versions available!
 
 ---
 
