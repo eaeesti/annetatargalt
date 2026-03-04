@@ -127,6 +127,6 @@ deploy-local.sh
 # These are build artifacts - source of truth is the .ts file
 src/db/schema.js
 src/db/client.js
-src/db/repositories/index.js
+src/db/repositories/*.js
 src/db/__tests__/test-db-helper.js
 src/utils/*.js
