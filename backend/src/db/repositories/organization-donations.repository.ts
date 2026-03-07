@@ -57,7 +57,8 @@ export class OrganizationDonationsRepository {
       .insert(organizationDonations)
       .values(data)
       .returning();
-    return orgDonation!;
+    if (!orgDonation) throw new Error("Failed to insert organization donation");
+    return orgDonation;
   }
 
   /**
