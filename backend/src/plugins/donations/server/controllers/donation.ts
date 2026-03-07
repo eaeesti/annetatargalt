@@ -1,6 +1,6 @@
 import type { Core } from "@strapi/strapi";
 import type { Context } from "koa";
-import montonio from "../../../../utils/montonio";
+import montonio, { type MontonioDecodedToken } from "../../../../utils/montonio";
 import { DonationsRepository } from "../../../../db/repositories/donations.repository";
 
 const donationsRepo = new DonationsRepository();
@@ -26,7 +26,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       return ctx.badRequest("No return URL provided");
     }
 
-    const globalConfig = await strapi.db.query("api::global.global").findOne();
+    const globalConfig = await strapi.documents("api::global.global").findFirst();
+    if (!globalConfig) {
+      return ctx.badRequest("Global config not found");
+    }
 
     const donation = {
       ...ctx.request.body,
@@ -72,7 +75,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       return ctx.badRequest("No order token provided");
     }
 
-    let decoded: any;
+    let decoded: MontonioDecodedToken;
     try {
       decoded = montonio.decodeOrderToken(orderToken);
     } catch (error) {
@@ -84,7 +87,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       return ctx.badRequest("Payment not paid");
     }
 
-    const id = Number(decoded.merchant_reference.split(" ").at(-1));
+    if (!decoded.merchant_reference) {
+      return ctx.badRequest("Invalid payment token: missing merchant reference");
+    }
+    const id = Number(decoded.merchant_reference.split(" ").pop());
 
     const donation = await donationsRepo.findById(id);
 
@@ -137,7 +143,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       return ctx.badRequest("No payment token provided");
     }
 
-    let decoded: any;
+    let decoded: MontonioDecodedToken;
     try {
       decoded = montonio.decodeOrderToken(orderToken);
     } catch (error) {
@@ -149,7 +155,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       return ctx.badRequest("Payment not paid");
     }
 
-    const id = Number(decoded.merchant_reference.split(" ").at(-1));
+    if (!decoded.merchant_reference) {
+      return ctx.badRequest("Invalid payment token: missing merchant reference");
+    }
+    const id = Number(decoded.merchant_reference.split(" ").pop());
 
     const donation = await strapi
       .plugin("donations")
