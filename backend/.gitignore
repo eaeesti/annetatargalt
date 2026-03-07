@@ -130,3 +130,8 @@ src/db/client.js
 src/db/repositories/*.js
 src/db/__tests__/test-db-helper.js
 src/utils/*.js
+
+# Strapi v5 compiles TypeScript to these directories (not in src/)
+# Only appears when API/services are converted to TS
+/api/
+/db/
