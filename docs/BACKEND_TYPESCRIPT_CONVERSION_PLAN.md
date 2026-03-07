@@ -12,11 +12,12 @@
 - **Phase 6**: All API routes converted - DONE (12 route files)
 - **Phase 7**: `src/index.ts` converted - DONE
 
+- **Phase 8**: Test migration - DONE
+
 ### Remaining
-- **Phase 8**: Test migration
 - **Phase 9**: Strict mode
 
-**Status:** 8 out of 10 phases complete. Phases 8, 9 remain.
+**Status:** 9 out of 10 phases complete. Phase 9 remains.
 
 ### Phase 5 Results
 
