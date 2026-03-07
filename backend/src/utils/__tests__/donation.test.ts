@@ -5,7 +5,7 @@ import {
   validateIdCode,
   validateEmail,
   resizeOrganizationDonations,
-} from "../donation.js";
+} from "../donation";
 
 describe("amountToCents", () => {
   it("should convert euros to cents correctly", () => {
