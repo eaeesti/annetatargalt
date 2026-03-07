@@ -27,6 +27,38 @@ Post-conversion cleanup based on critical analysis of the branch:
 4. **Replace `any` types** — Proper interfaces defined (`DonationInput`, `ForeignDonationInput`, `ImportData`, `OrgAmount`, `ValidationResult`, `InsertDonationInput`). `strapi` parameter typed as `Core.Strapi`. Email plugin access typed via `emailService()` helper using `unknown` cast.
 5. **Remove `!` non-null assertions** — Replaced with explicit null guards. `donation.donorId !== null` checked before `findById`. `donation.donor` checked before email sends.
 
+### Phase 11: Eliminate Remaining `any` and `as` Casts — IN PROGRESS
+
+Identified after comprehensive pre-PR review.
+
+**Goal:** Migrate all `strapi.db.query()` (Strapi v4 Entity Service) calls to `strapi.documents()` (Strapi v5 Document Service). This eliminates the `as Record<string, string | null>` casts that were required because `db.query()` returns `any`.
+
+**Files changed:**
+- `src/plugins/donations/server/services/donation.ts` — 13 `db.query()` calls across 8 methods
+- `src/plugins/donations/server/controllers/donation.ts` — 1 `db.query()` call + 2 `decoded: any` → `MontonioDecodedToken`
+
+**Content types migrated:**
+- `api::global.global` (single type) — 9 instances, fields: `tipOrganizationInternalId`, `externalOrganizationInternalId`, `currency`
+- `api::email-config.email-config` (single type) — 5 instances, various email template fields
+- `api::donation-info.donation-info` (single type) — 2 instances, fields: `returnPath`, `merchantReferencePrefix*`, `recurringPaymentComment*`
+
+**Migration pattern:**
+```typescript
+// Before
+const global = await strapi.db.query("api::global.global").findOne() as Record<string, string | null>;
+
+// After — typed, no cast, null guard added
+const global = await strapi.documents("api::global.global").findFirst();
+if (!global) throw new Error("Global config not found");
+```
+
+**Remaining unavoidable casts (at external API boundaries):**
+- `strapi as unknown as { plugins: { email: ... } }` — Strapi's email plugin exposes no public types
+- `strapi.db as unknown as { connection: KnexConnection }` — Knex internals not typed by Strapi
+- `as DonationCtrl` in proxy controller — Strapi types plugin methods as 2-arg Koa middleware
+- `(organization.cause as { id: number }).id` — Strapi Document Service populated relation type
+- `(org as { internalId: string } | null)?.internalId` — Document Service `fields:` narrowing limitation
+
 ### Status
 
 **Status:** All phases complete including cleanup. `yarn type-check` passes with `strict: true`. 44 unit tests passing.

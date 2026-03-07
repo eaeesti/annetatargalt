@@ -125,7 +125,7 @@ type InsertDonationInput = NewDonation & {
 // ─── Strapi Plugin Helpers ────────────────────────────────────────────────────
 
 type EmailRecipient = { to: string | null; replyTo?: string | null };
-type EmailTemplate = { subject: string | null; text?: string | null; html?: string | null };
+type EmailTemplate = { subject?: string | null; text?: string | null; html?: string | null };
 
 function emailService(strapi: Core.Strapi) {
   return (
@@ -332,9 +332,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       externalDonation?: boolean;
     } = {}
   ) {
-    const donationInfo = await strapi.db
-      .query("api::donation-info.donation-info")
-      .findOne() as Record<string, string>;
+    const donationInfo = await strapi.documents("api::donation-info.donation-info").findFirst();
+    if (!donationInfo) throw new Error("Donation info not found");
 
     const amount = donation.amount / 100;
 
@@ -427,7 +426,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       comment: "Foreign donation",
     });
 
-    const global = await strapi.db.query("api::global.global").findOne() as Record<string, string | null>;
+    const global = await strapi.documents("api::global.global").findFirst();
+    if (!global) throw new Error("Global config not found");
 
     if (!global.tipOrganizationInternalId) {
       throw new Error("Tip organization internalId not configured");
@@ -526,13 +526,12 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       organizationRecurringDonationsData
     );
 
-    const donationInfo = await strapi.db
-      .query("api::donation-info.donation-info")
-      .findOne() as Record<string, string>;
+    const donationInfo = await strapi.documents("api::donation-info.donation-info").findFirst();
+    if (!donationInfo) throw new Error("Donation info not found");
 
-    const description = externalDonation
+    const description = (externalDonation
       ? donationInfo.externalRecurringPaymentComment
-      : donationInfo.recurringPaymentComment;
+      : donationInfo.recurringPaymentComment) ?? "";
 
     const recurringPaymentLink =
       donation.bank === "other" || !donation.bank
@@ -540,8 +539,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         : createRecurringPaymentLink(
             donation.bank as Bank,
             {
-              iban: donationInfo.iban,
-              recipient: donationInfo.recipient,
+              iban: donationInfo.iban ?? "",
+              recipient: donationInfo.recipient ?? "",
               description,
             },
             donation.amount / 100
@@ -559,11 +558,11 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   async sendConfirmationEmail(donationId: number) {
-    const emailConfig = await strapi.db
-      .query("api::email-config.email-config")
-      .findOne() as Record<string, string | null>;
+    const emailConfig = await strapi.documents("api::email-config.email-config").findFirst();
+    if (!emailConfig) throw new Error("Email config not found");
 
-    const global = await strapi.db.query("api::global.global").findOne() as Record<string, string | null>;
+    const global = await strapi.documents("api::global.global").findFirst();
+    if (!global) throw new Error("Global config not found");
 
     const donation = await this.getDonationWithDetails(donationId);
 
@@ -610,11 +609,11 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   async sendExternalConfirmationEmail(donationId: number) {
-    const emailConfig = await strapi.db
-      .query("api::email-config.email-config")
-      .findOne() as Record<string, string | null>;
+    const emailConfig = await strapi.documents("api::email-config.email-config").findFirst();
+    if (!emailConfig) throw new Error("Email config not found");
 
-    const global = await strapi.db.query("api::global.global").findOne() as Record<string, string | null>;
+    const global = await strapi.documents("api::global.global").findFirst();
+    if (!global) throw new Error("Global config not found");
 
     const donation = await donationsRepository.findById(donationId);
     if (!donation) {
@@ -656,11 +655,11 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   async sendRecurringConfirmationEmail(recurringDonationId: number) {
-    const emailConfig = await strapi.db
-      .query("api::email-config.email-config")
-      .findOne() as Record<string, string | null>;
+    const emailConfig = await strapi.documents("api::email-config.email-config").findFirst();
+    if (!emailConfig) throw new Error("Email config not found");
 
-    const global = await strapi.db.query("api::global.global").findOne() as Record<string, string | null>;
+    const global = await strapi.documents("api::global.global").findFirst();
+    if (!global) throw new Error("Global config not found");
 
     const recurringDonation = await this.getRecurringDonationWithDetails(
       recurringDonationId
@@ -711,10 +710,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   async sendExternalRecurringConfirmationEmail(recurringDonationId: number) {
-    const emailConfig = await strapi.db
-      .query("api::email-config.email-config")
-      .findOne() as Record<string, string | null>;
-    const global = await strapi.db.query("api::global.global").findOne() as Record<string, string | null>;
+    const emailConfig = await strapi.documents("api::email-config.email-config").findFirst();
+    if (!emailConfig) throw new Error("Email config not found");
+    const global = await strapi.documents("api::global.global").findFirst();
+    if (!global) throw new Error("Global config not found");
 
     const recurringDonation = await recurringDonationsRepository.findById(
       recurringDonationId
@@ -754,11 +753,11 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   async sendDedicationEmail(donationId: number) {
-    const emailConfig = await strapi.db
-      .query("api::email-config.email-config")
-      .findOne() as Record<string, string | null>;
+    const emailConfig = await strapi.documents("api::email-config.email-config").findFirst();
+    if (!emailConfig) throw new Error("Email config not found");
 
-    const global = await strapi.db.query("api::global.global").findOne() as Record<string, string | null>;
+    const global = await strapi.documents("api::global.global").findFirst();
+    if (!global) throw new Error("Global config not found");
 
     const donationWithDetails = await this.getDonationWithDetails(donationId);
 
@@ -1022,7 +1021,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   async sumOfFinalizedDonations() {
-    const global = await strapi.db.query("api::global.global").findOne() as Record<string, string | null>;
+    const global = await strapi.documents("api::global.global").findFirst();
+    if (!global) throw new Error("Global config not found");
 
     const excludeInternalIds: string[] = [];
 
@@ -1041,7 +1041,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   async sumOfFinalizedCampaignDonations() {
-    const global = await strapi.db.query("api::global.global").findOne() as Record<string, string | null>;
+    const global = await strapi.documents("api::global.global").findFirst();
+    if (!global) throw new Error("Global config not found");
 
     const excludeInternalIds: string[] = [];
 
