@@ -1,9 +1,10 @@
 import { factories } from "@strapi/strapi";
+import type { Context } from "koa";
 
 export default factories.createCoreController(
   "api::email-config.email-config",
-  ({ strapi }: any) => ({
-    async sendEmail(ctx: any) {
+  ({ strapi }) => ({
+    async sendEmail(ctx: Context) {
       const { to, subject, text, html } = ctx.request.body;
 
       if (!to || !subject || !text || !html) {

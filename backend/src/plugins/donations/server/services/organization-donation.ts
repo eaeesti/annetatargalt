@@ -1,10 +1,22 @@
+import type { Core } from "@strapi/strapi";
 import { resizeOrganizationDonations } from "../../../../utils/donation";
 import { organizationDonationsRepository } from "../../../../db/repositories";
+import type { OrganizationRecurringDonation } from "../../../../db/schema";
 
-export default ({ strapi }: any) => ({
-  async createOrganizationDonations({ donationId, amounts }: any) {
+interface AmountEntry {
+  organizationId: string;
+  amount: number;
+}
+
+interface OrganizationDonationArrayEntry {
+  organization: string;
+  amount: number;
+}
+
+export default ({ strapi }: { strapi: Core.Strapi }) => ({
+  async createOrganizationDonations({ donationId, amounts }: { donationId: number; amounts: AmountEntry[] }) {
     const organizationDonationsData = await Promise.all(
-      amounts.map(async ({ organizationId, amount }: any) => {
+      amounts.map(async ({ organizationId, amount }) => {
         const organization = await strapi
           .documents("api::organization.organization")
           .findOne({
@@ -34,7 +46,12 @@ export default ({ strapi }: any) => ({
     donationAmount,
     recurringDonationAmount,
     organizationRecurringDonations,
-  }: any) {
+  }: {
+    donationId: number;
+    donationAmount: number;
+    recurringDonationAmount: number;
+    organizationRecurringDonations: OrganizationRecurringDonation[];
+  }) {
     const donationMultiplier = donationAmount / recurringDonationAmount;
 
     const resizedOrganizationDonations = resizeOrganizationDonations(
@@ -44,7 +61,7 @@ export default ({ strapi }: any) => ({
     );
 
     const organizationDonationsData = resizedOrganizationDonations.map(
-      (orgDonation: any) => ({
+      (orgDonation) => ({
         donationId,
         organizationInternalId: orgDonation.organizationInternalId,
         amount: orgDonation.amount,
@@ -54,9 +71,9 @@ export default ({ strapi }: any) => ({
     return organizationDonationsRepository.createMany(organizationDonationsData);
   },
 
-  async createFromArray({ donationId, organizationDonations }: any) {
+  async createFromArray({ donationId, organizationDonations }: { donationId: number; organizationDonations: OrganizationDonationArrayEntry[] }) {
     const organizationDonationsData = await Promise.all(
-      organizationDonations.map(async (organizationDonation: any) => {
+      organizationDonations.map(async (organizationDonation) => {
         const organization = await strapi
           .documents("api::organization.organization")
           .findOne({

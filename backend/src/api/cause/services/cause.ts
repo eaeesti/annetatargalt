@@ -6,7 +6,7 @@ import { factories } from "@strapi/strapi";
 
 export default factories.createCoreService(
   "api::cause.cause",
-  ({ strapi }: any) => ({
+  ({ strapi }) => ({
     async findCause(causeTitle: string) {
       const causeEntries = await strapi
         .documents("api::cause.cause")
@@ -21,7 +21,7 @@ export default factories.createCoreService(
       return null;
     },
 
-    async findOrCreateCause(cause: any) {
+    async findOrCreateCause(cause: { title: string; [key: string]: unknown }) {
       const causeEntry = await this.findCause(cause.title);
 
       if (causeEntry) {

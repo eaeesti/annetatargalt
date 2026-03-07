@@ -76,7 +76,8 @@ export async function createTestDonor(data: Partial<NewDonor> = {}): Promise<Don
       ...data,
     })
     .returning();
-  return donor!;
+  if (!donor) throw new Error("Failed to insert test donor");
+  return donor;
 }
 
 /**
@@ -106,7 +107,8 @@ export async function createTestDonation(data: Partial<NewDonation> = {}): Promi
       donationTransferId: data.donationTransferId ?? null,
     })
     .returning();
-  return donation!;
+  if (!donation) throw new Error("Failed to insert test donation");
+  return donation;
 }
 
 /**
@@ -123,7 +125,8 @@ export async function createTestOrganizationDonation(
       amount: data.amount,
     })
     .returning();
-  return orgDonation!;
+  if (!orgDonation) throw new Error("Failed to insert test organization donation");
+  return orgDonation;
 }
 
 /**
@@ -145,7 +148,8 @@ export async function createTestRecurringDonation(
       datetime: data.datetime ?? new Date(),
     })
     .returning();
-  return recurringDonation!;
+  if (!recurringDonation) throw new Error("Failed to insert test recurring donation");
+  return recurringDonation;
 }
 
 /**
@@ -162,7 +166,8 @@ export async function createTestOrganizationRecurringDonation(
       amount: data.amount,
     })
     .returning();
-  return orgRecurringDonation!;
+  if (!orgRecurringDonation) throw new Error("Failed to insert test organization recurring donation");
+  return orgRecurringDonation;
 }
 
 /**
@@ -179,5 +184,6 @@ export async function createTestDonationTransfer(
       notes: data.notes ?? null,
     })
     .returning();
-  return transfer!;
+  if (!transfer) throw new Error("Failed to insert test donation transfer");
+  return transfer;
 }

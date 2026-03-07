@@ -20,7 +20,7 @@ export interface Organization {
   internalId: string;
   active: boolean;
   name?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export class OrganizationResolver {
@@ -100,7 +100,7 @@ export class OrganizationResolver {
    */
   async isValidOrganization(internalId: string): Promise<boolean> {
     const organization = await this.findByInternalId(internalId);
-    return organization !== null && organization.active === true;
+    return !!organization && organization.active === true;
   }
 
   /**

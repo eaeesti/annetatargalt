@@ -3,13 +3,24 @@ import jwt from "jsonwebtoken";
 const montonioUrl = process.env.MONTONIO_URL;
 
 export interface MontonioPayload {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
-export interface MontonioDecodedToken extends MontonioPayload {
+export interface MontonioDecodedToken {
   accessKey: string;
   iat: number;
   exp: number;
+  paymentStatus?: string;
+  merchant_reference?: string;
+  customer_iban?: string;
+  payment_method_name?: string;
+  [key: string]: unknown;
+}
+
+function getPrivateKey(): string {
+  const key = process.env.MONTONIO_PRIVATE;
+  if (!key) throw new Error("MONTONIO_PRIVATE environment variable is not set");
+  return key;
 }
 
 const montonio = {
@@ -41,7 +52,7 @@ const montonio = {
       accessKey: process.env.MONTONIO_PUBLIC,
       ...payload,
     };
-    const token = jwt.sign(payloadWithKey, process.env.MONTONIO_PRIVATE!, {
+    const token = jwt.sign(payloadWithKey, getPrivateKey(), {
       algorithm: "HS256",
       expiresIn: "10m",
     });
@@ -52,10 +63,7 @@ const montonio = {
    * Decode and verify a Montonio order token.
    */
   decodeOrderToken: (orderToken: string): MontonioDecodedToken => {
-    const decoded = jwt.verify(
-      orderToken,
-      process.env.MONTONIO_PRIVATE!
-    ) as MontonioDecodedToken;
+    const decoded = jwt.verify(orderToken, getPrivateKey()) as MontonioDecodedToken;
 
     if (decoded.accessKey === process.env.MONTONIO_PUBLIC) {
       return decoded;
