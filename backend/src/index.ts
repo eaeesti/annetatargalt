@@ -9,7 +9,9 @@ export default {
     // Check if Strapi database still contains donation data that hasn't been migrated
     try {
       // Connect to Strapi database to check for legacy donation data
-      const strapiDbConnection = (strapi.db as any).connection;
+      // strapi.db.connection is an internal Knex instance not exposed in Strapi's public types
+      type KnexConn = { raw: (sql: string) => Promise<{ rows: Array<Record<string, string>> }> };
+      const strapiDbConnection = (strapi.db as unknown as { connection: KnexConn }).connection;
 
       // Check if Strapi still has donation tables with data
       // First check if table exists
@@ -18,7 +20,7 @@ export default {
         WHERE table_schema = 'public' AND table_name = 'donations'
       `);
 
-      const hasDonationTable = tableCheck.rows[0]?.count > 0;
+      const hasDonationTable = Number(tableCheck.rows[0]?.count) > 0;
       let donationCount = 0;
 
       // If table exists, count rows
@@ -84,7 +86,7 @@ export default {
         WHERE table_schema = 'public' AND table_name = 'organizations'
       `
         )
-        .then((result: any) => result.rows[0]?.count || 0);
+        .then((result) => Number(result.rows[0]?.count) || 0);
 
       const hasOrganizations = orgCount > 0;
 
@@ -93,9 +95,9 @@ export default {
         try {
           await pool.query("SELECT 1");
           strapi.log.info("✅ Drizzle database connection verified");
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error("\n❌ WARNING: Cannot connect to Drizzle database\n");
-          console.error("Error:", error.message);
+          console.error("Error:", error instanceof Error ? error.message : String(error));
           console.error(
             "\nThis appears to be an existing installation, but Drizzle is not configured."
           );
@@ -127,8 +129,8 @@ export default {
           "Fresh installation detected - Drizzle will be configured when needed"
         );
       }
-    } catch (error: any) {
-      console.error("\n❌ Error during startup validation:", error.message);
+    } catch (error: unknown) {
+      console.error("\n❌ Error during startup validation:", error instanceof Error ? error.message : String(error));
       console.error("If this persists, check database connectivity\n");
       // Don't exit - let Strapi handle DB connection errors
     }
