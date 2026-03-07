@@ -107,7 +107,8 @@ export class RecurringDonationsRepository {
             : data.datetime ?? new Date(),
       })
       .returning();
-    return recurringDonation!;
+    if (!recurringDonation) throw new Error("Failed to insert recurring donation");
+    return recurringDonation;
   }
 
   /**

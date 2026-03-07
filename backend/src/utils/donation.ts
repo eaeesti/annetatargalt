@@ -1,7 +1,6 @@
 export interface OrganizationDonation {
   amount: number;
-  organizationInternalId?: string;
-  [key: string]: any;
+  organizationInternalId: string;
 }
 
 /**

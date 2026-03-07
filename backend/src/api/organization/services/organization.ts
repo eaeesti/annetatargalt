@@ -6,7 +6,7 @@ import { factories } from "@strapi/strapi";
 
 export default factories.createCoreService(
   "api::organization.organization",
-  ({ strapi }: any) => ({
+  ({ strapi }) => ({
     async findOrganization(organizationTitle: string) {
       const organizationEntries = await strapi
         .documents("api::organization.organization")
@@ -21,7 +21,7 @@ export default factories.createCoreService(
       return null;
     },
 
-    async findOrCreateOrganization(organization: any) {
+    async findOrCreateOrganization(organization: { title: string; internalId: string; [key: string]: unknown }) {
       const organizationEntry = await this.findOrganization(organization.title);
 
       if (organizationEntry) {

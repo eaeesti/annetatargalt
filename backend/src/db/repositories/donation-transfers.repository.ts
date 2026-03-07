@@ -55,7 +55,8 @@ export class DonationTransfersRepository {
         notes: data.notes || null,
       })
       .returning();
-    return transfer!;
+    if (!transfer) throw new Error("Failed to insert donation transfer");
+    return transfer;
   }
 
   /**

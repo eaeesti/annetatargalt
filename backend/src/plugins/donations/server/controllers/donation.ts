@@ -1,10 +1,12 @@
+import type { Core } from "@strapi/strapi";
+import type { Context } from "koa";
 import montonio from "../../../../utils/montonio";
 import { DonationsRepository } from "../../../../db/repositories/donations.repository";
 
 const donationsRepo = new DonationsRepository();
 
-export default ({ strapi }: any) => ({
-  async donate(ctx: any) {
+export default ({ strapi }: { strapi: Core.Strapi }) => ({
+  async donate(ctx: Context) {
     const donation = ctx.request.body;
 
     try {
@@ -13,12 +15,12 @@ export default ({ strapi }: any) => ({
         .service("donation")
         .createDonation(donation);
       return ctx.send({ redirectURL });
-    } catch (error: any) {
-      return ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      return ctx.badRequest(error instanceof Error ? error.message : String(error));
     }
   },
 
-  async donateExternal(ctx: any) {
+  async donateExternal(ctx: Context) {
     const returnUrl = ctx.request.body.returnUrl;
     if (!returnUrl) {
       return ctx.badRequest("No return URL provided");
@@ -43,12 +45,12 @@ export default ({ strapi }: any) => ({
         .service("donation")
         .createDonation(donation, returnUrl, true);
       return ctx.send({ redirectURL });
-    } catch (error: any) {
-      return ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      return ctx.badRequest(error instanceof Error ? error.message : String(error));
     }
   },
 
-  async donateForeign(ctx: any) {
+  async donateForeign(ctx: Context) {
     const donation = ctx.request.body;
 
     try {
@@ -57,13 +59,14 @@ export default ({ strapi }: any) => ({
         .service("donation")
         .createForeignDonation(donation);
       return ctx.send({ redirectURL });
-    } catch (error: any) {
-      return ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      return ctx.badRequest(error instanceof Error ? error.message : String(error));
     }
   },
 
-  async confirm(ctx: any) {
-    const orderToken = ctx.request.query["order-token"];
+  async confirm(ctx: Context) {
+    const rawToken = ctx.request.query["order-token"];
+    const orderToken = Array.isArray(rawToken) ? rawToken[0] : rawToken;
 
     if (!orderToken) {
       return ctx.badRequest("No order token provided");
@@ -126,8 +129,9 @@ export default ({ strapi }: any) => ({
     return ctx.send();
   },
 
-  async decode(ctx: any) {
-    const orderToken = ctx.request.query["order-token"];
+  async decode(ctx: Context) {
+    const rawToken = ctx.request.query["order-token"];
+    const orderToken = Array.isArray(rawToken) ? rawToken[0] : rawToken;
 
     if (!orderToken) {
       return ctx.badRequest("No payment token provided");
@@ -159,7 +163,7 @@ export default ({ strapi }: any) => ({
     return ctx.send({ donation });
   },
 
-  async import(ctx: any) {
+  async import(ctx: Context) {
     const fullData = ctx.request.body;
 
     await strapi.plugin("donations").service("donation").import(fullData);
@@ -167,7 +171,7 @@ export default ({ strapi }: any) => ({
     return ctx.send();
   },
 
-  async export(ctx: any) {
+  async export(ctx: Context) {
     const fullData = await strapi
       .plugin("donations")
       .service("donation")
@@ -176,7 +180,7 @@ export default ({ strapi }: any) => ({
     return ctx.send(fullData);
   },
 
-  async deleteAll(ctx: any) {
+  async deleteAll(ctx: Context) {
     const confirmation = ctx.request.body.confirmation;
 
     const currentDateTime = new Date().toISOString().slice(0, 16);
@@ -192,7 +196,7 @@ export default ({ strapi }: any) => ({
     return ctx.send();
   },
 
-  async stats(ctx: any) {
+  async stats(ctx: Context) {
     let donationSum;
     try {
       donationSum = await strapi
@@ -209,7 +213,7 @@ export default ({ strapi }: any) => ({
     });
   },
 
-  async findTransaction(ctx: any) {
+  async findTransaction(ctx: Context) {
     const { idCode, amount, date } = ctx.request.query;
 
     let donation;
@@ -218,15 +222,15 @@ export default ({ strapi }: any) => ({
         .plugin("donations")
         .service("donation")
         .findTransactionDonation({ idCode, amount, date });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      return ctx.badRequest(error.message);
+      return ctx.badRequest(error instanceof Error ? error.message : String(error));
     }
 
     return ctx.send({ donation });
   },
 
-  async insertTransaction(ctx: any) {
+  async insertTransaction(ctx: Context) {
     const { idCode, amount, date, iban } = ctx.request.body;
 
     await strapi.plugin("donations").service("donation").insertFromTransaction({
@@ -239,7 +243,7 @@ export default ({ strapi }: any) => ({
     return ctx.send();
   },
 
-  async insertDonation(ctx: any) {
+  async insertDonation(ctx: Context) {
     const donation = { ...ctx.request.body };
     await strapi
       .plugin("donations")
@@ -249,7 +253,7 @@ export default ({ strapi }: any) => ({
     return ctx.send();
   },
 
-  async migrateTips(ctx: any) {
+  async migrateTips(ctx: Context) {
     const migratedCount = await strapi
       .plugin("donations")
       .service("donation")
@@ -263,7 +267,7 @@ export default ({ strapi }: any) => ({
     return ctx.send({ migratedCount, migratedRecurringCount });
   },
 
-  async addDonationsToTransferByDate(ctx: any) {
+  async addDonationsToTransferByDate(ctx: Context) {
     const { startDate, endDate, transferId } = ctx.request.body;
 
     if (!startDate || !endDate || !transferId) {
@@ -277,7 +281,7 @@ export default ({ strapi }: any) => ({
       .service("donation")
       .getDonationsInDateRange(startDate, endDate);
 
-    const donationIds = donations.map((donation: any) => donation.id);
+    const donationIds = donations.map((donation: { id: number }) => donation.id);
 
     await strapi
       .plugin("donations")

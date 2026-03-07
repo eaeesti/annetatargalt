@@ -1232,7 +1232,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       return null;
     }
 
-    const donor = donation.donorId !== null
+    const donor = donation.donorId
       ? await donorsRepository.findById(donation.donorId)
       : undefined;
 

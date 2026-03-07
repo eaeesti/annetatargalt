@@ -1,9 +1,15 @@
+import type { Core } from "@strapi/strapi";
 import { organizationRecurringDonationsRepository } from "../../../../db/repositories";
 
-export default ({ strapi }: any) => ({
-  async createOrganizationDonations({ recurringDonationId, amounts }: any) {
+interface AmountEntry {
+  organizationId: string;
+  amount: number;
+}
+
+export default ({ strapi }: { strapi: Core.Strapi }) => ({
+  async createOrganizationDonations({ recurringDonationId, amounts }: { recurringDonationId: number; amounts: AmountEntry[] }) {
     const organizationRecurringDonationsData = await Promise.all(
-      amounts.map(async ({ organizationId, amount }: any) => {
+      amounts.map(async ({ organizationId, amount }) => {
         const organization = await strapi
           .documents("api::organization.organization")
           .findOne({

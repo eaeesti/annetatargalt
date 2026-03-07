@@ -70,7 +70,8 @@ export class DonorsRepository {
         recurringDonor: data.recurringDonor || false,
       })
       .returning();
-    return donor!;
+    if (!donor) throw new Error("Failed to insert donor");
+    return donor;
   }
 
   /**
