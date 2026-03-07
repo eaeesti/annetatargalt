@@ -1,78 +1,59 @@
-"use strict";
-
-/**
- * donor service
- */
-
-const {
-  DonorsRepository,
-} = require("../../../../db/repositories/donors.repository");
-const {
-  RecurringDonationsRepository,
-} = require("../../../../db/repositories/recurring-donations.repository");
+import { DonorsRepository } from "../../../../db/repositories/donors.repository";
+import { RecurringDonationsRepository } from "../../../../db/repositories/recurring-donations.repository";
 
 const donorsRepo = new DonorsRepository();
 const recurringDonationsRepo = new RecurringDonationsRepository();
 
-module.exports = () => ({
-  async findDonor(idCode) {
-    // First, try to find donor by ID code in Drizzle
+export default () => ({
+  async findDonor(idCode: string) {
     const existingDonor = await donorsRepo.findByIdCode(idCode);
 
     if (existingDonor) {
       return existingDonor;
     }
 
-    // Fallback: check if recurring donation with this company code exists
-    const recurringDonation = await recurringDonationsRepo.findByCompanyCode(
-      idCode
-    );
+    const recurringDonation = await recurringDonationsRepo.findByCompanyCode(idCode);
 
     if (recurringDonation) {
-      // Fetch the donor associated with this recurring donation
       return donorsRepo.findById(recurringDonation.donorId);
     }
 
     return null;
   },
 
-  async findDonorByEmail(email) {
+  async findDonorByEmail(email: string) {
     return donorsRepo.findByEmail(email);
   },
 
-  async findOrCreateDonor(donor) {
+  async findOrCreateDonor(donor: any) {
     const donorEntry = await this.findDonor(donor.idCode);
 
     if (donorEntry) {
       return donorEntry;
     }
 
-    const newDonorEntry = await donorsRepo.create({
+    return donorsRepo.create({
       firstName: donor.firstName,
       lastName: donor.lastName,
       email: donor.email,
       idCode: donor.idCode,
     });
-
-    return newDonorEntry;
   },
 
-  async findOrCreateDonorByEmail(donor) {
+  async findOrCreateDonorByEmail(donor: any) {
     const donorEntry = await this.findDonorByEmail(donor.email);
 
     if (donorEntry) return donorEntry;
 
-    const newDonorEntry = await donorsRepo.create({
+    return donorsRepo.create({
       firstName: donor.firstName,
       lastName: donor.lastName,
       email: donor.email,
     });
-
-    return newDonorEntry;
   },
 
-  async updateOrCreateDonor(donor) {
-    let donorEntry;
+  async updateOrCreateDonor(donor: any) {
+    let donorEntry: any;
 
     if (donor.idCode) {
       donorEntry = await this.findOrCreateDonor(donor);
@@ -80,29 +61,25 @@ module.exports = () => ({
       donorEntry = await this.findOrCreateDonorByEmail(donor);
     }
 
-    const updatedDonor = await donorsRepo.update(donorEntry.id, {
+    return donorsRepo.update(donorEntry.id, {
       firstName: donor.firstName,
       lastName: donor.lastName,
       email: donor.email,
       idCode: donorEntry.idCode || donor.idCode,
     });
-
-    return updatedDonor;
   },
 
-  async updateOrCreateDonorByEmail(donor) {
+  async updateOrCreateDonorByEmail(donor: any) {
     const donorEntry = await this.findOrCreateDonorByEmail(donor);
 
-    const updatedDonor = await donorsRepo.update(donorEntry.id, {
+    return donorsRepo.update(donorEntry.id, {
       firstName: donor.firstName,
       lastName: donor.lastName,
     });
-
-    return updatedDonor;
   },
 
   async donorsWithFinalizedDonationCount() {
-    const strapi = global.strapi;
+    const strapi = (global as any).strapi;
     const result = await strapi.db.connection.raw(
       `SELECT COUNT(DISTINCT donations_donor_links.donor_id)
        FROM donations
@@ -110,7 +87,6 @@ module.exports = () => ({
        JOIN donors ON donations_donor_links.donor_id = donors.id
        WHERE donations.finalized = true`
     );
-    const count = Number(result.rows[0].count);
-    return count;
+    return Number(result.rows[0].count);
   },
 });
