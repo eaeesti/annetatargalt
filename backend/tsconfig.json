@@ -1,26 +1,26 @@
 {
-  "extends": "@tsconfig/node18/tsconfig.json",
+  "extends": "@strapi/typescript-utils/tsconfigs/server",
   "compilerOptions": {
-    "module": "CommonJS",
-    "moduleResolution": "Node",
-    "target": "ES2022",
+    "outDir": "dist",
+    "rootDir": ".",
     "allowJs": true,
-    "checkJs": false,
-    "noEmit": true,
-    "strict": false,
-    "noImplicitAny": false,
-    "strictNullChecks": false,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
       "~/*": ["src/*"]
-    },
-    "types": ["node"],
-    "typeRoots": ["./node_modules/@types", "./types"]
+    }
   },
-  "include": ["src/**/*.ts", "types/**/*"],
-  "exclude": ["node_modules", "dist", ".strapi", "build", "src/**/*.js"]
+  "include": [
+    "./",
+    "src/**/*.json"
+  ],
+  "exclude": [
+    "node_modules/",
+    "build/",
+    "dist/",
+    ".cache/",
+    ".tmp/",
+    "src/admin/",
+    "**/*.test.ts",
+    "src/plugins/**"
+  ]
 }

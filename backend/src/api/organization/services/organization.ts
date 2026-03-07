@@ -1,0 +1,40 @@
+/**
+ * organization service
+ */
+
+import { factories } from "@strapi/strapi";
+
+export default factories.createCoreService(
+  "api::organization.organization",
+  ({ strapi }: any) => ({
+    async findOrganization(organizationTitle: string) {
+      const organizationEntries = await strapi
+        .documents("api::organization.organization")
+        .findMany({
+          filters: { title: organizationTitle },
+        });
+
+      if (organizationEntries.length > 0) {
+        return organizationEntries[0];
+      }
+
+      return null;
+    },
+
+    async findOrCreateOrganization(organization: any) {
+      const organizationEntry = await this.findOrganization(organization.title);
+
+      if (organizationEntry) {
+        return organizationEntry;
+      }
+
+      const newOrganizationEntry = await strapi
+        .documents("api::organization.organization")
+        .create({
+          data: organization,
+        });
+
+      return newOrganizationEntry;
+    },
+  })
+);

@@ -17,5 +17,8 @@
     "@strapi/provider-email-nodemailer": "5.37.1",
     "concurrently": "^7.6.0",
     "nodemailer": "^6.9.16"
+  },
+  "devDependencies": {
+    "@strapi/typescript-utils": "^5.38.0"
   }
 }
