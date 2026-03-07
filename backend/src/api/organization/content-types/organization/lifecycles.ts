@@ -35,12 +35,16 @@ async function guardAgainstDelete(internalId: string): Promise<void> {
   }
 }
 
+interface LifecycleEvent {
+  params: { where: Record<string, unknown> };
+}
+
 export default {
-  async beforeDelete(event: any) {
-    const organization = await (strapi as any)
+  async beforeDelete(event: LifecycleEvent) {
+    const organization = await strapi
       .documents("api::organization.organization")
       .findOne({
-        documentId: event.params.where.documentId || event.params.where.id,
+        documentId: (event.params.where.documentId || event.params.where.id) as string,
         fields: ["internalId"],
       });
 
@@ -49,11 +53,11 @@ export default {
     }
   },
 
-  async beforeDeleteMany(event: any) {
-    const organizations = await (strapi as any)
+  async beforeDeleteMany(event: LifecycleEvent) {
+    const organizations = await strapi
       .documents("api::organization.organization")
       .findMany({
-        filters: event.params.where,
+        filters: event.params.where as Record<string, unknown>,
         fields: ["internalId"],
       });
 

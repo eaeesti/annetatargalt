@@ -64,7 +64,8 @@ export class OrganizationRecurringDonationsRepository {
       .insert(organizationRecurringDonations)
       .values(data)
       .returning();
-    return orgRecurringDonation!;
+    if (!orgRecurringDonation) throw new Error("Failed to insert organization recurring donation");
+    return orgRecurringDonation;
   }
 
   /**

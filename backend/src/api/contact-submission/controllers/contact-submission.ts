@@ -1,9 +1,10 @@
 import { factories } from "@strapi/strapi";
+import type { Context } from "koa";
 
 export default factories.createCoreController(
   "api::contact-submission.contact-submission",
-  ({ strapi }: any) => ({
-    async contact(ctx: any) {
+  ({ strapi }) => ({
+    async contact(ctx: Context) {
       const submission = ctx.request.body;
 
       try {

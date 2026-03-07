@@ -161,7 +161,8 @@ export class DonationsRepository {
         donationTransferId: data.donationTransferId || null,
       })
       .returning();
-    return donation!;
+    if (!donation) throw new Error("Failed to insert donation");
+    return donation;
   }
 
   /**
@@ -240,17 +241,12 @@ export class DonationsRepository {
 
     // If we need to exclude specific organizations, sum only the amounts
     // that don't go to those organizations
-    if (
-      params?.excludeOrganizationInternalIds &&
-      params.excludeOrganizationInternalIds.length > 0
-    ) {
+    const excludeIds = params?.excludeOrganizationInternalIds;
+    if (excludeIds && excludeIds.length > 0) {
       let total = 0;
       for (const donation of matchingDonations) {
         const orgDonationsFiltered = donation.organizationDonations.filter(
-          (od) =>
-            !params.excludeOrganizationInternalIds!.includes(
-              od.organizationInternalId
-            )
+          (od) => !excludeIds.includes(od.organizationInternalId)
         );
         total += orgDonationsFiltered.reduce((sum, od) => sum + od.amount, 0);
       }
@@ -291,17 +287,12 @@ export class DonationsRepository {
       },
     });
 
-    if (
-      params.excludeOrganizationInternalIds &&
-      params.excludeOrganizationInternalIds.length > 0
-    ) {
+    const excludeIdsInRange = params.excludeOrganizationInternalIds;
+    if (excludeIdsInRange && excludeIdsInRange.length > 0) {
       let total = 0;
       for (const donation of matchingDonations) {
         const orgDonationsFiltered = donation.organizationDonations.filter(
-          (od) =>
-            !params.excludeOrganizationInternalIds!.includes(
-              od.organizationInternalId
-            )
+          (od) => !excludeIdsInRange.includes(od.organizationInternalId)
         );
         total += orgDonationsFiltered.reduce((sum, od) => sum + od.amount, 0);
       }
