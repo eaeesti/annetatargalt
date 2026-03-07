@@ -33,7 +33,7 @@ module.exports = ({ env }) => ({
   },
   donations: {
     enabled: true,
-    resolve: "./src/plugins/donations",
+    resolve: "./dist/src/plugins/donations",
   },
   "deep-populate": {
     enabled: true,
