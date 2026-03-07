@@ -18,12 +18,16 @@ export default factories.createCoreController(
         return ctx.badRequest("Failed to create contact submission");
       }
 
-      const emailConfig = await strapi.db
-        .query("api::email-config.email-config")
-        .findOne();
+      const emailConfig = await strapi.documents("api::email-config.email-config").findFirst();
+      if (!emailConfig) {
+        return ctx.badRequest("Email config not found");
+      }
 
-      const recipientEmails =
-        emailConfig.contactFormSubmissionRecipients.split(/\r\n|\r|\n/);
+      const recipients = emailConfig.contactFormSubmissionRecipients;
+      if (!recipients) {
+        return ctx.badRequest("No recipient emails configured");
+      }
+      const recipientEmails = recipients.split(/\r\n|\r|\n/);
 
       const template = {
         subject: emailConfig.contactFormSubmissionSubject,

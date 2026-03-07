@@ -23,6 +23,12 @@ function getPrivateKey(): string {
   return key;
 }
 
+function getPublicKey(): string {
+  const key = process.env.MONTONIO_PUBLIC;
+  if (!key) throw new Error("MONTONIO_PUBLIC environment variable is not set");
+  return key;
+}
+
 const montonio = {
   /**
    * Fetch a payment redirect URL from Montonio API.
@@ -49,7 +55,7 @@ const montonio = {
    */
   createOrderToken: (payload: MontonioPayload): string => {
     const payloadWithKey = {
-      accessKey: process.env.MONTONIO_PUBLIC,
+      accessKey: getPublicKey(),
       ...payload,
     };
     const token = jwt.sign(payloadWithKey, getPrivateKey(), {
@@ -65,7 +71,7 @@ const montonio = {
   decodeOrderToken: (orderToken: string): MontonioDecodedToken => {
     const decoded = jwt.verify(orderToken, getPrivateKey()) as MontonioDecodedToken;
 
-    if (decoded.accessKey === process.env.MONTONIO_PUBLIC) {
+    if (decoded.accessKey === getPublicKey()) {
       return decoded;
     } else {
       throw new Error("Invalid public key");
