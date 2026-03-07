@@ -11,7 +11,8 @@
     "develop": "yarn clear && concurrently \"cd frontend && yarn develop\" \"cd backend && yarn develop\"",
     "setup:frontend": "cd frontend && yarn",
     "setup:backend": "cd backend && yarn",
-    "setup": "yarn install && yarn setup:frontend && yarn setup:backend"
+    "setup": "yarn install && yarn setup:frontend && yarn setup:backend",
+    "generate-types": "node scripts/generate-strapi-types.mjs"
   },
   "dependencies": {
     "@strapi/provider-email-nodemailer": "5.37.1",
