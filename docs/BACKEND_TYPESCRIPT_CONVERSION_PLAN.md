@@ -8,8 +8,59 @@
 - **Phase 2**: Test helpers & utilities conversion - DONE
 - **Phase 3**: All 7 repositories converted - DONE
 - **Phase 4**: All API controllers, services, and lifecycles converted - DONE
+- **Phase 5**: Donations plugin conversion - IN PROGRESS
+- **Phase 6**: All API routes converted - DONE (12 route files)
+- **Phase 7**: `src/index.ts` converted - DONE
 
-**Status:** 5 out of 10 phases complete. Core data layer + full API layer migrated to TypeScript.
+### Remaining
+- **Phase 8**: Test migration
+- **Phase 9**: Strict mode
+
+**Status:** 7 out of 10 phases complete. Phases 5, 8, 9 remain.
+
+### Phase 5 Plan
+
+Converting all 9 plugin files to TypeScript:
+- `strapi-server.ts`, `server/index.ts`
+- `server/controllers/index.ts`, `server/controllers/donation.ts`
+- `server/services/index.ts`, `server/services/donation.ts` (1306 lines)
+- `server/services/donor.ts`, `server/services/organization-donation.ts`
+- `server/services/organization-recurring-donation.ts`
+
+Will remove `src/plugins/**` from tsconfig exclude so Strapi compiles plugins like API files.
+After Phase 5 complete: delete the generated `.js` files in `src/db/` and `src/utils/`.
+
+### Important: Plugin JS Dependency (while Phase 5 is in progress)
+
+The donations plugin (`src/plugins/donations/strapi-server.js`) is loaded by Strapi as pure JavaScript *before* TypeScript compilation runs. It uses Node's `require()` to load utilities and repositories.
+
+Until Phase 5 is complete, the following generated `.js` files must exist on disk (gitignored):
+- `src/db/client.js`, `src/db/schema.js`
+- `src/db/repositories/*.js`
+- `src/utils/*.js`
+
+Regenerate them if missing (e.g. after a fresh clone) with:
+```bash
+cd backend && node -e "
+const ts = require('./node_modules/typescript');
+const fs = require('fs');
+const options = { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true };
+['src/db/client.ts','src/db/schema.ts',
+ 'src/db/repositories/donations.repository.ts',
+ 'src/db/repositories/donors.repository.ts',
+ 'src/db/repositories/recurring-donations.repository.ts',
+ 'src/db/repositories/organization-donations.repository.ts',
+ 'src/db/repositories/organization-recurring-donations.repository.ts',
+ 'src/db/repositories/donation-transfers.repository.ts',
+ 'src/db/repositories/index.ts',
+ 'src/utils/banks.ts','src/utils/donation.ts','src/utils/estonia.ts',
+ 'src/utils/montonio.ts','src/utils/organization-resolver.ts','src/utils/string.ts',
+].forEach(f => {
+  const r = ts.transpileModule(fs.readFileSync(f,'utf8'), {compilerOptions: options, fileName: f});
+  fs.writeFileSync(f.replace('.ts','.js'), r.outputText);
+});
+"
+```
 
 ### How Phase 4 Was Solved
 
@@ -412,95 +463,33 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
 ---
 
-### Phase 5: Plugin Services & Controllers (8-10 hours)
+### Phase 5: Plugin Services & Controllers 🔄 IN PROGRESS
 
 **Goal:** Convert custom donations plugin to TypeScript.
 
-**Note:** This is the largest section (1,306 lines in donation.js alone).
-
 #### Files to Convert
 
-1. `src/plugins/donations/server/services/donation.js` → `.ts` (1,306 lines - LARGEST)
-2. `src/plugins/donations/server/services/donor.js` → `.ts` (116 lines)
-3. `src/plugins/donations/server/services/organization-donation.js` → `.ts` (100 lines)
-4. `src/plugins/donations/server/controllers/donation.js` → `.ts` (322 lines)
+Same pattern as API files — `export default` with `({ strapi }: any) => ({})`. Remove `src/plugins/**` from tsconfig exclude so Strapi compiles them to `dist/` like all other files.
 
-#### Strategy for Large Files
+- `strapi-server.ts`, `server/index.ts`
+- `server/controllers/index.ts`, `server/controllers/donation.ts`
+- `server/services/index.ts`, `server/services/donation.ts` (1306 lines — largest file)
+- `server/services/donor.ts`, `server/services/organization-donation.ts`
+- `server/services/organization-recurring-donation.ts`
 
-**Recommended:** Split donation.js into modules before converting:
-```
-src/plugins/donations/server/services/donation/
-  ├── index.ts              # Main service export
-  ├── validation.ts         # Validation logic
-  ├── email.ts              # Email sending
-  ├── import-export.ts      # CSV import/export
-  ├── allocation.ts         # Organization allocation
-  └── types.ts              # Shared types
-```
+After Phase 5: permanently delete generated `.js` files in `src/db/` and `src/utils/`.
 
 ---
 
-### Phase 6: Controllers & Routes (4-6 hours)
+### Phase 6: Controllers & Routes ✅ COMPLETED
 
-**Goal:** Type HTTP request handlers and route definitions.
-
-#### Example: Controller Conversion
-
-**After (donation.controller.ts):**
-```typescript
-import type { Core } from "@strapi/strapi";
-
-export default {
-  async create(ctx: Core.KoaContext): Promise<void> {
-    try {
-      const donationService = strapi.plugin("donations").service("donation");
-      const donation = await donationService.create({
-        data: ctx.request.body,
-      });
-      ctx.body = { data: donation };
-    } catch (error) {
-      if (error instanceof Error) {
-        ctx.throw(400, error.message);
-      } else {
-        ctx.throw(500, "Unknown error");
-      }
-    }
-  },
-};
-```
+**Goal:** Type HTTP request handlers and route definitions. All 12 route files converted. Core routers use `factories.createCoreRouter()`, custom routes use plain `export default { routes: [...] }`.
 
 ---
 
-### Phase 7: Core Files & Bootstrap (2-3 hours)
+### Phase 7: Core Files & Bootstrap ✅ COMPLETED
 
-**Goal:** Type application initialization and lifecycle.
-
-#### Files to Convert
-
-1. `src/index.js` → `src/index.ts` (111 lines)
-
-**After (index.ts):**
-```typescript
-import type { Core } from "@strapi/strapi";
-
-export default {
-  async bootstrap({ strapi }: { strapi: Core.Strapi }): Promise<void> {
-    const { pool } = await import("./db/client");
-
-    try {
-      await pool.query("SELECT 1");
-      strapi.log.info("✅ Drizzle database connection verified");
-    } catch (error) {
-      strapi.log.error("❌ Drizzle database connection failed", error);
-    }
-
-    if (process.send) {
-      process.send("ready");
-      strapi.log.info("✅ PM2 ready signal sent");
-    }
-  },
-};
-```
+**Goal:** Type application initialization and lifecycle. `src/index.ts` converted — uses `import type { Core } from "@strapi/strapi"` and `export default { register, bootstrap }`.
 
 ---
 
