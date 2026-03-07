@@ -1,34 +1,28 @@
 /**
  * Returns an array of values from an object, based on the keys provided.
- * @param {Object} object - The object to get values from.
- * @param {Array} keys - The keys to get values for.
- * @return {Array} - An array of values.
  * @example
  * at({ a: 1, b: 2, c: 3 }, ["a", "c"]); // [1, 3]
  */
-export function at(object, keys) {
+export function at<V>(object: Record<string, V>, keys: string[]): V[] {
   return Object.keys(object)
     .map((key) => {
       if (keys.includes(key)) {
         return object[key];
       }
     })
-    .filter((value) => value !== undefined);
+    .filter((value): value is V => value !== undefined);
 }
 
 /**
  * Returns an object with the keys and values from the provided object, based
  * on the keys provided.
- * @param {Object} object - The object to get values from.
- * @param {Array} keys - The keys to get values for.
- * @return {Object} - An object with the keys and values.
  * @example
  * pick({ a: 1, b: 2, c: 3 }, ["a", "c"]); // { a: 1, c: 3 }
  */
-export function pick(object, keys) {
+export function pick<V>(object: Record<string, V>, keys: string[]): Record<string, V> {
   return Object.keys(object)
     .filter((key) => keys.includes(key))
-    .reduce((obj, key) => {
+    .reduce<Record<string, V>>((obj, key) => {
       obj[key] = object[key];
       return obj;
     }, {});

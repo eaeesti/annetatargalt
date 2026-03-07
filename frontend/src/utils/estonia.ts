@@ -1,10 +1,8 @@
 /**
  * Validate an Estonian ID code according to the specification at
  * https://et.wikipedia.org/wiki/Isikukood.
- * @param {string} idCode - An Estonian ID code, e.g. "49403136515".
- * @return {boolean} - Whether the idCode is valid or not.
  */
-export function validateIdCode(idCode) {
+export function validateIdCode(idCode: string): boolean {
   if (!/[1-6]\d{2}[0-1]\d[0-3]\d{5}/.test(idCode)) return false;
 
   const digits = Array.from(idCode).map(Number);
@@ -23,27 +21,24 @@ export function validateIdCode(idCode) {
 
 /**
  * Format a number to a valid Estonian number string.
- * @param {number} number - The number to format.
- * @return {string} - A formatted number string.
  * @example
  * formatEstonianAmount(1234.56); // "1234,56"
- * formatEstonianAmount(1234); // "1234"
- * formatEstonianAmount(12345); // "12 345"
- * formatEstonianAmount(1234.5); // "1234,5"
+ * formatEstonianAmount(1234);    // "1234"
+ * formatEstonianAmount(12345);   // "12 345"
  */
-export function formatEstonianAmount(number) {
+export function formatEstonianAmount(number: number): string {
   const withCents = formatEstonianAmountWithCents(number);
   return withCents.replace(/,00$/, "");
 }
 
-export function formatEstonianAmountWithCents(number) {
+export function formatEstonianAmountWithCents(number: number): string {
   const asString = String(number);
   const [integerPart, decimalPart] = asString.split(".");
-  const integerWithSpaces = integerPart.length >= 5
-    ? integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, " ")
-    : integerPart;
+  const integerWithSpaces =
+    integerPart.length >= 5
+      ? integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, " ")
+      : integerPart;
   const decimal = decimalPart ? "," + decimalPart.padEnd(2, "0") : ",00";
 
-  const estonianAmount = integerWithSpaces + decimal;
-  return estonianAmount;
+  return integerWithSpaces + decimal;
 }
