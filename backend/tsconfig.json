@@ -20,7 +20,6 @@
     ".cache/",
     ".tmp/",
     "src/admin/",
-    "**/*.test.ts",
-    "src/plugins/**"
+    "**/*.test.ts"
   ]
 }
