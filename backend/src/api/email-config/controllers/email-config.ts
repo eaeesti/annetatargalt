@@ -11,9 +11,10 @@ export default factories.createCoreController(
         return ctx.badRequest("Missing required fields");
       }
 
-      const emailConfig = await strapi.db
-        .query("api::email-config.email-config")
-        .findOne();
+      const emailConfig = await strapi.documents("api::email-config.email-config").findFirst();
+      if (!emailConfig) {
+        return ctx.badRequest("Email config not found");
+      }
 
       await strapi.plugins["email"].services.email.send({
         to,
