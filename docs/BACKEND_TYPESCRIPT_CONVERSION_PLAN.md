@@ -15,11 +15,21 @@
 - **Phase 8**: Test migration - DONE
 - **Phase 9**: Strict mode - DONE
 
-### All Phases Complete 🎉
+### Phase 10: Code Quality Cleanup — DONE
 
-**Status:** 10 out of 10 phases complete. Full TypeScript conversion finished.
+- **Phase 10**: Code quality cleanup - DONE
 
-`yarn type-check` passes with `strict: true`. 44 unit tests passing.
+Post-conversion cleanup based on critical analysis of the branch:
+
+1. **Remove unused `amountToCents` import** — was never used, even in the original JS
+2. **Consolidate repository access** — `donation.ts` had 3 patterns (module-level instances, imported singletons, locally instantiated inside methods). Standardized to singletons from the index.
+3. **Remove two misleading commits** (`19b68a3`, `9f6e75d`) between Phase 3 and Phase 4 via `git rebase --onto 2d5f5ee 9f6e75d`. These claimed "API layer must remain JavaScript" which subsequent commits disproved.
+4. **Replace `any` types** — Proper interfaces defined (`DonationInput`, `ForeignDonationInput`, `ImportData`, `OrgAmount`, `ValidationResult`, `InsertDonationInput`). `strapi` parameter typed as `Core.Strapi`. Email plugin access typed via `emailService()` helper using `unknown` cast.
+5. **Remove `!` non-null assertions** — Replaced with explicit null guards. `donation.donorId !== null` checked before `findById`. `donation.donor` checked before email sends.
+
+### Status
+
+**Status:** All phases complete including cleanup. `yarn type-check` passes with `strict: true`. 44 unit tests passing.
 
 ### Phase 5 Results
 

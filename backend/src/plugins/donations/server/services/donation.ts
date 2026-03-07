@@ -1,23 +1,19 @@
+import type { Core } from "@strapi/strapi";
 import {
-  amountToCents,
   validateIdCode,
   validateEmail,
   validateAmount,
   resizeOrganizationDonations,
 } from "../../../../utils/donation";
-import { createRecurringPaymentLink } from "../../../../utils/banks";
+import { createRecurringPaymentLink, type Bank } from "../../../../utils/banks";
 import montonio from "../../../../utils/montonio";
 import { formatEstonianAmount } from "../../../../utils/estonia";
 import { format, textIntoParagraphs, sanitize } from "../../../../utils/string";
-import { DonationsRepository } from "../../../../db/repositories/donations.repository";
-import { OrganizationDonationsRepository } from "../../../../db/repositories/organization-donations.repository";
-import { RecurringDonationsRepository } from "../../../../db/repositories/recurring-donations.repository";
-import { OrganizationRecurringDonationsRepository } from "../../../../db/repositories/organization-recurring-donations.repository";
-import { DonorsRepository } from "../../../../db/repositories/donors.repository";
+import type { Donor, NewDonation } from "../../../../db/schema";
 import {
   donorsRepository,
   donationsRepository,
-  recurringDonationsRepository as recurringDonationsRepo2,
+  recurringDonationsRepository,
   organizationDonationsRepository,
   organizationRecurringDonationsRepository,
   donationTransfersRepository,
@@ -32,14 +28,129 @@ import {
   donors as donorsTable,
 } from "../../../../db/schema";
 
-const donationsRepo = new DonationsRepository();
-const organizationDonationsRepo = new OrganizationDonationsRepository();
-const recurringDonationsRepo = new RecurringDonationsRepository();
-const organizationRecurringDonationsRepo =
-  new OrganizationRecurringDonationsRepository();
+// ─── Domain Types ────────────────────────────────────────────────────────────
 
-export default ({ strapi }: any) => ({
-  async validateDonation(donation: any) {
+interface OrgAmount {
+  organizationInternalId: string;
+  amount: number;
+}
+
+interface DonationInput {
+  firstName: string;
+  lastName: string;
+  email: string;
+  idCode?: string;
+  amount: number;
+  type: "recurring" | "onetime";
+  paymentMethod?: string;
+  bank?: string;
+  companyName?: string | null;
+  companyCode?: string | null;
+  dedicationName?: string | null;
+  dedicationEmail?: string | null;
+  dedicationMessage?: string | null;
+  comment?: string | null;
+  amounts: OrgAmount[];
+}
+
+interface ForeignDonationInput {
+  firstName: string;
+  lastName: string;
+  email: string;
+  amount: number;
+}
+
+type ValidationResult = { valid: true } | { valid: false; reason: string };
+
+interface ImportData {
+  causes: Array<{ id: number; [key: string]: unknown }>;
+  organizations: Array<{ id: number; cause?: number | null; [key: string]: unknown }>;
+  donors: Array<{ id: number; [key: string]: unknown }>;
+  recurringDonations: Array<{
+    id: number;
+    donor: number;
+    active?: boolean;
+    amount: number;
+    bank: string;
+    datetime: string;
+    companyName?: string | null;
+    companyCode?: string | null;
+    comment?: string | null;
+  }>;
+  organizationRecurringDonations: Array<{
+    recurringDonation: number;
+    organization: number;
+    amount: number;
+  }>;
+  donations: Array<{
+    id: number;
+    donor: number;
+    recurringDonation?: number;
+    amount: number;
+    datetime: string;
+    finalized?: boolean;
+    paymentMethod?: string;
+    iban?: string;
+    comment?: string;
+    companyName?: string;
+    companyCode?: string;
+    dedicationName?: string;
+    dedicationEmail?: string;
+    dedicationMessage?: string;
+    externalDonation?: boolean;
+    sentToOrganization?: boolean;
+  }>;
+  organizationDonations: Array<{
+    donation: number;
+    organization: number;
+    amount: number;
+  }>;
+  donationTransfers: Array<{
+    donations: number[];
+    datetime: string;
+    recipient?: string;
+    notes?: string;
+  }>;
+}
+
+type InsertDonationInput = NewDonation & {
+  datetime?: string | Date;
+  organizationDonations: Array<{
+    organizationInternalId?: string;
+    organization?: string;
+    amount: number;
+  }>;
+};
+
+// ─── Strapi Plugin Helpers ────────────────────────────────────────────────────
+
+type EmailRecipient = { to: string | null; replyTo?: string | null };
+type EmailTemplate = { subject: string | null; text?: string | null; html?: string | null };
+
+function emailService(strapi: Core.Strapi) {
+  return (
+    strapi as unknown as {
+      plugins: {
+        email: {
+          services: {
+            email: {
+              sendTemplatedEmail(
+                recipient: EmailRecipient,
+                template: EmailTemplate,
+                data: Record<string, unknown>
+              ): Promise<void>;
+            };
+          };
+        };
+      };
+    }
+  ).plugins.email.services.email;
+}
+
+// ─── Service ─────────────────────────────────────────────────────────────────
+
+export default ({ strapi }: { strapi: Core.Strapi }) => ({
+  async validateDonation(donation: DonationInput): Promise<ValidationResult> {
     if (!donation) {
       return { valid: false, reason: "No donation provided" };
     }
@@ -89,7 +200,7 @@ export default ({ strapi }: any) => ({
 
     if (donation.type === "onetime") {
       if (
-        !["paymentInitiation", "cardPayments"].includes(donation.paymentMethod)
+        !["paymentInitiation", "cardPayments"].includes(donation.paymentMethod ?? "")
       ) {
         return {
           valid: false,
@@ -158,7 +269,7 @@ export default ({ strapi }: any) => ({
     }
 
     const amountSum = donation.amounts.reduce(
-      (acc: number, { amount }: any) => acc + amount,
+      (acc, { amount }: OrgAmount) => acc + amount,
       0
     );
     if (amountSum !== donation.amount) {
@@ -171,7 +282,7 @@ export default ({ strapi }: any) => ({
     return { valid: true };
   },
 
-  validateForeignDonation(donation: any) {
+  validateForeignDonation(donation: ForeignDonationInput): ValidationResult {
     if (!donation) {
       return { valid: false, reason: "No donation provided" };
     }
@@ -208,7 +319,7 @@ export default ({ strapi }: any) => ({
   },
 
   async createMontonioPayload(
-    donation: any,
+    donation: { id: number; amount: number },
     {
       paymentMethod = "paymentInitiation",
       currency = "EUR",
@@ -223,7 +334,7 @@ export default ({ strapi }: any) => ({
   ) {
     const donationInfo = await strapi.db
       .query("api::donation-info.donation-info")
-      .findOne();
+      .findOne() as Record<string, string>;
 
     const amount = donation.amount / 100;
 
@@ -256,7 +367,7 @@ export default ({ strapi }: any) => ({
     return payload;
   },
 
-  async createDonation(donation: any, customReturnUrl?: string, externalDonation?: boolean) {
+  async createDonation(donation: DonationInput, customReturnUrl?: string, externalDonation?: boolean) {
     const validation = await this.validateDonation(donation);
 
     if (!validation.valid) {
@@ -297,7 +408,7 @@ export default ({ strapi }: any) => ({
     }
   },
 
-  async createForeignDonation(donation: any) {
+  async createForeignDonation(donation: ForeignDonationInput) {
     const validation = await this.validateForeignDonation(donation);
 
     if (!validation.valid) {
@@ -309,14 +420,14 @@ export default ({ strapi }: any) => ({
       .service("donor")
       .updateOrCreateDonorByEmail(donation);
 
-    const donationEntry = await donationsRepo.create({
+    const donationEntry = await donationsRepository.create({
       donorId: donor.id,
       amount: donation.amount,
       datetime: new Date(),
       comment: "Foreign donation",
     });
 
-    const global = await strapi.db.query("api::global.global").findOne();
+    const global = await strapi.db.query("api::global.global").findOne() as Record<string, string | null>;
 
     if (!global.tipOrganizationInternalId) {
       throw new Error("Tip organization internalId not configured");
@@ -324,7 +435,7 @@ export default ({ strapi }: any) => ({
 
     const tipInternalId = global.tipOrganizationInternalId;
 
-    await organizationDonationsRepo.create({
+    await organizationDonationsRepository.create({
       donationId: donationEntry.id,
       organizationInternalId: tipInternalId,
       amount: donation.amount,
@@ -344,8 +455,13 @@ export default ({ strapi }: any) => ({
     donor,
     customReturnUrl,
     externalDonation,
-  }: any) {
-    const donationEntry = await donationsRepo.create({
+  }: {
+    donation: DonationInput;
+    donor: Donor;
+    customReturnUrl?: string;
+    externalDonation?: boolean;
+  }) {
+    const donationEntry = await donationsRepository.create({
       donorId: donor.id,
       amount: donation.amount,
       datetime: new Date(),
@@ -359,14 +475,14 @@ export default ({ strapi }: any) => ({
     });
 
     const organizationDonationsData = donation.amounts.map(
-      ({ organizationInternalId, amount }: any) => ({
+      ({ organizationInternalId, amount }: OrgAmount) => ({
         donationId: donationEntry.id,
         organizationInternalId,
         amount,
       })
     );
 
-    await organizationDonationsRepo.createMany(organizationDonationsData);
+    await organizationDonationsRepository.createMany(organizationDonationsData);
 
     const payload = await this.createMontonioPayload(donationEntry, {
       paymentMethod: donation.paymentMethod,
@@ -378,8 +494,16 @@ export default ({ strapi }: any) => ({
     return { redirectURL };
   },
 
-  async createRecurringDonation({ donation, donor, externalDonation }: any) {
-    const recurringDonationEntry = await recurringDonationsRepo.create({
+  async createRecurringDonation({
+    donation,
+    donor,
+    externalDonation,
+  }: {
+    donation: DonationInput;
+    donor: Donor;
+    externalDonation?: boolean;
+  }) {
+    const recurringDonationEntry = await recurringDonationsRepository.create({
       donorId: donor.id,
       active: false,
       amount: donation.amount,
@@ -391,30 +515,30 @@ export default ({ strapi }: any) => ({
     });
 
     const organizationRecurringDonationsData = donation.amounts.map(
-      ({ organizationInternalId, amount }: any) => ({
+      ({ organizationInternalId, amount }: OrgAmount) => ({
         recurringDonationId: recurringDonationEntry.id,
         organizationInternalId,
         amount,
       })
     );
 
-    await organizationRecurringDonationsRepo.createMany(
+    await organizationRecurringDonationsRepository.createMany(
       organizationRecurringDonationsData
     );
 
     const donationInfo = await strapi.db
       .query("api::donation-info.donation-info")
-      .findOne();
+      .findOne() as Record<string, string>;
 
     const description = externalDonation
       ? donationInfo.externalRecurringPaymentComment
       : donationInfo.recurringPaymentComment;
 
     const recurringPaymentLink =
-      donation.bank === "other"
+      donation.bank === "other" || !donation.bank
         ? ""
         : createRecurringPaymentLink(
-            donation.bank,
+            donation.bank as Bank,
             {
               iban: donationInfo.iban,
               recipient: donationInfo.recipient,
@@ -437,14 +561,18 @@ export default ({ strapi }: any) => ({
   async sendConfirmationEmail(donationId: number) {
     const emailConfig = await strapi.db
       .query("api::email-config.email-config")
-      .findOne();
+      .findOne() as Record<string, string | null>;
 
-    const global = await strapi.db.query("api::global.global").findOne();
+    const global = await strapi.db.query("api::global.global").findOne() as Record<string, string | null>;
 
     const donation = await this.getDonationWithDetails(donationId);
 
     if (!donation) {
       throw new Error(`Donation ${donationId} not found`);
+    }
+
+    if (!donation.donor) {
+      throw new Error(`Donation ${donationId} has no associated donor`);
     }
 
     const template = {
@@ -453,26 +581,27 @@ export default ({ strapi }: any) => ({
       html: emailConfig.confirmationHtml,
     };
 
-    const data: any = {
-      firstName: donation.donor!.firstName,
-      firstNameHtml: sanitize(donation.donor!.firstName ?? ""),
-      lastName: donation.donor!.lastName,
-      lastNameHtml: sanitize(donation.donor!.lastName ?? ""),
-      amount: formatEstonianAmount(donation.amount / 100),
-      currency: global.currency,
-    };
-
-    data.summary = donation.organizationDonations
-      .map((organizationDonation: any) => {
+    const summary = donation.organizationDonations
+      .map((organizationDonation) => {
         const organization = organizationDonation.organization;
         const amount = formatEstonianAmount(organizationDonation.amount / 100);
-        return `${organization.title}: ${amount}${global.currency}`;
+        return `${organization?.title}: ${amount}${global.currency}`;
       })
       .join("\n");
 
-    await strapi.plugins["email"].services.email.sendTemplatedEmail(
+    const data = {
+      firstName: donation.donor.firstName,
+      firstNameHtml: sanitize(donation.donor.firstName ?? ""),
+      lastName: donation.donor.lastName,
+      lastNameHtml: sanitize(donation.donor.lastName ?? ""),
+      amount: formatEstonianAmount(donation.amount / 100),
+      currency: global.currency,
+      summary,
+    };
+
+    await emailService(strapi).sendTemplatedEmail(
       {
-        to: donation.donor!.email,
+        to: donation.donor.email,
         replyTo: emailConfig.confirmationReplyTo,
       },
       template,
@@ -483,18 +612,20 @@ export default ({ strapi }: any) => ({
   async sendExternalConfirmationEmail(donationId: number) {
     const emailConfig = await strapi.db
       .query("api::email-config.email-config")
-      .findOne();
+      .findOne() as Record<string, string | null>;
 
-    const global = await strapi.db.query("api::global.global").findOne();
+    const global = await strapi.db.query("api::global.global").findOne() as Record<string, string | null>;
 
-    const donorsRepo2 = new DonorsRepository();
-
-    const donation = await donationsRepo.findById(donationId);
+    const donation = await donationsRepository.findById(donationId);
     if (!donation) {
       throw new Error(`Donation ${donationId} not found`);
     }
 
-    const donor = await donorsRepo2.findById(donation.donorId!);
+    if (!donation.donorId) {
+      throw new Error(`Donation ${donationId} has no associated donor`);
+    }
+
+    const donor = await donorsRepository.findById(donation.donorId);
     if (!donor) {
       throw new Error(`Donor ${donation.donorId} not found`);
     }
@@ -514,7 +645,7 @@ export default ({ strapi }: any) => ({
       currency: global.currency,
     };
 
-    await strapi.plugins["email"].services.email.sendTemplatedEmail(
+    await emailService(strapi).sendTemplatedEmail(
       {
         to: donor.email,
         replyTo: emailConfig.confirmationReplyTo,
@@ -527,9 +658,9 @@ export default ({ strapi }: any) => ({
   async sendRecurringConfirmationEmail(recurringDonationId: number) {
     const emailConfig = await strapi.db
       .query("api::email-config.email-config")
-      .findOne();
+      .findOne() as Record<string, string | null>;
 
-    const global = await strapi.db.query("api::global.global").findOne();
+    const global = await strapi.db.query("api::global.global").findOne() as Record<string, string | null>;
 
     const recurringDonation = await this.getRecurringDonationWithDetails(
       recurringDonationId
@@ -539,34 +670,39 @@ export default ({ strapi }: any) => ({
       throw new Error(`Recurring donation ${recurringDonationId} not found`);
     }
 
+    if (!recurringDonation.donor) {
+      throw new Error(`Recurring donation ${recurringDonationId} has no associated donor`);
+    }
+
     const template = {
       subject: emailConfig.recurringConfirmationSubject,
       text: emailConfig.recurringConfirmationText,
       html: emailConfig.recurringConfirmationHtml,
     };
 
-    const data: any = {
-      firstName: recurringDonation.donor!.firstName,
-      firstNameHtml: sanitize(recurringDonation.donor!.firstName ?? ""),
-      lastName: recurringDonation.donor!.lastName,
-      lastNameHtml: sanitize(recurringDonation.donor!.lastName ?? ""),
-      amount: formatEstonianAmount(recurringDonation.amount / 100),
-      currency: global.currency,
-    };
-
-    data.summary = recurringDonation.organizationRecurringDonations
-      .map((organizationRecurringDonation: any) => {
+    const summary = recurringDonation.organizationRecurringDonations
+      .map((organizationRecurringDonation) => {
         const organization = organizationRecurringDonation.organization;
         const amount = formatEstonianAmount(
           organizationRecurringDonation.amount / 100
         );
-        return `${organization.title}: ${amount}${global.currency}`;
+        return `${organization?.title}: ${amount}${global.currency}`;
       })
       .join("\n");
 
-    await strapi.plugins["email"].services.email.sendTemplatedEmail(
+    const data = {
+      firstName: recurringDonation.donor.firstName,
+      firstNameHtml: sanitize(recurringDonation.donor.firstName ?? ""),
+      lastName: recurringDonation.donor.lastName,
+      lastNameHtml: sanitize(recurringDonation.donor.lastName ?? ""),
+      amount: formatEstonianAmount(recurringDonation.amount / 100),
+      currency: global.currency,
+      summary,
+    };
+
+    await emailService(strapi).sendTemplatedEmail(
       {
-        to: recurringDonation.donor!.email,
+        to: recurringDonation.donor.email,
         replyTo: emailConfig.confirmationReplyTo,
       },
       template,
@@ -577,19 +713,17 @@ export default ({ strapi }: any) => ({
   async sendExternalRecurringConfirmationEmail(recurringDonationId: number) {
     const emailConfig = await strapi.db
       .query("api::email-config.email-config")
-      .findOne();
-    const global = await strapi.db.query("api::global.global").findOne();
+      .findOne() as Record<string, string | null>;
+    const global = await strapi.db.query("api::global.global").findOne() as Record<string, string | null>;
 
-    const donorsRepo2 = new DonorsRepository();
-
-    const recurringDonation = await recurringDonationsRepo.findById(
+    const recurringDonation = await recurringDonationsRepository.findById(
       recurringDonationId
     );
     if (!recurringDonation) {
       throw new Error(`Recurring donation ${recurringDonationId} not found`);
     }
 
-    const donor = await donorsRepo2.findById(recurringDonation.donorId!);
+    const donor = await donorsRepository.findById(recurringDonation.donorId);
     if (!donor) {
       throw new Error(`Donor ${recurringDonation.donorId} not found`);
     }
@@ -609,7 +743,7 @@ export default ({ strapi }: any) => ({
       currency: global.currency,
     };
 
-    await strapi.plugins["email"].services.email.sendTemplatedEmail(
+    await emailService(strapi).sendTemplatedEmail(
       {
         to: donor.email,
         replyTo: emailConfig.confirmationReplyTo,
@@ -622,9 +756,9 @@ export default ({ strapi }: any) => ({
   async sendDedicationEmail(donationId: number) {
     const emailConfig = await strapi.db
       .query("api::email-config.email-config")
-      .findOne();
+      .findOne() as Record<string, string | null>;
 
-    const global = await strapi.db.query("api::global.global").findOne();
+    const global = await strapi.db.query("api::global.global").findOne() as Record<string, string | null>;
 
     const donationWithDetails = await this.getDonationWithDetails(donationId);
 
@@ -632,49 +766,55 @@ export default ({ strapi }: any) => ({
       throw new Error(`Donation ${donationId} not found`);
     }
 
-    const donation = (await donationsRepo.findById(donationId))!;
+    if (!donationWithDetails.donor) {
+      throw new Error(`Donation ${donationId} has no associated donor`);
+    }
 
-    const template: any = {
+    const donation = await donationsRepository.findById(donationId);
+    if (!donation) {
+      throw new Error(`Donation ${donationId} not found`);
+    }
+
+    const template = {
       subject: emailConfig.dedicationSubject,
+      text: format(emailConfig.dedicationText ?? "", {
+        message: donation.dedicationMessage
+          ? emailConfig.dedicationMessageText ?? ""
+          : "",
+      }),
+      html: format(emailConfig.dedicationHtml ?? "", {
+        messageHtml: donation.dedicationMessage
+          ? emailConfig.dedicationMessageHtml ?? ""
+          : "",
+      }),
     };
 
-    template.text = format(emailConfig.dedicationText, {
-      message: donation.dedicationMessage
-        ? emailConfig.dedicationMessageText
-        : "",
-    });
-    template.html = format(emailConfig.dedicationHtml, {
-      messageHtml: donation.dedicationMessage
-        ? emailConfig.dedicationMessageHtml
-        : "",
-    });
-
-    const data: any = {
-      dedicationName: donation.dedicationName,
-      donorName: `${donationWithDetails.donor!.firstName} ${donationWithDetails.donor!.lastName}`,
-      amount: formatEstonianAmount(donation.amount / 100),
-      currency: global.currency,
-      dedicationMessage: `"${donation.dedicationMessage}"`,
-    };
-
-    data.dedicationNameHtml = sanitize(data.dedicationName);
-    data.donorNameHtml = sanitize(data.donorName);
-    data.dedicationMessageHtml = textIntoParagraphs(
-      sanitize(data.dedicationMessage)
-    );
-
-    data.summary = donationWithDetails.organizationDonations
-      .map((organizationDonation: any) => {
+    const donorName = `${donationWithDetails.donor.firstName} ${donationWithDetails.donor.lastName}`;
+    const dedicationMessage = `"${donation.dedicationMessage}"`;
+    const summary = donationWithDetails.organizationDonations
+      .map((organizationDonation) => {
         const organization = organizationDonation.organization;
         const amount = formatEstonianAmount(organizationDonation.amount / 100);
-        return `${organization.title}: ${amount}${global.currency}`;
+        return `${organization?.title}: ${amount}${global.currency}`;
       })
       .join("\n");
 
-    await strapi.plugins["email"].services.email.sendTemplatedEmail(
+    const data = {
+      dedicationName: donation.dedicationName,
+      donorName,
+      amount: formatEstonianAmount(donation.amount / 100),
+      currency: global.currency,
+      dedicationMessage,
+      dedicationNameHtml: sanitize(donation.dedicationName ?? ""),
+      donorNameHtml: sanitize(donorName),
+      dedicationMessageHtml: textIntoParagraphs(sanitize(dedicationMessage)),
+      summary,
+    };
+
+    await emailService(strapi).sendTemplatedEmail(
       {
         to: donation.dedicationEmail,
-        replyTo: donationWithDetails.donor!.email,
+        replyTo: donationWithDetails.donor.email,
       },
       template,
       data
@@ -690,7 +830,7 @@ export default ({ strapi }: any) => ({
     donations,
     organizationDonations,
     donationTransfers,
-  }: any) {
+  }: ImportData) {
     const causeMap: Record<number, number> = {};
     for (const cause of causes) {
       const causeEntry = await strapi
@@ -710,7 +850,7 @@ export default ({ strapi }: any) => ({
         });
       organizationMap[organization.id] = organizationEntry.id;
       organizationInternalIdMap[organization.id] =
-        organizationEntry.internalId;
+        organizationEntry.internalId ?? "";
     }
 
     const donorMap: Record<number, number> = {};
@@ -724,7 +864,7 @@ export default ({ strapi }: any) => ({
 
     const recurringDonationMap: Record<number, number> = {};
     for (const recurringDonation of recurringDonations) {
-      const recurringDonationEntry = await recurringDonationsRepo2.create({
+      const recurringDonationEntry = await recurringDonationsRepository.create({
         donorId: donorMap[recurringDonation.donor],
         active: recurringDonation.active ?? false,
         amount: recurringDonation.amount,
@@ -795,6 +935,7 @@ export default ({ strapi }: any) => ({
       const donationIds = donationTransfer.donations.map(
         (donationId: number) => donationMap[donationId]
       );
+
       if (donationIds.length > 0) {
         await donationsRepository.addToTransfer(donationIds, transfer.id);
       }
@@ -811,30 +952,30 @@ export default ({ strapi }: any) => ({
         sort: "id",
         populate: ["cause"],
       })
-    ).map((organization: any) => ({
+    ).map((organization) => ({
       ...organization,
-      cause: organization.cause ? organization.cause.id : null,
+      cause: organization.cause ? (organization.cause as { id: number }).id : null,
     }));
 
     const donors = await donorsRepository.findAll();
 
     const recurringDonations = (
-      await recurringDonationsRepo2.findAll()
-    ).map((recurringDonation: any) => ({
+      await recurringDonationsRepository.findAll()
+    ).map((recurringDonation) => ({
       ...recurringDonation,
       donor: recurringDonation.donor ? recurringDonation.donor.id : null,
     }));
 
     const organizationRecurringDonations = (
       await organizationRecurringDonationsRepository.findAll()
-    ).map((organizationRecurringDonation: any) => ({
+    ).map((organizationRecurringDonation) => ({
       ...organizationRecurringDonation,
       recurringDonation: organizationRecurringDonation.recurringDonation
         ? organizationRecurringDonation.recurringDonation.id
         : null,
     }));
 
-    const donations = (await donationsRepository.findAll()).map((donation: any) => ({
+    const donations = (await donationsRepository.findAll()).map((donation) => ({
       ...donation,
       donor: donation.donor ? donation.donor.id : null,
       recurringDonation: donation.recurringDonationId,
@@ -843,7 +984,7 @@ export default ({ strapi }: any) => ({
 
     const organizationDonations = (
       await organizationDonationsRepository.findAll()
-    ).map((organizationDonation: any) => ({
+    ).map((organizationDonation) => ({
       ...organizationDonation,
       donation: organizationDonation.donation
         ? organizationDonation.donation.id
@@ -852,10 +993,11 @@ export default ({ strapi }: any) => ({
 
     const donationTransfers = (
       await donationTransfersRepository.findAll({ withDonations: true })
-    ).map((donationTransfer: any) => ({
+    ).map((donationTransfer) => ({
       ...donationTransfer,
       donations:
-        donationTransfer.donations?.map((donation: any) => donation.id) || [],
+        (donationTransfer as typeof donationTransfer & { donations?: Array<{ id: number }> })
+          .donations?.map((donation) => donation.id) || [],
     }));
 
     return {
@@ -880,7 +1022,7 @@ export default ({ strapi }: any) => ({
   },
 
   async sumOfFinalizedDonations() {
-    const global = await strapi.db.query("api::global.global").findOne();
+    const global = await strapi.db.query("api::global.global").findOne() as Record<string, string | null>;
 
     const excludeInternalIds: string[] = [];
 
@@ -899,7 +1041,7 @@ export default ({ strapi }: any) => ({
   },
 
   async sumOfFinalizedCampaignDonations() {
-    const global = await strapi.db.query("api::global.global").findOne();
+    const global = await strapi.db.query("api::global.global").findOne() as Record<string, string | null>;
 
     const excludeInternalIds: string[] = [];
 
@@ -919,7 +1061,7 @@ export default ({ strapi }: any) => ({
     });
   },
 
-  async findTransactionDonation({ idCode, date, amount }: any) {
+  async findTransactionDonation({ idCode, date, amount }: { idCode: string; date: string; amount: number }) {
     const donor = await donorsRepository.findByIdCode(idCode);
 
     if (!donor) {
@@ -962,7 +1104,7 @@ export default ({ strapi }: any) => ({
     return donations[0];
   },
 
-  async insertFromTransaction({ idCode, date, amount, iban }: any) {
+  async insertFromTransaction({ idCode, date, amount, iban }: { idCode: string; date: string; amount: number; iban: string }) {
     let donor = await strapi
       .plugin("donations")
       .service("donor")
@@ -973,11 +1115,11 @@ export default ({ strapi }: any) => ({
     }
 
     let latestRecurringDonations =
-      await recurringDonationsRepo2.findByDonorId(donor.id);
+      await recurringDonationsRepository.findByDonorId(donor.id);
 
     if (idCode.length !== 11) {
       latestRecurringDonations = latestRecurringDonations.filter(
-        (rd: any) => rd.companyCode === idCode
+        (rd) => rd.companyCode === idCode
       );
     }
 
@@ -987,7 +1129,7 @@ export default ({ strapi }: any) => ({
 
     const transactionDateLimit = new Date(date).getTime() + 24 * 60 * 60 * 1000;
     const recurringDonation = latestRecurringDonations.find(
-      (rd: any) => new Date(rd.datetime).getTime() <= transactionDateLimit
+      (rd) => new Date(rd.datetime).getTime() <= transactionDateLimit
     );
 
     if (!recurringDonation) {
@@ -1024,9 +1166,9 @@ export default ({ strapi }: any) => ({
     );
 
     const orgDonationsData = resizedOrganizationDonations.map(
-      (orgRecurring: any) => ({
+      (orgRecurring) => ({
         donationId: donation.id,
-        organizationInternalId: orgRecurring.organizationInternalId,
+        organizationInternalId: orgRecurring.organizationInternalId ?? "",
         amount: orgRecurring.amount,
       })
     );
@@ -1036,20 +1178,13 @@ export default ({ strapi }: any) => ({
     return donation;
   },
 
-  async insertDonation(donationData: any) {
-    const {
-      organizationDonations,
-      ...donationDataWithoutOrganizationDonations
-    } = donationData;
+  async insertDonation({
+    organizationDonations,
+    ...donationFields
+  }: InsertDonationInput) {
+    const donation = await donationsRepository.create(donationFields);
 
-    const donation = await donationsRepository.create({
-      ...donationDataWithoutOrganizationDonations,
-      datetime: donationDataWithoutOrganizationDonations.datetime
-        ? new Date(donationDataWithoutOrganizationDonations.datetime)
-        : new Date(),
-    });
-
-    const orgDonationsData: any[] = [];
+    const orgDonationsData: Array<{ donationId: number; organizationInternalId: string; amount: number }> = [];
     for (const orgDonation of organizationDonations) {
       let organizationInternalId = orgDonation.organizationInternalId;
 
@@ -1060,14 +1195,16 @@ export default ({ strapi }: any) => ({
             documentId: orgDonation.organization,
             fields: ["internalId"],
           });
-        organizationInternalId = org.internalId;
+        organizationInternalId = (org as { internalId: string } | null)?.internalId;
       }
 
-      orgDonationsData.push({
-        donationId: donation.id,
-        organizationInternalId,
-        amount: orgDonation.amount,
-      });
+      if (organizationInternalId) {
+        orgDonationsData.push({
+          donationId: donation.id,
+          organizationInternalId,
+          amount: orgDonation.amount,
+        });
+      }
     }
 
     await organizationDonationsRepository.createMany(orgDonationsData);
@@ -1081,7 +1218,7 @@ export default ({ strapi }: any) => ({
       endDate
     );
 
-    return allDonations.filter((donation: any) => donation.finalized);
+    return allDonations.filter((donation) => donation.finalized);
   },
 
   async addDonationsToTransfer(donationIds: number[], transferId: number) {
@@ -1089,18 +1226,18 @@ export default ({ strapi }: any) => ({
   },
 
   async getDonationWithDetails(donationId: number) {
-    const donorsRepo2 = new DonorsRepository();
-
-    const donation = await donationsRepo.findByIdWithRelations(donationId);
+    const donation = await donationsRepository.findByIdWithRelations(donationId);
 
     if (!donation) {
       return null;
     }
 
-    const donor = await donorsRepo2.findById(donation.donorId!);
+    const donor = donation.donorId !== null
+      ? await donorsRepository.findById(donation.donorId)
+      : undefined;
 
     const organizationDonations = await Promise.all(
-      donation.organizationDonations.map(async (orgDonation: any) => {
+      donation.organizationDonations.map(async (orgDonation) => {
         const organizations = await strapi
           .documents("api::organization.organization")
           .findMany({
@@ -1128,10 +1265,7 @@ export default ({ strapi }: any) => ({
   },
 
   async getRecurringDonationWithDetails(recurringDonationId: number) {
-    const donorsRepo2 = new DonorsRepository();
-    const orgRecurringDonationsRepo = new OrganizationRecurringDonationsRepository();
-
-    const recurringDonation = await recurringDonationsRepo.findById(
+    const recurringDonation = await recurringDonationsRepository.findById(
       recurringDonationId
     );
 
@@ -1139,15 +1273,15 @@ export default ({ strapi }: any) => ({
       return null;
     }
 
-    const donor = await donorsRepo2.findById(recurringDonation.donorId);
+    const donor = await donorsRepository.findById(recurringDonation.donorId);
 
     const organizationRecurringDonations =
-      await orgRecurringDonationsRepo.findByRecurringDonationId(
+      await organizationRecurringDonationsRepository.findByRecurringDonationId(
         recurringDonationId
       );
 
     const organizationRecurringDonationsWithOrgs = await Promise.all(
-      organizationRecurringDonations.map(async (orgRecurringDonation: any) => {
+      organizationRecurringDonations.map(async (orgRecurringDonation) => {
         const organizations = await strapi
           .documents("api::organization.organization")
           .findMany({
