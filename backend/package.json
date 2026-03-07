@@ -8,6 +8,9 @@
     "name": "Andri Soone"
   },
   "scripts": {
+    "generate-types": "node ../scripts/generate-strapi-types.mjs",
+    "prebuild": "yarn generate-types",
+    "predevelop": "yarn generate-types",
     "build": "strapi build",
     "develop": "strapi develop",
     "start": "strapi start",
