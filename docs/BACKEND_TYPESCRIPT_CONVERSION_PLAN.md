@@ -1,5 +1,41 @@
 # Backend TypeScript Conversion Plan
 
+## Progress Update (March 7, 2026)
+
+### Completed Phases ✅
+- **Phase 0**: TypeScript infrastructure setup - DONE
+- **Phase 1**: Database schema & client conversion - DONE
+- **Phase 2**: Test helpers & utilities conversion - DONE
+- **Phase 3**: All 7 repositories converted - DONE
+- **Phase 4**: All API controllers, services, and lifecycles converted - DONE
+
+**Status:** 5 out of 10 phases complete. Core data layer + full API layer migrated to TypeScript.
+
+### How Phase 4 Was Solved
+
+Initial attempts failed because we used the wrong tsconfig approach (`noEmit: true`, custom extends). The fix was to follow the [official Strapi TypeScript documentation](https://docs.strapi.io/cms/typescript/adding-support-to-existing-project):
+
+**Key configuration changes:**
+- Switch `tsconfig.json` to extend `@strapi/typescript-utils/tsconfigs/server`
+- Set `outDir: "dist"` — Strapi compiles TypeScript to `dist/` before loading
+- Add `src/admin/tsconfig.json` extending `@strapi/typescript-utils/tsconfigs/admin`
+- Use `export default` syntax (standard ESM, not `export =`)
+
+**What Strapi does during `yarn develop`:**
+1. Compiles all `.ts` files to `dist/` directory
+2. Loads modules from `dist/` (not from `src/`)
+3. Hot-reloads on `.ts` file changes
+
+**Phase 4 files converted:**
+- 11 services (6 simple wrappers + cause, organization with custom methods)
+- 10 controllers (7 simple wrappers + contact-submission, email-config, donation proxy)
+- 1 lifecycle hook (organization before-delete guards with Drizzle queries)
+
+All endpoints verified working after conversion. `yarn type-check` passes.
+
+---
+
+
 ## Executive Summary
 
 Convert the Strapi v5 backend from JavaScript to TypeScript incrementally, starting with the data layer and working outward. The backend has 65 JavaScript files organized in clear layers with existing Strapi-generated types and Vitest tests ready for conversion.
