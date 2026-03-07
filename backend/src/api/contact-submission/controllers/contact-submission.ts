@@ -1,19 +1,17 @@
-"use strict";
+import { factories } from "@strapi/strapi";
 
-const { createCoreController } = require("@strapi/strapi").factories;
-
-module.exports = createCoreController(
+export default factories.createCoreController(
   "api::contact-submission.contact-submission",
-  ({ strapi }) => ({
-    async contact(ctx) {
+  ({ strapi }: any) => ({
+    async contact(ctx: any) {
       const submission = ctx.request.body;
 
       try {
-        await strapi.documents(
-          "api::contact-submission.contact-submission"
-        ).create({
-          data: submission,
-        });
+        await strapi
+          .documents("api::contact-submission.contact-submission")
+          .create({
+            data: submission,
+          });
       } catch (error) {
         console.error(error);
         return ctx.badRequest("Failed to create contact submission");
@@ -32,7 +30,7 @@ module.exports = createCoreController(
         html: emailConfig.contactFormSubmissionHtml,
       };
 
-      const emailPromises = recipientEmails.map((recipientEmail) =>
+      const emailPromises = recipientEmails.map((recipientEmail: string) =>
         strapi.plugins["email"].services.email.sendTemplatedEmail(
           {
             to: recipientEmail,

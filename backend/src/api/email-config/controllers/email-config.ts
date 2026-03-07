@@ -1,15 +1,9 @@
-"use strict";
+import { factories } from "@strapi/strapi";
 
-/**
- * email-config controller
- */
-
-const { createCoreController } = require("@strapi/strapi").factories;
-
-module.exports = createCoreController(
+export default factories.createCoreController(
   "api::email-config.email-config",
-  ({ strapi }) => ({
-    async sendEmail(ctx) {
+  ({ strapi }: any) => ({
+    async sendEmail(ctx: any) {
       const { to, subject, text, html } = ctx.request.body;
 
       if (!to || !subject || !text || !html) {
