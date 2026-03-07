@@ -1,4 +1,4 @@
-import { decodeOrderToken } from "../../../../utils/montonio";
+import montonio from "../../../../utils/montonio";
 import { DonationsRepository } from "../../../../db/repositories/donations.repository";
 
 const donationsRepo = new DonationsRepository();
@@ -71,7 +71,7 @@ export default ({ strapi }: any) => ({
 
     let decoded: any;
     try {
-      decoded = decodeOrderToken(orderToken);
+      decoded = montonio.decodeOrderToken(orderToken);
     } catch (error) {
       console.error(error);
       return ctx.badRequest("Invalid payment token");
@@ -135,7 +135,7 @@ export default ({ strapi }: any) => ({
 
     let decoded: any;
     try {
-      decoded = decodeOrderToken(orderToken);
+      decoded = montonio.decodeOrderToken(orderToken);
     } catch (error) {
       console.error(error);
       return ctx.badRequest("Invalid payment token");
