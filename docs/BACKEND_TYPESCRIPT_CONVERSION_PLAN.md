@@ -59,14 +59,17 @@ The migration also caught real bugs previously hidden by the `as` cast:
 
 **Remaining unavoidable casts (at external API boundaries):**
 
-| Cast | Reason |
-|---|---|
-| `strapi as unknown as { plugins: { email } }` | Strapi email plugin has no type exports |
-| `strapi.db as unknown as { connection: KnexConnection }` | Knex internals not typed by Strapi |
-| `as DonationCtrl` in proxy controller | Strapi types plugin methods as 2-arg Koa middleware |
-| `organization.cause as { id: number }` | Document Service populated relation type |
-| `org as { internalId: string } \| null` | Document Service `fields:` narrowing limitation |
-| `event.params.where as Record<string, unknown>` | Lifecycle event type vs Document Service filters |
+| Cast | Location | Reason |
+|---|---|---|
+| `strapi as unknown as { plugins: { email } }` | `donation.ts` | Strapi email plugin has no type exports |
+| `strapi.db as unknown as { connection: KnexConnection }` | `donor.ts`, `index.ts` | Knex internals not typed by Strapi |
+| `as DonationCtrl` | donation proxy controller | Strapi types plugin methods as 2-arg Koa middleware |
+| `organization.cause as { id: number }` | `donation.ts` export | Document Service populated relation type |
+| `org as { internalId: string } \| null` | `donation.ts` insertDonation | Document Service `fields:` narrowing limitation |
+| `event.params.where as Record<string, unknown>` | `lifecycles.ts` | Lifecycle event type vs Document Service filters |
+| `donation.bank as Bank` | `donation.ts` | Drizzle types `bank` as `string \| null`; `Bank` is a string union |
+| `jwt.verify(...) as MontonioDecodedToken` | `montonio.ts` | `jwt.verify()` returns `string \| JwtPayload` |
+| `(await response.json()) as { paymentUrl: string }` | `montonio.ts` | `fetch().json()` returns `unknown` |
 
 ### Final Status
 
