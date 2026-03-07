@@ -3,15 +3,17 @@ import {
   validateIdCode,
   validateEmail,
   validateAmount,
+  resizeOrganizationDonations,
 } from "../../../../utils/donation";
 import { createRecurringPaymentLink } from "../../../../utils/banks";
-import { fetchRedirectUrl } from "../../../../utils/montonio";
+import montonio from "../../../../utils/montonio";
 import { formatEstonianAmount } from "../../../../utils/estonia";
 import { format, textIntoParagraphs, sanitize } from "../../../../utils/string";
 import { DonationsRepository } from "../../../../db/repositories/donations.repository";
 import { OrganizationDonationsRepository } from "../../../../db/repositories/organization-donations.repository";
 import { RecurringDonationsRepository } from "../../../../db/repositories/recurring-donations.repository";
 import { OrganizationRecurringDonationsRepository } from "../../../../db/repositories/organization-recurring-donations.repository";
+import { DonorsRepository } from "../../../../db/repositories/donors.repository";
 import {
   donorsRepository,
   donationsRepository,
@@ -29,9 +31,6 @@ import {
   donationTransfers as donationTransfersTable,
   donors as donorsTable,
 } from "../../../../db/schema";
-import { resizeOrganizationDonations } from "../../../../utils/donation";
-import { DonorsRepository } from "../../../../db/repositories/donors.repository";
-import { OrganizationRecurringDonationsRepository } from "../../../../db/repositories/organization-recurring-donations.repository";
 
 const donationsRepo = new DonationsRepository();
 const organizationDonationsRepo = new OrganizationDonationsRepository();
@@ -335,7 +334,7 @@ export default ({ strapi }: any) => ({
       paymentMethod: "cardPayments",
     });
 
-    const redirectURL = await fetchRedirectUrl(payload);
+    const redirectURL = await montonio.fetchRedirectUrl(payload);
 
     return { redirectURL };
   },
@@ -374,7 +373,7 @@ export default ({ strapi }: any) => ({
       customReturnUrl,
       externalDonation,
     });
-    const redirectURL = await fetchRedirectUrl(payload);
+    const redirectURL = await montonio.fetchRedirectUrl(payload);
 
     return { redirectURL };
   },
@@ -455,10 +454,10 @@ export default ({ strapi }: any) => ({
     };
 
     const data: any = {
-      firstName: donation.donor.firstName,
-      firstNameHtml: sanitize(donation.donor.firstName),
-      lastName: donation.donor.lastName,
-      lastNameHtml: sanitize(donation.donor.lastName),
+      firstName: donation.donor!.firstName,
+      firstNameHtml: sanitize(donation.donor!.firstName ?? ""),
+      lastName: donation.donor!.lastName,
+      lastNameHtml: sanitize(donation.donor!.lastName ?? ""),
       amount: formatEstonianAmount(donation.amount / 100),
       currency: global.currency,
     };
@@ -473,7 +472,7 @@ export default ({ strapi }: any) => ({
 
     await strapi.plugins["email"].services.email.sendTemplatedEmail(
       {
-        to: donation.donor.email,
+        to: donation.donor!.email,
         replyTo: emailConfig.confirmationReplyTo,
       },
       template,
@@ -495,7 +494,7 @@ export default ({ strapi }: any) => ({
       throw new Error(`Donation ${donationId} not found`);
     }
 
-    const donor = await donorsRepo2.findById(donation.donorId);
+    const donor = await donorsRepo2.findById(donation.donorId!);
     if (!donor) {
       throw new Error(`Donor ${donation.donorId} not found`);
     }
@@ -508,9 +507,9 @@ export default ({ strapi }: any) => ({
 
     const data = {
       firstName: donor.firstName,
-      firstNameHtml: sanitize(donor.firstName),
+      firstNameHtml: sanitize(donor.firstName ?? ""),
       lastName: donor.lastName,
-      lastNameHtml: sanitize(donor.lastName),
+      lastNameHtml: sanitize(donor.lastName ?? ""),
       amount: formatEstonianAmount(donation.amount / 100),
       currency: global.currency,
     };
@@ -547,10 +546,10 @@ export default ({ strapi }: any) => ({
     };
 
     const data: any = {
-      firstName: recurringDonation.donor.firstName,
-      firstNameHtml: sanitize(recurringDonation.donor.firstName),
-      lastName: recurringDonation.donor.lastName,
-      lastNameHtml: sanitize(recurringDonation.donor.lastName),
+      firstName: recurringDonation.donor!.firstName,
+      firstNameHtml: sanitize(recurringDonation.donor!.firstName ?? ""),
+      lastName: recurringDonation.donor!.lastName,
+      lastNameHtml: sanitize(recurringDonation.donor!.lastName ?? ""),
       amount: formatEstonianAmount(recurringDonation.amount / 100),
       currency: global.currency,
     };
@@ -567,7 +566,7 @@ export default ({ strapi }: any) => ({
 
     await strapi.plugins["email"].services.email.sendTemplatedEmail(
       {
-        to: recurringDonation.donor.email,
+        to: recurringDonation.donor!.email,
         replyTo: emailConfig.confirmationReplyTo,
       },
       template,
@@ -590,7 +589,7 @@ export default ({ strapi }: any) => ({
       throw new Error(`Recurring donation ${recurringDonationId} not found`);
     }
 
-    const donor = await donorsRepo2.findById(recurringDonation.donorId);
+    const donor = await donorsRepo2.findById(recurringDonation.donorId!);
     if (!donor) {
       throw new Error(`Donor ${recurringDonation.donorId} not found`);
     }
@@ -603,9 +602,9 @@ export default ({ strapi }: any) => ({
 
     const data = {
       firstName: donor.firstName,
-      firstNameHtml: sanitize(donor.firstName),
+      firstNameHtml: sanitize(donor.firstName ?? ""),
       lastName: donor.lastName,
-      lastNameHtml: sanitize(donor.lastName),
+      lastNameHtml: sanitize(donor.lastName ?? ""),
       amount: formatEstonianAmount(recurringDonation.amount / 100),
       currency: global.currency,
     };
@@ -633,7 +632,7 @@ export default ({ strapi }: any) => ({
       throw new Error(`Donation ${donationId} not found`);
     }
 
-    const donation = await donationsRepo.findById(donationId);
+    const donation = (await donationsRepo.findById(donationId))!;
 
     const template: any = {
       subject: emailConfig.dedicationSubject,
@@ -652,7 +651,7 @@ export default ({ strapi }: any) => ({
 
     const data: any = {
       dedicationName: donation.dedicationName,
-      donorName: `${donationWithDetails.donor.firstName} ${donationWithDetails.donor.lastName}`,
+      donorName: `${donationWithDetails.donor!.firstName} ${donationWithDetails.donor!.lastName}`,
       amount: formatEstonianAmount(donation.amount / 100),
       currency: global.currency,
       dedicationMessage: `"${donation.dedicationMessage}"`,
@@ -675,7 +674,7 @@ export default ({ strapi }: any) => ({
     await strapi.plugins["email"].services.email.sendTemplatedEmail(
       {
         to: donation.dedicationEmail,
-        replyTo: donationWithDetails.donor.email,
+        replyTo: donationWithDetails.donor!.email,
       },
       template,
       data
@@ -1098,7 +1097,7 @@ export default ({ strapi }: any) => ({
       return null;
     }
 
-    const donor = await donorsRepo2.findById(donation.donorId);
+    const donor = await donorsRepo2.findById(donation.donorId!);
 
     const organizationDonations = await Promise.all(
       donation.organizationDonations.map(async (orgDonation: any) => {

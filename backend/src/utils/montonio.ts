@@ -3,12 +3,6 @@ import jwt from "jsonwebtoken";
 const montonioUrl = process.env.MONTONIO_URL;
 
 export interface MontonioPayload {
-  amount: number;
-  currency: string;
-  merchant_reference: string;
-  merchant_return_url: string;
-  merchant_notification_url: string;
-  payment_information_unstructured?: string;
   [key: string]: any;
 }
 
