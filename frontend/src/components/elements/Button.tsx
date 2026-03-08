@@ -5,20 +5,21 @@ import { ArrowLongRightIcon } from "@heroicons/react/20/solid";
 import Anchor from "./Anchor";
 import { usePlausible } from "next-plausible";
 
-interface ButtonProps {
+export interface ButtonProps {
   text?: string | null;
-  type?: "primary" | "secondary" | "white" | "text";
-  size?: "link" | "sm" | "md" | "lg" | "xl";
+  type?: "primary" | "secondary" | "white" | "text" | null;
+  size?: "link" | "sm" | "md" | "lg" | "xl" | "text" | null;
   href?: string | null;
-  onClick?: (event?: any) => void;
-  arrow?: boolean;
+  onClick?: (event?: React.MouseEvent) => void;
+  arrow?: boolean | null;
   newTab?: boolean | null;
   className?: string;
   children?: React.ReactNode;
   buttonType?: "button" | "submit" | "reset";
-  plausibleEvent?: string;
+  plausibleEvent?: string | null;
   disabled?: boolean;
-  [key: string]: unknown;
+  noIcon?: boolean;
+  title?: string | null;
 }
 
 export default function Button({
@@ -33,7 +34,9 @@ export default function Button({
   children,
   buttonType = "button",
   plausibleEvent,
-  ...rest
+  disabled,
+  noIcon,
+  title,
 }: ButtonProps) {
   const plausible = usePlausible();
 
@@ -55,9 +58,10 @@ export default function Button({
     xl: "px-8 py-4 text-xl",
   };
 
+  const effectiveSize = size === "text" ? "link" : (size ?? "md");
   const fullClassName = classes(
     "flex gap-1.5 items-center justify-center font-semibold rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 text-center disabled:opacity-50 disabled:cursor-not-allowed",
-    sizes[size!],
+    sizes[effectiveSize],
     type ? buttons[type] : undefined,
     className,
   );
@@ -66,7 +70,9 @@ export default function Button({
     return (
       <Anchor
         href={href}
-        newTab={newTab}
+        newTab={newTab ?? false}
+        noIcon={noIcon}
+        title={title ?? undefined}
         className={fullClassName}
         onClick={(event) => {
           if (plausibleEvent) {
@@ -77,7 +83,6 @@ export default function Button({
             event.preventDefault();
           }
         }}
-        {...(rest as any)}
       >
         {text}
         {children}
@@ -94,7 +99,7 @@ export default function Button({
         if (onClick) onClick(event);
       }}
       className={fullClassName}
-      {...(rest as any)}
+      disabled={disabled}
     >
       {text}
       {children}
