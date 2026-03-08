@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { at, pick } from "@/utils/object";
+import { at } from "@/utils/object";
 import AmountChooser from "../elements/forms/AmountChooser";
 import NameInput from "../elements/forms/NameInput";
 import EmailInput from "../elements/forms/EmailInput";
@@ -28,14 +28,14 @@ export default function ForeignDonationSection(props: ForeignDonationSectionProp
     setModalOpen(true);
   }
 
-  const amounts = at(props as unknown as Record<string, unknown>, ["amount1", "amount2", "amount3"]) as (number | null)[];
+  const amounts = [props.amount1, props.amount2, props.amount3];
   const amountOptions = amounts.filter((a): a is number => a !== null).map((amount) => ({
     value: amount,
     label: `${amount}${props.global.currency}`,
   }));
 
   const [donation, setDonation] = useState({
-    amount: amountOptions[1].value as number,
+    amount: amountOptions[1]?.value ?? amountOptions[0]?.value ?? 0,
     firstName: "",
     lastName: "",
     email: "",
@@ -48,7 +48,11 @@ export default function ForeignDonationSection(props: ForeignDonationSectionProp
     donation.acceptTerms;
 
   const donate = async () => {
-    const donationData: Record<string, unknown> = pick(donation as unknown as Record<string, unknown>, ["firstName", "lastName", "email"]);
+    const donationData: Record<string, unknown> = {
+      firstName: donation.firstName,
+      lastName: donation.lastName,
+      email: donation.email,
+    };
     donationData.amount = donation.amount * 100;
 
     const response = await makeForeignDonationRequest(donationData);

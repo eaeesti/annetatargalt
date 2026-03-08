@@ -2,10 +2,10 @@ import Banner from "./Banner";
 import Footer from "./Footer";
 import Navbar from "./Navbar";
 import Section from "./Section";
-import type { StrapiGlobal, StrapiPage, StrapiCause, StrapiOrganization, StrapiBlogPost } from "@/types/generated/strapi";
+import type { StrapiGlobal, StrapiPage, StrapiSpecialPage, StrapiCause, StrapiOrganization, StrapiBlogPost } from "@/types/generated/strapi";
 
 interface PageProps {
-  page: StrapiPage;
+  page: StrapiPage | StrapiSpecialPage;
   global: StrapiGlobal;
   entity?: StrapiCause | StrapiOrganization | StrapiBlogPost;
 }

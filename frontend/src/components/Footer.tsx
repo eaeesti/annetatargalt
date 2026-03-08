@@ -26,7 +26,7 @@ export default function Footer({ global }: FooterProps) {
               {footer.socialMediaLinks.map((socialMediaLink) => (
                 <Button
                   key={socialMediaLink.id}
-                  href={socialMediaLink.href!}
+                  href={socialMediaLink.href}
                   newTab={true}
                   size="link"
                   type="text"
