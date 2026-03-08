@@ -1,18 +1,19 @@
+import type { MetadataRoute } from "next";
 import { getAllSlugs } from "@/utils/strapi";
 
-export default async function Sitemap() {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const host_url = process.env.NEXT_PUBLIC_SITE_URL;
 
   const allSlugs = await getAllSlugs();
 
-  const index = {
-    url: host_url,
+  const index: MetadataRoute.Sitemap[number] = {
+    url: host_url!,
     lastModified: new Date(),
     changeFrequency: "monthly",
     priority: 1,
   };
 
-  const others = allSlugs
+  const others: MetadataRoute.Sitemap = allSlugs
     .filter((slug) => slug !== "/")
     .map((slug) => ({
       url: `${host_url}/${slug}`,
