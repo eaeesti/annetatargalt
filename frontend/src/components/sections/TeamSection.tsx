@@ -67,6 +67,7 @@ export default function TeamSection({
                         key={socialMediaLink.id}
                         href={socialMediaLink.href}
                         newTab={true}
+                        noIcon={true}
                         size="link"
                         type="text"
                         className="text-slate-400"
