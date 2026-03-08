@@ -13,6 +13,7 @@
 - ✅ **Phase 0** — `tsconfig.json`, `next.config.ts`, `type-check` script, Vitest setup
 - ✅ **Phase 1** — 7 pure utils converted (`string`, `array`, `object`, `estonia`, `react`, `seo`, `donation`) + tests
 - ✅ **Phase 2** — `utils/strapi.ts` (API layer) + `utils/proportions.ts` + tests
+- ✅ **Phase 3** — 4 icons + 9 elements converted. `Button` pulled in early (was Phase 5)
 
 ---
 
@@ -170,7 +171,7 @@ export default nextConfig;
 
 ---
 
-### Phase 3: Icon + Simple Element Components (2–3 hours)
+### ✅ Phase 3: Icon + Simple Element Components (done)
 
 **Goal:** Leaf components with minimal or no props complexity.
 
@@ -355,9 +356,9 @@ Final target:
 | tsconfig + config | 2 | 0 |
 | Pure utils | 7 | 1 |
 | Strapi API + Proportions | 2 | 2 |
-| Icons + simple elements | 10 | 3 |
+| Icons + simple elements + Button | 13 | 3 |
 | Form components + Modal | 16 | 4 |
-| Section components + elements | 25 | 5 |
+| Section components + elements | 24 | 5 |
 | Layout + Page + Section | 5 | 6 |
 | App layer | 6 | 7 |
 | **Total** | **~73** | |
