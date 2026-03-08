@@ -356,6 +356,38 @@ A targeted audit of all frontend files against the conventions in `AGENTS.md` / 
 - **`PaymentSummary.tsx`**, **`DonationSummary.tsx`** — `organization.title!` and `.find(...)!.amount` replaced with `?? ""` / `?.amount ?? 0`.
 - **`Page.tsx`**, **`Section.tsx`** — `page` prop widened to `StrapiPage | StrapiSpecialPage` to avoid the cast in `page.tsx`.
 
+### ✅ Phase 10: Code Quality Audit Passes (done)
+
+Two full codebase audit rounds, each followed by fixes. All 26 issues resolved. `yarn type-check` passes with `strict: true`.
+
+**Audit Round 1 — 12 files fixed:**
+
+- **`RedirectSection.tsx`** — `useEffect` missing `destination` + `router` deps; removed `!` assertion on `destination`.
+- **`ThankYouSection.tsx`** — `return router.push("/")` used as JSX return value (`router.push` returns `void`). Restructured to use `useEffect` for redirect; `decoded` derivation moved before early returns.
+- **`app/layout.tsx`** — `{ ... } as any` on PlausibleProvider scriptProps replaced with `as React.ComponentPropsWithoutRef<"script">`.
+- **`OrgHeaderSection.tsx`** — `entity.cause!` non-null assertion removed; hardcoded Estonian strings `"Koduleht"` / `"Anneta"` replaced with `websiteText` / `donateText` CMS fields.
+- **`BlogPostsSection.tsx`** — `post.date!`, `global.dateLocale!` removed; duplicate `key={post.id}` on `<article>` (already keyed on parent `<Anchor>`) removed.
+- **`ContactSection.tsx`** — `!` assertions on `successTitle`, `successDescription`, `global.errorText`, `global.closeText` replaced with `?? ""` fallbacks.
+- **`TextInput.tsx`**, **`TextareaInput.tsx`** — `useEffect` missing `name`, `setValidity` deps; `isValid` inline lambda stabilised with `isValidRef` pattern (`useRef` + `.current`).
+- **`CompanyInput.tsx`**, **`DedicationInput.tsx`** — `useEffect` missing `setValidity` dep added.
+- **`CopyButton.tsx`** — Rewrote: removed `[key: string]: unknown` index signature and `...rest` spread; explicit prop interface; `navigator.clipboard.writeText` now awaited with `try/catch` for error feedback.
+- **`Footer.tsx`** — Duplicate `key={link.id}` on `<Button>` inside `<li key={link.id}>`; `{...link}` spread (passes unknown `id`) replaced with explicit props.
+- **`TeamSection.tsx`** — `newTab={true}` social media buttons missing `noIcon={true}`, causing `ExternalLinkIcon` to render alongside `SocialMediaIcon`.
+- **`tsconfig.json`** — Committed Next.js auto-configured settings: `target: ES2017`, `jsx: react-jsx`, `.next/dev/types/**/*.ts` in `include`.
+
+**Audit Round 2 — 14 issues fixed across 8 files:**
+
+- **`AmountChooser.tsx`** — `AmountInput` effect missing `isValidAmount`, `setValidity` deps and `setAmount` (inline lambda) stabilised with `setAmountRef` pattern. `AmountChooser` effect missing `otherAmountSelected`, `setValidity` deps; `setAmount` stabilised with `setAmountRef`.
+- **`Modal.tsx`** — `ModalButtonProps.onClick` declared required while function had default `() => {}` (inconsistency); made optional. `key={props.text}` (fragile text-based key) → `key={index}`. `ModalIcon` SVG missing `aria-hidden={true}` (decorative icon not suppressed from screen readers).
+- **`DonationSection.tsx`** — `(donationData.amounts as unknown[]).push(...)` replaced with typed `amountEntries` local array. Added `tipOrganizationInternalId` null guard (was `string | null`, passed where `string` required).
+- **`Summary.tsx`** — `key={index}` on summary rows → `key={row.href ?? row.title ?? String(index)}`.
+- **`Breadcrumbs.tsx`** — `breadcrumbs[...].href!` → `?? "/"`. `breadcrumb.title!` → `?? ""`.
+- **`strapi.ts`** — Renamed `getOrganizaitons` (typo) → `getOrganizations`. `console.error(error)` → `console.error(\`Failed to fetch ${path}:\`, error)`.
+- **`OrganizationsSection.tsx`** — Updated import for renamed `getOrganizations`.
+- **`OrganizationChooser.tsx`** — `key={causeIndex}` → `key={cause.id}`. `key={organizationIndex}` → `key={organization.id}`. Organizations without `internalId` now filtered before render (eliminates 6 `!` assertions). Lock toggle button: added `type="button"` (prevents accidental form submission) and `aria-label`.
+
+---
+
 ## Verification
 
 After each phase:

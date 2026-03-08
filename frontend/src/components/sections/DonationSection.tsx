@@ -134,18 +134,19 @@ export default function DonationSection(props: DonationSectionProps) {
       bank: donation.bank,
       paymentMethod: donation.paymentMethod,
     };
-    donationData.amounts = donation.proportions
+    const amountEntries = donation.proportions
       .calculateAmounts(donation.amount, causes)
       .map(({ organizationInternalId, amount }) => ({
         organizationInternalId,
         amount: Math.round(amount * 100),
       }));
-    if (tipAmount > 0) {
-      (donationData.amounts as unknown[]).push({
+    if (tipAmount > 0 && props.global.tipOrganizationInternalId) {
+      amountEntries.push({
         organizationInternalId: props.global.tipOrganizationInternalId,
         amount: Math.round(tipAmount * 100),
       });
     }
+    donationData.amounts = amountEntries;
 
     donationData.amount = Math.round(totalAmount * 100);
     if (donation.companyDonation) {

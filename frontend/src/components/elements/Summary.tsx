@@ -19,7 +19,7 @@ export default function Summary({ summary, currency, totalText, totalAmount }: S
     <dl className="w-full divide-y divide-slate-200 text-sm">
       {summary.map((row, index) => (
         <div
-          key={index}
+          key={row.href ?? row.title ?? String(index)}
           className="flex items-center justify-between gap-3 py-2"
         >
           <dt>
