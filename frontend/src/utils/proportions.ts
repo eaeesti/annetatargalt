@@ -29,6 +29,10 @@ function requireEntry(entry: ProportionEntry | undefined, id: ProportionKey): Pr
   return entry;
 }
 
+function hasInternalId(org: OrganizationData): org is OrganizationData & { internalId: string } {
+  return org.internalId !== null;
+}
+
 function requireSubProportions(entry: ProportionEntry, id: ProportionKey): Proportions {
   if (!entry.proportions) throw new Error(`Proportions: key "${String(id)}" has no sub-proportions`);
   return entry.proportions;
@@ -280,7 +284,7 @@ export default class Proportions {
     causes.data.forEach((cause) => {
       const causeProportion = this.getProportion(cause.id);
       cause.organizations
-        .filter((org): org is OrganizationData & { internalId: string } => org.internalId !== null)
+        .filter(hasInternalId)
         .forEach((organization) => {
           const organizationProportion = this.getSubProportion(cause.id, organization.internalId);
           const proportion = (causeProportion * organizationProportion) / 10000;
@@ -326,7 +330,7 @@ export default class Proportions {
           toFund: true,
           proportions: new Proportions(
             cause.organizations
-              .filter((org): org is OrganizationData & { internalId: string } => org.internalId !== null)
+              .filter(hasInternalId)
               .map((organization) => [
                 organization.internalId,
                 {
@@ -385,7 +389,7 @@ export default class Proportions {
           toFund: preChosenProportions[causeIndex] === 100 ? false : true,
           proportions: new Proportions(
             cause.organizations
-              .filter((org): org is OrganizationData & { internalId: string } => org.internalId !== null)
+              .filter(hasInternalId)
               .map((organization) => [
                 organization.internalId,
                 {
