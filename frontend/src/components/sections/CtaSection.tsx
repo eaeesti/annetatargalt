@@ -24,12 +24,12 @@ export default function CtaSection({ title, description, buttons }: CtaSectionPr
               <Button
                 key={button.id}
                 text={button.text}
-                type={button.type ?? undefined}
-                size={button.size ?? undefined}
+                type={button.type}
+                size={button.size}
                 href={button.href}
-                arrow={button.arrow ?? undefined}
+                arrow={button.arrow}
                 newTab={button.newTab}
-                plausibleEvent={button.plausibleEvent ?? undefined}
+                plausibleEvent={button.plausibleEvent}
               />
             ))}
           </div>
