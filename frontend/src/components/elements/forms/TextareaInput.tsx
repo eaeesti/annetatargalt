@@ -7,7 +7,7 @@ interface TextareaInputProps {
   setValue: (value: string) => void;
   setValidity: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   isValid: (value: string) => boolean;
-  label: string;
+  label: string | null;
   placeholder?: string;
   autoFocus?: boolean;
   maxLength?: number;

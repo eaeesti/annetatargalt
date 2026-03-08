@@ -1,6 +1,6 @@
 interface OptionProps {
   id: string;
-  label: string;
+  label: string | null;
   paymentMethod: string;
   setPaymentMethod: (method: string) => void;
 }
@@ -29,9 +29,9 @@ function Option({ id, label, paymentMethod, setPaymentMethod }: OptionProps) {
 interface PaymentMethodChooserProps {
   paymentMethod: string;
   setPaymentMethod: (method: string) => void;
-  label: string;
-  paymentInitiationText: string;
-  cardPaymentsText: string;
+  label: string | null;
+  paymentInitiationText: string | null;
+  cardPaymentsText: string | null;
 }
 
 export default function PaymentMethodChooser({

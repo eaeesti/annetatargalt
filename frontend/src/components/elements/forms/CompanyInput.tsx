@@ -3,13 +3,13 @@ import CheckboxInput from "./CheckboxInput";
 import TextInput from "./TextInput";
 
 interface CompanyInputProps {
-  donateAsCompanyText: string;
+  donateAsCompanyText: string | null;
   companyDonation: boolean;
   setCompanyDonation: (val: boolean) => void;
-  companyNameText: string;
+  companyNameText: string | null;
   companyName: string;
   setCompanyName: (name: string) => void;
-  companyCodeText: string;
+  companyCodeText: string | null;
   companyCode: string;
   setCompanyCode: (code: string) => void;
   setValidity: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;

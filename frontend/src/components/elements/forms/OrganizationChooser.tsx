@@ -11,7 +11,7 @@ import type { StrapiCause } from "@/types/generated/strapi";
 import Proportions from "@/utils/proportions";
 
 interface ProportionSliderProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onMouseUp" | "min" | "max"> {
-  lockText: string;
+  lockText: string | null;
   proportion: number;
   setProportion: (value: number) => void;
   isLocked: boolean;
@@ -57,10 +57,10 @@ function ProportionSlider({
 }
 
 interface OrganizationChooserProps {
-  lockText: string;
-  chooseOrganizationsText: string;
-  informationText: string;
-  letExpertsChooseText: string;
+  lockText: string | null;
+  chooseOrganizationsText: string | null;
+  informationText: string | null;
+  letExpertsChooseText: string | null;
   causes: { data: StrapiCause[] };
   proportions: Proportions;
   setProportions: (proportions: Proportions) => void;
