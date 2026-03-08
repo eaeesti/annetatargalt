@@ -2,6 +2,16 @@ import Anchor from "../elements/Anchor";
 import Button from "../elements/Button";
 import Image from "../elements/Image";
 import Markdown from "../elements/Markdown";
+import type { StrapiOrganization } from "@/types/generated/strapi";
+
+interface OrganizationProps {
+  id: number;
+  organization: StrapiOrganization;
+  donateButtonText: string | null;
+  donateLink: string | null;
+  readMoreText: string | null;
+  organizationLink: string;
+}
 
 export default function Organization({
   id,
@@ -10,7 +20,7 @@ export default function Organization({
   donateLink,
   readMoreText,
   organizationLink,
-}) {
+}: OrganizationProps) {
   return (
     <div className="mx-auto mt-16 flex w-full max-w-2xl flex-col items-start gap-4 bg-slate-100 px-8 pb-8 xs:rounded-2xl">
       <Image

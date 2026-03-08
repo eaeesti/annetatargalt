@@ -1,5 +1,10 @@
 import Markdown from "../elements/Markdown";
 import TextWithImageSection from "./TextWithImageSection";
+import type { StrapiCausesSection, StrapiPage } from "@/types/generated/strapi";
+
+interface CausesSectionProps extends StrapiCausesSection {
+  page: StrapiPage;
+}
 
 export default function CausesSection({
   page: { slug },
@@ -8,11 +13,11 @@ export default function CausesSection({
   causes,
   anchor,
   readAboutOrganizationsText,
-}) {
+}: CausesSectionProps) {
   return (
     <>
       <section
-        id={anchor}
+        id={anchor!}
         className="flex flex-col items-center gap-6 px-4 pb-12 pt-24 lg:pt-36"
       >
         <div className="w-full max-w-3xl">
@@ -33,12 +38,14 @@ export default function CausesSection({
           textOnRight={i % 2 === 1}
           buttons={[
             {
+              id: 0,
               text: readAboutOrganizationsText,
               href: `/${cause.slug}`,
               type: "text",
-              size: "link",
+              size: "sm",
               arrow: true,
-              className: "text-primary-700 !font-medium",
+              newTab: null,
+              plausibleEvent: null,
             },
           ]}
         />

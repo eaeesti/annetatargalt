@@ -5,8 +5,15 @@ import { fetcher } from "@/utils/react";
 import useSWR from "swr";
 import LoadingSection from "./LoadingSection";
 import { getStrapiURL } from "@/utils/strapi";
+import type { StrapiStatsSection } from "@/types/generated/strapi";
 
-function Stat({ term, value, unit }) {
+interface StatProps {
+  term: string | null;
+  value: string | null;
+  unit?: string | null;
+}
+
+function Stat({ term, value, unit }: StatProps) {
   return (
     <div className="mx-auto flex max-w-md flex-col justify-end gap-y-4">
       <dt className="text-md leading-7 text-slate-600 [text-wrap:balance]">
@@ -27,7 +34,7 @@ export default function StatsSection({
   donationAmountCurrency,
   transactionFeeText,
   transactionFeeValue,
-}) {
+}: StrapiStatsSection) {
   const { data, error, isLoading } = useSWR(
     getStrapiURL("/api/stats"),
     fetcher,
@@ -37,7 +44,7 @@ export default function StatsSection({
 
   if (error) return;
 
-  const { donationSum } = data;
+  const { donationSum } = data as { donationSum: number };
 
   const donationAmount = Math.floor(donationSum / 100);
 

@@ -20,25 +20,53 @@ import OrganizationChooser from "../elements/forms/OrganizationChooser";
 import Proportions from "@/utils/proportions";
 import PaymentSummary from "../elements/forms/PaymentSummary";
 import Modal from "../Modal";
+import type { ModalData } from "../Modal";
 import CompanyInput from "../elements/forms/CompanyInput";
 import { usePlausible } from "next-plausible";
 import DedicationInput from "../elements/forms/DedicationInput";
 import PaymentMethodChooser from "../elements/forms/PaymentMethodChooser";
+import type { StrapiDonationSection, StrapiGlobal, StrapiPage } from "@/types/generated/strapi";
 
-export default function DonationSection(props) {
+interface DonationSectionProps extends StrapiDonationSection {
+  global: StrapiGlobal;
+  page: StrapiPage;
+}
+
+interface DonationState {
+  amount: number;
+  type: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  idCode: string;
+  bank: string;
+  companyDonation: boolean;
+  companyName: string;
+  companyCode: string;
+  dedicateDonation: boolean;
+  dedicationName: string;
+  dedicationEmail: string;
+  dedicationMessage: string;
+  proportions: Proportions;
+  addTip: boolean;
+  paymentMethod: string;
+  acceptTerms: boolean;
+}
+
+export default function DonationSection(props: DonationSectionProps) {
   const router = useRouter();
   const plausible = usePlausible();
   const searchParams = useSearchParams();
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalData, setModalData] = useState({});
+  const [modalData, setModalData] = useState<ModalData>({});
 
-  function showModal(data) {
+  function showModal(data: ModalData) {
     setModalData(data);
     setModalOpen(true);
   }
 
-  const amounts = at(props, ["amount1", "amount2", "amount3"]);
+  const amounts = at(props as unknown as Record<string, unknown>, ["amount1", "amount2", "amount3"]) as (number | null)[];
   const amountOptions = amounts.map((amount) => ({
     value: amount,
     label: `${amount}${props.global.currency}`,
@@ -50,8 +78,8 @@ export default function DonationSection(props) {
   // Wrap it to maintain compatibility with components expecting { data: [...] }
   const causes = { data: props.causes || [] };
 
-  const [donation, setDonation] = useState({
-    amount: amountOptions[1].value,
+  const [donation, setDonation] = useState<DonationState>({
+    amount: amountOptions[1].value as number,
     type: typeParam === "onetime" ? "onetime" : "recurring",
     firstName: "",
     lastName: "",
@@ -71,8 +99,8 @@ export default function DonationSection(props) {
     acceptTerms: false,
   });
 
-  const [validity, setValidity] = useState({});
-  const stageValidity = {
+  const [validity, setValidity] = useState<Record<string, boolean>>({});
+  const stageValidity: Record<number, boolean> = {
     0: at(validity, ["amount"]).every(Boolean),
     1: at(validity, [
       "firstName",
@@ -84,7 +112,7 @@ export default function DonationSection(props) {
     ]).every(Boolean),
     2:
       donation.acceptTerms &&
-      (donation.type === "recurring" ? donation.bank : true),
+      (donation.type === "recurring" ? !!donation.bank : true),
   };
 
   const [stage, setStage] = useState(0);
@@ -97,7 +125,7 @@ export default function DonationSection(props) {
   const totalAmount = Math.round((donation.amount + tipAmount) * 100) / 100;
 
   const donate = async () => {
-    const donationData = pick(donation, [
+    const donationData: Record<string, unknown> = pick(donation as unknown as Record<string, unknown>, [
       "type",
       "firstName",
       "lastName",
@@ -113,7 +141,7 @@ export default function DonationSection(props) {
         amount: Math.round(amount * 100),
       }));
     if (tipAmount > 0) {
-      donationData.amounts.push({
+      (donationData.amounts as unknown[]).push({
         organizationInternalId: props.global.tipOrganizationInternalId,
         amount: Math.round(tipAmount * 100),
       });
@@ -142,7 +170,7 @@ export default function DonationSection(props) {
     } else {
       showModal({
         icon: "error",
-        title: props.global.errorText,
+        title: props.global.errorText!,
         description: `${data.error.name}: ${data.error.message}`,
       });
     }
@@ -155,15 +183,15 @@ export default function DonationSection(props) {
 
   return (
     <section className="flex h-full flex-grow items-start justify-center bg-slate-200 xs:px-4 xs:py-16 sm:px-8 sm:py-32">
-      <h1 className="sr-only">{props.page.metadata.title}</h1>
+      <h1 className="sr-only">{props.page.metadata!.title}</h1>
       {!donated && (
         <div className="flex w-full max-w-lg flex-col gap-4 bg-white px-4 py-24 xs:rounded-2xl xs:px-12 xs:py-12">
           <Steps
             currentStep={stage}
             setStep={setStage}
-            stepText={props.stepText}
+            stepText={props.stepText!}
             stepCount={4}
-            backWord={props.global.backWord}
+            backWord={props.global.backWord!}
           />
           {stage === 0 && (
             <form
@@ -403,8 +431,8 @@ export default function DonationSection(props) {
       {donated && (
         <div className="flex max-w-lg flex-col gap-4 bg-white px-4 py-24 xs:rounded-2xl xs:px-12 xs:py-12 ">
           <Markdown className="prose prose-primary w-full">
-            {format(props.recurringDonationGuide, {
-              amount: formatEstonianAmount(totalAmount) + props.global.currency,
+            {format(props.recurringDonationGuide!, {
+              amount: formatEstonianAmount(totalAmount) + props.global.currency!,
             })}
           </Markdown>
         </div>
@@ -413,7 +441,7 @@ export default function DonationSection(props) {
         open={modalOpen}
         data={modalData}
         setOpen={setModalOpen}
-        closeText={props.global.closeText}
+        closeText={props.global.closeText!}
       />
     </section>
   );
