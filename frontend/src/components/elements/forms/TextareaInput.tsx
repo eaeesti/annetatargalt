@@ -1,5 +1,5 @@
 import { classes } from "@/utils/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface TextareaInputProps {
   name: string;
@@ -30,13 +30,12 @@ export default function TextareaInput({
 }: TextareaInputProps) {
   const [error, setError] = useState(false);
 
+  const isValidRef = useRef(isValid);
+  isValidRef.current = isValid;
+
   useEffect(() => {
-    if (isValid(value)) {
-      setValidity((ready) => ({ ...ready, [name]: true }));
-    } else {
-      setValidity((ready) => ({ ...ready, [name]: false }));
-    }
-  }, [value]);
+    setValidity((ready) => ({ ...ready, [name]: isValidRef.current(value) }));
+  }, [value, name, setValidity]);
 
   return (
     <div className="">

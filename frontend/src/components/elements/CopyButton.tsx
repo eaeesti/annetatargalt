@@ -2,42 +2,51 @@
 
 import { useState } from "react";
 import Modal from "../Modal";
+import type { ModalData } from "../Modal";
 import Button from "./Button";
 
 interface CopyButtonProps {
   textToCopy: string;
   copiedText?: string | null;
   closeText?: string | null;
-  [key: string]: unknown;
+  size?: "link" | "sm" | "md" | "lg" | "xl" | "text" | null;
+  type?: "primary" | "secondary" | "white" | "text" | null;
+  className?: string;
+  children?: React.ReactNode;
 }
 
 export default function CopyButton({
   textToCopy,
   copiedText = "Copied to clipboard!",
   closeText = "Close",
-  ...rest
+  size,
+  type,
+  className,
+  children,
 }: CopyButtonProps) {
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalData, setModalData] = useState({});
+  const [modalData, setModalData] = useState<ModalData>({});
 
-  function showModal(data: Record<string, unknown>) {
-    setModalData(data);
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      setModalData({ icon: "success", title: copiedText ?? "", description: textToCopy });
+    } catch {
+      setModalData({ icon: "error", title: "Copy failed", description: textToCopy });
+    }
     setModalOpen(true);
   }
 
   return (
     <>
       <Button
-        onClick={() => {
-          navigator.clipboard.writeText(textToCopy);
-          showModal({
-            icon: "success",
-            title: copiedText,
-            description: textToCopy,
-          });
-        }}
-        {...rest}
-      />
+        onClick={handleCopy}
+        size={size}
+        type={type}
+        className={className}
+      >
+        {children}
+      </Button>
       <Modal
         open={modalOpen}
         data={modalData}
