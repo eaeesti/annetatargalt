@@ -30,8 +30,11 @@ export default function TextareaInput({
 }: TextareaInputProps) {
   const [error, setError] = useState(false);
 
+  // Sync is done in an effect (not during render) to satisfy react-hooks/refs.
   const isValidRef = useRef(isValid);
-  isValidRef.current = isValid;
+  useEffect(() => {
+    isValidRef.current = isValid;
+  });
 
   useEffect(() => {
     setValidity((ready) => ({ ...ready, [name]: isValidRef.current(value) }));
