@@ -1,8 +1,14 @@
 import Anchor from "../elements/Anchor";
 import Image from "../elements/Image";
 import { getBlogPosts } from "@/utils/strapi";
+import type { StrapiBlogPostsSection, StrapiGlobal, StrapiPage } from "@/types/generated/strapi";
 
-export default async function BlogPostsSection({ global, page }) {
+interface BlogPostsSectionProps extends StrapiBlogPostsSection {
+  global: StrapiGlobal;
+  page: StrapiPage;
+}
+
+export default async function BlogPostsSection({ global, page }: BlogPostsSectionProps) {
   const blogPosts = await getBlogPosts();
 
   return (
@@ -22,8 +28,8 @@ export default async function BlogPostsSection({ global, page }) {
                   />
                   <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-slate-900/10" />
                 </div>
-                <time dateTime={post.date} className="text-xs text-slate-500">
-                  {new Date(post.date).toLocaleDateString(global.dateLocale, {
+                <time dateTime={post.date!} className="text-xs text-slate-500">
+                  {new Date(post.date!).toLocaleDateString(global.dateLocale!, {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
