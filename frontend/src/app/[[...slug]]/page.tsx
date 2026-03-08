@@ -1,7 +1,6 @@
-import Page from "../../components/Page";
-import { buildMetadata } from "../../utils/seo";
-import { getGlobal, getPageBySlug, findSpecialPage } from "../../utils/strapi";
-import type { StrapiPage, StrapiCause, StrapiOrganization, StrapiBlogPost } from "@/types/generated/strapi";
+import Page from "@/components/Page";
+import { buildMetadata } from "@/utils/seo";
+import { getGlobal, getPageBySlug, findSpecialPage } from "@/utils/strapi";
 import type { Metadata } from "next";
 
 interface PageParams {
@@ -24,7 +23,7 @@ export async function generateMetadata(
   const specialPage = await findSpecialPage(slug);
 
   if (specialPage) {
-    return buildMetadata(global, (specialPage.entity as any)?.metadata ?? {});
+    return buildMetadata(global, specialPage.entity.metadata ?? {});
   }
 
   const page = await getPageBySlug(slug);
@@ -41,8 +40,8 @@ export default async function SlugPage({ params }: { params: Promise<PageParams>
   if (specialPage) {
     return (
       <Page
-        page={specialPage.page as unknown as StrapiPage}
-        entity={specialPage.entity as StrapiCause | StrapiOrganization | StrapiBlogPost}
+        page={specialPage.page}
+        entity={specialPage.entity}
         global={global}
       />
     );

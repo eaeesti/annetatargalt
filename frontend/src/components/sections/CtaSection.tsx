@@ -21,7 +21,16 @@ export default function CtaSection({ title, description, buttons }: CtaSectionPr
           </Markdown>
           <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
             {buttons.map((button) => (
-              <Button key={button.id} {...(button as any)} />
+              <Button
+                key={button.id}
+                text={button.text}
+                type={button.type ?? undefined}
+                size={button.size ?? undefined}
+                href={button.href}
+                arrow={button.arrow ?? undefined}
+                newTab={button.newTab}
+                plausibleEvent={button.plausibleEvent ?? undefined}
+              />
             ))}
           </div>
         </div>

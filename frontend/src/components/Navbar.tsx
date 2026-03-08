@@ -34,11 +34,21 @@ export default function Navbar({ global }: NavbarProps) {
           </div>
           <div className="hidden gap-x-4 lg:flex">
             {navbar.links.map((link) => (
-              <Button key={link.id} type="text" size="lg" {...link} />
+              <Button key={link.id} type="text" size="lg" text={link.text} href={link.href} newTab={link.newTab} />
             ))}
           </div>
           <div className="">
-            <Button {...(navbar.ctaButton as any)} />
+            {navbar.ctaButton && (
+              <Button
+                text={navbar.ctaButton.text}
+                type={navbar.ctaButton.type ?? undefined}
+                size={navbar.ctaButton.size ?? undefined}
+                href={navbar.ctaButton.href}
+                arrow={navbar.ctaButton.arrow ?? undefined}
+                newTab={navbar.ctaButton.newTab}
+                plausibleEvent={navbar.ctaButton.plausibleEvent ?? undefined}
+              />
+            )}
           </div>
           <div className="flex items-center lg:hidden">
             <button
@@ -72,7 +82,17 @@ export default function Navbar({ global }: NavbarProps) {
                 priority
               />
             </Anchor>
-            <Button {...(navbar.ctaButton as any)} />
+            {navbar.ctaButton && (
+              <Button
+                text={navbar.ctaButton.text}
+                type={navbar.ctaButton.type ?? undefined}
+                size={navbar.ctaButton.size ?? undefined}
+                href={navbar.ctaButton.href}
+                arrow={navbar.ctaButton.arrow ?? undefined}
+                newTab={navbar.ctaButton.newTab}
+                plausibleEvent={navbar.ctaButton.plausibleEvent ?? undefined}
+              />
+            )}
             <button
               type="button"
               className="-m-2.5 rounded-md p-2.5 text-slate-700"
@@ -87,7 +107,7 @@ export default function Navbar({ global }: NavbarProps) {
               {navbar.links.map((link) => (
                 <Anchor
                   key={link.id}
-                  href={link.href!}
+                  href={link.href ?? "/"}
                   className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-slate-900 hover:bg-primary-100"
                 >
                   {link.text}

@@ -26,16 +26,18 @@ export default function CauseOrganizationsSection({
         <h2 className="inline-block max-w-full break-words px-4 text-center text-2xl font-semibold tracking-tight text-primary-700 xs:text-2xl xs:font-bold sm:text-3xl">
           {recommendedFundTitle}
         </h2>
-        <div className="w-full xs:px-4">
-          <Organization
-            id={fund!.id}
-            organization={fund!}
-            donateButtonText={global.donateText}
-            donateLink={global.donateLink}
-            readMoreText={global.readMoreText}
-            organizationLink={`/${entity.slug}/${fund!.slug}`}
-          />
-        </div>
+        {fund && (
+          <div className="w-full xs:px-4">
+            <Organization
+              id={fund.id}
+              organization={fund}
+              donateButtonText={global.donateText}
+              donateLink={global.donateLink}
+              readMoreText={global.readMoreText}
+              organizationLink={`/${entity.slug}/${fund.slug}`}
+            />
+          </div>
+        )}
         <h2 className="mt-12 inline-block max-w-full break-words px-4 text-center text-2xl font-semibold tracking-tight text-primary-700 xs:text-2xl xs:font-bold sm:text-3xl">
           {recommendedOrganizationsTitle}
         </h2>

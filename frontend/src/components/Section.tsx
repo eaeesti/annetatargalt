@@ -1,10 +1,10 @@
 import { strapiSectionNameToReactComponentName } from "@/utils/strapi";
-import type { StrapiSection, StrapiGlobal, StrapiPage, StrapiCause, StrapiOrganization, StrapiBlogPost } from "@/types/generated/strapi";
+import type { StrapiSection, StrapiGlobal, StrapiPage, StrapiSpecialPage, StrapiCause, StrapiOrganization, StrapiBlogPost } from "@/types/generated/strapi";
 
 interface SectionProps {
   section: StrapiSection;
   global: StrapiGlobal;
-  page: StrapiPage;
+  page: StrapiPage | StrapiSpecialPage;
   entity?: StrapiCause | StrapiOrganization | StrapiBlogPost;
 }
 

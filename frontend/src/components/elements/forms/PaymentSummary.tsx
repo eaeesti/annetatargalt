@@ -46,11 +46,11 @@ export default function PaymentSummary({
           ),
         )
         .map((organization) => ({
-          title: organization.title!,
+          title: organization.title ?? "",
           href: `/${cause.slug}/${organization.slug}`,
           amount: organizationAmounts.find(
             ({ organizationInternalId }) => organizationInternalId === organization.internalId,
-          )!.amount,
+          )?.amount ?? 0,
         })),
     )
     .flat()
