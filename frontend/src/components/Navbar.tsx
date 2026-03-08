@@ -6,8 +6,13 @@ import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import Anchor from "./elements/Anchor";
 import Button from "./elements/Button";
 import Image from "./elements/Image";
+import type { StrapiGlobal } from "@/types/generated/strapi";
 
-export default function Navbar({ global }) {
+interface NavbarProps {
+  global: StrapiGlobal;
+}
+
+export default function Navbar({ global }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const { title, navbar } = global;
@@ -33,7 +38,7 @@ export default function Navbar({ global }) {
             ))}
           </div>
           <div className="">
-            <Button {...navbar.ctaButton} />
+            <Button {...(navbar.ctaButton as any)} />
           </div>
           <div className="flex items-center lg:hidden">
             <button
@@ -67,7 +72,7 @@ export default function Navbar({ global }) {
                 priority
               />
             </Anchor>
-            <Button {...navbar.ctaButton} />
+            <Button {...(navbar.ctaButton as any)} />
             <button
               type="button"
               className="-m-2.5 rounded-md p-2.5 text-slate-700"
@@ -82,7 +87,7 @@ export default function Navbar({ global }) {
               {navbar.links.map((link) => (
                 <Anchor
                   key={link.id}
-                  href={link.href}
+                  href={link.href!}
                   className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-slate-900 hover:bg-primary-100"
                 >
                   {link.text}
