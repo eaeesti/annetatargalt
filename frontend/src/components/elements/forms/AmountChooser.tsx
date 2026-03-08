@@ -3,7 +3,15 @@ import { RadioGroup } from "@headlessui/react";
 import { useEffect, useState } from "react";
 import { validatePrice } from "@/utils/string";
 
-function AmountInput({ amount, setAmount, currency, label, setValidity }) {
+interface AmountInputProps {
+  amount: number;
+  setAmount: (amount: number) => void;
+  currency: string;
+  label: string;
+  setValidity: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+}
+
+function AmountInput({ amount, setAmount, currency, label, setValidity }: AmountInputProps) {
   const [localValue, setLocalValue] = useState(`${amount}`);
 
   const isValidAmount = validatePrice(localValue);
@@ -37,7 +45,7 @@ function AmountInput({ amount, setAmount, currency, label, setValidity }) {
           aria-describedby="amount-currency"
           value={localValue}
           placeholder={label}
-          onInput={(event) => setLocalValue(event.target.value)}
+          onInput={(event) => setLocalValue(event.currentTarget.value)}
           autoFocus
         />
         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-5">
@@ -50,7 +58,17 @@ function AmountInput({ amount, setAmount, currency, label, setValidity }) {
   );
 }
 
-function AmountChooserOption({ value, label }) {
+interface AmountOption {
+  value: number;
+  label: string;
+}
+
+interface AmountChooserOptionProps {
+  value: number | "other";
+  label: string;
+}
+
+function AmountChooserOption({ value, label }: AmountChooserOptionProps) {
   return (
     <RadioGroup.Option
       value={value}
@@ -69,6 +87,17 @@ function AmountChooserOption({ value, label }) {
   );
 }
 
+interface AmountChooserProps {
+  amount: number;
+  setAmount: (amount: number) => void;
+  amountText: string;
+  amountOptions: AmountOption[];
+  otherAmountText: string;
+  otherAmountOptionText: string;
+  currency: string;
+  setValidity: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+}
+
 export default function AmountChooser({
   amount,
   setAmount,
@@ -78,12 +107,12 @@ export default function AmountChooser({
   otherAmountOptionText,
   currency,
   setValidity,
-}) {
+}: AmountChooserProps) {
   const amountIsOption = amountOptions.find(
     (amountOption) => amountOption.value === amount,
   );
-  const defaultAmount = amountIsOption ? amount : "other";
-  const [selectedAmount, setSelectedAmount] = useState(defaultAmount);
+  const defaultAmount: number | "other" = amountIsOption ? amount : "other";
+  const [selectedAmount, setSelectedAmount] = useState<number | "other">(defaultAmount);
   const otherAmountSelected = selectedAmount === "other";
 
   useEffect(() => {

@@ -1,13 +1,21 @@
 import { validateIdCode } from "@/utils/estonia";
 import TextInput from "./TextInput";
 
+interface IdCodeInputProps {
+  idCodeText: string;
+  idCodeDescription?: string;
+  idCode: string;
+  setIdCode: (idCode: string) => void;
+  setValidity: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+}
+
 export default function IdCodeInput({
   idCodeText,
   idCodeDescription,
   idCode,
   setIdCode,
   setValidity,
-}) {
+}: IdCodeInputProps) {
   return (
     <TextInput
       name="idCode"

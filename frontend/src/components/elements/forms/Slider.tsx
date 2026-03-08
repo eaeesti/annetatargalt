@@ -1,3 +1,12 @@
+interface SliderProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onMouseUp" | "min" | "max"> {
+  id?: string;
+  min?: number;
+  max?: number;
+  value: number;
+  setValue: (value: number) => void;
+  onMouseUp?: () => void;
+}
+
 export default function Slider({
   id,
   min = 0,
@@ -6,7 +15,7 @@ export default function Slider({
   setValue,
   onMouseUp,
   ...props
-}) {
+}: SliderProps) {
   return (
     <div className="relative flex w-full flex-col justify-center">
       <div className="absolute my-auto h-2.5 w-full rounded-full bg-slate-200"></div>
@@ -22,7 +31,7 @@ export default function Slider({
         aria-valuemin={min}
         max={max}
         aria-valuemax={max}
-        onInput={(event) => setValue(Number(event.target.value))}
+        onInput={(event) => setValue(Number(event.currentTarget.value))}
         onMouseUp={onMouseUp}
         onTouchEnd={onMouseUp}
         aria-valuenow={value}
