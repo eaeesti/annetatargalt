@@ -2,13 +2,21 @@ import { range } from "@/utils/array";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import Button from "../Button";
 
+interface StepsProps {
+  currentStep: number;
+  setStep: (step: number) => void;
+  stepText: string;
+  stepCount: number;
+  backWord: string;
+}
+
 export default function Steps({
   currentStep,
   setStep,
   stepText,
   stepCount,
   backWord,
-}) {
+}: StepsProps) {
   return (
     <div className="mb-4 flex flex-row items-center">
       {currentStep > 0 && (

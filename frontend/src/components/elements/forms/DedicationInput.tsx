@@ -4,6 +4,22 @@ import TextInput from "./TextInput";
 import EmailInput from "./EmailInput";
 import TextareaInput from "./TextareaInput";
 
+interface DedicationInputProps {
+  dedicateDonationText: string;
+  dedicateDonation: boolean;
+  setDedicateDonation: (val: boolean) => void;
+  dedicationNameText: string;
+  dedicationName: string;
+  setDedicationName: (name: string) => void;
+  dedicationEmailText: string;
+  dedicationEmail: string;
+  setDedicationEmail: (email: string) => void;
+  dedicationMessageText: string;
+  dedicationMessage: string;
+  setDedicationMessage: (message: string) => void;
+  setValidity: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+}
+
 export default function DedicationInput({
   dedicateDonationText,
   dedicateDonation,
@@ -18,8 +34,8 @@ export default function DedicationInput({
   dedicationMessage,
   setDedicationMessage,
   setValidity,
-}) {
-  const [dedicationValidity, setDedicationValidity] = useState({});
+}: DedicationInputProps) {
+  const [dedicationValidity, setDedicationValidity] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!dedicateDonation) {
