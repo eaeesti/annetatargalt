@@ -6,8 +6,10 @@ import type {
   StrapiSpecialPage,
   StrapiBlogPost,
   StrapiOrganization,
+  StrapiCause,
 } from "@/types/generated/strapi";
 
+type SpecialPageEntity = StrapiCause | StrapiOrganization | StrapiBlogPost;
 function headersWithAuthToken(): { headers: { Authorization: string } } {
   const token = process.env.NEXT_PUBLIC_STRAPI_API_TOKEN;
 
@@ -90,7 +92,9 @@ export async function getGlobal(): Promise<StrapiGlobal> {
   return response.data;
 }
 
-export async function getSpecialPages(): Promise<StrapiSpecialPage[]> {
+type SpecialPageWithPattern = StrapiSpecialPage & { slugPattern: string; collectionType: string };
+
+export async function getSpecialPages(): Promise<SpecialPageWithPattern[]> {
   const path = "/special-pages";
   const options = headersWithAuthToken();
   const urlParamsObject = { populate: "*" };
@@ -104,32 +108,30 @@ export async function getSpecialPages(): Promise<StrapiSpecialPage[]> {
   }
 
   // In Strapi v5, data is returned flat (not nested under attributes)
-  const specialPages = response.data.filter((page) => page && page.slugPattern);
-
-  return specialPages;
+  return response.data.filter(
+    (page): page is SpecialPageWithPattern =>
+      Boolean(page?.slugPattern) && Boolean(page?.collectionType),
+  );
 }
 
 export async function findSpecialPage(
   slug: string,
-): Promise<{ page: StrapiSpecialPage; entity: unknown } | null> {
+): Promise<{ page: SpecialPageWithPattern; entity: SpecialPageEntity } | null> {
   const specialPages = await getSpecialPages();
 
-  const foundSpecialPage = specialPages.find((specialPage) => {
-    const slugMatcher = new RegExp(specialPage.slugPattern!);
-    return slugMatcher.test(slug);
-  });
+  const foundSpecialPage = specialPages.find((specialPage) =>
+    new RegExp(specialPage.slugPattern).test(slug),
+  );
 
   if (!foundSpecialPage) return null;
 
-  const slugMatcher = new RegExp(foundSpecialPage.slugPattern!);
-  const endpoint = slug.match(slugMatcher)![1];
+  const match = slug.match(new RegExp(foundSpecialPage.slugPattern));
+  if (!match) return null;
+  const endpoint = match[1];
 
-  const entity = await getEntityBySlug(
-    foundSpecialPage.collectionType!,
-    endpoint,
-  );
+  const entity = await getEntityBySlug(foundSpecialPage.collectionType, endpoint);
 
-  return { page: foundSpecialPage, entity };
+  return { page: foundSpecialPage, entity: entity as SpecialPageEntity };
 }
 
 export async function getEntityBySlug(type: string, slug: string): Promise<unknown> {
@@ -165,7 +167,7 @@ export async function getAllSlugs(): Promise<string[]> {
     data: StrapiPage[];
   };
   // In Strapi v5, data is returned flat (not nested under attributes)
-  const pageSlugs = pagesResponse.data?.map((page) => page.slug!) || [];
+  const pageSlugs = pagesResponse.data?.flatMap((page) => page.slug ? [page.slug] : []) || [];
 
   const causesPath = "/causes";
   const causesResponse = (await fetchAPI(causesPath, urlParamsObject, options)) as {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { at, pick } from "@/utils/object";
+import { at } from "@/utils/object";
 import AmountChooser from "../elements/forms/AmountChooser";
 import DonationTypeChooser from "../elements/forms/DonationTypeChooser";
 import Button from "../elements/Button";
@@ -66,7 +66,7 @@ export default function DonationSection(props: DonationSectionProps) {
     setModalOpen(true);
   }
 
-  const amounts = at(props as unknown as Record<string, unknown>, ["amount1", "amount2", "amount3"]) as (number | null)[];
+  const amounts = [props.amount1, props.amount2, props.amount3];
   const amountOptions = amounts.filter((a): a is number => a !== null).map((amount) => ({
     value: amount,
     label: `${amount}${props.global.currency}`,
@@ -79,7 +79,7 @@ export default function DonationSection(props: DonationSectionProps) {
   const causes = { data: props.causes || [] };
 
   const [donation, setDonation] = useState<DonationState>({
-    amount: amountOptions[1].value as number,
+    amount: amountOptions[1]?.value ?? amountOptions[0]?.value ?? 0,
     type: typeParam === "onetime" ? "onetime" : "recurring",
     firstName: "",
     lastName: "",
@@ -125,15 +125,15 @@ export default function DonationSection(props: DonationSectionProps) {
   const totalAmount = Math.round((donation.amount + tipAmount) * 100) / 100;
 
   const donate = async () => {
-    const donationData: Record<string, unknown> = pick(donation as unknown as Record<string, unknown>, [
-      "type",
-      "firstName",
-      "lastName",
-      "email",
-      "idCode",
-      "bank",
-      "paymentMethod",
-    ]);
+    const donationData: Record<string, unknown> = {
+      type: donation.type,
+      firstName: donation.firstName,
+      lastName: donation.lastName,
+      email: donation.email,
+      idCode: donation.idCode,
+      bank: donation.bank,
+      paymentMethod: donation.paymentMethod,
+    };
     donationData.amounts = donation.proportions
       .calculateAmounts(donation.amount, causes)
       .map(({ organizationInternalId, amount }) => ({
@@ -170,7 +170,7 @@ export default function DonationSection(props: DonationSectionProps) {
     } else {
       showModal({
         icon: "error",
-        title: props.global.errorText!,
+        title: props.global.errorText ?? "Error",
         description: `${data.error.name}: ${data.error.message}`,
       });
     }
@@ -183,15 +183,15 @@ export default function DonationSection(props: DonationSectionProps) {
 
   return (
     <section className="flex h-full flex-grow items-start justify-center bg-slate-200 xs:px-4 xs:py-16 sm:px-8 sm:py-32">
-      <h1 className="sr-only">{props.page.metadata!.title}</h1>
+      <h1 className="sr-only">{props.page.metadata?.title}</h1>
       {!donated && (
         <div className="flex w-full max-w-lg flex-col gap-4 bg-white px-4 py-24 xs:rounded-2xl xs:px-12 xs:py-12">
           <Steps
             currentStep={stage}
             setStep={setStage}
-            stepText={props.stepText!}
+            stepText={props.stepText ?? ""}
             stepCount={4}
-            backWord={props.global.backWord!}
+            backWord={props.global.backWord ?? ""}
           />
           {stage === 0 && (
             <form
@@ -431,8 +431,8 @@ export default function DonationSection(props: DonationSectionProps) {
       {donated && (
         <div className="flex max-w-lg flex-col gap-4 bg-white px-4 py-24 xs:rounded-2xl xs:px-12 xs:py-12 ">
           <Markdown className="prose prose-primary w-full">
-            {format(props.recurringDonationGuide!, {
-              amount: formatEstonianAmount(totalAmount) + props.global.currency!,
+            {format(props.recurringDonationGuide ?? "", {
+              amount: formatEstonianAmount(totalAmount) + (props.global.currency ?? ""),
             })}
           </Markdown>
         </div>
@@ -441,7 +441,7 @@ export default function DonationSection(props: DonationSectionProps) {
         open={modalOpen}
         data={modalData}
         setOpen={setModalOpen}
-        closeText={props.global.closeText!}
+        closeText={props.global.closeText ?? ""}
       />
     </section>
   );

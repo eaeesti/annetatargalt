@@ -28,7 +28,16 @@ export default function HeroSection({
             </p>
             <div className="mt-10 flex w-full max-w-xs flex-col items-stretch justify-center gap-4 text-white xs:max-w-none xs:flex-row xs:items-center xl:justify-start">
               {buttons.map((button) => (
-                <Button key={button.id} {...(button as any)} />
+                <Button
+                  key={button.id}
+                  text={button.text}
+                  type={button.type ?? undefined}
+                  size={button.size ?? undefined}
+                  href={button.href}
+                  arrow={button.arrow ?? undefined}
+                  newTab={button.newTab}
+                  plausibleEvent={button.plausibleEvent ?? undefined}
+                />
               ))}
             </div>
           </div>

@@ -24,6 +24,16 @@ interface AmountEntry {
   amount: number;
 }
 
+function requireEntry(entry: ProportionEntry | undefined, id: ProportionKey): ProportionEntry {
+  if (!entry) throw new Error(`Proportions: key "${String(id)}" not found`);
+  return entry;
+}
+
+function requireSubProportions(entry: ProportionEntry, id: ProportionKey): Proportions {
+  if (!entry.proportions) throw new Error(`Proportions: key "${String(id)}" has no sub-proportions`);
+  return entry.proportions;
+}
+
 export default class Proportions {
   proportions: Map<ProportionKey, ProportionEntry>;
 
@@ -40,11 +50,11 @@ export default class Proportions {
   }
 
   get(id: ProportionKey): ProportionEntry {
-    return this.proportions.get(id)!;
+    return requireEntry(this.proportions.get(id), id);
   }
 
   getSub(id: ProportionKey, subId: ProportionKey): ProportionEntry {
-    return this.proportions.get(id)!.proportions!.get(subId);
+    return requireEntry(requireSubProportions(this.get(id), id).proportions.get(subId), subId);
   }
 
   set(id: ProportionKey, value: ProportionEntry): void {
@@ -52,11 +62,11 @@ export default class Proportions {
   }
 
   setSub(id: ProportionKey, subId: ProportionKey, value: ProportionEntry): void {
-    this.proportions.get(id)!.proportions!.set(subId, value);
+    requireSubProportions(this.get(id), id).set(subId, value);
   }
 
   getProportion(id: ProportionKey): number {
-    return this.proportions.get(id)!.proportion;
+    return this.get(id).proportion;
   }
 
   getSubProportion(id: ProportionKey, subId: ProportionKey): number {
@@ -64,7 +74,7 @@ export default class Proportions {
   }
 
   goesToFund(id: ProportionKey): boolean | undefined {
-    return this.proportions.get(id)!.toFund;
+    return this.get(id).toFund;
   }
 
   toggleToFund(id: ProportionKey): Proportions {
@@ -74,10 +84,12 @@ export default class Proportions {
       const fundId = this.subKeys(id).find(
         (subId) => this.getSub(id, subId).fund,
       );
-      newProportions = newProportions
-        .unlockSubProportions(id)
-        .updateSubProportion(id, fundId!, 100)
-        .unlockSubProportions(id);
+      if (fundId !== undefined) {
+        newProportions = newProportions
+          .unlockSubProportions(id)
+          .updateSubProportion(id, fundId, 100)
+          .unlockSubProportions(id);
+      }
     }
 
     return newProportions.mapEntries((key, value) => [
@@ -87,7 +99,7 @@ export default class Proportions {
   }
 
   isLocked(id: ProportionKey): boolean {
-    return this.proportions.get(id)!.locked;
+    return this.get(id).locked;
   }
 
   isSubLocked(id: ProportionKey, subId: ProportionKey): boolean {
@@ -99,7 +111,7 @@ export default class Proportions {
   }
 
   subKeys(id: ProportionKey): ProportionKey[] {
-    return Array.from(this.get(id).proportions!.keys());
+    return Array.from(requireSubProportions(this.get(id), id).keys());
   }
 
   entries(): Array<[ProportionKey, ProportionEntry]> {
@@ -134,7 +146,7 @@ export default class Proportions {
       key === id
         ? {
             ...value,
-            proportions: value.proportions!.lockProportion(subId),
+            proportions: requireSubProportions(value, id).lockProportion(subId),
           }
         : value,
     ]);
@@ -153,7 +165,7 @@ export default class Proportions {
       key === id
         ? {
             ...value,
-            proportions: value.proportions!.toggleProportionLock(subId),
+            proportions: requireSubProportions(value, id).toggleProportionLock(subId),
           }
         : value,
     ]);
@@ -167,7 +179,7 @@ export default class Proportions {
     return this.mapEntries((key, value) => [
       key,
       key === id
-        ? { ...value, proportions: value.proportions!.unlockProportions() }
+        ? { ...value, proportions: requireSubProportions(value, id).unlockProportions() }
         : value,
     ]);
   }
@@ -180,7 +192,7 @@ export default class Proportions {
     let totalLocked = 0;
     let totalUnlocked = 0;
 
-    for (let key of this.keys()) {
+    for (const key of this.keys()) {
       if (key === id) {
         continue;
       } else if (newProportions.isLocked(key)) {
@@ -224,7 +236,7 @@ export default class Proportions {
       );
       if (proportionsToChange.length === 0 && adder >= 0)
         proportionsToChange = unlockedProportions;
-      let proportionToChangeIndex =
+      const proportionToChangeIndex =
         (totalUnlocked - (adder < 0 ? 1 : 0)) % proportionsToChange.length;
       const proportionToChange = proportionsToChange[proportionToChangeIndex];
       const oldProportion = newProportions.getProportion(proportionToChange);
@@ -245,7 +257,7 @@ export default class Proportions {
       key === id
         ? {
             ...value,
-            proportions: value.proportions!.updateProportion(subId, proportion),
+            proportions: requireSubProportions(value, id).updateProportion(subId, proportion),
           }
         : value,
     ]);
@@ -267,21 +279,20 @@ export default class Proportions {
 
     causes.data.forEach((cause) => {
       const causeProportion = this.getProportion(cause.id);
-      cause.organizations.forEach((organization) => {
-        const organizationProportion = this.getSubProportion(
-          cause.id,
-          organization.internalId!,
-        );
-        const proportion = (causeProportion * organizationProportion) / 10000;
-        const amount = totalAmount * proportion;
-        const roundedAmount = Math.round(amount * 100) / 100;
-        if (roundedAmount > 0) {
-          amounts.push({
-            organizationInternalId: organization.internalId!,
-            amount: roundedAmount,
-          });
-        }
-      });
+      cause.organizations
+        .filter((org): org is OrganizationData & { internalId: string } => org.internalId !== null)
+        .forEach((organization) => {
+          const organizationProportion = this.getSubProportion(cause.id, organization.internalId);
+          const proportion = (causeProportion * organizationProportion) / 10000;
+          const amount = totalAmount * proportion;
+          const roundedAmount = Math.round(amount * 100) / 100;
+          if (roundedAmount > 0) {
+            amounts.push({
+              organizationInternalId: organization.internalId,
+              amount: roundedAmount,
+            });
+          }
+        });
     });
 
     // Avoid rounding errors
@@ -314,14 +325,16 @@ export default class Proportions {
           locked: false,
           toFund: true,
           proportions: new Proportions(
-            cause.organizations.map((organization) => [
-              organization.internalId!,
-              {
-                proportion: organization.fund ? 100 : 0,
-                fund: organization.fund,
-                locked: false,
-              },
-            ]),
+            cause.organizations
+              .filter((org): org is OrganizationData & { internalId: string } => org.internalId !== null)
+              .map((organization) => [
+                organization.internalId,
+                {
+                  proportion: organization.fund ? 100 : 0,
+                  fund: organization.fund,
+                  locked: false,
+                },
+              ]),
           ),
         },
       ]),
@@ -371,18 +384,20 @@ export default class Proportions {
           locked: false,
           toFund: preChosenProportions[causeIndex] === 100 ? false : true,
           proportions: new Proportions(
-            cause.organizations.map((organization) => [
-              organization.internalId!,
-              {
-                proportion: calculateProportion(
-                  preChosenProportions[causeIndex] === 100,
-                  organization.internalId === chosenOrganizationInternalId,
-                  organization.fund,
-                ),
-                fund: organization.fund,
-                locked: false,
-              },
-            ]),
+            cause.organizations
+              .filter((org): org is OrganizationData & { internalId: string } => org.internalId !== null)
+              .map((organization) => [
+                organization.internalId,
+                {
+                  proportion: calculateProportion(
+                    preChosenProportions[causeIndex] === 100,
+                    organization.internalId === chosenOrganizationInternalId,
+                    organization.fund,
+                  ),
+                  fund: organization.fund,
+                  locked: false,
+                },
+              ]),
           ),
         },
       ]),

@@ -335,6 +335,27 @@ Fix any new errors — most likely `strictNullChecks` violations from Strapi fie
 
 ---
 
+### ✅ Phase 9: AGENTS.md Compliance Pass (done)
+
+A targeted audit of all frontend files against the conventions in `AGENTS.md` / `frontend/AGENTS.md`. Zero remaining violations. `yarn type-check` passes with `strict: true`.
+
+**Fixes applied across 26 files:**
+
+- **`Button.tsx`** — Removed `[key: string]: unknown` index signature and `...rest` spread. Expanded `size` to include `"text"` (maps to `"link"` internally via `effectiveSize`). Added `noIcon` and `title` props passed through to `Anchor`. All call sites updated to use explicit props instead of `{...(button as any)}`.
+- **`utils/strapi.ts`** — Replaced all `!` assertions (`slugPattern!`, `match()[1]!`, `page.slug!`) with null guards and type predicates. Introduced `SpecialPageWithPattern` type. Relative imports (`../../utils/...`) replaced with `@/` alias in `page.tsx`.
+- **`utils/proportions.ts`** — Replaced all `Map.get()!` and `entry.proportions!` with helper functions (`requireEntry`, `requireSubProportions`) that throw descriptive errors. `OrganizationData.internalId` null narrowed via filter type predicate.
+- **Section components** — `HeroSection`, `CtaSection`, `TextWithImageSection`, `Navbar`, `not-found.tsx`, `PowerSection`: button spreads replaced with explicit props. `TextWithImageSection`: logic bug fixed (rendered boolean `{textOnRight}` removed from JSX).
+- **`Modal.tsx`** — Arrow function components `ModalIcon` / `ModalButton` converted to function declarations.
+- **`CheckboxInput.tsx`** — Removed `value={value as any}` (controlled checkbox only needs `checked`).
+- **`manifest.ts`** — `global.metadata!` and `global.chromeIcon192.url!` replaced with optional chaining and null guards.
+- **`BlogHeaderSection.tsx`** — `backButton!`, `author!`, `entity.date!` replaced with conditional rendering.
+- **`OrganizationsSection.tsx`**, **`CauseOrganizationsSection.tsx`** — `cause!.slug` and missing null guard on `fund` fixed.
+- **`CampaignSection.tsx`** — `goalsArray.at(-1)!` replaced with `?? 0` fallback; `countdownText as unknown as Record<string, string>` replaced with typed object.
+- **`ThankYouSection.tsx`** — Introduced `DecodedDonation` interface; removed all `any` and `!` assertions.
+- **`DonationSection.tsx`**, **`ForeignDonationSection.tsx`** — `at(props as unknown as Record<string, unknown>, [...])` and `pick(donation as unknown as Record<string, unknown>, [...])` replaced with direct field access.
+- **`PaymentSummary.tsx`**, **`DonationSummary.tsx`** — `organization.title!` and `.find(...)!.amount` replaced with `?? ""` / `?.amount ?? 0`.
+- **`Page.tsx`**, **`Section.tsx`** — `page` prop widened to `StrapiPage | StrapiSpecialPage` to avoid the cast in `page.tsx`.
+
 ## Verification
 
 After each phase:

@@ -29,7 +29,6 @@ export default function CheckboxInput({
         name={name}
         type="checkbox"
         className="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary-600 focus:ring-primary-600"
-        value={value as any}
         checked={value}
         onChange={(event) => setValue(event.target.checked)}
       />
