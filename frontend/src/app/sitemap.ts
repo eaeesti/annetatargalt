@@ -7,7 +7,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const allSlugs = await getAllSlugs();
 
   const index: MetadataRoute.Sitemap[number] = {
-    url: host_url!,
+    url: host_url ?? "",
     lastModified: new Date(),
     changeFrequency: "monthly",
     priority: 1,

@@ -17,7 +17,7 @@ export default function CausesSection({
   return (
     <>
       <section
-        id={anchor!}
+        id={anchor ?? undefined}
         className="flex flex-col items-center gap-6 px-4 pb-12 pt-24 lg:pt-36"
       >
         <div className="w-full max-w-3xl">
