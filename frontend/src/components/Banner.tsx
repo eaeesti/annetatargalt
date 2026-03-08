@@ -6,7 +6,12 @@ import { XMarkIcon } from "@heroicons/react/20/solid";
 
 const BANNER_DISMISSED_KEY = "topBannerDismissed";
 
-export default function Banner({ topBannerText, closeText }) {
+interface BannerProps {
+  topBannerText: string | null;
+  closeText: string | null;
+}
+
+export default function Banner({ topBannerText, closeText }: BannerProps) {
   // Use lazy initializer to read localStorage on mount without useEffect
   const [isDismissed, setIsDismissed] = useState(() => {
     if (typeof window === "undefined") return true;

@@ -1,8 +1,13 @@
 import Button from "./elements/Button";
 import Image from "./elements/Image";
 import { SocialMediaIcon } from "./elements/SocialMediaIcon";
+import type { StrapiGlobal } from "@/types/generated/strapi";
 
-export default function Footer({ global }) {
+interface FooterProps {
+  global: StrapiGlobal;
+}
+
+export default function Footer({ global }: FooterProps) {
   const { footer } = global;
 
   if (!footer) return;
@@ -21,7 +26,7 @@ export default function Footer({ global }) {
               {footer.socialMediaLinks.map((socialMediaLink) => (
                 <Button
                   key={socialMediaLink.id}
-                  href={socialMediaLink.href}
+                  href={socialMediaLink.href!}
                   newTab={true}
                   size="link"
                   type="text"
