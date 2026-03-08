@@ -35,12 +35,12 @@ export default function PowerSection({ title, column1, column2 }: StrapiPowerSec
                   <div className="flex justify-start text-primary-700">
                     <Button
                       text={column.button.text}
-                      type={column.button.type ?? undefined}
-                      size={column.button.size ?? undefined}
+                      type={column.button.type}
+                      size={column.button.size}
                       href={column.button.href}
-                      arrow={column.button.arrow ?? undefined}
+                      arrow={column.button.arrow}
                       newTab={column.button.newTab}
-                      plausibleEvent={column.button.plausibleEvent ?? undefined}
+                      plausibleEvent={column.button.plausibleEvent}
                     />
                   </div>
                 )}
