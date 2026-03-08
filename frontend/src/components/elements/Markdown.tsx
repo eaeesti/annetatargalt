@@ -22,7 +22,8 @@ export default function Markdown({ children, className, newTabs = "external" }: 
       rehypePlugins={[rehypeRaw]}
       className={className}
       components={{
-        a({ children, href, node, ...rest }) {
+        // node is destructured to exclude it from ...rest (passing it to the DOM causes a warning)
+        a({ children, href, node: _node, ...rest }) {
           return (
             <Anchor href={href ?? "#"} newTab={openInNewTab(href)} {...rest}>
               {children ?? ""}

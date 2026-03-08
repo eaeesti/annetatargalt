@@ -41,12 +41,12 @@ export default function Navbar({ global }: NavbarProps) {
             {navbar.ctaButton && (
               <Button
                 text={navbar.ctaButton.text}
-                type={navbar.ctaButton.type ?? undefined}
-                size={navbar.ctaButton.size ?? undefined}
+                type={navbar.ctaButton.type}
+                size={navbar.ctaButton.size}
                 href={navbar.ctaButton.href}
-                arrow={navbar.ctaButton.arrow ?? undefined}
+                arrow={navbar.ctaButton.arrow}
                 newTab={navbar.ctaButton.newTab}
-                plausibleEvent={navbar.ctaButton.plausibleEvent ?? undefined}
+                plausibleEvent={navbar.ctaButton.plausibleEvent}
               />
             )}
           </div>
@@ -85,12 +85,12 @@ export default function Navbar({ global }: NavbarProps) {
             {navbar.ctaButton && (
               <Button
                 text={navbar.ctaButton.text}
-                type={navbar.ctaButton.type ?? undefined}
-                size={navbar.ctaButton.size ?? undefined}
+                type={navbar.ctaButton.type}
+                size={navbar.ctaButton.size}
                 href={navbar.ctaButton.href}
-                arrow={navbar.ctaButton.arrow ?? undefined}
+                arrow={navbar.ctaButton.arrow}
                 newTab={navbar.ctaButton.newTab}
-                plausibleEvent={navbar.ctaButton.plausibleEvent ?? undefined}
+                plausibleEvent={navbar.ctaButton.plausibleEvent}
               />
             )}
             <button
