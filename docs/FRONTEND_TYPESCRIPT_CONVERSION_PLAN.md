@@ -3,10 +3,16 @@
 ## Current State
 
 - **~78 JavaScript files** in `src/` (`.js` only, no `.jsx`)
-- TypeScript, `@types/react`, `@types/react-dom` already installed — just no `tsconfig.json`
+- TypeScript, `@types/react`, `@types/react-dom`, `@types/node` already installed
 - Next.js App Router, Tailwind CSS, SWR
-- No existing tests to protect
+- Vitest unit test suite (70 tests) covering all converted utils
 - All CMS data flows: Strapi API → server component → props → child components
+
+### Completed
+
+- ✅ **Phase 0** — `tsconfig.json`, `next.config.ts`, `type-check` script, Vitest setup
+- ✅ **Phase 1** — 7 pure utils converted (`string`, `array`, `object`, `estonia`, `react`, `seo`, `donation`) + tests
+- ✅ **Phase 2** — `utils/strapi.ts` (API layer) + `utils/proportions.ts` + tests
 
 ---
 
@@ -62,25 +68,19 @@ const Component = mod.default;
 
 `section` is typed as `StrapiSection` (the generated discriminated union), so `Page.tsx` and the rest of the data flow are fully typed. Type safety for individual sections is enforced at the component definition level, not at the dispatcher.
 
-### 2. `Proportions` class
+### 2. `Proportions` class ✅ resolved
 
-`Proportions` is a recursive immutable class — each instance can hold sub-`Proportions`. It needs a generic type parameter:
+Used a single `ProportionEntry` interface with all optional fields rather than a generic type parameter. The recursive `proportions?: Proportions` field is typed as optional. This is simpler and works well since `strict: false` means the compiler doesn't force exhaustive null-checks on the nested structure.
 
 ```ts
-interface BaseEntry { proportion: number; locked: boolean; }
-interface OrgEntry extends BaseEntry { fund?: boolean; }
-interface CauseEntry extends BaseEntry {
+interface ProportionEntry {
+  locked: boolean;
+  proportion: number;
   toFund?: boolean;
-  proportions: Proportions<OrgEntry>;
-}
-
-class Proportions<T extends BaseEntry> {
-  private proportions: Map<number | string, T>;
-  // ...
+  fund?: boolean;
+  proportions?: Proportions;
 }
 ```
-
-This is the most complex file to convert.
 
 ### 3. `Button` component `...rest` spread
 
@@ -94,7 +94,7 @@ When rendered as `<button>`, `rest` should be `React.ComponentPropsWithoutRef<"b
 
 ## Phases
 
-### Phase 0: Infrastructure (1–2 hours)
+### ✅ Phase 0: Infrastructure (done)
 
 **Goal:** Get `yarn type-check` running with zero changes to business logic.
 
@@ -131,7 +131,7 @@ export default nextConfig;
 
 ---
 
-### Phase 1: Pure Utilities (2–3 hours)
+### ✅ Phase 1: Pure Utilities (done)
 
 **Goal:** Convert pure functions — no JSX, no React. Easiest files. Strapi types come from the auto-generated file, so no manual type definitions needed.
 
@@ -147,7 +147,7 @@ export default nextConfig;
 
 ---
 
-### Phase 2: Strapi API + Proportions (3–4 hours)
+### ✅ Phase 2: Strapi API + Proportions (done)
 
 **Goal:** Type the data-fetching layer and the complex Proportions class.
 

@@ -1,19 +1,30 @@
 import qs from "qs";
 import { notFound } from "next/navigation";
+import type {
+  StrapiGlobal,
+  StrapiPage,
+  StrapiSpecialPage,
+  StrapiBlogPost,
+  StrapiOrganization,
+} from "@/types/generated/strapi";
 
-function headersWithAuthToken() {
+function headersWithAuthToken(): { headers: { Authorization: string } } {
   const token = process.env.NEXT_PUBLIC_STRAPI_API_TOKEN;
 
   return { headers: { Authorization: `Bearer ${token}` } };
 }
 
-export function getStrapiURL(path = "") {
+export function getStrapiURL(path = ""): string {
   return `${
     process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://127.0.0.1:1337"
   }${path}`;
 }
 
-export async function fetchAPI(path, urlParamsObject = {}, options = {}) {
+export async function fetchAPI(
+  path: string,
+  urlParamsObject: Record<string, unknown> = {},
+  options: Record<string, unknown> = {},
+): Promise<unknown> {
   try {
     // Merge default and user options
     const mergedOptions = {
@@ -31,7 +42,7 @@ export async function fetchAPI(path, urlParamsObject = {}, options = {}) {
     )}`;
 
     // Trigger API call
-    const response = await fetch(requestUrl, mergedOptions);
+    const response = await fetch(requestUrl, mergedOptions as RequestInit);
     const data = await response.json();
     return data;
   } catch (error) {
@@ -42,7 +53,7 @@ export async function fetchAPI(path, urlParamsObject = {}, options = {}) {
   }
 }
 
-export async function getPageBySlug(slug) {
+export async function getPageBySlug(slug: string): Promise<StrapiPage> {
   const path = "/pages";
   const options = headersWithAuthToken();
   const urlParamsObject = {
@@ -50,7 +61,9 @@ export async function getPageBySlug(slug) {
     populate: "*",
   };
 
-  const response = await fetchAPI(path, urlParamsObject, options);
+  const response = (await fetchAPI(path, urlParamsObject, options)) as {
+    data: StrapiPage[];
+  };
 
   if (!response.data || response.data.length === 0) {
     notFound();
@@ -64,23 +77,27 @@ export async function getPageBySlug(slug) {
   }
 }
 
-export async function getGlobal() {
+export async function getGlobal(): Promise<StrapiGlobal> {
   const path = "/global";
   const options = headersWithAuthToken();
   const urlParamsObject = { populate: "*" };
 
-  const response = await fetchAPI(path, urlParamsObject, options);
+  const response = (await fetchAPI(path, urlParamsObject, options)) as {
+    data: StrapiGlobal;
+  };
 
   // Singleton types return data directly (not in an array)
   return response.data;
 }
 
-export async function getSpecialPages() {
+export async function getSpecialPages(): Promise<StrapiSpecialPage[]> {
   const path = "/special-pages";
   const options = headersWithAuthToken();
   const urlParamsObject = { populate: "*" };
 
-  const response = await fetchAPI(path, urlParamsObject, options);
+  const response = (await fetchAPI(path, urlParamsObject, options)) as {
+    data: StrapiSpecialPage[];
+  };
 
   if (!response.data || response.data.length === 0) {
     return [];
@@ -92,28 +109,30 @@ export async function getSpecialPages() {
   return specialPages;
 }
 
-export async function findSpecialPage(slug) {
+export async function findSpecialPage(
+  slug: string,
+): Promise<{ page: StrapiSpecialPage; entity: unknown } | null> {
   const specialPages = await getSpecialPages();
 
   const foundSpecialPage = specialPages.find((specialPage) => {
-    const slugMatcher = new RegExp(specialPage.slugPattern);
+    const slugMatcher = new RegExp(specialPage.slugPattern!);
     return slugMatcher.test(slug);
   });
 
   if (!foundSpecialPage) return null;
 
-  const slugMatcher = new RegExp(foundSpecialPage.slugPattern);
-  const endpoint = slug.match(slugMatcher)[1];
+  const slugMatcher = new RegExp(foundSpecialPage.slugPattern!);
+  const endpoint = slug.match(slugMatcher)![1];
 
   const entity = await getEntityBySlug(
-    foundSpecialPage.collectionType,
+    foundSpecialPage.collectionType!,
     endpoint,
   );
 
   return { page: foundSpecialPage, entity };
 }
 
-export async function getEntityBySlug(type, slug) {
+export async function getEntityBySlug(type: string, slug: string): Promise<unknown> {
   const path = `/${type}`;
   const options = headersWithAuthToken();
   const urlParamsObject = {
@@ -121,7 +140,9 @@ export async function getEntityBySlug(type, slug) {
     populate: "*",
   };
 
-  const response = await fetchAPI(path, urlParamsObject, options);
+  const response = (await fetchAPI(path, urlParamsObject, options)) as {
+    data: unknown[];
+  };
 
   if (!response.data || response.data.length === 0) {
     notFound();
@@ -135,17 +156,21 @@ export async function getEntityBySlug(type, slug) {
   }
 }
 
-export async function getAllSlugs() {
+export async function getAllSlugs(): Promise<string[]> {
   const pagesPath = "/pages";
   const options = headersWithAuthToken();
   const urlParamsObject = { populate: "*" };
 
-  const pagesResponse = await fetchAPI(pagesPath, urlParamsObject, options);
+  const pagesResponse = (await fetchAPI(pagesPath, urlParamsObject, options)) as {
+    data: StrapiPage[];
+  };
   // In Strapi v5, data is returned flat (not nested under attributes)
-  const pageSlugs = pagesResponse.data?.map((page) => page.slug) || [];
+  const pageSlugs = pagesResponse.data?.map((page) => page.slug!) || [];
 
   const causesPath = "/causes";
-  const causesResponse = await fetchAPI(causesPath, urlParamsObject, options);
+  const causesResponse = (await fetchAPI(causesPath, urlParamsObject, options)) as {
+    data: Array<{ slug: string; organizations?: Array<{ slug: string }> }>;
+  };
   const causes = causesResponse.data || [];
   const causeSlugs = causes.map((cause) => cause.slug);
 
@@ -173,12 +198,14 @@ export async function getAllSlugs() {
   return allSlugs;
 }
 
-export async function getBlogPosts() {
+export async function getBlogPosts(): Promise<StrapiBlogPost[]> {
   const path = "/blog-posts";
   const options = headersWithAuthToken();
   const urlParamsObject = { populate: "*", sort: "date:desc" };
 
-  const response = await fetchAPI(path, urlParamsObject, options);
+  const response = (await fetchAPI(path, urlParamsObject, options)) as {
+    data: StrapiBlogPost[];
+  };
 
   if (!response.data || response.data.length === 0) {
     return [];
@@ -188,18 +215,18 @@ export async function getBlogPosts() {
   return response.data;
 }
 
-export function strapiSectionNameToReactComponentName(component) {
+export function strapiSectionNameToReactComponentName(component: string): string {
   return snakeCaseToPascalCase(component.split(".")[1]);
 }
 
-export function snakeCaseToPascalCase(string) {
+export function snakeCaseToPascalCase(string: string): string {
   return string
     .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join("");
 }
 
-export async function getOrganizaitons() {
+export async function getOrganizaitons(): Promise<StrapiOrganization[]> {
   const path = "/organizations";
   const options = headersWithAuthToken();
   const urlParamsObject = {
@@ -214,7 +241,9 @@ export async function getOrganizaitons() {
     },
   };
 
-  const response = await fetchAPI(path, urlParamsObject, options);
+  const response = (await fetchAPI(path, urlParamsObject, options)) as {
+    data: StrapiOrganization[];
+  };
 
   if (!response.data || response.data.length === 0) {
     return [];
