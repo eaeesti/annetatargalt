@@ -1,5 +1,5 @@
 import { classes } from "@/utils/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface TextInputProps {
   name: string;
@@ -30,13 +30,14 @@ export default function TextInput({
 }: TextInputProps) {
   const [error, setError] = useState(false);
 
+  // Use a ref so the effect can always call the latest isValid without
+  // being sensitive to inline function identity changes at the call site.
+  const isValidRef = useRef(isValid);
+  isValidRef.current = isValid;
+
   useEffect(() => {
-    if (isValid(value)) {
-      setValidity((ready) => ({ ...ready, [name]: true }));
-    } else {
-      setValidity((ready) => ({ ...ready, [name]: false }));
-    }
-  }, [value]);
+    setValidity((ready) => ({ ...ready, [name]: isValidRef.current(value) }));
+  }, [value, name, setValidity]);
 
   return (
     <div className="">

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { fetcher } from "@/utils/react";
 import Markdown from "../elements/Markdown";
 import { useSearchParams } from "next/navigation";
@@ -43,12 +44,15 @@ export default function ThankYouSection({
 
   const { data, isLoading } = useSWR(decodeURL, fetcher);
 
-  if (isLoading) return <LoadingSection />;
-
   const decoded = data as { donation?: DecodedDonation } | null;
-  if (!decoded?.donation) {
-    return router.push("/");
-  }
+
+  useEffect(() => {
+    if (!isLoading && !decoded?.donation) {
+      router.push("/");
+    }
+  }, [isLoading, decoded, router]);
+
+  if (isLoading || !decoded?.donation) return <LoadingSection />;
 
   const donationForTemplate = {
     ...decoded.donation.donor,
