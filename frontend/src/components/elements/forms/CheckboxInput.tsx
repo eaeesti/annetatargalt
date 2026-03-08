@@ -5,7 +5,7 @@ interface CheckboxInputProps {
   name: string;
   value: boolean;
   setValue: (value: boolean) => void;
-  label: string;
+  label: string | null;
   labelSize?: "base" | "sm";
 }
 

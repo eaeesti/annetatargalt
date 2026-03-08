@@ -9,10 +9,10 @@ interface Donation {
 
 interface PaymentSummaryProps {
   donation: Donation;
-  currency: string;
+  currency: string | null;
   causes: { data: StrapiCause[] };
-  totalText: string;
-  tipOrganization: string;
+  totalText: string | null;
+  tipOrganization: string | null;
   tipAmount: number;
   totalAmount: number;
 }
@@ -32,7 +32,7 @@ export default function PaymentSummary({
   );
 
   const tip = {
-    title: tipOrganization,
+    title: tipOrganization ?? "",
     href: "",
     amount: tipAmount,
   };

@@ -6,8 +6,8 @@ import Button from "./Button";
 
 interface CopyButtonProps {
   textToCopy: string;
-  copiedText?: string;
-  closeText?: string;
+  copiedText?: string | null;
+  closeText?: string | null;
   [key: string]: unknown;
 }
 
@@ -42,7 +42,7 @@ export default function CopyButton({
         open={modalOpen}
         data={modalData}
         setOpen={setModalOpen}
-        closeText={closeText}
+        closeText={closeText ?? "Close"}
       />
     </>
   );

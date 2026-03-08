@@ -3,7 +3,7 @@ import TextInput from "./TextInput";
 
 interface EmailInputProps {
   name?: string;
-  emailText: string;
+  emailText: string | null;
   email: string;
   setEmail: (email: string) => void;
   setValidity: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
