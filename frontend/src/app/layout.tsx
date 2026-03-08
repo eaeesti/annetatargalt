@@ -22,7 +22,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             scriptProps={{
               src: "/js/script.js",
               "data-api": "/api/event",
-            } as any}
+            } as React.ComponentPropsWithoutRef<"script">}
           />
         </head>
       )}

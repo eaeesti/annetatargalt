@@ -46,7 +46,7 @@ export default function DedicationInput({
         Boolean(dedicationValidity.dedicationEmail);
       setValidity((ready) => ({ ...ready, dedication: dedicationValid }));
     }
-  }, [dedicateDonation, dedicationName, dedicationEmail, dedicationValidity]);
+  }, [dedicateDonation, dedicationName, dedicationEmail, dedicationValidity, setValidity]);
 
   return (
     <>

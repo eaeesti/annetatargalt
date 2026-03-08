@@ -9,8 +9,10 @@ export default function RedirectSection({ destination }: StrapiRedirectSection) 
   const router = useRouter();
 
   useEffect(() => {
-    router.replace(destination!);
-  }, []);
+    if (destination) {
+      router.replace(destination);
+    }
+  }, [destination, router]);
 
   return <LoadingSection />;
 }

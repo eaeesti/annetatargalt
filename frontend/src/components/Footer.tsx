@@ -51,11 +51,12 @@ export default function Footer({ global }: FooterProps) {
                   {column.links.map((link) => (
                     <li key={link.id}>
                       <Button
-                        key={link.id}
+                        text={link.text}
+                        href={link.href}
+                        newTab={link.newTab}
                         type="text"
                         size="md"
                         className="!justify-start !font-normal leading-6 !gap-0"
-                        {...link}
                       />
                     </li>
                   ))}

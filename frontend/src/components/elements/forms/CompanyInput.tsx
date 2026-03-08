@@ -38,7 +38,7 @@ export default function CompanyInput({
         Boolean(companyValidity.companyCode);
       setValidity((ready) => ({ ...ready, company: companyValid }));
     }
-  }, [companyDonation, companyName, companyCode, companyValidity]);
+  }, [companyDonation, companyName, companyCode, companyValidity, setValidity]);
 
   return (
     <>
