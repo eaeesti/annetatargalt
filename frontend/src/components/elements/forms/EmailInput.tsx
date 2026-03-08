@@ -1,6 +1,15 @@
 import { validateEmail } from "@/utils/string";
 import TextInput from "./TextInput";
 
+interface EmailInputProps {
+  name?: string;
+  emailText: string;
+  email: string;
+  setEmail: (email: string) => void;
+  setValidity: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  autoComplete?: string;
+}
+
 export default function EmailInput({
   name = "email",
   emailText,
@@ -8,7 +17,7 @@ export default function EmailInput({
   setEmail,
   setValidity,
   autoComplete = "email",
-}) {
+}: EmailInputProps) {
   return (
     <TextInput
       name={name}

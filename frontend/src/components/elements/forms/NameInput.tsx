@@ -1,5 +1,15 @@
 import TextInput from "./TextInput";
 
+interface NameInputProps {
+  firstNameText: string;
+  lastNameText: string;
+  firstName: string;
+  lastName: string;
+  setFirstName: (name: string) => void;
+  setLastName: (name: string) => void;
+  setValidity: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+}
+
 export default function NameInput({
   firstNameText,
   lastNameText,
@@ -8,7 +18,7 @@ export default function NameInput({
   setFirstName,
   setLastName,
   setValidity,
-}) {
+}: NameInputProps) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <TextInput

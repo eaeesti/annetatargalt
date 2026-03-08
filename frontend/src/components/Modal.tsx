@@ -9,7 +9,13 @@ import {
 
 import { classes } from "@/utils/react";
 
-const ModalIcon = ({ Icon, iconClass, backgroundClass }) => {
+interface ModalIconProps {
+  Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  iconClass: string;
+  backgroundClass: string;
+}
+
+const ModalIcon = ({ Icon, iconClass, backgroundClass }: ModalIconProps) => {
   return (
     <div
       className={classes(
@@ -53,7 +59,17 @@ const icons = {
   ),
 };
 
-const ModalButton = ({ text, type = "primary", onClick = () => {} }) => {
+interface ModalButtonData {
+  text: string;
+  type?: "primary" | "secondary" | "danger";
+  onClick?: () => void;
+}
+
+interface ModalButtonProps extends ModalButtonData {
+  onClick: () => void;
+}
+
+const ModalButton = ({ text, type = "primary", onClick = () => {} }: ModalButtonProps) => {
   const styles = {
     primary:
       "text-white bg-primary-600 hover:bg-primary-500 focus-visible:outline-primary-600",
@@ -76,7 +92,21 @@ const ModalButton = ({ text, type = "primary", onClick = () => {} }) => {
   );
 };
 
-export default function Modal({ open, data, setOpen, closeText }) {
+export interface ModalData {
+  title?: string;
+  description?: string;
+  icon?: keyof typeof icons;
+  buttons?: ModalButtonData[];
+}
+
+interface ModalProps {
+  open: boolean;
+  data: ModalData;
+  setOpen: (open: boolean) => void;
+  closeText: string;
+}
+
+export default function Modal({ open, data, setOpen, closeText }: ModalProps) {
   const {
     title = "",
     description = "",

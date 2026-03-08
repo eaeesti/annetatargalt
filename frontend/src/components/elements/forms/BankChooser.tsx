@@ -1,8 +1,15 @@
 import { classes } from "@/utils/react";
 import { RadioGroup } from "@headlessui/react";
 import Image from "../Image";
+import type { StrapiBankIcon } from "@/types/generated/strapi";
 
-function BankChooserOption({ value, label, icon }) {
+interface BankChooserOptionProps {
+  value: string;
+  label: string;
+  icon?: StrapiBankIcon["icon"];
+}
+
+function BankChooserOption({ value, label, icon }: BankChooserOptionProps) {
   return (
     <RadioGroup.Option
       value={value}
@@ -24,13 +31,21 @@ function BankChooserOption({ value, label, icon }) {
   );
 }
 
+interface BankChooserProps {
+  bankText: string;
+  otherBankText: string;
+  banks: StrapiBankIcon[];
+  bank: string;
+  setBank: (bank: string) => void;
+}
+
 export default function BankChooser({
   bankText,
   otherBankText,
   banks,
   bank,
   setBank,
-}) {
+}: BankChooserProps) {
   return (
     <RadioGroup value={bank} onChange={setBank}>
       <RadioGroup.Label className="mb-2 block text-sm font-medium leading-6 text-slate-900">
@@ -38,7 +53,7 @@ export default function BankChooser({
       </RadioGroup.Label>
       <div className="grid grid-cols-3 gap-2 xs:gap-3">
         {banks.map(({ bank, icon }) => (
-          <BankChooserOption key={bank} value={bank} label={bank} icon={icon} />
+          <BankChooserOption key={bank!} value={bank!} label={bank!} icon={icon} />
         ))}
         <BankChooserOption value="other" label={otherBankText} />
       </div>

@@ -1,6 +1,20 @@
 import { classes } from "@/utils/react";
 import { useEffect, useState } from "react";
 
+interface TextareaInputProps {
+  name: string;
+  value: string;
+  setValue: (value: string) => void;
+  setValidity: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  isValid: (value: string) => boolean;
+  label: string;
+  placeholder?: string;
+  autoFocus?: boolean;
+  maxLength?: number;
+  rows?: number;
+  description?: string;
+}
+
 export default function TextareaInput({
   name,
   value,
@@ -13,7 +27,7 @@ export default function TextareaInput({
   maxLength,
   rows = 4,
   description,
-}) {
+}: TextareaInputProps) {
   const [error, setError] = useState(false);
 
   useEffect(() => {

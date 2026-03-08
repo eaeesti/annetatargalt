@@ -1,4 +1,21 @@
 import Summary from "../Summary";
+import Proportions from "@/utils/proportions";
+import type { StrapiCause } from "@/types/generated/strapi";
+
+interface Donation {
+  proportions: Proportions;
+  amount: number;
+}
+
+interface PaymentSummaryProps {
+  donation: Donation;
+  currency: string;
+  causes: { data: StrapiCause[] };
+  totalText: string;
+  tipOrganization: string;
+  tipAmount: number;
+  totalAmount: number;
+}
 
 export default function PaymentSummary({
   donation,
@@ -8,7 +25,7 @@ export default function PaymentSummary({
   tipOrganization,
   tipAmount,
   totalAmount,
-}) {
+}: PaymentSummaryProps) {
   const organizationAmounts = donation.proportions.calculateAmounts(
     donation.amount,
     causes,
@@ -29,11 +46,11 @@ export default function PaymentSummary({
           ),
         )
         .map((organization) => ({
-          title: organization.title,
+          title: organization.title!,
           href: `/${cause.slug}/${organization.slug}`,
           amount: organizationAmounts.find(
             ({ organizationInternalId }) => organizationInternalId === organization.internalId,
-          ).amount,
+          )!.amount,
         })),
     )
     .flat()

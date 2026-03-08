@@ -1,6 +1,20 @@
 import { classes } from "@/utils/react";
 import { useEffect, useState } from "react";
 
+interface TextInputProps {
+  name: string;
+  value: string;
+  setValue: (value: string) => void;
+  setValidity: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  isValid: (value: string) => boolean;
+  label: string;
+  placeholder?: string;
+  autoComplete?: string;
+  autoFocus?: boolean;
+  maxLength?: number;
+  description?: string;
+}
+
 export default function TextInput({
   name,
   value,
@@ -13,7 +27,7 @@ export default function TextInput({
   autoFocus = false,
   maxLength,
   description,
-}) {
+}: TextInputProps) {
   const [error, setError] = useState(false);
 
   useEffect(() => {
