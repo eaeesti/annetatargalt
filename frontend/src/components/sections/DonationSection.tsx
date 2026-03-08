@@ -67,7 +67,7 @@ export default function DonationSection(props: DonationSectionProps) {
   }
 
   const amounts = at(props as unknown as Record<string, unknown>, ["amount1", "amount2", "amount3"]) as (number | null)[];
-  const amountOptions = amounts.map((amount) => ({
+  const amountOptions = amounts.filter((a): a is number => a !== null).map((amount) => ({
     value: amount,
     label: `${amount}${props.global.currency}`,
   }));
@@ -93,7 +93,7 @@ export default function DonationSection(props: DonationSectionProps) {
     dedicationName: "",
     dedicationEmail: "",
     dedicationMessage: "",
-    proportions: Proportions.fromStrapiData(causes.data, orgParam),
+    proportions: Proportions.fromStrapiData(causes.data, orgParam ?? undefined),
     addTip: false,
     paymentMethod: "paymentInitiation",
     acceptTerms: false,

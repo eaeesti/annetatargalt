@@ -6,8 +6,8 @@ import { validatePrice } from "@/utils/string";
 interface AmountInputProps {
   amount: number;
   setAmount: (amount: number) => void;
-  currency: string;
-  label: string;
+  currency: string | null;
+  label: string | null;
   setValidity: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 }
 
@@ -44,7 +44,7 @@ function AmountInput({ amount, setAmount, currency, label, setValidity }: Amount
           maxLength={10}
           aria-describedby="amount-currency"
           value={localValue}
-          placeholder={label}
+          placeholder={label ?? undefined}
           onInput={(event) => setLocalValue(event.currentTarget.value)}
           autoFocus
         />
@@ -60,12 +60,12 @@ function AmountInput({ amount, setAmount, currency, label, setValidity }: Amount
 
 interface AmountOption {
   value: number;
-  label: string;
+  label: string | null;
 }
 
 interface AmountChooserOptionProps {
   value: number | "other";
-  label: string;
+  label: string | null;
 }
 
 function AmountChooserOption({ value, label }: AmountChooserOptionProps) {
@@ -90,11 +90,11 @@ function AmountChooserOption({ value, label }: AmountChooserOptionProps) {
 interface AmountChooserProps {
   amount: number;
   setAmount: (amount: number) => void;
-  amountText: string;
+  amountText: string | null;
   amountOptions: AmountOption[];
-  otherAmountText: string;
-  otherAmountOptionText: string;
-  currency: string;
+  otherAmountText: string | null;
+  otherAmountOptionText: string | null;
+  currency: string | null;
   setValidity: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 }
 

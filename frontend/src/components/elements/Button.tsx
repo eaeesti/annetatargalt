@@ -6,13 +6,13 @@ import Anchor from "./Anchor";
 import { usePlausible } from "next-plausible";
 
 interface ButtonProps {
-  text?: string;
+  text?: string | null;
   type?: "primary" | "secondary" | "white" | "text";
   size?: "link" | "sm" | "md" | "lg" | "xl";
-  href?: string;
+  href?: string | null;
   onClick?: (event?: any) => void;
   arrow?: boolean;
-  newTab?: boolean;
+  newTab?: boolean | null;
   className?: string;
   children?: React.ReactNode;
   buttonType?: "button" | "submit" | "reset";

@@ -1,8 +1,8 @@
 import TextInput from "./TextInput";
 
 interface NameInputProps {
-  firstNameText: string;
-  lastNameText: string;
+  firstNameText: string | null;
+  lastNameText: string | null;
   firstName: string;
   lastName: string;
   setFirstName: (name: string) => void;

@@ -76,7 +76,8 @@ const icons: Record<string, { name: string; icon: (props: React.SVGProps<SVGSVGE
   },
 };
 
-export function SocialMediaIcon({ type }: { type: string }) {
+export function SocialMediaIcon({ type }: { type: string | null }) {
+  if (!type || !icons[type]) return null;
   const Icon = icons[type].icon;
 
   return (

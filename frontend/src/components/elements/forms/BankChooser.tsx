@@ -5,7 +5,7 @@ import type { StrapiBankIcon } from "@/types/generated/strapi";
 
 interface BankChooserOptionProps {
   value: string;
-  label: string;
+  label: string | null;
   icon?: StrapiBankIcon["icon"];
 }
 
@@ -32,8 +32,8 @@ function BankChooserOption({ value, label, icon }: BankChooserOptionProps) {
 }
 
 interface BankChooserProps {
-  bankText: string;
-  otherBankText: string;
+  bankText: string | null;
+  otherBankText: string | null;
   banks: StrapiBankIcon[];
   bank: string;
   setBank: (bank: string) => void;
