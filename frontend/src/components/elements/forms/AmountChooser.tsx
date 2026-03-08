@@ -1,6 +1,6 @@
 import { classes } from "@/utils/react";
 import { RadioGroup } from "@headlessui/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { validatePrice } from "@/utils/string";
 
 interface AmountInputProps {
@@ -16,14 +16,17 @@ function AmountInput({ amount, setAmount, currency, label, setValidity }: Amount
 
   const isValidAmount = validatePrice(localValue);
 
+  const setAmountRef = useRef(setAmount);
+  setAmountRef.current = setAmount;
+
   useEffect(() => {
     if (isValidAmount) {
-      setAmount(Number(localValue.replace(",", ".")));
+      setAmountRef.current(Number(localValue.replace(",", ".")));
       setValidity((ready) => ({ ...ready, amount: true }));
     } else {
       setValidity((ready) => ({ ...ready, amount: false }));
     }
-  }, [localValue]);
+  }, [isValidAmount, localValue, setValidity]);
 
   return (
     <div>
@@ -115,11 +118,14 @@ export default function AmountChooser({
   const [selectedAmount, setSelectedAmount] = useState<number | "other">(defaultAmount);
   const otherAmountSelected = selectedAmount === "other";
 
+  const setAmountRef = useRef(setAmount);
+  setAmountRef.current = setAmount;
+
   useEffect(() => {
     if (otherAmountSelected) return;
-    setAmount(selectedAmount);
+    setAmountRef.current(selectedAmount as number);
     setValidity((ready) => ({ ...ready, amount: true }));
-  }, [selectedAmount]);
+  }, [selectedAmount, otherAmountSelected, setValidity]);
 
   return (
     <div className="flex flex-col gap-4">
