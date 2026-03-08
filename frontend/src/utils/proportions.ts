@@ -1,6 +1,33 @@
 
+type ProportionKey = string | number;
+
+interface ProportionEntry {
+  locked: boolean;
+  proportion: number;
+  toFund?: boolean;
+  fund?: boolean;
+  proportions?: Proportions;
+}
+
+interface CauseData {
+  id: number;
+  organizations: OrganizationData[];
+}
+
+interface OrganizationData {
+  internalId: string;
+  fund?: boolean;
+}
+
+interface AmountEntry {
+  organizationInternalId: string;
+  amount: number;
+}
+
 export default class Proportions {
-  constructor(entries) {
+  proportions: Map<ProportionKey, ProportionEntry>;
+
+  constructor(entries: Array<[ProportionKey, Partial<ProportionEntry>]>) {
     const preparedEntries = entries.map(([key, value]) => [
       key,
       {
@@ -8,40 +35,40 @@ export default class Proportions {
         proportion: Math.floor(100 / entries.length),
         ...value,
       },
-    ]);
+    ]) as Array<[ProportionKey, ProportionEntry]>;
     this.proportions = new Map(preparedEntries);
   }
 
-  get(id) {
-    return this.proportions.get(id);
+  get(id: ProportionKey): ProportionEntry {
+    return this.proportions.get(id)!;
   }
 
-  getSub(id, subId) {
-    return this.proportions.get(id).proportions.get(subId);
+  getSub(id: ProportionKey, subId: ProportionKey): ProportionEntry {
+    return this.proportions.get(id)!.proportions!.get(subId);
   }
 
-  set(id, value) {
+  set(id: ProportionKey, value: ProportionEntry): void {
     this.proportions.set(id, value);
   }
 
-  setSub(id, subId, value) {
-    this.proportions.get(id).proportions.set(subId, value);
+  setSub(id: ProportionKey, subId: ProportionKey, value: ProportionEntry): void {
+    this.proportions.get(id)!.proportions!.set(subId, value);
   }
 
-  getProportion(id) {
-    return this.proportions.get(id).proportion;
+  getProportion(id: ProportionKey): number {
+    return this.proportions.get(id)!.proportion;
   }
 
-  getSubProportion(id, subId) {
+  getSubProportion(id: ProportionKey, subId: ProportionKey): number {
     return this.getSub(id, subId).proportion;
   }
 
-  goesToFund(id) {
-    return this.proportions.get(id).toFund;
+  goesToFund(id: ProportionKey): boolean | undefined {
+    return this.proportions.get(id)!.toFund;
   }
 
-  toggleToFund(id) {
-    let newProportions = this;
+  toggleToFund(id: ProportionKey): Proportions {
+    let newProportions: Proportions = this;
 
     if (!this.goesToFund(id)) {
       const fundId = this.subKeys(id).find(
@@ -49,7 +76,7 @@ export default class Proportions {
       );
       newProportions = newProportions
         .unlockSubProportions(id)
-        .updateSubProportion(id, fundId, 100)
+        .updateSubProportion(id, fundId!, 100)
         .unlockSubProportions(id);
     }
 
@@ -59,95 +86,97 @@ export default class Proportions {
     ]);
   }
 
-  isLocked(id) {
-    return this.proportions.get(id).locked;
+  isLocked(id: ProportionKey): boolean {
+    return this.proportions.get(id)!.locked;
   }
 
-  isSubLocked(id, subId) {
+  isSubLocked(id: ProportionKey, subId: ProportionKey): boolean {
     return this.getSub(id, subId).locked;
   }
 
-  keys() {
+  keys(): ProportionKey[] {
     return Array.from(this.proportions.keys());
   }
 
-  subKeys(id) {
-    return Array.from(this.get(id).proportions.keys());
+  subKeys(id: ProportionKey): ProportionKey[] {
+    return Array.from(this.get(id).proportions!.keys());
   }
 
-  entries() {
+  entries(): Array<[ProportionKey, ProportionEntry]> {
     return Array.from(this.proportions.entries());
   }
 
-  mapEntries(fun) {
+  mapEntries(
+    fun: (key: ProportionKey, value: ProportionEntry) => [ProportionKey, ProportionEntry],
+  ): Proportions {
     return new Proportions(
       this.entries().map(([key, value]) => fun(key, value)),
     );
   }
 
-  proportionSum() {
-    return [...this.proportions.values()].reduce(
+  proportionSum(): number {
+    return Array.from(this.proportions.values()).reduce(
       (sum, { proportion }) => sum + proportion,
       0,
     );
   }
 
-  lockProportion(id) {
+  lockProportion(id: ProportionKey): Proportions {
     return this.mapEntries((key, value) => [
       key,
       key === id ? { ...value, locked: true } : value,
     ]);
   }
 
-  lockSubProportion(id, subId) {
+  lockSubProportion(id: ProportionKey, subId: ProportionKey): Proportions {
     return this.mapEntries((key, value) => [
       key,
       key === id
         ? {
             ...value,
-            proportions: value.proportions.lockProportion(subId),
+            proportions: value.proportions!.lockProportion(subId),
           }
         : value,
     ]);
   }
 
-  toggleProportionLock(id) {
+  toggleProportionLock(id: ProportionKey): Proportions {
     return this.mapEntries((key, value) => [
       key,
       key === id ? { ...value, locked: !value.locked } : value,
     ]);
   }
 
-  toggleSubProportionLock(id, subId) {
+  toggleSubProportionLock(id: ProportionKey, subId: ProportionKey): Proportions {
     return this.mapEntries((key, value) => [
       key,
       key === id
         ? {
             ...value,
-            proportions: value.proportions.toggleProportionLock(subId),
+            proportions: value.proportions!.toggleProportionLock(subId),
           }
         : value,
     ]);
   }
 
-  unlockProportions() {
+  unlockProportions(): Proportions {
     return this.mapEntries((key, value) => [key, { ...value, locked: false }]);
   }
 
-  unlockSubProportions(id) {
+  unlockSubProportions(id: ProportionKey): Proportions {
     return this.mapEntries((key, value) => [
       key,
       key === id
-        ? { ...value, proportions: value.proportions.unlockProportions() }
+        ? { ...value, proportions: value.proportions!.unlockProportions() }
         : value,
     ]);
   }
 
-  updateProportion(id, proportion) {
+  updateProportion(id: ProportionKey, proportion: number): Proportions {
     const newProportions = new Proportions(this.entries());
 
-    const lockedProportions = [];
-    const unlockedProportions = [];
+    const lockedProportions: ProportionKey[] = [];
+    const unlockedProportions: ProportionKey[] = [];
     let totalLocked = 0;
     let totalUnlocked = 0;
 
@@ -163,7 +192,7 @@ export default class Proportions {
       }
     }
 
-    let newProportion;
+    let newProportion: number;
     if (unlockedProportions.length === 0) {
       newProportion = newProportions.getProportion(id);
     } else if (totalLocked + proportion > 100) {
@@ -189,14 +218,14 @@ export default class Proportions {
 
     const adder = targetDelta / Math.abs(targetDelta);
     for (let i = 0; i < Math.abs(targetDelta); i++) {
-      let proportionsToChange;
+      let proportionsToChange: ProportionKey[];
       proportionsToChange = unlockedProportions.filter(
         (prop) => newProportions.getProportion(prop) > 0,
       );
       if (proportionsToChange.length === 0 && adder >= 0)
         proportionsToChange = unlockedProportions;
       let proportionToChangeIndex =
-        (totalUnlocked - (adder < 0)) % proportionsToChange.length;
+        (totalUnlocked - (adder < 0 ? 1 : 0)) % proportionsToChange.length;
       const proportionToChange = proportionsToChange[proportionToChangeIndex];
       const oldProportion = newProportions.getProportion(proportionToChange);
       newProportions.set(proportionToChange, {
@@ -210,31 +239,31 @@ export default class Proportions {
     return newProportions;
   }
 
-  updateSubProportion(id, subId, proportion) {
+  updateSubProportion(id: ProportionKey, subId: ProportionKey, proportion: number): Proportions {
     return this.mapEntries((key, value) => [
       key,
       key === id
         ? {
             ...value,
-            proportions: value.proportions.updateProportion(subId, proportion),
+            proportions: value.proportions!.updateProportion(subId, proportion),
           }
         : value,
     ]);
   }
 
-  toJSON() {
+  toJSON(): Record<string, { proportion: number; proportions?: Proportions }> {
     return Object.fromEntries(
       this.entries()
         .map(([key, value]) => [
           key,
           { proportion: value.proportion, proportions: value.proportions },
         ])
-        .filter(([_, value]) => value.proportion > 0),
+        .filter(([_, value]) => (value as { proportion: number }).proportion > 0),
     );
   }
 
-  calculateAmounts(totalAmount, causes) {
-    const amounts = [];
+  calculateAmounts(totalAmount: number, causes: { data: CauseData[] }): AmountEntry[] {
+    const amounts: AmountEntry[] = [];
 
     causes.data.forEach((cause) => {
       const causeProportion = this.getProportion(cause.id);
@@ -272,7 +301,7 @@ export default class Proportions {
     return amounts;
   }
 
-  static fromStrapiDataWithEqualProportions(data) {
+  static fromStrapiDataWithEqualProportions(data: CauseData[]): Proportions {
     const equalProportions = data.map(
       (_, i) => Math.floor(100 / data.length) + (i < 100 % data.length ? 1 : 0),
     );
@@ -299,7 +328,7 @@ export default class Proportions {
     );
   }
 
-  static fromStrapiData(data, chosenOrganizationInternalId) {
+  static fromStrapiData(data: CauseData[], chosenOrganizationInternalId?: string): Proportions {
     if (!chosenOrganizationInternalId) {
       return Proportions.fromStrapiDataWithEqualProportions(data);
     }
@@ -324,7 +353,7 @@ export default class Proportions {
         : 0,
     );
 
-    function calculateProportion(isInCause, isChosenOrganization, isFund) {
+    function calculateProportion(isInCause: boolean, isChosenOrganization: boolean, isFund: boolean | undefined): number {
       if (isInCause) {
         if (isChosenOrganization) return 100;
         return 0;
