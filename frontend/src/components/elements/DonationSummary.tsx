@@ -23,9 +23,9 @@ interface DonationSummaryProps {
 export default function DonationSummary({ donation, currency, totalText }: DonationSummaryProps) {
   const summary = donation.organizationDonations.map(
     (organizationDonation) => ({
-      title: organizationDonation.organization.title!,
+      title: organizationDonation.organization.title ?? "",
       href: organizationDonation.organization.cause
-        ? `/${organizationDonation.organization.cause.slug}/${organizationDonation.organization.slug}`
+        ? `/${organizationDonation.organization.cause.slug ?? ""}/${organizationDonation.organization.slug ?? ""}`
         : "",
       amount: organizationDonation.amount / 100,
     }),

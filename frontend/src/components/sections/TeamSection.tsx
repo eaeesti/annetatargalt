@@ -65,7 +65,6 @@ export default function TeamSection({
                     {teamMember.socialMediaLinks?.map((socialMediaLink) => (
                       <Button
                         key={socialMediaLink.id}
-                        id={socialMediaLink.id}
                         href={socialMediaLink.href}
                         newTab={true}
                         size="link"

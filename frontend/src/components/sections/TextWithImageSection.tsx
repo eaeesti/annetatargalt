@@ -39,12 +39,21 @@ export default function TextWithImageSection({
           />
           <div className="flex flex-col p-4 pb-12 xs:p-8 sm:p-16 xl:p-20">
             <h3 className="mb-6 text-xl font-bold tracking-tight text-primary-700 sm:text-2xl">
-              {textOnRight} {title}
+              {title}
             </h3>
             <Markdown className="prose prose-primary">{text}</Markdown>
             <div className="mt-10 flex flex-col flex-wrap gap-3 xs:flex-row">
               {buttons.map((button) => (
-                <Button key={button.href} {...(button as any)} />
+                <Button
+                  key={button.id}
+                  text={button.text}
+                  type={button.type ?? undefined}
+                  size={button.size ?? undefined}
+                  href={button.href}
+                  arrow={button.arrow ?? undefined}
+                  newTab={button.newTab}
+                  plausibleEvent={button.plausibleEvent ?? undefined}
+                />
               ))}
             </div>
           </div>

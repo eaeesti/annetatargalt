@@ -15,7 +15,7 @@ interface ModalIconProps {
   backgroundClass: string;
 }
 
-const ModalIcon = ({ Icon, iconClass, backgroundClass }: ModalIconProps) => {
+function ModalIcon({ Icon, iconClass, backgroundClass }: ModalIconProps) {
   return (
     <div
       className={classes(
@@ -26,7 +26,7 @@ const ModalIcon = ({ Icon, iconClass, backgroundClass }: ModalIconProps) => {
       <Icon className={classes("h-6 w-6", iconClass)} />
     </div>
   );
-};
+}
 
 const icons = {
   success: (
@@ -69,7 +69,7 @@ interface ModalButtonProps extends ModalButtonData {
   onClick: () => void;
 }
 
-const ModalButton = ({ text, type = "primary", onClick = () => {} }: ModalButtonProps) => {
+function ModalButton({ text, type = "primary", onClick = () => {} }: ModalButtonProps) {
   const styles = {
     primary:
       "text-white bg-primary-600 hover:bg-primary-500 focus-visible:outline-primary-600",
@@ -90,7 +90,7 @@ const ModalButton = ({ text, type = "primary", onClick = () => {} }: ModalButton
       {text}
     </button>
   );
-};
+}
 
 export interface ModalData {
   title?: string;

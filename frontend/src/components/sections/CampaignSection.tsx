@@ -93,7 +93,12 @@ function Countdown({ endDate, countdownText }: CountdownProps) {
     return null;
   }
 
-  const formattedText = format(countdownText, timeRemaining as unknown as Record<string, string>);
+  const formattedText = format(countdownText, {
+    days: String(timeRemaining.days),
+    hours: String(timeRemaining.hours),
+    minutes: String(timeRemaining.minutes),
+    seconds: String(timeRemaining.seconds),
+  });
 
   return (
     <Markdown className="text-lg md:text-xl [&_strong]:font-bold [&_strong]:text-primary-700">
@@ -122,7 +127,9 @@ export default function CampaignSection({
     fetcher,
   );
 
-  const goalsArray = goals as number[];
+  const goalsArray = Array.isArray(goals)
+    ? goals.filter((g): g is number => typeof g === "number")
+    : [];
 
   let amount: number;
   if (isLoading) {
@@ -133,7 +140,7 @@ export default function CampaignSection({
     amount = 0;
   }
 
-  const goal = goalsArray.find((goal) => amount < goal) || goalsArray.at(-1)!;
+  const goal = goalsArray.find((g) => amount < g) ?? goalsArray[goalsArray.length - 1] ?? 0;
   const percentage = (amount / goal) * 100;
 
   useEffect(() => {
