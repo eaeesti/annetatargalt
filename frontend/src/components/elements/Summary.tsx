@@ -2,15 +2,15 @@ import { formatEstonianAmountWithCents } from "@/utils/estonia";
 import Anchor from "./Anchor";
 
 interface SummaryRow {
-  title: string;
+  title: string | null;
   href?: string | null;
   amount: number;
 }
 
 interface SummaryProps {
   summary: SummaryRow[];
-  currency: string;
-  totalText: string;
+  currency: string | null;
+  totalText: string | null;
   totalAmount: number;
 }
 

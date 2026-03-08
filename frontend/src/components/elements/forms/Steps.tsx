@@ -5,9 +5,9 @@ import Button from "../Button";
 interface StepsProps {
   currentStep: number;
   setStep: (step: number) => void;
-  stepText: string;
+  stepText: string | null;
   stepCount: number;
-  backWord: string;
+  backWord: string | null;
 }
 
 export default function Steps({

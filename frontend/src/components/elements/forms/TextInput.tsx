@@ -7,12 +7,12 @@ interface TextInputProps {
   setValue: (value: string) => void;
   setValidity: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   isValid: (value: string) => boolean;
-  label: string;
+  label: string | null;
   placeholder?: string;
   autoComplete?: string;
   autoFocus?: boolean;
   maxLength?: number;
-  description?: string;
+  description?: string | null;
 }
 
 export default function TextInput({

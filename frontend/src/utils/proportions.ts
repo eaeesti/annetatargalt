@@ -5,7 +5,7 @@ interface ProportionEntry {
   locked: boolean;
   proportion: number;
   toFund?: boolean;
-  fund?: boolean;
+  fund?: boolean | null;
   proportions?: Proportions;
 }
 
@@ -15,8 +15,8 @@ interface CauseData {
 }
 
 interface OrganizationData {
-  internalId: string;
-  fund?: boolean;
+  internalId: string | null;
+  fund?: boolean | null;
 }
 
 interface AmountEntry {
@@ -270,14 +270,14 @@ export default class Proportions {
       cause.organizations.forEach((organization) => {
         const organizationProportion = this.getSubProportion(
           cause.id,
-          organization.internalId,
+          organization.internalId!,
         );
         const proportion = (causeProportion * organizationProportion) / 10000;
         const amount = totalAmount * proportion;
         const roundedAmount = Math.round(amount * 100) / 100;
         if (roundedAmount > 0) {
           amounts.push({
-            organizationInternalId: organization.internalId,
+            organizationInternalId: organization.internalId!,
             amount: roundedAmount,
           });
         }
@@ -315,7 +315,7 @@ export default class Proportions {
           toFund: true,
           proportions: new Proportions(
             cause.organizations.map((organization) => [
-              organization.internalId,
+              organization.internalId!,
               {
                 proportion: organization.fund ? 100 : 0,
                 fund: organization.fund,
@@ -353,7 +353,7 @@ export default class Proportions {
         : 0,
     );
 
-    function calculateProportion(isInCause: boolean, isChosenOrganization: boolean, isFund: boolean | undefined): number {
+    function calculateProportion(isInCause: boolean, isChosenOrganization: boolean, isFund: boolean | null | undefined): number {
       if (isInCause) {
         if (isChosenOrganization) return 100;
         return 0;
@@ -372,7 +372,7 @@ export default class Proportions {
           toFund: preChosenProportions[causeIndex] === 100 ? false : true,
           proportions: new Proportions(
             cause.organizations.map((organization) => [
-              organization.internalId,
+              organization.internalId!,
               {
                 proportion: calculateProportion(
                   preChosenProportions[causeIndex] === 100,
