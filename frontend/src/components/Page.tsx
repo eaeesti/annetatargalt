@@ -2,8 +2,15 @@ import Banner from "./Banner";
 import Footer from "./Footer";
 import Navbar from "./Navbar";
 import Section from "./Section";
+import type { StrapiGlobal, StrapiPage, StrapiCause, StrapiOrganization, StrapiBlogPost } from "@/types/generated/strapi";
 
-export default function Page({ page, global, entity }) {
+interface PageProps {
+  page: StrapiPage;
+  global: StrapiGlobal;
+  entity?: StrapiCause | StrapiOrganization | StrapiBlogPost;
+}
+
+export default function Page({ page, global, entity }: PageProps) {
   return (
     <>
       <Banner
