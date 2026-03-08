@@ -17,7 +17,9 @@ function AmountInput({ amount, setAmount, currency, label, setValidity }: Amount
   const isValidAmount = validatePrice(localValue);
 
   const setAmountRef = useRef(setAmount);
-  setAmountRef.current = setAmount;
+  useEffect(() => {
+    setAmountRef.current = setAmount;
+  });
 
   useEffect(() => {
     if (isValidAmount) {
@@ -119,7 +121,9 @@ export default function AmountChooser({
   const otherAmountSelected = selectedAmount === "other";
 
   const setAmountRef = useRef(setAmount);
-  setAmountRef.current = setAmount;
+  useEffect(() => {
+    setAmountRef.current = setAmount;
+  });
 
   useEffect(() => {
     if (otherAmountSelected) return;
