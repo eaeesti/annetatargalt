@@ -10,6 +10,11 @@ import { formatEstonianAmount } from "@/utils/estonia";
 import { useRouter } from "next/navigation";
 import LoadingSection from "./LoadingSection";
 import DonationSummary from "../elements/DonationSummary";
+import type { StrapiGlobal, StrapiThankYouSection } from "@/types/generated/strapi";
+
+interface ThankYouSectionProps extends StrapiThankYouSection {
+  global: StrapiGlobal;
+}
 
 export default function ThankYouSection({
   title,
@@ -17,14 +22,14 @@ export default function ThankYouSection({
   text2,
   text3,
   global,
-}) {
+}: ThankYouSectionProps) {
   const router = useRouter();
 
   const searchParams = useSearchParams();
   const orderToken = searchParams.get("order-token");
 
   const decodeURL = getStrapiURL(
-    "/api/decode?" + new URLSearchParams({ "order-token": orderToken }),
+    "/api/decode?" + new URLSearchParams({ "order-token": orderToken! }),
   );
 
   const { data, error, isLoading } = useSWR(
@@ -34,13 +39,14 @@ export default function ThankYouSection({
 
   if (isLoading) return <LoadingSection />;
 
-  if (!data || !data.donation) {
+  const decodedData = data as { donation?: any } | null;
+  if (!decodedData || !decodedData.donation) {
     return router.push("/");
   }
 
   const donation = {
-    ...data.donation.donor,
-    amount: formatEstonianAmount(data.donation.amount / 100),
+    ...decodedData!.donation.donor,
+    amount: formatEstonianAmount(decodedData!.donation.amount / 100),
   };
 
   return (
@@ -59,24 +65,23 @@ export default function ThankYouSection({
             />
           </svg>
           <h1 className="mb-4 text-4xl font-bold tracking-tight text-primary-700 sm:text-5xl">
-            {format(title, donation)}
+            {format(title!, donation)}
           </h1>
           <Markdown className="prose-md prose prose-primary w-full max-w-3xl [&>p>strong]:text-primary-700">
-            {format(text1, donation)}
+            {format(text1!, donation)}
           </Markdown>
           <div className="w-full max-w-3xl rounded-xl bg-slate-50 px-8 py-6">
             <DonationSummary
-              donation={data.donation}
+              donation={decodedData!.donation}
               currency={global.currency}
               totalText={global.totalText}
-              tipOrganization={global.tipOrganization}
             />
           </div>
           <Markdown className="prose-md prose prose-primary w-full max-w-3xl">
-            {format(text2, donation)}
+            {format(text2!, donation)}
           </Markdown>
           <Markdown className="prose-md prose prose-primary w-full max-w-3xl">
-            {format(text3, donation)}
+            {format(text3!, donation)}
           </Markdown>
         </div>
       </div>

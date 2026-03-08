@@ -6,17 +6,23 @@ import { useState } from "react";
 import Button from "../elements/Button";
 import { getStrapiURL } from "@/utils/strapi";
 import Modal from "../Modal";
+import type { ModalData } from "../Modal";
+import type { StrapiContactSection, StrapiGlobal } from "@/types/generated/strapi";
 
-export default function ContactSection(props) {
+interface ContactSectionProps extends StrapiContactSection {
+  global: StrapiGlobal;
+}
+
+export default function ContactSection(props: ContactSectionProps) {
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalData, setModalData] = useState({});
+  const [modalData, setModalData] = useState<ModalData>({});
 
-  function showModal(data) {
+  function showModal(data: ModalData) {
     setModalData(data);
     setModalOpen(true);
   }
 
-  const [data, setData] = useState({});
+  const [data, setData] = useState<Record<string, string>>({});
 
   const ready = data.name && data.email && data.message;
 
@@ -33,8 +39,8 @@ export default function ContactSection(props) {
       setData({});
       showModal({
         icon: "success",
-        title: props.successTitle,
-        description: props.successDescription,
+        title: props.successTitle!,
+        description: props.successDescription!,
       });
     } else {
       let errorMessage;
@@ -47,7 +53,7 @@ export default function ContactSection(props) {
       }
       showModal({
         icon: "error",
-        title: props.global.errorText,
+        title: props.global.errorText!,
         description: errorMessage,
       });
     }
@@ -167,7 +173,7 @@ export default function ContactSection(props) {
         open={modalOpen}
         data={modalData}
         setOpen={setModalOpen}
-        closeText={props.global.closeText}
+        closeText={props.global.closeText!}
       />
     </section>
   );

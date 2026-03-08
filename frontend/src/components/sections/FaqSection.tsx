@@ -4,8 +4,9 @@ import { Disclosure } from "@headlessui/react";
 import { MinusSmallIcon, PlusSmallIcon } from "@heroicons/react/24/outline";
 import Markdown from "../elements/Markdown";
 import { usePlausible } from "next-plausible";
+import type { StrapiFAQSection } from "@/types/generated/strapi";
 
-export default function FAQSection({ questions }) {
+export default function FAQSection({ questions }: StrapiFAQSection) {
   const plausible = usePlausible();
 
   return (
