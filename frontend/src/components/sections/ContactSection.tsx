@@ -39,8 +39,8 @@ export default function ContactSection(props: ContactSectionProps) {
       setData({});
       showModal({
         icon: "success",
-        title: props.successTitle!,
-        description: props.successDescription!,
+        title: props.successTitle ?? "",
+        description: props.successDescription ?? "",
       });
     } else {
       let errorMessage;
@@ -53,7 +53,7 @@ export default function ContactSection(props: ContactSectionProps) {
       }
       showModal({
         icon: "error",
-        title: props.global.errorText!,
+        title: props.global.errorText ?? "",
         description: errorMessage,
       });
     }
@@ -173,7 +173,7 @@ export default function ContactSection(props: ContactSectionProps) {
         open={modalOpen}
         data={modalData}
         setOpen={setModalOpen}
-        closeText={props.global.closeText!}
+        closeText={props.global.closeText ?? ""}
       />
     </section>
   );

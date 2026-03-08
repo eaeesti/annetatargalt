@@ -11,18 +11,20 @@ interface OrgHeaderSectionProps extends StrapiOrgHeaderSection {
 // This is not called OrganizationHeaderSection, because there is a limit of
 // how long a postgres relation can be and Strapi said it was creating a
 // duplicate relation.
-export default function OrgHeaderSection({ breadcrumbs, entity, global }: OrgHeaderSectionProps) {
+export default function OrgHeaderSection({ breadcrumbs, entity, global, donateText, websiteText }: OrgHeaderSectionProps) {
   // In Strapi v5, relations are returned flat (not wrapped in data)
-  const cause = entity.cause!;
+  const cause = entity.cause;
 
-  const breadcrumbsWithCause = [
-    ...breadcrumbs,
-    {
-      id: 0,
-      title: cause.title,
-      href: `/${cause.slug}`,
-    },
-  ];
+  const breadcrumbsWithCause = cause
+    ? [
+        ...breadcrumbs,
+        {
+          id: 0,
+          title: cause.title,
+          href: `/${cause.slug}`,
+        },
+      ]
+    : breadcrumbs;
 
   return (
     <header className="bg-slate-100">
@@ -48,7 +50,7 @@ export default function OrgHeaderSection({ breadcrumbs, entity, global }: OrgHea
             <div className="flex flex-col-reverse justify-center gap-6 xs:flex-row-reverse xs:items-center md:justify-end lg:flex-row">
               {entity.homepage && (
                 <Button
-                  text="Koduleht"
+                  text={websiteText}
                   href={entity.homepage}
                   type="text"
                   size="sm"
@@ -57,7 +59,7 @@ export default function OrgHeaderSection({ breadcrumbs, entity, global }: OrgHea
                 />
               )}
               <Button
-                text="Anneta"
+                text={donateText}
                 href={`${global.donateLink}?org=${entity.internalId}`}
                 type="primary"
                 size="lg"
