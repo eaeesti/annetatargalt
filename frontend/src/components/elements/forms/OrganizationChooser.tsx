@@ -46,7 +46,9 @@ function ProportionSlider({
         {proportion}%
       </span>
       <button
+        type="button"
         className="cursor-pointer text-primary-700 hover:opacity-70"
+        aria-label={lockText ?? undefined}
         onClick={() => toggleLock()}
       >
         <span className="sr-only">{lockText}</span>
@@ -81,8 +83,8 @@ export default function OrganizationChooser({
         {chooseOrganizationsText}
       </legend>
       <div className="flex flex-col gap-10">
-        {causes.data.map((cause, causeIndex) => (
-          <Disclosure key={causeIndex}>
+        {causes.data.map((cause) => (
+          <Disclosure key={cause.id}>
             {({ open }) => (
               <div className="flex flex-col gap-4">
                 <div className="flex flex-row items-center gap-3">
@@ -148,10 +150,10 @@ export default function OrganizationChooser({
                       "flex flex-col gap-6",
                     )}
                   >
-                    {cause.organizations.map(
-                      (organization, organizationIndex) => (
+                    {cause.organizations.filter((org): org is typeof org & { internalId: string } => org.internalId !== null).map(
+                      (organization) => (
                         <div
-                          key={organizationIndex}
+                          key={organization.id}
                           className="flex flex-col gap-4"
                         >
                           <div className="flex flex-row items-center gap-3">
@@ -178,26 +180,26 @@ export default function OrganizationChooser({
                             lockText={lockText}
                             proportion={proportions.getSubProportion(
                               cause.id,
-                              organization.internalId!,
+                              organization.internalId,
                             )}
                             setProportion={(value) =>
                               setProportions(
                                 proportions.updateSubProportion(
                                   cause.id,
-                                  organization.internalId!,
+                                  organization.internalId,
                                   value,
                                 ),
                               )
                             }
                             isLocked={proportions.isSubLocked(
                               cause.id,
-                              organization.internalId!,
+                              organization.internalId,
                             )}
                             lock={() =>
                               setProportions(
                                 proportions.lockSubProportion(
                                   cause.id,
-                                  organization.internalId!,
+                                  organization.internalId,
                                 ),
                               )
                             }
@@ -205,7 +207,7 @@ export default function OrganizationChooser({
                               setProportions(
                                 proportions.toggleSubProportionLock(
                                   cause.id,
-                                  organization.internalId!,
+                                  organization.internalId,
                                 ),
                               )
                             }

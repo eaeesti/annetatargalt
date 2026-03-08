@@ -48,7 +48,7 @@ export async function fetchAPI(
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error(error);
+    console.error(`Failed to fetch ${path}:`, error);
     throw new Error(
       "Please check if your server is running and you set all the required tokens.",
     );
@@ -228,7 +228,7 @@ export function snakeCaseToPascalCase(string: string): string {
     .join("");
 }
 
-export async function getOrganizaitons(): Promise<StrapiOrganization[]> {
+export async function getOrganizations(): Promise<StrapiOrganization[]> {
   const path = "/organizations";
   const options = headersWithAuthToken();
   const urlParamsObject = {

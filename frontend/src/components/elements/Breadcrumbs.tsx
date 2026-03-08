@@ -66,14 +66,14 @@ export default function Breadcrumbs({ breadcrumbs, title, backWord, className = 
     <div className={classes("text-sm text-slate-600", className)}>
       <nav className="flex md:hidden" aria-label="Back">
         <BackButton
-          href={breadcrumbs[breadcrumbs.length - 1].href!}
+          href={breadcrumbs[breadcrumbs.length - 1].href ?? "/"}
           backWord={backWord}
         />
       </nav>
       <nav className="hidden md:flex" aria-label="Breadcrumbs">
         <ol role="list" className="flex flex-wrap items-center gap-4">
           {breadcrumbs.concat([{ id: -1, title: title, href: null }]).map((breadcrumb, index) => (
-            <BreadcrumbItem key={index} index={index} title={breadcrumb.title!} href={breadcrumb.href} />
+            <BreadcrumbItem key={index} index={index} title={breadcrumb.title ?? ""} href={breadcrumb.href} />
           ))}
         </ol>
       </nav>

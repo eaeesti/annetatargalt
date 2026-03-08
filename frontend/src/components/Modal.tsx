@@ -23,7 +23,7 @@ function ModalIcon({ Icon, iconClass, backgroundClass }: ModalIconProps) {
         backgroundClass,
       )}
     >
-      <Icon className={classes("h-6 w-6", iconClass)} />
+      <Icon className={classes("h-6 w-6", iconClass)} aria-hidden={true} />
     </div>
   );
 }
@@ -66,10 +66,10 @@ interface ModalButtonData {
 }
 
 interface ModalButtonProps extends ModalButtonData {
-  onClick: () => void;
+  onClick?: () => void;
 }
 
-function ModalButton({ text, type = "primary", onClick = () => {} }: ModalButtonProps) {
+function ModalButton({ text, type = "primary", onClick }: ModalButtonProps) {
   const styles = {
     primary:
       "text-white bg-primary-600 hover:bg-primary-500 focus-visible:outline-primary-600",
@@ -162,9 +162,9 @@ export default function Modal({ open, data, setOpen, closeText }: ModalProps) {
                   </div>
                 </div>
                 <div className="mt-5 flex flex-col-reverse gap-2 sm:mt-6 sm:flex-row">
-                  {buttons.map((props) => (
+                  {buttons.map((props, index) => (
                     <ModalButton
-                      key={props.text}
+                      key={index}
                       {...props}
                       onClick={() => {
                         if (props.onClick) props.onClick();

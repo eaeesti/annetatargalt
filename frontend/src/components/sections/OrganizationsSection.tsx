@@ -1,4 +1,4 @@
-import { getOrganizaitons } from "@/utils/strapi";
+import { getOrganizations } from "@/utils/strapi";
 import Organization from "../elements/Organization";
 import type { StrapiGlobal, StrapiOrganizationsSection } from "@/types/generated/strapi";
 
@@ -7,7 +7,7 @@ interface OrganizationsSectionProps extends StrapiOrganizationsSection {
 }
 
 export default async function OrganizationsSection({ global }: OrganizationsSectionProps) {
-  const organizations = await getOrganizaitons();
+  const organizations = await getOrganizations();
 
   return (
     <section className="bg-slate-200 py-24">
