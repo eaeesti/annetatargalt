@@ -14,6 +14,7 @@
 - ✅ **Phase 1** — 7 pure utils converted (`string`, `array`, `object`, `estonia`, `react`, `seo`, `donation`) + tests
 - ✅ **Phase 2** — `utils/strapi.ts` (API layer) + `utils/proportions.ts` + tests
 - ✅ **Phase 3** — 4 icons + 9 elements converted. `Button` pulled in early (was Phase 5)
+- ✅ **Phase 4** — Modal + 16 form components converted. `setValidity` typed as `React.Dispatch<React.SetStateAction<Record<string, boolean>>>`
 
 ---
 
@@ -198,7 +199,7 @@ interface AnchorProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
 
 ---
 
-### Phase 4: Form Components + Modal (3–4 hours)
+### ✅ Phase 4: Form Components + Modal (done)
 
 **Goal:** Type all form inputs and the Modal component.
 

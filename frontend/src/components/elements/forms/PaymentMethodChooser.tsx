@@ -1,4 +1,11 @@
-function Option({ id, label, paymentMethod, setPaymentMethod }) {
+interface OptionProps {
+  id: string;
+  label: string;
+  paymentMethod: string;
+  setPaymentMethod: (method: string) => void;
+}
+
+function Option({ id, label, paymentMethod, setPaymentMethod }: OptionProps) {
   return (
     <div className="flex !cursor-pointer items-center gap-2">
       <input
@@ -19,13 +26,21 @@ function Option({ id, label, paymentMethod, setPaymentMethod }) {
   );
 }
 
+interface PaymentMethodChooserProps {
+  paymentMethod: string;
+  setPaymentMethod: (method: string) => void;
+  label: string;
+  paymentInitiationText: string;
+  cardPaymentsText: string;
+}
+
 export default function PaymentMethodChooser({
   paymentMethod,
   setPaymentMethod,
   label,
   paymentInitiationText,
   cardPaymentsText,
-}) {
+}: PaymentMethodChooserProps) {
   return (
     <fieldset aria-labelledby="paymentMethodLabel">
       <div className="flex flex-row gap-4">

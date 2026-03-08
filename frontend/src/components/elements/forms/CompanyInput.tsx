@@ -2,6 +2,19 @@ import { useEffect, useState } from "react";
 import CheckboxInput from "./CheckboxInput";
 import TextInput from "./TextInput";
 
+interface CompanyInputProps {
+  donateAsCompanyText: string;
+  companyDonation: boolean;
+  setCompanyDonation: (val: boolean) => void;
+  companyNameText: string;
+  companyName: string;
+  setCompanyName: (name: string) => void;
+  companyCodeText: string;
+  companyCode: string;
+  setCompanyCode: (code: string) => void;
+  setValidity: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+}
+
 export default function CompanyInput({
   donateAsCompanyText,
   companyDonation,
@@ -13,8 +26,8 @@ export default function CompanyInput({
   companyCode,
   setCompanyCode,
   setValidity,
-}) {
-  const [companyValidity, setCompanyValidity] = useState({});
+}: CompanyInputProps) {
+  const [companyValidity, setCompanyValidity] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!companyDonation) {
