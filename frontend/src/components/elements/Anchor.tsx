@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import type { ComponentPropsWithoutRef } from "react";
 import ExternalLinkIcon from "../icons/ExternalLinkIcon";
+
+interface AnchorProps extends ComponentPropsWithoutRef<typeof Link> {
+  newTab?: boolean;
+  noIcon?: boolean;
+}
 
 export default function Anchor({
   className,
@@ -10,7 +16,7 @@ export default function Anchor({
   noIcon = false,
   children,
   ...rest
-}) {
+}: AnchorProps) {
   return (
     <Link
       href={href}

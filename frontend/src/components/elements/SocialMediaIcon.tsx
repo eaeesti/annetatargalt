@@ -1,4 +1,4 @@
-const icons = {
+const icons: Record<string, { name: string; icon: (props: React.SVGProps<SVGSVGElement>) => React.ReactElement }> = {
   facebook: {
     name: "Facebook",
     icon: (props) => (
@@ -76,7 +76,7 @@ const icons = {
   },
 };
 
-export function SocialMediaIcon({ type }) {
+export function SocialMediaIcon({ type }: { type: string }) {
   const Icon = icons[type].icon;
 
   return (

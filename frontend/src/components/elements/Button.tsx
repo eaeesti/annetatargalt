@@ -1,8 +1,25 @@
 "use client";
+
 import { classes } from "@/utils/react";
 import { ArrowLongRightIcon } from "@heroicons/react/20/solid";
 import Anchor from "./Anchor";
 import { usePlausible } from "next-plausible";
+
+interface ButtonProps {
+  text?: string;
+  type?: "primary" | "secondary" | "white" | "text";
+  size?: "link" | "sm" | "md" | "lg" | "xl";
+  href?: string;
+  onClick?: (event?: any) => void;
+  arrow?: boolean;
+  newTab?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+  buttonType?: "button" | "submit" | "reset";
+  plausibleEvent?: string;
+  disabled?: boolean;
+  [key: string]: unknown;
+}
 
 export default function Button({
   text,
@@ -17,7 +34,7 @@ export default function Button({
   buttonType = "button",
   plausibleEvent,
   ...rest
-}) {
+}: ButtonProps) {
   const plausible = usePlausible();
 
   const buttons = {
@@ -40,8 +57,8 @@ export default function Button({
 
   const fullClassName = classes(
     "flex gap-1.5 items-center justify-center font-semibold rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 text-center disabled:opacity-50 disabled:cursor-not-allowed",
-    sizes[size],
-    buttons[type],
+    sizes[size!],
+    type ? buttons[type] : undefined,
     className,
   );
 
@@ -60,7 +77,7 @@ export default function Button({
             event.preventDefault();
           }
         }}
-        {...rest}
+        {...(rest as any)}
       >
         {text}
         {children}
@@ -77,7 +94,7 @@ export default function Button({
         if (onClick) onClick(event);
       }}
       className={fullClassName}
-      {...rest}
+      {...(rest as any)}
     >
       {text}
       {children}
