@@ -1,4 +1,4 @@
-export default function ExternalLinkIcon(props) {
+export default function ExternalLinkIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       className="h-4 w-4"

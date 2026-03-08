@@ -1,7 +1,20 @@
 import { formatEstonianAmountWithCents } from "@/utils/estonia";
 import Anchor from "./Anchor";
 
-export default function Summary({ summary, currency, totalText, totalAmount }) {
+interface SummaryRow {
+  title: string;
+  href?: string | null;
+  amount: number;
+}
+
+interface SummaryProps {
+  summary: SummaryRow[];
+  currency: string;
+  totalText: string;
+  totalAmount: number;
+}
+
+export default function Summary({ summary, currency, totalText, totalAmount }: SummaryProps) {
   return (
     <dl className="w-full divide-y divide-slate-200 text-sm">
       {summary.map((row, index) => (
