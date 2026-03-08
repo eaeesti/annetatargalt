@@ -32,8 +32,11 @@ export default function TextInput({
 
   // Use a ref so the effect can always call the latest isValid without
   // being sensitive to inline function identity changes at the call site.
+  // Sync is done in an effect (not during render) to satisfy react-hooks/refs.
   const isValidRef = useRef(isValid);
-  isValidRef.current = isValid;
+  useEffect(() => {
+    isValidRef.current = isValid;
+  });
 
   useEffect(() => {
     setValidity((ready) => ({ ...ready, [name]: isValidRef.current(value) }));
