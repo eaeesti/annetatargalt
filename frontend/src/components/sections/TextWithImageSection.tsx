@@ -2,6 +2,15 @@ import { classes } from "@/utils/react";
 import Button from "../elements/Button";
 import Image from "../elements/Image";
 import Markdown from "../elements/Markdown";
+import type { StrapiButton, StrapiMedia } from "@/types/generated/strapi";
+
+interface TextWithImageSectionProps {
+  title: string | null;
+  text: string | null;
+  image: StrapiMedia | null;
+  buttons: StrapiButton[];
+  textOnRight?: boolean;
+}
 
 export default function TextWithImageSection({
   title,
@@ -9,7 +18,7 @@ export default function TextWithImageSection({
   image,
   buttons,
   textOnRight = true,
-}) {
+}: TextWithImageSectionProps) {
   return (
     <section className="bg-white py-16">
       <div className="container mt-24 w-full max-w-full sm:mt-36 sm:w-auto md:px-8 lg:mt-0 xl:max-w-7xl">
@@ -35,7 +44,7 @@ export default function TextWithImageSection({
             <Markdown className="prose prose-primary">{text}</Markdown>
             <div className="mt-10 flex flex-col flex-wrap gap-3 xs:flex-row">
               {buttons.map((button) => (
-                <Button key={button.href} {...button} />
+                <Button key={button.href} {...(button as any)} />
               ))}
             </div>
           </div>

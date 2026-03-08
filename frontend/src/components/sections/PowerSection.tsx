@@ -1,8 +1,9 @@
 import Button from "../elements/Button";
 import Image from "../elements/Image";
 import Markdown from "../elements/Markdown";
+import type { StrapiPowerSection } from "@/types/generated/strapi";
 
-export default function PowerSection({ title, column1, column2, bottomText }) {
+export default function PowerSection({ title, column1, column2 }: StrapiPowerSection) {
   return (
     <section className="bg-slate-100 py-16 sm:py-32">
       <div className="container flex w-full max-w-full flex-col items-center gap-16 px-4 sm:w-auto sm:gap-32 md:px-8 xl:max-w-6xl">
@@ -11,24 +12,24 @@ export default function PowerSection({ title, column1, column2, bottomText }) {
         </h2>
         <div className="grid justify-center gap-24 lg:grid-cols-2">
           {[column1, column2].map((column) => (
-            <div key={column.id} className="flex max-w-xl flex-col gap-8">
+            <div key={column!.id} className="flex max-w-xl flex-col gap-8">
               <h3 className="text-md mb-4 text-center tracking-tight text-slate-600 sm:text-xl">
-                <div>{column.title.split("**")[0]}</div>
+                <div>{column!.title!.split("**")[0]}</div>
                 <strong className="mt-1 block text-xl font-semibold text-primary-700 sm:text-2xl">
-                  {column.title.split("**")[1]}
+                  {column!.title!.split("**")[1]}
                 </strong>
               </h3>
               <div className="overflow-hidden rounded-3xl bg-white shadow-lg">
-                <Image data={column.image} className="h-full w-full" />
+                <Image data={column!.image} className="h-full w-full" />
               </div>
               <Markdown className="prose prose-sm prose-primary -mt-5 mb-3 max-w-full text-right text-xs [&>p>a>svg]:-mt-1">
-                {column.source}
+                {column!.source}
               </Markdown>
               <Markdown className="prose prose-primary">
-                {column.description}
+                {column!.description}
               </Markdown>
               <div className="flex justify-start text-primary-700">
-                <Button {...column.button} />
+                <Button {...(column!.button! as any)} />
               </div>
             </div>
           ))}

@@ -1,6 +1,10 @@
 import Markdown from "../elements/Markdown";
 
-export default function TextSection({ text }) {
+interface TextSectionProps {
+  text: string | null;
+}
+
+export default function TextSection({ text }: TextSectionProps) {
   if (!text) return null;
 
   return (
