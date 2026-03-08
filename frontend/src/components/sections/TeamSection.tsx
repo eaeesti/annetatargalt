@@ -4,13 +4,18 @@ import Markdown from "../elements/Markdown";
 import Button from "../elements/Button";
 import { SocialMediaIcon } from "../elements/SocialMediaIcon";
 import CopyButton from "../elements/CopyButton";
+import type { StrapiGlobal, StrapiTeamSection } from "@/types/generated/strapi";
+
+interface TeamSectionProps extends StrapiTeamSection {
+  global: StrapiGlobal;
+}
 
 export default function TeamSection({
   title,
   emailCopiedText,
   teamMembers,
   global,
-}) {
+}: TeamSectionProps) {
   return (
     <section className="bg-slate-50 px-4 py-12 pt-24 lg:px-8">
       <div className="container flex flex-col gap-12 lg:max-w-3xl">

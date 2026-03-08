@@ -8,11 +8,12 @@ import useSWR from "swr";
 import { fetcher } from "@/utils/react";
 import { getStrapiURL } from "@/utils/strapi";
 import { useEffect, useRef, useState } from "react";
+import type { StrapiCampaignSection } from "@/types/generated/strapi";
 
 // https://stackoverflow.com/a/67826055/12123296
-function useOnScreen(ref) {
+function useOnScreen(ref: React.RefObject<HTMLElement | null>) {
   const [isOnScreen, setIsOnScreen] = useState(false);
-  const observerRef = useRef(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
     observerRef.current = new IntersectionObserver(([entry]) =>
@@ -35,8 +36,21 @@ function useOnScreen(ref) {
   return isOnScreen;
 }
 
-function Countdown({ endDate, countdownText }) {
-  const [timeRemaining, setTimeRemaining] = useState(null);
+interface TimeRemaining {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  ended: boolean;
+}
+
+interface CountdownProps {
+  endDate: string;
+  countdownText: string;
+}
+
+function Countdown({ endDate, countdownText }: CountdownProps) {
+  const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(null);
 
   useEffect(() => {
     const calculateTimeRemaining = () => {
@@ -79,7 +93,7 @@ function Countdown({ endDate, countdownText }) {
     return null;
   }
 
-  const formattedText = format(countdownText, timeRemaining);
+  const formattedText = format(countdownText, timeRemaining as unknown as Record<string, string>);
 
   return (
     <Markdown className="text-lg md:text-xl [&_strong]:font-bold [&_strong]:text-primary-700">
@@ -98,9 +112,9 @@ export default function CampaignSection({
   countdownText,
   ctaButtonHref,
   ctaButtonText,
-}) {
+}: StrapiCampaignSection) {
   const [progress, setProgress] = useState(0);
-  const progressBarRef = useRef(null);
+  const progressBarRef = useRef<HTMLDivElement | null>(null);
   const progressBarOnScreen = useOnScreen(progressBarRef);
 
   const { data, error, isLoading } = useSWR(
@@ -108,16 +122,18 @@ export default function CampaignSection({
     fetcher,
   );
 
-  let amount;
+  const goalsArray = goals as number[];
+
+  let amount: number;
   if (isLoading) {
     amount = 0;
   } else if (data) {
-    amount = data.campaignSum / 100;
+    amount = (data as { campaignSum: number }).campaignSum / 100;
   } else {
     amount = 0;
   }
 
-  const goal = goals.find((goal) => amount < goal) || goals.at(-1);
+  const goal = goalsArray.find((goal) => amount < goal) || goalsArray.at(-1)!;
   const percentage = (amount / goal) * 100;
 
   useEffect(() => {
@@ -191,7 +207,7 @@ export default function CampaignSection({
           )}
         </div>
         {bottomText && (
-          <div class="flex justify-center">
+          <div className="flex justify-center">
             <div className="prose-md prose max-w-full rounded-2xl bg-slate-50 p-8 text-slate-600 lg:px-12 [&_strong]:text-2xl [&_strong]:text-primary-700">
               <Markdown>{bottomText}</Markdown>
             </div>

@@ -1,7 +1,12 @@
 import { getOrganizaitons } from "@/utils/strapi";
 import Organization from "../elements/Organization";
+import type { StrapiGlobal, StrapiOrganizationsSection } from "@/types/generated/strapi";
 
-export default async function SpecialOrganizationsSection({ global }) {
+interface OrganizationsSectionProps extends StrapiOrganizationsSection {
+  global: StrapiGlobal;
+}
+
+export default async function OrganizationsSection({ global }: OrganizationsSectionProps) {
   const organizations = await getOrganizaitons();
 
   return (
@@ -16,7 +21,7 @@ export default async function SpecialOrganizationsSection({ global }) {
               donateButtonText={global.donateText}
               donateLink={global.donateLink}
               readMoreText={global.readMoreText}
-              organizationLink={`/${organization.cause.slug}/${organization.slug}`}
+              organizationLink={`/${organization.cause!.slug}/${organization.slug}`}
             />
           ))}
         </div>

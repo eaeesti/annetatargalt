@@ -1,5 +1,6 @@
 import Button from "../elements/Button";
 import Image from "../elements/Image";
+import type { StrapiHeroSection } from "@/types/generated/strapi";
 
 export default function HeroSection({
   title,
@@ -7,7 +8,7 @@ export default function HeroSection({
   buttons,
   image,
   mobileImage,
-}) {
+}: StrapiHeroSection) {
   return (
     <header className="relative h-[56rem] max-h-[90vh] min-h-[40rem] xl:h-[90vh] xl:max-h-[96rem] xl:min-h-[44rem]">
       <Image
@@ -27,7 +28,7 @@ export default function HeroSection({
             </p>
             <div className="mt-10 flex w-full max-w-xs flex-col items-stretch justify-center gap-4 text-white xs:max-w-none xs:flex-row xs:items-center xl:justify-start">
               {buttons.map((button) => (
-                <Button key={button.id} {...button} />
+                <Button key={button.id} {...(button as any)} />
               ))}
             </div>
           </div>

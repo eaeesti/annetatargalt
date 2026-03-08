@@ -1,7 +1,8 @@
 import Image from "../elements/Image";
 import Markdown from "../elements/Markdown";
+import type { StrapiPartnerSection } from "@/types/generated/strapi";
 
-export default function PartnerSection({ text, image }) {
+export default function PartnerSection({ text, image }: StrapiPartnerSection) {
   return (
     <section className="bg-slate-100 px-4 py-12 md:px-8">
       <div className="mx-auto flex flex-col items-center justify-center gap-4 text-center sm:flex-row sm:gap-10 sm:text-left lg:max-w-2xl">

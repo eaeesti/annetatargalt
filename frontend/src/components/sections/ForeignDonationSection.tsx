@@ -10,39 +10,45 @@ import Markdown from "../elements/Markdown";
 import Button from "../elements/Button";
 import { makeForeignDonationRequest } from "@/utils/donation";
 import Modal from "../Modal";
+import type { ModalData } from "../Modal";
 import { useRouter } from "next/navigation";
+import type { StrapiGlobal, StrapiForeignDonationSection } from "@/types/generated/strapi";
 
-export default function ForeignDonationSection(props) {
+interface ForeignDonationSectionProps extends StrapiForeignDonationSection {
+  global: StrapiGlobal;
+}
+
+export default function ForeignDonationSection(props: ForeignDonationSectionProps) {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalData, setModalData] = useState({});
+  const [modalData, setModalData] = useState<ModalData>({});
 
-  function showModal(data) {
+  function showModal(data: ModalData) {
     setModalData(data);
     setModalOpen(true);
   }
 
-  const amounts = at(props, ["amount1", "amount2", "amount3"]);
+  const amounts = at(props as unknown as Record<string, unknown>, ["amount1", "amount2", "amount3"]) as (number | null)[];
   const amountOptions = amounts.map((amount) => ({
     value: amount,
     label: `${amount}${props.global.currency}`,
   }));
 
   const [donation, setDonation] = useState({
-    amount: amountOptions[1].value,
+    amount: amountOptions[1].value as number,
     firstName: "",
     lastName: "",
     email: "",
     acceptTerms: false,
   });
 
-  const [validity, setValidity] = useState({});
+  const [validity, setValidity] = useState<Record<string, boolean>>({});
   const isValid =
     at(validity, ["amount", "firstName", "lastName", "email"]).every(Boolean) &&
     donation.acceptTerms;
 
   const donate = async () => {
-    const donationData = pick(donation, ["firstName", "lastName", "email"]);
+    const donationData: Record<string, unknown> = pick(donation as unknown as Record<string, unknown>, ["firstName", "lastName", "email"]);
     donationData.amount = donation.amount * 100;
 
     const response = await makeForeignDonationRequest(donationData);

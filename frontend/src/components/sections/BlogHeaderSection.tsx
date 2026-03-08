@@ -1,8 +1,14 @@
 import { ArrowLeftIcon } from "@heroicons/react/20/solid";
 import Anchor from "../elements/Anchor";
 import Image from "../elements/Image";
+import type { StrapiBlogHeaderSection, StrapiBlogPost, StrapiGlobal } from "@/types/generated/strapi";
 
-export default function SpecialHeaderSection({ entity, backButton, global }) {
+interface BlogHeaderSectionProps extends StrapiBlogHeaderSection {
+  entity: StrapiBlogPost;
+  global: StrapiGlobal;
+}
+
+export default function BlogHeaderSection({ entity, backButton, global }: BlogHeaderSectionProps) {
   // In Strapi v5, relations are returned flat (not wrapped in data)
   const author = entity.author;
 
@@ -18,23 +24,23 @@ export default function SpecialHeaderSection({ entity, backButton, global }) {
         <div className="flex flex-col gap-8 text-white">
           <Anchor
             className="flex items-center gap-1 self-start rounded-full bg-primary-100/10 px-2.5 py-1.5 text-sm text-white hover:bg-primary-100/20"
-            href={backButton.href}
+            href={backButton!.href!}
           >
             <ArrowLeftIcon className="h-5 w-5 text-primary-100" />
-            {backButton.text}
+            {backButton!.text}
           </Anchor>
           <h1 className="text-2xl font-bold tracking-tight text-white sm:text-4xl">
             {entity.title}
           </h1>
           <div className="flex flex-col gap-2 text-base text-slate-300 md:flex-row md:text-lg">
             <address className="not-italic">
-              {author.name}, {author.role}
+              {author!.name}, {author!.role}
             </address>
             <span className="pointer-events-none hidden select-none md:block">
               •
             </span>
-            <time dateTime={entity.date}>
-              {new Date(entity.date).toLocaleDateString(global.dateLocale, {
+            <time dateTime={entity.date!}>
+              {new Date(entity.date!).toLocaleDateString(global.dateLocale!, {
                 year: "numeric",
                 month: "long",
                 day: "numeric",
