@@ -10,7 +10,7 @@ export async function generateMetadata() {
   return buildMetadata(global, {});
 }
 
-export default async function RootLayout({ children }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const plausibleDomain = process.env.PLAUSIBLE_DOMAIN;
 
   return (
@@ -22,7 +22,7 @@ export default async function RootLayout({ children }) {
             scriptProps={{
               src: "/js/script.js",
               "data-api": "/api/event",
-            }}
+            } as any}
           />
         </head>
       )}

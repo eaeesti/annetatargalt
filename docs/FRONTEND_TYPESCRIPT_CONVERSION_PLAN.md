@@ -291,7 +291,7 @@ interface SectionProps {
 
 ---
 
-### Phase 7: App Layer (2–3 hours)
+### ✅ Phase 7: App Layer (done)
 
 **Goal:** Type Next.js route files and metadata.
 
