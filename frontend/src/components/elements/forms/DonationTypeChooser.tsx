@@ -1,4 +1,11 @@
-function Option({ id, label, donationType, setDonationType }) {
+interface OptionProps {
+  id: string;
+  label: string;
+  donationType: string;
+  setDonationType: (type: string) => void;
+}
+
+function Option({ id, label, donationType, setDonationType }: OptionProps) {
   return (
     <div className="flex !cursor-pointer items-center gap-2">
       <input
@@ -19,13 +26,21 @@ function Option({ id, label, donationType, setDonationType }) {
   );
 }
 
+interface DonationTypeChooserProps {
+  donationType: string;
+  setDonationType: (type: string) => void;
+  label: string;
+  recurringDonationText: string;
+  singleDonationText: string;
+}
+
 export default function DonationTypeChooser({
   donationType,
   setDonationType,
   label,
   recurringDonationText,
   singleDonationText,
-}) {
+}: DonationTypeChooserProps) {
   return (
     <div>
       <fieldset>

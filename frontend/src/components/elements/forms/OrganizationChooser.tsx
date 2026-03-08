@@ -7,6 +7,18 @@ import { ChevronUpIcon } from "@heroicons/react/24/solid";
 import Button from "../Button";
 import InfoIcon from "@/components/icons/InfoIcon";
 import CheckboxInput from "./CheckboxInput";
+import type { StrapiCause } from "@/types/generated/strapi";
+import Proportions from "@/utils/proportions";
+
+interface ProportionSliderProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onMouseUp" | "min" | "max"> {
+  lockText: string;
+  proportion: number;
+  setProportion: (value: number) => void;
+  isLocked: boolean;
+  lock: () => void;
+  toggleLock: () => void;
+  onMouseUp?: () => void;
+}
 
 function ProportionSlider({
   lockText,
@@ -16,7 +28,7 @@ function ProportionSlider({
   lock,
   toggleLock,
   ...props
-}) {
+}: ProportionSliderProps) {
   return (
     <div className="flex w-full flex-row gap-4">
       <Slider
@@ -44,6 +56,16 @@ function ProportionSlider({
   );
 }
 
+interface OrganizationChooserProps {
+  lockText: string;
+  chooseOrganizationsText: string;
+  informationText: string;
+  letExpertsChooseText: string;
+  causes: { data: StrapiCause[] };
+  proportions: Proportions;
+  setProportions: (proportions: Proportions) => void;
+}
+
 export default function OrganizationChooser({
   lockText,
   chooseOrganizationsText,
@@ -52,7 +74,7 @@ export default function OrganizationChooser({
   causes,
   proportions,
   setProportions,
-}) {
+}: OrganizationChooserProps) {
   return (
     <fieldset>
       <legend className="my-6 block text-xl font-semibold leading-6 tracking-tight text-primary-700 ">
@@ -111,7 +133,7 @@ export default function OrganizationChooser({
                 <Disclosure.Panel className="flex w-full flex-col gap-6  rounded-xl bg-slate-50 px-6 py-8 shadow-lg shadow-slate-200">
                   <CheckboxInput
                     name={`cause${cause.id}fund`}
-                    value={proportions.goesToFund(cause.id)}
+                    value={proportions.goesToFund(cause.id) ?? false}
                     setValue={() =>
                       setProportions(proportions.toggleToFund(cause.id))
                     }
@@ -156,26 +178,26 @@ export default function OrganizationChooser({
                             lockText={lockText}
                             proportion={proportions.getSubProportion(
                               cause.id,
-                              organization.internalId,
+                              organization.internalId!,
                             )}
                             setProportion={(value) =>
                               setProportions(
                                 proportions.updateSubProportion(
                                   cause.id,
-                                  organization.internalId,
+                                  organization.internalId!,
                                   value,
                                 ),
                               )
                             }
                             isLocked={proportions.isSubLocked(
                               cause.id,
-                              organization.internalId,
+                              organization.internalId!,
                             )}
                             lock={() =>
                               setProportions(
                                 proportions.lockSubProportion(
                                   cause.id,
-                                  organization.internalId,
+                                  organization.internalId!,
                                 ),
                               )
                             }
@@ -183,12 +205,12 @@ export default function OrganizationChooser({
                               setProportions(
                                 proportions.toggleSubProportionLock(
                                   cause.id,
-                                  organization.internalId,
+                                  organization.internalId!,
                                 ),
                               )
                             }
                             aria-labelledby={`organization${organization.internalId}`}
-                            disabled={proportions.goesToFund(cause.id)}
+                            disabled={proportions.goesToFund(cause.id) ?? false}
                           />
                         </div>
                       ),
