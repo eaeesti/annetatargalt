@@ -14,8 +14,8 @@ export default function OrganizationCtaSection({
   entity,
   global,
 }: OrganizationCtaSectionProps) {
-  const buttonText = format(donateText!, {
-    title: entity.title!,
+  const buttonText = format(donateText ?? "", {
+    title: entity.title ?? "",
   });
 
   return (
