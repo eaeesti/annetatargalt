@@ -268,7 +268,7 @@ Files (25 total, sections + elements):
 
 ---
 
-### Phase 6: Layout + Page (2–3 hours)
+### ✅ Phase 6: Layout + Page (done)
 
 **Goal:** Type the top-level structural components and `Section.tsx` (the dynamic dispatcher).
 
