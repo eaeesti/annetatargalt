@@ -29,7 +29,7 @@ export default function ForeignDonationSection(props: ForeignDonationSectionProp
   }
 
   const amounts = at(props as unknown as Record<string, unknown>, ["amount1", "amount2", "amount3"]) as (number | null)[];
-  const amountOptions = amounts.map((amount) => ({
+  const amountOptions = amounts.filter((a): a is number => a !== null).map((amount) => ({
     value: amount,
     label: `${amount}${props.global.currency}`,
   }));

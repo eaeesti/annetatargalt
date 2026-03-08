@@ -2,8 +2,8 @@ import { validateIdCode } from "@/utils/estonia";
 import TextInput from "./TextInput";
 
 interface IdCodeInputProps {
-  idCodeText: string;
-  idCodeDescription?: string;
+  idCodeText: string | null;
+  idCodeDescription?: string | null;
   idCode: string;
   setIdCode: (idCode: string) => void;
   setValidity: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;

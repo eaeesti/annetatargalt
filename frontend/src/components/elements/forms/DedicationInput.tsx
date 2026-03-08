@@ -5,16 +5,16 @@ import EmailInput from "./EmailInput";
 import TextareaInput from "./TextareaInput";
 
 interface DedicationInputProps {
-  dedicateDonationText: string;
+  dedicateDonationText: string | null;
   dedicateDonation: boolean;
   setDedicateDonation: (val: boolean) => void;
-  dedicationNameText: string;
+  dedicationNameText: string | null;
   dedicationName: string;
   setDedicationName: (name: string) => void;
-  dedicationEmailText: string;
+  dedicationEmailText: string | null;
   dedicationEmail: string;
   setDedicationEmail: (email: string) => void;
-  dedicationMessageText: string;
+  dedicationMessageText: string | null;
   dedicationMessage: string;
   setDedicationMessage: (message: string) => void;
   setValidity: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;

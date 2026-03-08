@@ -5,7 +5,7 @@ import type { StrapiBreadcrumb } from "@/types/generated/strapi";
 
 interface BackButtonProps {
   href: string;
-  backWord: string;
+  backWord: string | null;
 }
 
 function BackButton({ href, backWord }: BackButtonProps) {
@@ -22,7 +22,7 @@ function BackButton({ href, backWord }: BackButtonProps) {
 
 interface BreadcrumbItemProps {
   index: number;
-  title: string;
+  title: string | null;
   href?: string | null;
 }
 
@@ -54,8 +54,8 @@ function BreadcrumbItem({ index, title, href }: BreadcrumbItemProps) {
 
 interface BreadcrumbsProps {
   breadcrumbs: StrapiBreadcrumb[];
-  title: string;
-  backWord: string;
+  title: string | null;
+  backWord: string | null;
   className?: string;
 }
 

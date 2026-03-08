@@ -4,7 +4,7 @@ import rehypeRaw from "rehype-raw";
 import Anchor from "../elements/Anchor";
 
 interface MarkdownProps {
-  children: string;
+  children: string | null | undefined;
   className?: string;
   newTabs?: "external" | "all" | "none";
 }
@@ -25,13 +25,13 @@ export default function Markdown({ children, className, newTabs = "external" }: 
         a({ children, href, node, ...rest }) {
           return (
             <Anchor href={href ?? "#"} newTab={openInNewTab(href)} {...rest}>
-              {children}
+              {children ?? ""}
             </Anchor>
           );
         },
       }}
     >
-      {children}
+      {children ?? ""}
     </ReactMarkdown>
   );
 }

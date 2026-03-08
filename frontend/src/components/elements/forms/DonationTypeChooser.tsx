@@ -1,6 +1,6 @@
 interface OptionProps {
   id: string;
-  label: string;
+  label: string | null;
   donationType: string;
   setDonationType: (type: string) => void;
 }
@@ -29,9 +29,9 @@ function Option({ id, label, donationType, setDonationType }: OptionProps) {
 interface DonationTypeChooserProps {
   donationType: string;
   setDonationType: (type: string) => void;
-  label: string;
-  recurringDonationText: string;
-  singleDonationText: string;
+  label: string | null;
+  recurringDonationText: string | null;
+  singleDonationText: string | null;
 }
 
 export default function DonationTypeChooser({
