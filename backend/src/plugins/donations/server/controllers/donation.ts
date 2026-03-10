@@ -276,6 +276,22 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     return ctx.send({ migratedCount, migratedRecurringCount });
   },
 
+  async list(ctx: Context) {
+    const page = Math.max(1, Number(ctx.request.query.page ?? 1));
+    const pageSize = Math.min(100, Math.max(1, Number(ctx.request.query.pageSize ?? 25)));
+    const offset = (page - 1) * pageSize;
+
+    const [data, total] = await Promise.all([
+      donationsRepo.findAll({ limit: pageSize, offset }),
+      donationsRepo.count(),
+    ]);
+
+    return ctx.send({
+      data,
+      pagination: { page, pageSize, total, pageCount: Math.ceil(total / pageSize) },
+    });
+  },
+
   async addDonationsToTransferByDate(ctx: Context) {
     const { startDate, endDate, transferId } = ctx.request.body;
 
