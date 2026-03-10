@@ -7,7 +7,7 @@ const STRAPI_URL = process.env.STRAPI_URL ?? "http://localhost:1337";
 export async function POST(request: NextRequest) {
   const { email, password } = await request.json() as { email: string; password: string };
 
-  const strapiRes = await fetch(`${STRAPI_URL}/admin/login`, {
+  const strapiRes = await fetch(`${STRAPI_URL}/api/admin-auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
@@ -21,8 +21,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const body = await strapiRes.json() as { data: { token: string } };
-  const token = body.data.token;
+  const body = await strapiRes.json() as { jwt: string };
+  const token = body.jwt;
 
   const response = NextResponse.json({ ok: true });
   response.cookies.set(COOKIE_NAME, token, {
