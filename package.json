@@ -8,10 +8,11 @@
   },
   "scripts": {
     "clear": "cd frontend && rm -rf .next && rm -rf cache",
-    "develop": "yarn clear && concurrently \"cd frontend && yarn develop\" \"cd backend && yarn develop\"",
+    "develop": "yarn clear && concurrently \"cd frontend && yarn develop\" \"cd backend && yarn develop\" \"cd admin && npm run dev\"",
     "setup:frontend": "cd frontend && yarn",
     "setup:backend": "cd backend && yarn",
-    "setup": "yarn install && yarn setup:frontend && yarn setup:backend",
+    "setup:admin": "cd admin && npm install",
+    "setup": "yarn install && yarn setup:frontend && yarn setup:backend && yarn setup:admin",
     "generate-types": "node scripts/generate-strapi-types.mjs"
   },
   "dependencies": {
