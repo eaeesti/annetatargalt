@@ -68,4 +68,8 @@ export default {
   async addDonationsToTransferByDate(ctx: Context) {
     return ctrl().addDonationsToTransferByDate(ctx);
   },
+
+  async list(ctx: Context) {
+    return ctrl().list(ctx);
+  },
 };
