@@ -111,6 +111,14 @@ export default {
       },
     },
     {
+      method: "GET",
+      path: "/donations/list",
+      handler: "donation.list",
+      config: {
+        policies: ["admin::isAuthenticatedAdmin"],
+      },
+    },
+    {
       method: "PUT",
       path: "/addDonationsToTransferByDate",
       handler: "donation.addDonationsToTransferByDate",
