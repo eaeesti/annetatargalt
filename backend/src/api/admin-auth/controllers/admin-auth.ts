@@ -6,16 +6,28 @@ const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_MAX_ATTEMPTS = 10;
 const loginAttempts = new Map<string, { count: number; resetAt: number }>();
 
-function isLoginRateLimited(ip: string): boolean {
+// Prune expired entries once per window to prevent unbounded memory growth
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of loginAttempts) {
+    if (now > record.resetAt) loginAttempts.delete(ip);
+  }
+}, LOGIN_WINDOW_MS);
+
+function checkRateLimit(ip: string): boolean {
+  const record = loginAttempts.get(ip);
+  if (!record || Date.now() > record.resetAt) return false;
+  return record.count >= LOGIN_MAX_ATTEMPTS;
+}
+
+function recordFailedAttempt(ip: string): void {
   const now = Date.now();
   const record = loginAttempts.get(ip);
   if (!record || now > record.resetAt) {
     loginAttempts.set(ip, { count: 1, resetAt: now + LOGIN_WINDOW_MS });
-    return false;
+  } else {
+    record.count++;
   }
-  if (record.count >= LOGIN_MAX_ATTEMPTS) return true;
-  record.count++;
-  return false;
 }
 
 interface UserPermissionsUser {
@@ -25,7 +37,7 @@ interface UserPermissionsUser {
 
 interface Role {
   id: number;
-  type: string;
+  name: string;
 }
 
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
@@ -37,8 +49,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
    * (which works natively on /api/* routes) while keeping Strapi admin accounts
    * as the single source of truth for identity.
    *
-   * New users are provisioned automatically on first login with the default
-   * "Authenticated" role. Assign them a more specific role in the Strapi UI.
+   * New users are provisioned automatically on first login with the
+   * "DonationAdmin" role. Assign them a more restricted role in the Strapi UI
+   * if needed.
    */
   async login(ctx: Context) {
     const { email, password } = ctx.request.body as {
@@ -50,7 +63,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       return ctx.badRequest("Email and password are required");
     }
 
-    if (isLoginRateLimited(ctx.request.ip)) {
+    if (checkRateLimit(ctx.request.ip)) {
       ctx.status = 429;
       return ctx.send({ error: "Too many login attempts. Try again in 15 minutes." });
     }
@@ -64,6 +77,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     });
 
     if (!adminRes.ok) {
+      recordFailedAttempt(ctx.request.ip);
       return ctx.unauthorized("Invalid credentials");
     }
 
@@ -75,9 +89,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       .findOne({ where: { email: normalizedEmail } })) as UserPermissionsUser | null;
 
     if (!user) {
-      const defaultRole = (await strapi.db
+      // Assign the DonationAdmin role — not "authenticated", which public registrants also get
+      const adminRole = (await strapi.db
         .query("plugin::users-permissions.role")
-        .findOne({ where: { type: "authenticated" } })) as Role | null;
+        .findOne({ where: { name: "DonationAdmin" } })) as Role | null;
 
       user = (await strapi.db.query("plugin::users-permissions.user").create({
         data: {
@@ -87,7 +102,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
           password: crypto.randomBytes(32).toString("hex"),
           confirmed: true,
           provider: "local",
-          role: defaultRole?.id,
+          role: adminRole?.id,
         },
       })) as UserPermissionsUser;
     }
