@@ -15,6 +15,7 @@ module.exports = [
       },
     },
   },
+  "global::rate-limit",
   "strapi::cors",
   "strapi::poweredBy",
   "strapi::query",
