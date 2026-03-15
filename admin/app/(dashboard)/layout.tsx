@@ -33,7 +33,7 @@ function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="border-b px-4 py-4">
-        <span className="text-sm font-semibold">Anneta Targalt</span>
+        <span className="text-sm font-semibold">Anneta Targalt Admin</span>
       </SidebarHeader>
       <SidebarContent className="px-2 py-2">
         <SidebarMenu>
@@ -60,15 +60,15 @@ function AppSidebar() {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <SidebarProvider>
+    <SidebarProvider className="h-svh overflow-hidden">
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="overflow-auto">
         <header className="flex items-center gap-2 border-b bg-white px-4 py-3 md:hidden">
           <SidebarTrigger />
-          <span className="text-sm font-semibold">Anneta Targalt</span>
+          <span className="text-sm font-semibold">Anneta Targalt Admin</span>
         </header>
-        <div className="bg-gray-50 flex-1">
-          <div className="mx-auto max-w-7xl px-6 py-8">{children}</div>
+        <div className="bg-gray-50 flex-1 min-w-0">
+          <div className="px-6 py-8">{children}</div>
         </div>
       </SidebarInset>
     </SidebarProvider>
