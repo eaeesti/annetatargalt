@@ -65,7 +65,7 @@ export default async function DonationsPage() {
 
   if (!res.ok) {
     return (
-      <p className="text-red-600">
+      <p className="text-destructive">
         Failed to load donations ({res.status}). Check that Strapi is running.
       </p>
     );
@@ -77,12 +77,12 @@ export default async function DonationsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Donations</h1>
-        <p className="text-sm text-gray-500">{pagination.total} total</p>
+        <p className="text-sm text-muted-foreground">{pagination.total} total</p>
       </div>
 
       <Card>
         <CardHeader className="pb-0">
-          <CardTitle className="text-base font-medium text-gray-600">
+          <CardTitle className="text-base font-medium text-muted-foreground">
             Most recent {donations.length}
           </CardTitle>
         </CardHeader>
@@ -102,7 +102,7 @@ export default async function DonationsPage() {
             <TableBody>
               {donations.map((donation) => (
                 <TableRow key={donation.id}>
-                  <TableCell className="font-mono text-xs text-gray-500">
+                  <TableCell className="font-mono text-xs text-muted-foreground">
                     #{donation.id}
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-sm">
@@ -115,14 +115,14 @@ export default async function DonationsPage() {
                     {donation.companyName ??
                       donation.donor?.name ??
                       donation.donor?.email ??
-                      <span className="text-gray-400">—</span>}
+                      <span className="text-muted-foreground">—</span>}
                   </TableCell>
                   <TableCell className="text-sm">
                     {donation.organizationDonations.length > 0
                       ? donation.organizationDonations
                           .map((od) => `${od.organizationInternalId} (${formatAmount(od.amount)})`)
                           .join(", ")
-                      : <span className="text-gray-400">—</span>}
+                      : <span className="text-muted-foreground">—</span>}
                   </TableCell>
                   <TableCell>
                     {donation.finalized ? (
@@ -131,7 +131,7 @@ export default async function DonationsPage() {
                       <Badge variant="secondary">Pending</Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-sm text-gray-500">
+                  <TableCell className="text-sm text-muted-foreground">
                     {donation.paymentMethod ?? "—"}
                   </TableCell>
                 </TableRow>
