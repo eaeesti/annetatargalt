@@ -2,11 +2,9 @@
 
 This is the code for the Anneta Targalt donation platform that runs at https://annetatargalt.ee/.
 
-The backend runs on [Strapi 4](https://strapi.io/) in the `/backend` directory.
-
-The frontend runs on [Next.js 13](https://nextjs.org/), [HeadlessUI](https://headlessui.com/) and [TailwindCSS](https://tailwindcss.com/) in the `/frontend` directory.
-
-The old platform can be found at https://github.com/eaeesti/annetatargalt-old.
+- **Backend**: [Strapi v5](https://strapi.io/) (TypeScript) in `/backend`
+- **Frontend**: [Next.js 15](https://nextjs.org/) and [TailwindCSS](https://tailwindcss.com/) in `/frontend`
+- **Admin panel**: Next.js 15 with shadcn/ui in `/admin` (port 3001)
 
 ## Setup
 
@@ -27,7 +25,7 @@ yarn setup
 
 ### Backend
 
-1\. Navgate to the backend directory:
+1\. Navigate to the backend directory:
 
 ```
 cd backend
@@ -46,7 +44,6 @@ More info here: https://docs.strapi.io/dev-docs/configurations/server
 - `ADMIN_JWT_SECRET`: generate using `openssl rand -base64 16`
 - `TRANSFER_TOKEN_SALT`: generate using `openssl rand -base64 16`
 - `JWT_SECRET`: generate using `openssl rand -base64 16`
-- `API_TOKEN_SALT`: generate using `openssl rand -base64 16`
 
 #### Cloudinary
 
@@ -54,13 +51,19 @@ Create an account at https://cloudinary.com/ and get the three keys from there.
 
 #### Database
 
-Strapi supports [multiple databases](https://docs.strapi.io/dev-docs/configurations/database), but this project has only been tested with Postgres, so using that is recommended.
+Strapi uses Postgres. This project requires **two databases**:
 
-Fill in your Postgres details in `.env` and create a new database called `annetatargalt` or whatever you have under `DATABASE_NAME`:
+- `DATABASE_NAME`: the main Strapi database (content, users, etc.)
+- `DRIZZLE_DATABASE_NAME`: a separate database for donations (managed by Drizzle ORM)
+
+Create both (replace the names with whatever you set in `.env`):
 
 ```
-sudo -u postgres createdb annetatargalt
+sudo -u postgres createdb <DATABASE_NAME>
+sudo -u postgres createdb <DRIZZLE_DATABASE_NAME>
 ```
+
+Fill in your Postgres connection details in `.env`.
 
 4\. Build and run Strapi:
 
@@ -70,6 +73,11 @@ yarn develop
 ```
 
 5\. Open `127.0.0.1:1337` and create your admin user.
+
+On first startup, the bootstrap automatically:
+
+- Creates the **Public API Token** for the frontend and writes it to `frontend/.env`
+- Grants the **Authenticated** role access to all donation admin endpoints
 
 6\. Close Strapi and seed the data if you have it:
 
@@ -81,47 +89,20 @@ Read more about data importing and exporting: https://docs.strapi.io/dev-docs/da
 
 ### Frontend
 
-1\. Navgate to the frontend directory. From `/backend`:
+The `frontend/.env` file is created automatically by the Strapi bootstrap on first startup with the correct API token. If you need to create it manually, copy `frontend/.env.example` and fill in the values.
 
-```
-cd ../frontend
-```
+### Admin panel
 
-2\. Create the `.env` file from `.env.example`:
+The admin panel at `/admin` is a separate Next.js app running on port 3001. It is included in `yarn develop` and requires no additional setup.
 
-```
-NEXT_PUBLIC_STRAPI_API_TOKEN=your-api-token
-NEXT_PUBLIC_STRAPI_API_URL=http://127.0.0.1:1337
-```
+Log in using your Strapi admin credentials. On first login, a users-permissions account is automatically provisioned for you.
 
-3\. To get the API token, run Strapi and generate it:
+### Running everything
 
-Settings (left sidebar) → API Tokens (second sidebar) → Create new API Token (top right)
-
-- Name: Public API Token
-- Token duration: Unlimited
-- Type: Custom
-
-Under Permissions, give the token access `find` and `findOne` access for the following:
-
-- `Blog-author`
-- `Blog-post`
-- `Cause`
-- `Global` (does not have `findOne`)
-- `Organization`
-- `Page`
-- `Special-page`
-
-Click Save and place the token you are given to `.env` under `NEXT_PUBLIC_STRAPI_API_TOKEN`.
-
-4\. Close Strapi and go the repository root directory:
-
-```
-cd ..
-```
-
-5\. Run both the frontend and backend at the same time:
+From the repository root:
 
 ```
 yarn develop
 ```
+
+This starts the frontend (port 3000), backend (port 1337), and admin panel (port 3001) concurrently.
