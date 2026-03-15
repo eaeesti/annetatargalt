@@ -53,7 +53,7 @@ async function bootstrapApiToken(strapi: Core.Strapi): Promise<void> {
     permissions,
   });
 
-  // Write/update NEXT_PUBLIC_STRAPI_API_TOKEN in frontend/.env.local
+  // Write/update NEXT_PUBLIC_STRAPI_API_TOKEN in frontend/.env
   // process.cwd() is the backend directory when Strapi runs
   const envPath = path.resolve(process.cwd(), "..", "frontend", ".env");
   const key = "NEXT_PUBLIC_STRAPI_API_TOKEN";
@@ -69,25 +69,20 @@ async function bootstrapApiToken(strapi: Core.Strapi): Promise<void> {
     fs.writeFileSync(envPath, `${newLine}\nNEXT_PUBLIC_STRAPI_API_URL=http://127.0.0.1:1337\nNEXT_PUBLIC_SITE_URL=http://localhost:3000\nPLAUSIBLE_DOMAIN=\n`, "utf8");
   }
 
-  strapi.log.info(`✅ Created Public API Token — written to frontend/.env.local`);
+  strapi.log.info(`✅ Created Public API Token — written to frontend/.env`);
 }
 
 /**
- * Grants the users-permissions "authenticated" role access to all donation
- * admin endpoints so the admin panel works out of the box.
+ * Sets up the "DonationAdmin" role with access to all donation admin endpoints.
+ *
+ * Uses a dedicated role rather than "authenticated" so that publicly registered
+ * users-permissions accounts cannot access sensitive donation endpoints.
  */
 async function bootstrapDonationPermissions(strapi: Core.Strapi): Promise<void> {
   type Role = { id: number };
-  type Permission = { action: string };
+  type Permission = { id: number; action: string };
 
-  const role = (await strapi.db.query("plugin::users-permissions.role").findOne({
-    where: { type: "authenticated" },
-  })) as Role | null;
-
-  if (!role) {
-    strapi.log.warn("⚠️  Could not find 'authenticated' role — skipping donation permissions setup");
-    return;
-  }
+  const ROLE_NAME = "DonationAdmin";
 
   const actions = [
     "api::donation.donation.list",
@@ -101,27 +96,58 @@ async function bootstrapDonationPermissions(strapi: Core.Strapi): Promise<void> 
     "api::donation.donation.addDonationsToTransferByDate",
   ];
 
+  // Find or create the dedicated DonationAdmin role
+  let adminRole = (await strapi.db.query("plugin::users-permissions.role").findOne({
+    where: { name: ROLE_NAME },
+  })) as Role | null;
+
+  if (!adminRole) {
+    adminRole = (await strapi.db.query("plugin::users-permissions.role").create({
+      data: { name: ROLE_NAME, description: "Full access to donation admin endpoints", type: "donation_admin" },
+    })) as Role;
+    strapi.log.info(`✅ Created '${ROLE_NAME}' users-permissions role`);
+  }
+
+  // Grant any missing permissions to DonationAdmin
   const existing = (await strapi.db.query("plugin::users-permissions.permission").findMany({
-    where: { role: role.id, action: { $in: actions } },
+    where: { role: adminRole.id, action: { $in: actions } },
   })) as Permission[];
 
   const existingSet = new Set(existing.map((p) => p.action));
   const missing = actions.filter((a) => !existingSet.has(a));
 
-  if (missing.length === 0) {
-    strapi.log.info("✅ Donation admin permissions already set — skipping");
-    return;
+  if (missing.length > 0) {
+    await Promise.all(
+      missing.map((action) =>
+        strapi.db.query("plugin::users-permissions.permission").create({
+          data: { action, role: adminRole.id },
+        })
+      )
+    );
+    strapi.log.info(`✅ Granted ${missing.length} donation permission(s) to '${ROLE_NAME}' role`);
+  } else {
+    strapi.log.info(`✅ Donation admin permissions already set — skipping`);
   }
 
-  await Promise.all(
-    missing.map((action) =>
-      strapi.db.query("plugin::users-permissions.permission").create({
-        data: { action, role: role.id },
-      })
-    )
-  );
+  // Revoke these permissions from 'authenticated' if they were previously granted
+  const authenticatedRole = (await strapi.db.query("plugin::users-permissions.role").findOne({
+    where: { type: "authenticated" },
+  })) as Role | null;
 
-  strapi.log.info(`✅ Granted ${missing.length} donation permission(s) to 'authenticated' role`);
+  if (authenticatedRole) {
+    const stalePerms = (await strapi.db.query("plugin::users-permissions.permission").findMany({
+      where: { role: authenticatedRole.id, action: { $in: actions } },
+    })) as Permission[];
+
+    if (stalePerms.length > 0) {
+      await Promise.all(
+        stalePerms.map((p) =>
+          strapi.db.query("plugin::users-permissions.permission").delete({ where: { id: p.id } })
+        )
+      );
+      strapi.log.info(`✅ Revoked ${stalePerms.length} stale donation permission(s) from 'authenticated' role`);
+    }
+  }
 }
 
 export default {
