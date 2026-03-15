@@ -2,6 +2,22 @@ import type { Core } from "@strapi/strapi";
 import type { Context } from "koa";
 import crypto from "node:crypto";
 
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = 10;
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+
+function isLoginRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const record = loginAttempts.get(ip);
+  if (!record || now > record.resetAt) {
+    loginAttempts.set(ip, { count: 1, resetAt: now + LOGIN_WINDOW_MS });
+    return false;
+  }
+  if (record.count >= LOGIN_MAX_ATTEMPTS) return true;
+  record.count++;
+  return false;
+}
+
 interface UserPermissionsUser {
   id: number;
   email: string;
@@ -32,6 +48,11 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
     if (!email || !password) {
       return ctx.badRequest("Email and password are required");
+    }
+
+    if (isLoginRateLimited(ctx.request.ip)) {
+      ctx.status = 429;
+      return ctx.send({ error: "Too many login attempts. Try again in 15 minutes." });
     }
 
     // Step 1: Validate against Strapi admin auth (reuse its exact logic)
