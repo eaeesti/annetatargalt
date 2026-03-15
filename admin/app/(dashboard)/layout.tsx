@@ -1,67 +1,31 @@
-"use client";
-
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Button } from "../../components/ui/button";
+import { strapiAdmin } from "../../lib/api";
+import { AppSidebar } from "./_components/app-sidebar";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
   SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
 } from "../../components/ui/sidebar";
 
-const navLinks = [
-  { href: "/", label: "Dashboard" },
-  { href: "/donations", label: "Donations" },
-];
+type StrapiUser = {
+  email: string;
+};
 
-function AppSidebar() {
-  const pathname = usePathname();
-  const router = useRouter();
-
-  async function handleLogout() {
-    await fetch("/api/logout", { method: "POST" });
-    router.push("/login");
+async function getCurrentUser(): Promise<StrapiUser | null> {
+  try {
+    const res = await strapiAdmin("/api/users/me");
+    if (!res.ok) return null;
+    return res.json() as Promise<StrapiUser>;
+  } catch {
+    return null;
   }
-
-  return (
-    <Sidebar>
-      <SidebarHeader className="border-b px-4 py-4">
-        <span className="text-sm font-semibold">Anneta Targalt Admin</span>
-      </SidebarHeader>
-      <SidebarContent className="px-2 py-2">
-        <SidebarMenu>
-          {navLinks.map(({ href, label }) => {
-            const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
-            return (
-              <SidebarMenuItem key={href}>
-                <SidebarMenuButton render={<Link href={href} />} isActive={active}>
-                  {label}
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            );
-          })}
-        </SidebarMenu>
-      </SidebarContent>
-      <SidebarFooter className="border-t px-3 py-3">
-        <Button variant="outline" size="sm" className="w-full" onClick={handleLogout}>
-          Sign out
-        </Button>
-      </SidebarFooter>
-    </Sidebar>
-  );
 }
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const user = await getCurrentUser();
+
   return (
     <SidebarProvider className="h-svh overflow-hidden">
-      <AppSidebar />
+      <AppSidebar user={user} />
       <SidebarInset className="overflow-auto">
         <header className="flex items-center gap-2 border-b bg-white px-4 py-3 md:hidden">
           <SidebarTrigger />
