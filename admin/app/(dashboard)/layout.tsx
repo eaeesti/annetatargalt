@@ -27,11 +27,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <SidebarProvider className="h-svh overflow-hidden">
       <AppSidebar user={user} />
       <SidebarInset className="overflow-auto">
-        <header className="flex items-center gap-2 border-b bg-white px-4 py-3 md:hidden">
+        <header className="flex items-center gap-2 border-b bg-background px-4 py-3 md:hidden">
           <SidebarTrigger />
           <span className="text-sm font-semibold">Anneta Targalt Admin</span>
         </header>
-        <div className="bg-gray-50 flex-1 min-w-0">
+        <div className="bg-muted/40 flex-1 min-w-0">
           <div className="px-6 py-8">{children}</div>
         </div>
       </SidebarInset>
