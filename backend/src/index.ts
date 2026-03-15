@@ -85,6 +85,7 @@ async function bootstrapDonationPermissions(strapi: Core.Strapi): Promise<void> 
   const ROLE_NAME = "DonationAdmin";
 
   const actions = [
+    "plugin::users-permissions.user.me",
     "api::donation.donation.list",
     "api::donation.donation.import",
     "api::donation.donation.export",
