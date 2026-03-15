@@ -1,5 +1,128 @@
 import type { Core } from "@strapi/strapi";
 import { pool } from "./db/client";
+import fs from "fs";
+import path from "path";
+
+// ---------------------------------------------------------------------------
+// Bootstrap helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Creates the "Public API Token" used by the Next.js frontend if it doesn't
+ * already exist, and writes its value to frontend/.env.local so developers
+ * don't have to do it manually.
+ */
+async function bootstrapApiToken(strapi: Core.Strapi): Promise<void> {
+  const TOKEN_NAME = "Public API Token";
+
+  const existing = await strapi.db.query("admin::api-token").findOne({
+    where: { name: TOKEN_NAME },
+  });
+
+  if (existing) {
+    strapi.log.info("✅ Public API Token already exists — skipping creation");
+    return;
+  }
+
+  // Actions for read-only public frontend access
+  const permissions = [
+    "api::blog-author.blog-author.find",
+    "api::blog-author.blog-author.findOne",
+    "api::blog-post.blog-post.find",
+    "api::blog-post.blog-post.findOne",
+    "api::cause.cause.find",
+    "api::cause.cause.findOne",
+    "api::global.global.find",
+    "api::organization.organization.find",
+    "api::organization.organization.findOne",
+    "api::page.page.find",
+    "api::page.page.findOne",
+    "api::special-page.special-page.find",
+    "api::special-page.special-page.findOne",
+  ];
+
+  type ApiTokenService = {
+    create(data: Record<string, unknown>): Promise<{ accessKey: string }>;
+  };
+  const tokenService = strapi.service("admin::api-token") as ApiTokenService;
+  const result = await tokenService.create({
+    name: TOKEN_NAME,
+    type: "custom",
+    lifespan: null, // unlimited
+    description: "Frontend public read-only access",
+    permissions,
+  });
+
+  // Write/update NEXT_PUBLIC_STRAPI_API_TOKEN in frontend/.env.local
+  // process.cwd() is the backend directory when Strapi runs
+  const envPath = path.resolve(process.cwd(), "..", "frontend", ".env");
+  const key = "NEXT_PUBLIC_STRAPI_API_TOKEN";
+  const newLine = `${key}=${result.accessKey}`;
+
+  if (fs.existsSync(envPath)) {
+    const contents = fs.readFileSync(envPath, "utf8");
+    const updated = contents.match(new RegExp(`^${key}=`, "m"))
+      ? contents.replace(new RegExp(`^${key}=.*`, "m"), newLine)
+      : `${contents.trimEnd()}\n${newLine}\n`;
+    fs.writeFileSync(envPath, updated, "utf8");
+  } else {
+    fs.writeFileSync(envPath, `${newLine}\nNEXT_PUBLIC_STRAPI_API_URL=http://127.0.0.1:1337\nNEXT_PUBLIC_SITE_URL=http://localhost:3000\nPLAUSIBLE_DOMAIN=\n`, "utf8");
+  }
+
+  strapi.log.info(`✅ Created Public API Token — written to frontend/.env.local`);
+}
+
+/**
+ * Grants the users-permissions "authenticated" role access to all donation
+ * admin endpoints so the admin panel works out of the box.
+ */
+async function bootstrapDonationPermissions(strapi: Core.Strapi): Promise<void> {
+  type Role = { id: number };
+  type Permission = { action: string };
+
+  const role = (await strapi.db.query("plugin::users-permissions.role").findOne({
+    where: { type: "authenticated" },
+  })) as Role | null;
+
+  if (!role) {
+    strapi.log.warn("⚠️  Could not find 'authenticated' role — skipping donation permissions setup");
+    return;
+  }
+
+  const actions = [
+    "api::donation.donation.list",
+    "api::donation.donation.import",
+    "api::donation.donation.export",
+    "api::donation.donation.deleteAll",
+    "api::donation.donation.findTransaction",
+    "api::donation.donation.insertTransaction",
+    "api::donation.donation.insertDonation",
+    "api::donation.donation.migrateTips",
+    "api::donation.donation.addDonationsToTransferByDate",
+  ];
+
+  const existing = (await strapi.db.query("plugin::users-permissions.permission").findMany({
+    where: { role: role.id, action: { $in: actions } },
+  })) as Permission[];
+
+  const existingSet = new Set(existing.map((p) => p.action));
+  const missing = actions.filter((a) => !existingSet.has(a));
+
+  if (missing.length === 0) {
+    strapi.log.info("✅ Donation admin permissions already set — skipping");
+    return;
+  }
+
+  await Promise.all(
+    missing.map((action) =>
+      strapi.db.query("plugin::users-permissions.permission").create({
+        data: { action, role: role.id },
+      })
+    )
+  );
+
+  strapi.log.info(`✅ Granted ${missing.length} donation permission(s) to 'authenticated' role`);
+}
 
 export default {
   register(/*{ strapi }: { strapi: Core.Strapi }*/) {},
@@ -134,6 +257,9 @@ export default {
       console.error("If this persists, check database connectivity\n");
       // Don't exit - let Strapi handle DB connection errors
     }
+
+    await bootstrapApiToken(strapi);
+    await bootstrapDonationPermissions(strapi);
 
     // Signal PM2 that Strapi is ready to accept connections
     // This enables zero-downtime reloads with pm2 reload
