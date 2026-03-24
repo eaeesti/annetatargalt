@@ -5,6 +5,7 @@
 - Login / logout with Strapi admin credentials
 - Sidebar navigation with mobile support, dark mode
 - Donations list — basic table, most recent 50
+- Phase 0 complete: middleware fixed, session expiry redirect, DonationAdmin read-only, error/loading boundaries
 
 ---
 
@@ -221,21 +222,19 @@ Until Phase 8, the root route shows a simple placeholder ("Dashboard coming soon
 
 ## Implementation Order
 
-### Phase 0 — Security & reliability baseline (before any feature work)
-
-These must be done before Phase 1 because they protect real financial data and donor PII.
+### Phase 0 — Security & reliability baseline ✅
 
 #### Backend
-- **Remove write permissions from DonationAdmin role** (`deleteAll`, `import`, `insertTransaction`, `insertDonation`, `migrateTips`, `addDonationsToTransferByDate`). The bootstrap in `backend/src/index.ts` already grants/revokes; update it to only allow read actions and actively revoke the write ones if previously granted. DonationAdmin is read-only until write features are deliberately built.
+- ✅ **DonationAdmin role is now read-only** — write permissions (`deleteAll`, `import`, `insertTransaction`, `insertDonation`, `migrateTips`, `addDonationsToTransferByDate`) are actively revoked on bootstrap; `api::organization.organization.find` added for org name resolution.
 
 #### Auth / session
-- **Session expiry handling**: when `strapiAdmin()` gets a 401, the dashboard layout already calls `/api/users/me` — redirect to `/login` if that returns non-OK. This handles both JWT expiry and user deletion from Strapi (deleted user → 401 on `/api/users/me` → immediate logout on next request).
-- **Fix middleware**: the auth redirect logic lives in `proxy.ts` with a wrong export name and is never applied. Rename to `middleware.ts`, export as `middleware`. This ensures unauthenticated requests to all dashboard routes redirect to `/login`.
-- **Shorten JWT TTL**: consider reducing Strapi JWT TTL from default 30 days to something shorter (e.g. 8 hours) in Strapi settings, to limit the window after user deletion.
+- ✅ **Middleware fixed** — `proxy.ts` renamed to `middleware.ts`, export renamed to `middleware`; unauthenticated dashboard requests now correctly redirect to `/login`.
+- ✅ **Session expiry handling** — dashboard layout redirects to `/login` when `/api/users/me` returns non-OK (covers JWT expiry and deleted users).
+- **Shorten JWT TTL** (optional, not done): consider reducing Strapi JWT TTL from default 30 days to ~8 hours in Strapi settings.
 
 #### Error & loading boundaries
-- Add `error.tsx` to `app/(dashboard)/` — catches render errors and shows a recoverable error UI instead of a blank page.
-- Add `loading.tsx` to `app/(dashboard)/` — shows a skeleton/spinner during server component data fetches.
+- ✅ `error.tsx` added to `app/(dashboard)/`
+- ✅ `loading.tsx` added to `app/(dashboard)/`
 
 ---
 

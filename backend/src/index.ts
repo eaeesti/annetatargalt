@@ -84,13 +84,19 @@ async function bootstrapDonationPermissions(strapi: Core.Strapi): Promise<void> 
 
   const ROLE_NAME = "DonationAdmin";
 
-  const actions = [
+  // Read-only actions granted to DonationAdmin
+  const allowedActions = [
     "plugin::users-permissions.user.me",
     "api::donation.donation.list",
-    "api::donation.donation.import",
     "api::donation.donation.export",
-    "api::donation.donation.deleteAll",
     "api::donation.donation.findTransaction",
+    "api::organization.organization.find",
+  ];
+
+  // Write actions that must be actively revoked from DonationAdmin if previously granted
+  const revokedActions = [
+    "api::donation.donation.import",
+    "api::donation.donation.deleteAll",
     "api::donation.donation.insertTransaction",
     "api::donation.donation.insertDonation",
     "api::donation.donation.migrateTips",
@@ -104,18 +110,18 @@ async function bootstrapDonationPermissions(strapi: Core.Strapi): Promise<void> 
 
   if (!adminRole) {
     adminRole = (await strapi.db.query("plugin::users-permissions.role").create({
-      data: { name: ROLE_NAME, description: "Full access to donation admin endpoints", type: "donation_admin" },
+      data: { name: ROLE_NAME, description: "Read-only access to donation admin endpoints", type: "donation_admin" },
     })) as Role;
     strapi.log.info(`✅ Created '${ROLE_NAME}' users-permissions role`);
   }
 
-  // Grant any missing permissions to DonationAdmin
+  // Grant any missing allowed permissions to DonationAdmin
   const existing = (await strapi.db.query("plugin::users-permissions.permission").findMany({
-    where: { role: adminRole.id, action: { $in: actions } },
+    where: { role: adminRole.id, action: { $in: allowedActions } },
   })) as Permission[];
 
   const existingSet = new Set(existing.map((p) => p.action));
-  const missing = actions.filter((a) => !existingSet.has(a));
+  const missing = allowedActions.filter((a) => !existingSet.has(a));
 
   if (missing.length > 0) {
     await Promise.all(
@@ -125,19 +131,34 @@ async function bootstrapDonationPermissions(strapi: Core.Strapi): Promise<void> 
         })
       )
     );
-    strapi.log.info(`✅ Granted ${missing.length} donation permission(s) to '${ROLE_NAME}' role`);
+    strapi.log.info(`✅ Granted ${missing.length} permission(s) to '${ROLE_NAME}' role`);
   } else {
-    strapi.log.info(`✅ Donation admin permissions already set — skipping`);
+    strapi.log.info(`✅ DonationAdmin permissions already set — skipping`);
   }
 
-  // Revoke these permissions from 'authenticated' if they were previously granted
+  // Revoke previously-granted write permissions from DonationAdmin
+  const writePermsOnAdmin = (await strapi.db.query("plugin::users-permissions.permission").findMany({
+    where: { role: adminRole.id, action: { $in: revokedActions } },
+  })) as Permission[];
+
+  if (writePermsOnAdmin.length > 0) {
+    await Promise.all(
+      writePermsOnAdmin.map((p) =>
+        strapi.db.query("plugin::users-permissions.permission").delete({ where: { id: p.id } })
+      )
+    );
+    strapi.log.info(`✅ Revoked ${writePermsOnAdmin.length} write permission(s) from '${ROLE_NAME}' role`);
+  }
+
+  // Revoke all donation admin permissions from 'authenticated' if previously granted
   const authenticatedRole = (await strapi.db.query("plugin::users-permissions.role").findOne({
     where: { type: "authenticated" },
   })) as Role | null;
 
   if (authenticatedRole) {
+    const allActions = [...allowedActions, ...revokedActions];
     const stalePerms = (await strapi.db.query("plugin::users-permissions.permission").findMany({
-      where: { role: authenticatedRole.id, action: { $in: actions } },
+      where: { role: authenticatedRole.id, action: { $in: allActions } },
     })) as Permission[];
 
     if (stalePerms.length > 0) {
@@ -146,7 +167,7 @@ async function bootstrapDonationPermissions(strapi: Core.Strapi): Promise<void> 
           strapi.db.query("plugin::users-permissions.permission").delete({ where: { id: p.id } })
         )
       );
-      strapi.log.info(`✅ Revoked ${stalePerms.length} stale donation permission(s) from 'authenticated' role`);
+      strapi.log.info(`✅ Revoked ${stalePerms.length} stale permission(s) from 'authenticated' role`);
     }
   }
 }
