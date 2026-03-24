@@ -16,6 +16,7 @@ import {
 const navLinks = [
   { href: "/", label: "Dashboard" },
   { href: "/donations", label: "Donations" },
+  { href: "/organizations", label: "Organizations" },
 ];
 
 type User = {
