@@ -1,4 +1,5 @@
 import { strapiAdmin } from "../../../lib/api";
+import { resolveOrgNames } from "../../../lib/orgs";
 import { Badge } from "../../../components/ui/badge";
 import {
   Table,
@@ -73,6 +74,11 @@ export default async function DonationsPage() {
 
   const { data: donations, pagination } = await res.json() as ListResponse;
 
+  const allOrgIds = [
+    ...new Set(donations.flatMap((d) => d.organizationDonations.map((od) => od.organizationInternalId))),
+  ];
+  const orgNames = await resolveOrgNames(allOrgIds);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -120,7 +126,7 @@ export default async function DonationsPage() {
                   <TableCell className="text-sm">
                     {donation.organizationDonations.length > 0
                       ? donation.organizationDonations
-                          .map((od) => `${od.organizationInternalId} (${formatAmount(od.amount)})`)
+                          .map((od) => `${orgNames.get(od.organizationInternalId) ?? od.organizationInternalId} (${formatAmount(od.amount)})`)
                           .join(", ")
                       : <span className="text-muted-foreground">—</span>}
                   </TableCell>
