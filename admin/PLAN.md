@@ -6,6 +6,7 @@
 - Sidebar navigation with mobile support, dark mode
 - Donations list — basic table, most recent 50
 - Phase 0 complete: middleware fixed, session expiry redirect, DonationAdmin read-only, error/loading boundaries
+- Phase 1 complete: `resolveOrgNames()` utility, `/organizations` page with logo/avatar/status/website, org names resolved in donations table
 
 ---
 
@@ -238,10 +239,12 @@ Until Phase 8, the root route shows a simple placeholder ("Dashboard coming soon
 
 ---
 
-### Phase 1 — Organization name resolution + basic organizations page
-Next.js utility (not Strapi backend): `resolveOrgNames(internalIds: string[]) → Map<string, string>` in `admin/lib/orgs.ts`. Fetches from Strapi content API (`/api/organizations?populate=*&pagination[limit]=-1`) using `strapiAdmin()` (admin JWT — the DonationAdmin role is granted `api::organization.organization.find` in the backend bootstrap). The `pagination[limit]=-1` avoids Strapi's default 25-result truncation. Maps `internalId` → display name. Falls back to the raw internal ID if an org isn't found. Fetched fresh on each request. Used in every subsequent phase — donations table, donation detail, transfers, etc.
+### Phase 1 — Organization name resolution + basic organizations page ✅
 
-Frontend: render the same Strapi org data as a basic `/organizations` table — org name, internal ID, and any other fields available (logo, description, website, etc.). Stats columns (total donated, donation count, last donation date) are absent until Phase 7 fills them in. No TanStack Table needed — ~10 orgs, simple static table is sufficient.
+- ✅ `admin/lib/orgs.ts` — `fetchOrgs()` + `resolveOrgNames()`. Uses `pagination[pageSize]=500` (`pagination[limit]=-1` is not supported in Strapi v5). Logo URLs handled for both local (`/uploads/...`) and cloud storage (already-absolute URLs).
+- ✅ `/organizations` page — table with logo (or colored initial avatar fallback), name, internal ID, type (org vs fund), active status, website.
+- ✅ Donations table updated to show resolved org names instead of raw `internalId`s.
+- ✅ Organizations added to sidebar nav.
 
 ### Phase 2 — Donations table (foundation)
 Backend: move `GET /api/donations/list` into the `admin-panel` plugin. Extend it with sort by any column, full filter params (`finalized`, `dateFrom`, `dateTo`, `donorId`, `transferId`, `hasTransfer`, `hasCompany`, `orgId`). Fix the existing hardcoded `pageSize` cap of 100 → 250. Also: **create the `admin_audit_log` Drizzle table and migration** in this phase (even though the logging code lands in Phase 3) — the table must exist before the detail endpoint goes live.
