@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { strapiAdmin } from "../../lib/api";
 import { AppSidebar } from "./_components/app-sidebar";
 import {
@@ -22,6 +23,10 @@ async function getCurrentUser(): Promise<StrapiUser | null> {
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
+
+  if (!user) {
+    redirect("/login");
+  }
 
   return (
     <SidebarProvider className="h-svh overflow-hidden">
