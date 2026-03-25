@@ -1,6 +1,12 @@
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, asc, sql, count, sum } from "drizzle-orm";
 import { db, type Database } from "../client";
-import { donationTransfers, type DonationTransfer, type NewDonationTransfer } from "../schema";
+import {
+  donationTransfers,
+  donations,
+  organizationDonations,
+  type DonationTransfer,
+  type NewDonationTransfer,
+} from "../schema";
 
 interface FindAllOptions {
   withDonations?: boolean;
@@ -8,6 +14,111 @@ interface FindAllOptions {
 
 export class DonationTransfersRepository {
   constructor(private database: Database = db) {}
+
+  /**
+   * Find paginated transfers with computed donationCount and totalAmount.
+   */
+  async findPaginated(options: {
+    page: number;
+    pageSize: number;
+    sortBy?: string;
+    sortDir?: "asc" | "desc";
+  }) {
+    const { page, pageSize, sortBy = "datetime", sortDir = "desc" } = options;
+    const offset = (page - 1) * pageSize;
+    const dir = sortDir === "desc" ? desc : asc;
+
+    // Subquery: donation count and total amount per transfer (finalized only)
+    const statsSq = this.database
+      .select({
+        transferId: donations.donationTransferId,
+        donationCount: sql<number>`cast(count(*) as int)`.as("donation_count"),
+        totalAmount:
+          sql<number>`cast(coalesce(sum(${donations.amount}), 0) as int)`.as(
+            "total_amount",
+          ),
+      })
+      .from(donations)
+      .where(
+        sql`${donations.donationTransferId} is not null and ${donations.finalized} = true`,
+      )
+      .groupBy(donations.donationTransferId)
+      .as("ts");
+
+    const colMap: Record<string, Parameters<typeof dir>[0]> = {
+      id: donationTransfers.id,
+      datetime: donationTransfers.datetime,
+      donationCount: statsSq.donationCount,
+      totalAmount: statsSq.totalAmount,
+    };
+
+    const orderCol = colMap[sortBy] ?? donationTransfers.datetime;
+
+    const [rows, countRows] = await Promise.all([
+      this.database
+        .select({
+          id: donationTransfers.id,
+          datetime: donationTransfers.datetime,
+          recipient: donationTransfers.recipient,
+          notes: donationTransfers.notes,
+          createdAt: donationTransfers.createdAt,
+          donationCount: statsSq.donationCount,
+          totalAmount: statsSq.totalAmount,
+        })
+        .from(donationTransfers)
+        .leftJoin(statsSq, eq(donationTransfers.id, statsSq.transferId))
+        .orderBy(dir(orderCol))
+        .limit(pageSize)
+        .offset(offset),
+      this.database.select({ total: count() }).from(donationTransfers),
+    ]);
+
+    return { data: rows, total: countRows[0]?.total ?? 0 };
+  }
+
+  /**
+   * Find a transfer by ID with all linked donations and per-org totals.
+   *
+   * Per-org totals are computed across the finalized donations' organizationDonations
+   * rows — this is the primary output used for GWWC reporting.
+   */
+  async findByIdWithPerOrgTotals(id: number) {
+    const transfer = await this.database.query.donationTransfers.findFirst({
+      where: eq(donationTransfers.id, id),
+      with: {
+        donations: {
+          orderBy: [desc(donations.datetime)],
+          with: { organizationDonations: true },
+        },
+      },
+    });
+
+    if (!transfer) return undefined;
+
+    // Aggregate per-org totals across finalized donations of this transfer
+    const orgTotals = await this.database
+      .select({
+        organizationInternalId: organizationDonations.organizationInternalId,
+        total:
+          sql<number>`cast(coalesce(sum(${organizationDonations.amount}), 0) as int)`.as(
+            "total",
+          ),
+        donationCount: sql<number>`cast(count(*) as int)`.as("donation_count"),
+      })
+      .from(organizationDonations)
+      .innerJoin(donations, eq(organizationDonations.donationId, donations.id))
+      .where(
+        sql`${donations.donationTransferId} = ${id} and ${donations.finalized} = true`,
+      )
+      .groupBy(organizationDonations.organizationInternalId)
+      .orderBy(
+        desc(
+          sql<number>`cast(coalesce(sum(${organizationDonations.amount}), 0) as int)`,
+        ),
+      );
+
+    return { ...transfer, orgTotals };
+  }
 
   /**
    * Find a donation transfer by ID
@@ -43,7 +154,9 @@ export class DonationTransfersRepository {
   /**
    * Create a new donation transfer
    */
-  async create(data: Omit<NewDonationTransfer, 'datetime'> & { datetime: string | Date }): Promise<DonationTransfer> {
+  async create(
+    data: Omit<NewDonationTransfer, "datetime"> & { datetime: string | Date },
+  ): Promise<DonationTransfer> {
     const [transfer] = await this.database
       .insert(donationTransfers)
       .values({
@@ -64,7 +177,9 @@ export class DonationTransfersRepository {
    */
   async update(
     id: number,
-    data: Partial<Omit<NewDonationTransfer, 'datetime'>> & { datetime?: string | Date }
+    data: Partial<Omit<NewDonationTransfer, "datetime">> & {
+      datetime?: string | Date;
+    },
   ): Promise<DonationTransfer | undefined> {
     const updateData: Partial<NewDonationTransfer> & { updatedAt: Date } = {
       updatedAt: new Date(),
@@ -93,7 +208,9 @@ export class DonationTransfersRepository {
    * Delete a donation transfer (only if no donations are linked)
    */
   async delete(id: number): Promise<void> {
-    await this.database.delete(donationTransfers).where(eq(donationTransfers.id, id));
+    await this.database
+      .delete(donationTransfers)
+      .where(eq(donationTransfers.id, id));
   }
 }
 

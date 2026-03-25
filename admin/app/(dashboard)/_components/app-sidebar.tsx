@@ -18,6 +18,7 @@ const navLinks = [
   { href: "/donations", label: "Donations" },
   { href: "/donors", label: "Donors" },
   { href: "/recurring-donations", label: "Recurring" },
+  { href: "/transfers", label: "Transfers" },
   { href: "/organizations", label: "Organizations" },
 ];
 
