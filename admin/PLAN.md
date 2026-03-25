@@ -297,15 +297,15 @@ Until Phase 8, the root route shows a simple placeholder ("Dashboard coming soon
 - ✅ `/donors/[id]` — detail page with donor info, stats, recurring donations summary, and full donations list (each row links to `/donations/[id]`).
 - ✅ Donors added to sidebar nav.
 
-### Phase 5 — Recurring donations
+### Phase 5 — Recurring donations ✅
 
-Backend: `GET /api/admin-panel/recurring-donations/list` + `GET /api/admin-panel/recurring-donations/:id`.
-
-- `RecurringDonationsRepository.findAll()` returns all records unsorted with no pagination — needs the same paginated + sorted extension as Phase 4.
-- Org split summary for the list view requires joining `organizationRecurringDonations`.
-- Gap detection (months where a payment was expected but missing) is new logic: every calendar month between the recurring donation's start date and today counts as an expected month — generate the full set, diff against actual linked donations, any missing month is a gap.
-
-Frontend: table + detail with gap detection
+- ✅ `RecurringDonationsRepository.findPaginated()` — paginated + sorted recurring donations with donor name JOIN and finalized donation stats subquery (donationCount, lastDonationDate). Sortable by all columns including computed ones.
+- ✅ `RecurringDonationsRepository.findByIdWithFullDonations()` — recurring donation with donor, org splits, and all linked donations (with org splits) ordered by date.
+- ✅ `GET /api/admin-panel/recurring-donations/list` + `GET /api/admin-panel/recurring-donations/:id` — with audit logging. Detail endpoint computes `gapMonths[]` (array of "YYYY-MM" strings for months with no finalized linked donation since the start date).
+- ✅ `recurringDonation.list` and `recurringDonation.findOne` added to DonationAdmin role in bootstrap.
+- ✅ `/recurring-donations` — sortable table: ID, status, donor, amount/mo, started, donations count, last donation; URL-driven state; clickable rows.
+- ✅ `/recurring-donations/[id]` — detail page with details, donor (linked), org split, gap months (shown as destructive badges), and linked donations list.
+- ✅ Recurring added to sidebar nav.
 
 ### Phase 6 — Transfers
 
