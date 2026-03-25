@@ -35,6 +35,10 @@ module.exports = ({ env }) => ({
     enabled: true,
     resolve: "./dist/src/plugins/donations",
   },
+  "admin-panel": {
+    enabled: true,
+    resolve: "./dist/src/plugins/admin-panel",
+  },
   "deep-populate": {
     enabled: true,
     config: {
