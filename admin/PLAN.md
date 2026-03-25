@@ -287,15 +287,15 @@ Until Phase 8, the root route shows a simple placeholder ("Dashboard coming soon
 - ✅ Table rows clickable — `router.push('/donations/${id}')` on row click.
 - ⏳ Sheet/drawer overlay (intercepting route) — deferred to a later pass per the tech decisions above.
 
-### Phase 4 — Donors
+### Phase 4 — Donors ✅
 
-Backend: `GET /api/admin-panel/donors/list` + `GET /api/admin-panel/donors/:id`.
-
-- `DonorsRepository.findAll()` currently returns all donors unsorted with no pagination — needs a new paginated + sorted variant.
-- Computed columns (`totalDonated`, `donationCount`, `lastDonationDate`) don't exist — require new Drizzle subqueries aggregating finalized donations per donor.
-- `GET .../donors/:id` stats (total donated, count, first/last donation date) are also new queries.
-
-Frontend: donors table + detail (reuses Phase 3 pattern)
+- ✅ `DonorsRepository.findPaginated()` — paginated + sorted donors list with computed columns (`totalDonated`, `donationCount`, `lastDonationDate`) via LEFT JOIN on a finalized-donations subquery. Sortable by all columns including the computed ones.
+- ✅ `DonorsRepository.findByIdWithDonations()` — donor with full donations list (incl. org splits) and recurring donations via Drizzle relations.
+- ✅ `GET /api/admin-panel/donors/list` + `GET /api/admin-panel/donors/:id` — with audit logging. Stats (totalDonated, donationCount, firstDonationDate, lastDonationDate) computed in the controller from the fetched donations.
+- ✅ `donor.list` and `donor.findOne` added to DonationAdmin role in bootstrap.
+- ✅ `/donors` — sortable table: ID, name, email, recurring, total donated, donation count, last donation date; URL-driven state; clickable rows.
+- ✅ `/donors/[id]` — detail page with donor info, stats, recurring donations summary, and full donations list (each row links to `/donations/[id]`).
+- ✅ Donors added to sidebar nav.
 
 ### Phase 5 — Recurring donations
 
