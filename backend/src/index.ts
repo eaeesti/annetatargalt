@@ -87,10 +87,11 @@ async function bootstrapDonationPermissions(strapi: Core.Strapi): Promise<void> 
   // Read-only actions granted to DonationAdmin
   const allowedActions = [
     "plugin::users-permissions.user.me",
-    "api::donation.donation.list",
+    "api::donation.donation.list",          // legacy — kept during transition, revoked at Cleanup
     "api::donation.donation.export",
     "api::donation.donation.findTransaction",
     "api::organization.organization.find",
+    "plugin::admin-panel.donation.list",    // new admin-panel plugin endpoint (Phase 2)
   ];
 
   // Write actions that must be actively revoked from DonationAdmin if previously granted
