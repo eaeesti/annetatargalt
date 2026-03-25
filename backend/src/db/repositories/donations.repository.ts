@@ -1,4 +1,4 @@
-import { eq, and, gte, lte, desc, sql, inArray } from "drizzle-orm";
+import { eq, and, gte, lte, asc, desc, isNotNull, isNull, sql, inArray } from "drizzle-orm";
 import { db, type Database } from "../client";
 import { donations, type Donation, type NewDonation } from "../schema";
 
@@ -94,6 +94,77 @@ export class DonationsRepository {
         organizationDonations: true,
       },
     });
+  }
+
+  /**
+   * Paginated, sortable, filterable donations list for the admin panel.
+   */
+  async findWithFilters(options: {
+    page: number;
+    pageSize: number;
+    sortBy?: string;
+    sortDir?: "asc" | "desc";
+    finalized?: boolean;
+    dateFrom?: Date;
+    dateTo?: Date;
+    donorId?: number;
+    transferId?: number;
+    hasTransfer?: boolean;
+    hasCompany?: boolean;
+    orgId?: string;
+  }) {
+    const { page, pageSize, sortBy = "datetime", sortDir = "desc" } = options;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const conditions: any[] = [];
+    if (options.finalized !== undefined) conditions.push(eq(donations.finalized, options.finalized));
+    if (options.dateFrom) conditions.push(gte(donations.datetime, options.dateFrom));
+    if (options.dateTo) conditions.push(lte(donations.datetime, options.dateTo));
+    if (options.donorId !== undefined) conditions.push(eq(donations.donorId, options.donorId));
+    if (options.transferId !== undefined) conditions.push(eq(donations.donationTransferId, options.transferId));
+    if (options.hasTransfer === true) conditions.push(isNotNull(donations.donationTransferId));
+    if (options.hasTransfer === false) conditions.push(isNull(donations.donationTransferId));
+    if (options.hasCompany === true) conditions.push(isNotNull(donations.companyCode));
+    if (options.hasCompany === false) conditions.push(isNull(donations.companyCode));
+    if (options.orgId) {
+      conditions.push(
+        sql`EXISTS (
+          SELECT 1 FROM organization_donations
+          WHERE organization_donations.donation_id = ${donations.id}
+          AND organization_donations.organization_internal_id = ${options.orgId}
+        )`
+      );
+    }
+
+    const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const sortCol = (() => {
+      switch (sortBy) {
+        case "id": return donations.id;
+        case "amount": return donations.amount;
+        case "finalized": return donations.finalized;
+        case "paymentMethod": return donations.paymentMethod;
+        case "companyName": return donations.companyName;
+        default: return donations.datetime;
+      }
+    })();
+    const orderByClause = sortDir === "asc" ? asc(sortCol) : desc(sortCol);
+
+    const [data, countResult] = await Promise.all([
+      this.database.query.donations.findMany({
+        where,
+        orderBy: [orderByClause],
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
+        with: { donor: true, organizationDonations: true },
+      }),
+      this.database
+        .select({ total: sql<number>`cast(count(*) as int)` })
+        .from(donations)
+        .where(where),
+    ]);
+
+    return { data, total: countResult[0]?.total ?? 0 };
   }
 
   /**

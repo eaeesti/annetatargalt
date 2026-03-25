@@ -1,151 +1,73 @@
 import { strapiAdmin } from "../../../lib/api";
 import { resolveOrgNames } from "../../../lib/orgs";
-import { Badge } from "../../../components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../../../components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
+import { DonationsTable, type DonationRow, type Pagination } from "./_components/donations-table";
 
-interface Donor {
-  id: number;
-  name: string | null;
-  email: string | null;
-  idCode: string | null;
-}
-
-interface OrganizationDonation {
-  organizationInternalId: string;
-  amount: number;
-}
-
-interface Donation {
-  id: number;
-  datetime: string;
-  amount: number;
-  finalized: boolean;
-  paymentMethod: string | null;
-  companyName: string | null;
-  externalDonation: boolean;
-  donor: Donor | null;
-  organizationDonations: OrganizationDonation[];
-}
-
-interface Pagination {
-  page: number;
-  pageSize: number;
-  total: number;
-  pageCount: number;
-}
+const VALID_PAGE_SIZES = [25, 50, 100, 250];
+const VALID_SORT_COLS = new Set(["id", "datetime", "amount", "finalized", "paymentMethod", "companyName"]);
 
 interface ListResponse {
-  data: Donation[];
+  data: DonationRow[];
   pagination: Pagination;
 }
 
-function formatAmount(cents: number): string {
-  return `€${(cents / 100).toFixed(2)}`;
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+function str(val: string | string[] | undefined): string | undefined {
+  return Array.isArray(val) ? val[0] : val;
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("et-EE", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
+export default async function DonationsPage({ searchParams }: { searchParams: SearchParams }) {
+  const params = await searchParams;
+
+  const page = Math.max(1, Number(str(params.page) ?? 1));
+  const pageSizeRaw = Number(str(params.pageSize) ?? 50);
+  const pageSize = VALID_PAGE_SIZES.includes(pageSizeRaw) ? pageSizeRaw : 50;
+  const sortByRaw = str(params.sortBy) ?? "datetime";
+  const sortBy = VALID_SORT_COLS.has(sortByRaw) ? sortByRaw : "datetime";
+  const sortDir = str(params.sortDir) === "asc" ? ("asc" as const) : ("desc" as const);
+
+  const qs = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+    sortBy,
+    sortDir,
   });
-}
 
-export default async function DonationsPage() {
-  const res = await strapiAdmin("/api/donations/list?pageSize=50", { cache: "no-store" });
+  const res = await strapiAdmin(`/api/admin-panel/donations/list?${qs}`, {
+    cache: "no-store",
+  });
 
   if (!res.ok) {
     return (
-      <p className="text-destructive">
-        Failed to load donations ({res.status}). Check that Strapi is running.
-      </p>
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold">Donations</h1>
+        <p className="text-destructive">
+          Failed to load donations ({res.status}). Check that Strapi is running.
+        </p>
+      </div>
     );
   }
 
-  const { data: donations, pagination } = await res.json() as ListResponse;
+  const { data, pagination } = (await res.json()) as ListResponse;
 
   const allOrgIds = [
-    ...new Set(donations.flatMap((d) => d.organizationDonations.map((od) => od.organizationInternalId))),
+    ...new Set(
+      data.flatMap((d) => d.organizationDonations.map((od) => od.organizationInternalId))
+    ),
   ];
-  const orgNames = await resolveOrgNames(allOrgIds);
+  const orgNamesMap = await resolveOrgNames(allOrgIds);
+  const orgNames = Object.fromEntries(orgNamesMap);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Donations</h1>
-        <p className="text-sm text-muted-foreground">{pagination.total} total</p>
-      </div>
-
-      <Card>
-        <CardHeader className="pb-0">
-          <CardTitle className="text-base font-medium text-muted-foreground">
-            Most recent {donations.length}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-4">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Donor</TableHead>
-                <TableHead>Organizations</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Payment</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {donations.map((donation) => (
-                <TableRow key={donation.id}>
-                  <TableCell className="font-mono text-xs text-muted-foreground">
-                    #{donation.id}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap text-sm">
-                    {formatDate(donation.datetime)}
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {formatAmount(donation.amount)}
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {donation.companyName ??
-                      donation.donor?.name ??
-                      donation.donor?.email ??
-                      <span className="text-muted-foreground">—</span>}
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {donation.organizationDonations.length > 0
-                      ? donation.organizationDonations
-                          .map((od) => `${orgNames.get(od.organizationInternalId) ?? od.organizationInternalId} (${formatAmount(od.amount)})`)
-                          .join(", ")
-                      : <span className="text-muted-foreground">—</span>}
-                  </TableCell>
-                  <TableCell>
-                    {donation.finalized ? (
-                      <Badge variant="default">Finalized</Badge>
-                    ) : (
-                      <Badge variant="secondary">Pending</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {donation.paymentMethod ?? "—"}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <h1 className="text-2xl font-bold">Donations</h1>
+      <DonationsTable
+        data={data}
+        pagination={pagination}
+        orgNames={orgNames}
+        sortBy={sortBy}
+        sortDir={sortDir}
+      />
     </div>
   );
 }
