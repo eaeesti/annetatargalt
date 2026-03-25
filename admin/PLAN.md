@@ -307,15 +307,16 @@ Until Phase 8, the root route shows a simple placeholder ("Dashboard coming soon
 - ✅ `/recurring-donations/[id]` — detail page with details, donor (linked), org split, gap months (shown as destructive badges), and linked donations list.
 - ✅ Recurring added to sidebar nav.
 
-### Phase 6 — Transfers
+### Phase 6 — Transfers ✅
 
-Backend: `GET /api/admin-panel/transfers/list` + `GET /api/admin-panel/transfers/:id`.
-
-- `DonationTransfersRepository.findAll()` exists but lacks computed `donationCount` and `totalAmount` — needs a new aggregation query joining donations.
-- `GET .../transfers/:id` per-org totals = GROUP BY `organizationInternalId` across the transfer's `organizationDonations` — new Drizzle query.
-- Both endpoints require unit tests.
-
-Frontend: table + detail (per-org totals view is the most important output of the whole app)
+- ✅ `DonationTransfersRepository.findPaginated()` — paginated + sorted transfers with computed `donationCount` and `totalAmount` via finalized-donations subquery.
+- ✅ `DonationTransfersRepository.findByIdWithPerOrgTotals()` — transfer with all linked donations (+ org splits) and per-org totals aggregated from finalized donations' `organizationDonations`, sorted by amount descending.
+- ✅ Unit tests for both methods (9 new tests, all passing; total suite now 56 tests).
+- ✅ `GET /api/admin-panel/transfers/list` + `GET /api/admin-panel/transfers/:id` — with audit logging.
+- ✅ `transfer.list` and `transfer.findOne` added to DonationAdmin role in bootstrap.
+- ✅ `/transfers` — sortable table: ID, date, recipient, donations count, total; URL-driven state; clickable rows. Default sort: date descending.
+- ✅ `/transfers/[id]` — detail with metadata, per-org totals section (org names resolved, amounts, donation counts, %, progress bars, grand total row), and full linked donations list.
+- ✅ Transfers added to sidebar nav.
 
 ### Phase 7 — Organizations view (stats + detail)
 
