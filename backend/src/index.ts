@@ -99,6 +99,8 @@ async function bootstrapDonationPermissions(
     "api::organization.organization.find",
     "plugin::admin-panel.donation.list", // new admin-panel plugin endpoints (Phase 2+)
     "plugin::admin-panel.donation.findOne",
+    "plugin::admin-panel.donor.list",
+    "plugin::admin-panel.donor.findOne",
   ];
 
   // Write actions that must be actively revoked from DonationAdmin if previously granted
