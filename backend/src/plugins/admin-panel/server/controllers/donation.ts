@@ -1,9 +1,35 @@
 import type { Core } from "@strapi/strapi";
 import type { Context } from "koa";
 import { donationsRepository } from "../../../../db/repositories/donations.repository";
+import { adminAuditLogRepository } from "../../../../db/repositories/adminAuditLog.repository";
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
-const VALID_SORT_COLS = new Set(["id", "datetime", "amount", "finalized", "paymentMethod", "companyName"]);
+const VALID_SORT_COLS = new Set([
+  "id",
+  "datetime",
+  "amount",
+  "finalized",
+  "paymentMethod",
+  "companyName",
+]);
+
+async function auditLog(ctx: Context, action: string, recordId?: string) {
+  try {
+    const user = ctx.state.user as { id: number; email: string } | undefined;
+    if (!user) return;
+    const ip =
+      ctx.get("X-Forwarded-For").split(",")[0]?.trim() || ctx.ip || null;
+    await adminAuditLogRepository.log({
+      userId: String(user.id),
+      userEmail: user.email,
+      action,
+      recordId: recordId ?? null,
+      ip,
+    });
+  } catch {
+    // Never fail the request due to audit logging errors
+  }
+}
 
 export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
   async list(ctx: Context) {
@@ -24,7 +50,9 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
     const donorId = q.donorId ? Number(q.donorId) : undefined;
     const transferId = q.transferId ? Number(q.transferId) : undefined;
     const hasTransfer =
-      q.hasTransfer !== undefined ? String(q.hasTransfer) === "true" : undefined;
+      q.hasTransfer !== undefined
+        ? String(q.hasTransfer) === "true"
+        : undefined;
     const hasCompany =
       q.hasCompany !== undefined ? String(q.hasCompany) === "true" : undefined;
     const orgId = q.orgId ? String(q.orgId) : undefined;
@@ -44,6 +72,8 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
       orgId,
     });
 
+    await auditLog(ctx, "donations.list");
+
     return ctx.send({
       data,
       pagination: {
@@ -53,5 +83,21 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
         pageCount: Math.ceil(total / pageSize),
       },
     });
+  },
+
+  async findOne(ctx: Context) {
+    const id = Number(ctx.params.id);
+    if (!id || isNaN(id)) {
+      return ctx.badRequest("Invalid donation ID");
+    }
+
+    const donation = await donationsRepository.findByIdWithRelations(id);
+    if (!donation) {
+      return ctx.notFound("Donation not found");
+    }
+
+    await auditLog(ctx, "donations.findOne", String(id));
+
+    return ctx.send({ data: donation });
   },
 });
