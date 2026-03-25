@@ -1,5 +1,6 @@
 import donation from "./donation";
 import donor from "./donor";
+import recurringDonation from "./recurringDonation";
 
 export default {
   "donation-router": {
@@ -9,5 +10,9 @@ export default {
   "donor-router": {
     type: "content-api",
     routes: donor.routes,
+  },
+  "recurring-donation-router": {
+    type: "content-api",
+    routes: recurringDonation.routes,
   },
 };
