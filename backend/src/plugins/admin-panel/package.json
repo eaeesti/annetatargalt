@@ -1,0 +1,13 @@
+{
+  "name": "admin-panel",
+  "version": "1.0.0",
+  "description": "Admin panel API endpoints for Annetusplatvorm",
+  "strapi": {
+    "name": "admin-panel",
+    "displayName": "Admin Panel",
+    "description": "Protected endpoints for the Next.js admin panel",
+    "kind": "plugin"
+  },
+  "dependencies": {},
+  "license": "MIT"
+}

@@ -183,3 +183,17 @@ export type NewOrganizationDonation = typeof organizationDonations.$inferInsert;
 
 export type OrganizationRecurringDonation = typeof organizationRecurringDonations.$inferSelect;
 export type NewOrganizationRecurringDonation = typeof organizationRecurringDonations.$inferInsert;
+
+// Admin audit log — never deleted, append-only
+export const adminAuditLog = pgTable("admin_audit_log", {
+  id: serial("id").primaryKey(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  userId: varchar("user_id", { length: 256 }).notNull(),
+  userEmail: varchar("user_email", { length: 256 }).notNull(),
+  action: varchar("action", { length: 128 }).notNull(), // e.g. "donations.list", "donors.view"
+  recordId: varchar("record_id", { length: 64 }),       // ID of the accessed record, if applicable
+  ip: varchar("ip", { length: 64 }),
+});
+
+export type AdminAuditLog = typeof adminAuditLog.$inferSelect;
+export type NewAdminAuditLog = typeof adminAuditLog.$inferInsert;
