@@ -15,6 +15,7 @@
 - **`finalized`**: set to `true` by the payment webhook when payment completes. Donations imported from bank CSV are finalized by default. Unfinalized = payment initiated but not yet confirmed.
 - **`externalDonation`**: donations made through MTÜ Efektiivne Altruism Eesti's frontend (efektiivnealtruism.org/anneta) routed through our backend. Purely internal for now — no special UI treatment needed.
 - **`companyName` / `companyCode`**: important for tax purposes. Should be optional visible columns in the donations table with a filter for "has company" (companyCode is not null). Show in all donation detail views.
+  So
 
 ---
 
@@ -249,7 +250,7 @@ Until Phase 8, the root route shows a simple placeholder ("Dashboard coming soon
 
 #### Auth / session
 
-- ✅ **Middleware fixed** — `proxy.ts` renamed to `middleware.ts`, export renamed to `middleware`; unauthenticated dashboard requests now correctly redirect to `/login`.
+- ✅ **Middleware fixed** — file is `proxy.ts` with `export function proxy(...)`. Next.js 16 renamed the middleware file convention from `middleware.ts` to `proxy.ts`; unauthenticated dashboard requests now correctly redirect to `/login`.
 - ✅ **Session expiry handling** — dashboard layout redirects to `/login` when `/api/users/me` returns non-OK (covers JWT expiry and deleted users).
 - **Shorten JWT TTL** (optional, not done): consider reducing Strapi JWT TTL from default 30 days to ~8 hours in Strapi settings.
 
@@ -272,22 +273,19 @@ Until Phase 8, the root route shows a simple placeholder ("Dashboard coming soon
 - ✅ `admin-panel` plugin created at `backend/src/plugins/admin-panel/` with `GET /api/admin-panel/donations/list` — sort by any column, full filter params (`finalized`, `dateFrom`, `dateTo`, `donorId`, `transferId`, `hasTransfer`, `hasCompany`, `orgId`), pageSize up to 250.
 - ✅ Plugin registered in `backend/config/plugins.js` pointing to the dist path (`./dist/src/plugins/admin-panel`).
 - ✅ **Strapi v5 plugin route fix**: routes must be exported as a named-router object with `type: "content-api"` — a flat array silently registers routes under the admin prefix (`/admin/...`) instead of `/api/...`.
+- ✅ **Next.js 16 proxy convention**: `proxy.ts` with `export function proxy(...)` is the correct Next.js 16 middleware file name. `middleware.ts` is deprecated and causes Turbopack panics.
 - ✅ Frontend: TanStack Table with URL-driven state (page, sort, pageSize in URL params), optional company columns toggle (hidden by default), org names resolved via Phase 1 utility.
 - ⏳ `admin_audit_log` Drizzle table + migration — deferred to Phase 3.
 
-### Phase 3 — Donation detail + audit log (sets the pattern)
+### Phase 3 — Donation detail + audit log ✅
 
-Backend: `GET /api/admin-panel/donations/:id`. Add audit logging to both this endpoint and Phase 2's list endpoint at the same time.
-Frontend: intercepting route + sheet + full page — establishes the pattern reused everywhere
-
-#### Audit log
-
-- Log **all admin actions: reads and writes** — which user, what action, what record was accessed.
-- Read events matter for GDPR: viewing a donor's name, email, or ID code is a personal data access that must be accountable. List views are also logged.
-- Log at minimum: `timestamp`, `userId`, `userEmail`, `action` (e.g. `donations.list`, `donors.view`, `transfers.create`), `recordId` (where applicable), `ip`.
-- **Implementation**: logging happens in Strapi controllers (server-side), not in Next.js. Next.js forwards the real client IP in `X-Forwarded-For`; Strapi reads it from the request headers alongside the JWT.
-- Store in the `admin_audit_log` Drizzle table (schema + migration created in Phase 2). Entries are never deleted.
-- No admin UI initially — queryable from DB. Add a UI view later when needed.
+- ✅ `GET /api/admin-panel/donations/:id` — full detail with donor, org split, recurring donation link, transfer link. Uses existing `findByIdWithRelations()`.
+- ✅ `backend/src/db/repositories/adminAuditLog.repository.ts` — append-only audit log repository.
+- ✅ Audit logging added to both `donations.list` and `donations.findOne` — logs userId, userEmail, action, recordId, IP. Fire-and-forget (never fails the request).
+- ✅ `plugin::admin-panel.donation.findOne` added to DonationAdmin role in bootstrap.
+- ✅ Frontend: `/donations/[id]` full-page detail view — details, donor, company (conditional), dedication (conditional), org split sections.
+- ✅ Table rows clickable — `router.push('/donations/${id}')` on row click.
+- ⏳ Sheet/drawer overlay (intercepting route) — deferred to a later pass per the tech decisions above.
 
 ### Phase 4 — Donors
 

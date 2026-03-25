@@ -6,5 +6,11 @@ export default {
       handler: "donation.list",
       config: {},
     },
+    {
+      method: "GET",
+      path: "/donations/:id",
+      handler: "donation.findOne",
+      config: {},
+    },
   ],
 };

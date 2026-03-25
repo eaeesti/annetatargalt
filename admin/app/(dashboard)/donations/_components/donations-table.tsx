@@ -76,11 +76,22 @@ function donorLabel(row: DonationRow): string | null {
 
 // ── Sort header ───────────────────────────────────────────────────────────────
 
-function SortIcon({ col, sortBy, sortDir }: { col: string; sortBy: string; sortDir: string }) {
-  if (sortBy !== col) return <ChevronsUpDown className="ml-1 h-3 w-3 opacity-40" />;
-  return sortDir === "asc"
-    ? <ChevronUp className="ml-1 h-3 w-3" />
-    : <ChevronDown className="ml-1 h-3 w-3" />;
+function SortIcon({
+  col,
+  sortBy,
+  sortDir,
+}: {
+  col: string;
+  sortBy: string;
+  sortDir: string;
+}) {
+  if (sortBy !== col)
+    return <ChevronsUpDown className="ml-1 h-3 w-3 opacity-40" />;
+  return sortDir === "asc" ? (
+    <ChevronUp className="ml-1 h-3 w-3" />
+  ) : (
+    <ChevronDown className="ml-1 h-3 w-3" />
+  );
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -95,7 +106,13 @@ interface DonationsTableProps {
 
 const PAGE_SIZES = [25, 50, 100, 250] as const;
 
-export function DonationsTable({ data, pagination, orgNames, sortBy, sortDir }: DonationsTableProps) {
+export function DonationsTable({
+  data,
+  pagination,
+  orgNames,
+  sortBy,
+  sortDir,
+}: DonationsTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -121,7 +138,13 @@ export function DonationsTable({ data, pagination, orgNames, sortBy, sortDir }: 
     }
   }
 
-  function SortableHeader({ col, children }: { col: string; children: React.ReactNode }) {
+  function SortableHeader({
+    col,
+    children,
+  }: {
+    col: string;
+    children: React.ReactNode;
+  }) {
     return (
       <button
         className="flex items-center font-medium hover:text-foreground"
@@ -143,7 +166,9 @@ export function DonationsTable({ data, pagination, orgNames, sortBy, sortDir }: 
         enableSorting: true,
         header: () => <SortableHeader col="id">ID</SortableHeader>,
         cell: ({ row }) => (
-          <span className="font-mono text-xs text-muted-foreground">#{row.original.id}</span>
+          <span className="font-mono text-xs text-muted-foreground">
+            #{row.original.id}
+          </span>
         ),
       },
       {
@@ -152,7 +177,9 @@ export function DonationsTable({ data, pagination, orgNames, sortBy, sortDir }: 
         enableSorting: true,
         header: () => <SortableHeader col="datetime">Date</SortableHeader>,
         cell: ({ row }) => (
-          <span className="whitespace-nowrap text-sm">{formatDate(row.original.datetime)}</span>
+          <span className="whitespace-nowrap text-sm">
+            {formatDate(row.original.datetime)}
+          </span>
         ),
       },
       {
@@ -161,7 +188,9 @@ export function DonationsTable({ data, pagination, orgNames, sortBy, sortDir }: 
         enableSorting: true,
         header: () => <SortableHeader col="amount">Amount</SortableHeader>,
         cell: ({ row }) => (
-          <span className="font-medium">{formatAmount(row.original.amount)}</span>
+          <span className="font-medium">
+            {formatAmount(row.original.amount)}
+          </span>
         ),
       },
       {
@@ -170,9 +199,11 @@ export function DonationsTable({ data, pagination, orgNames, sortBy, sortDir }: 
         header: "Donor",
         cell: ({ row }) => {
           const label = donorLabel(row.original);
-          return label
-            ? <span className="text-sm">{label}</span>
-            : <span className="text-muted-foreground">—</span>;
+          return label ? (
+            <span className="text-sm">{label}</span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          );
         },
       },
       {
@@ -181,11 +212,15 @@ export function DonationsTable({ data, pagination, orgNames, sortBy, sortDir }: 
         header: "Organizations",
         cell: ({ row }) => {
           const ods = row.original.organizationDonations;
-          if (ods.length === 0) return <span className="text-muted-foreground">—</span>;
+          if (ods.length === 0)
+            return <span className="text-muted-foreground">—</span>;
           return (
             <span className="text-sm">
               {ods
-                .map((od) => `${orgNames[od.organizationInternalId] ?? od.organizationInternalId} (${formatAmount(od.amount)})`)
+                .map(
+                  (od) =>
+                    `${orgNames[od.organizationInternalId] ?? od.organizationInternalId} (${formatAmount(od.amount)})`,
+                )
                 .join(", ")}
             </span>
           );
@@ -207,16 +242,22 @@ export function DonationsTable({ data, pagination, orgNames, sortBy, sortDir }: 
         id: "paymentMethod",
         accessorKey: "paymentMethod",
         enableSorting: true,
-        header: () => <SortableHeader col="paymentMethod">Payment</SortableHeader>,
+        header: () => (
+          <SortableHeader col="paymentMethod">Payment</SortableHeader>
+        ),
         cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground">{row.original.paymentMethod ?? "—"}</span>
+          <span className="text-sm text-muted-foreground">
+            {row.original.paymentMethod ?? "—"}
+          </span>
         ),
       },
       {
         id: "companyName",
         accessorKey: "companyName",
         enableSorting: true,
-        header: () => <SortableHeader col="companyName">Company</SortableHeader>,
+        header: () => (
+          <SortableHeader col="companyName">Company</SortableHeader>
+        ),
         cell: ({ row }) => (
           <span className="text-sm">{row.original.companyName ?? "—"}</span>
         ),
@@ -227,12 +268,14 @@ export function DonationsTable({ data, pagination, orgNames, sortBy, sortDir }: 
         enableSorting: false,
         header: "Company Code",
         cell: ({ row }) => (
-          <span className="font-mono text-xs">{row.original.companyCode ?? "—"}</span>
+          <span className="font-mono text-xs">
+            {row.original.companyCode ?? "—"}
+          </span>
         ),
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [orgNames, sortBy, sortDir]
+    [orgNames, sortBy, sortDir],
   );
 
   const table = useReactTable({
@@ -246,7 +289,8 @@ export function DonationsTable({ data, pagination, orgNames, sortBy, sortDir }: 
     onColumnVisibilityChange: setColumnVisibility,
   });
 
-  const showingCompanyCols = columnVisibility.companyName || columnVisibility.companyCode;
+  const showingCompanyCols =
+    columnVisibility.companyName || columnVisibility.companyCode;
 
   return (
     <div className="space-y-4">
@@ -280,7 +324,10 @@ export function DonationsTable({ data, pagination, orgNames, sortBy, sortDir }: 
                   <TableHead key={header.id}>
                     {header.isPlaceholder
                       ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -289,16 +336,26 @@ export function DonationsTable({ data, pagination, orgNames, sortBy, sortDir }: 
           <TableBody>
             {table.getRowModel().rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-center text-muted-foreground py-8">
+                <TableCell
+                  colSpan={columns.length}
+                  className="text-center text-muted-foreground py-8"
+                >
                   No donations found.
                 </TableCell>
               </TableRow>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  className="cursor-pointer"
+                  onClick={() => router.push(`/donations/${row.original.id}`)}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
