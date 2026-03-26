@@ -3,6 +3,7 @@ import donor from "./donor";
 import recurringDonation from "./recurringDonation";
 import transfer from "./transfer";
 import organization from "./organization";
+import dashboard from "./dashboard";
 
 export default {
   "donation-router": {
@@ -24,5 +25,9 @@ export default {
   "organization-router": {
     type: "content-api",
     routes: organization.routes,
+  },
+  "dashboard-router": {
+    type: "content-api",
+    routes: dashboard.routes,
   },
 };
