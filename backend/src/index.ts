@@ -107,6 +107,7 @@ async function bootstrapDonationPermissions(
     "plugin::admin-panel.transfer.findOne",
     "plugin::admin-panel.organization.stats",
     "plugin::admin-panel.dashboard.stats",
+    "plugin::admin-panel.dashboard.charts",
   ];
 
   // Write actions that must be actively revoked from DonationAdmin if previously granted

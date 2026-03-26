@@ -329,18 +329,14 @@ Until Phase 8, the root route shows a simple placeholder ("Dashboard coming soon
 
 `DashboardRepository` with `getTotalDonations`, `getTotalDonors`, `getActiveDonors`, `getMrr`, `getPeriodStats`, `getStats` (parallel). 10 integration tests (66 total passing). `GET /api/admin-panel/dashboard/stats`. Dashboard page replaced with 4 KPI cards + period comparison table with trend badges (vs prior period).
 
-### Phase 9 — Dashboard charts
+### ✅ Phase 9 — Dashboard charts
 
-Backend: `GET /api/admin-panel/dashboard/charts`. All series are new queries:
+`GET /api/admin-panel/dashboard/charts` (3 series, all in parallel). Raw SQL for `generate_series`-based queries. 4 Recharts components (client components):
 
-- Monthly donation totals — GROUP BY month across finalized donations
-- Cumulative donations — running sum over all months
-- Active donors per month — **most complex**: for each month M, count distinct donors with ≥1 finalized donation in [M−11, M]; likely requires a generate_series approach or raw SQL
-- New vs churned recurring donors — **payment-based, not flag-based**: for each month, a donor is "active" if they have ≥1 finalized donation linked to a recurring donation in that month. A donor is "new" if they appear this month but not last month; "churned" if they appeared last month but not this month. The `active` boolean flag on `recurringDonations` is not used for this calculation.
-- Monthly average donation amount — AVG per month across finalized donations
-- Org allocation totals — GROUP BY org + month across `organizationDonations`, filterable by date range
-
-Frontend: all 6 charts
+- Bar chart: monthly donation totals (last 24 months)
+- Area chart: cumulative donations (computed from monthly via running sum in JS)
+- Line chart: active donors per month (rolling 12-month window per month, CTE + generate_series)
+- Composed chart: recurring donors new/churned (bars) + active count (line)
 
 ### Phase 10 — Recurring donations grid
 

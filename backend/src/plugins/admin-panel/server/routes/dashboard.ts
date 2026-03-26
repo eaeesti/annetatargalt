@@ -6,5 +6,11 @@ export default {
       handler: "dashboard.stats",
       config: {},
     },
+    {
+      method: "GET",
+      path: "/dashboard/charts",
+      handler: "dashboard.charts",
+      config: {},
+    },
   ],
 };

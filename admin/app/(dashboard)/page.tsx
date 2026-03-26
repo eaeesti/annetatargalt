@@ -1,5 +1,11 @@
 import { strapiAdmin } from "../../lib/api";
-import type { DashboardStats } from "./types";
+import {
+  MonthlyTotalsChart,
+  CumulativeChart,
+} from "./_components/monthly-totals-chart";
+import { ActiveDonorsChart } from "./_components/active-donors-chart";
+import { RecurringChurnChart } from "./_components/recurring-churn-chart";
+import type { DashboardStats, DashboardCharts } from "./types";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -29,18 +35,16 @@ function TrendBadge({ pct }: { pct: number | null }) {
   );
 }
 
-// ── Stat card ─────────────────────────────────────────────────────────────────
+// ── Sub-components ────────────────────────────────────────────────────────────
 
 function StatCard({
   label,
   value,
   sub,
-  trend,
 }: {
   label: string;
   value: string;
   sub?: string;
-  trend?: number | null;
 }) {
   return (
     <div className="rounded-lg border bg-card p-5 space-y-1">
@@ -48,17 +52,10 @@ function StatCard({
         {label}
       </p>
       <p className="text-2xl font-bold tabular-nums">{value}</p>
-      {(sub || trend !== undefined) && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          {sub && <span>{sub}</span>}
-          {trend !== undefined && <TrendBadge pct={trend} />}
-        </div>
-      )}
+      {sub && <p className="text-sm text-muted-foreground">{sub}</p>}
     </div>
   );
 }
-
-// ── Period section ────────────────────────────────────────────────────────────
 
 function PeriodRow({
   label,
@@ -69,8 +66,6 @@ function PeriodRow({
   current: { count: number; total: number };
   prior: { count: number; total: number };
 }) {
-  const eurTrend = pctChange(current.total, prior.total);
-  const cntTrend = pctChange(current.count, prior.count);
   return (
     <div className="grid grid-cols-[8rem_1fr_1fr_auto] gap-4 items-center text-sm py-2 border-b last:border-0">
       <span className="text-muted-foreground font-medium">{label}</span>
@@ -81,9 +76,26 @@ function PeriodRow({
         {formatCount(current.count)} donations
       </span>
       <div className="flex gap-1.5">
-        <TrendBadge pct={eurTrend} />
-        <TrendBadge pct={cntTrend} />
+        <TrendBadge pct={pctChange(current.total, prior.total)} />
+        <TrendBadge pct={pctChange(current.count, prior.count)} />
       </div>
+    </div>
+  );
+}
+
+function ChartCard({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-lg border bg-card p-5 space-y-3">
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+        {title}
+      </h2>
+      {children}
     </div>
   );
 }
@@ -91,29 +103,34 @@ function PeriodRow({
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function DashboardPage() {
-  const res = await strapiAdmin("/api/admin-panel/dashboard/stats", {
-    cache: "no-store",
-  });
+  const [statsRes, chartsRes] = await Promise.all([
+    strapiAdmin("/api/admin-panel/dashboard/stats", { cache: "no-store" }),
+    strapiAdmin("/api/admin-panel/dashboard/charts", { cache: "no-store" }),
+  ]);
 
-  if (!res.ok) {
+  if (!statsRes.ok) {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <p className="text-sm text-muted-foreground">
-          Could not load stats ({res.status}).
+          Could not load stats ({statsRes.status}).
         </p>
       </div>
     );
   }
 
-  const { data }: { data: DashboardStats } = await res.json();
+  const { data }: { data: DashboardStats } = await statsRes.json();
   const { totalDonations, totalDonors, activeDonors, mrr, periods } = data;
+
+  const charts: DashboardCharts | null = chartsRes.ok
+    ? ((await chartsRes.json()) as { data: DashboardCharts }).data
+    : null;
 
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-bold">Dashboard</h1>
 
-      {/* Top KPIs */}
+      {/* KPI cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Total donated"
@@ -154,6 +171,28 @@ export default async function DashboardPage() {
           prior={periods.days365.prior}
         />
       </div>
+
+      {/* Charts */}
+      {charts && (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <ChartCard title="Monthly donations (last 24 months)">
+              <MonthlyTotalsChart data={charts.monthlyTotals} />
+            </ChartCard>
+            <ChartCard title="Cumulative donations (all time)">
+              <CumulativeChart data={charts.monthlyTotals} />
+            </ChartCard>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <ChartCard title="Active donors per month (rolling 12 months)">
+              <ActiveDonorsChart data={charts.activeDonorsPerMonth} />
+            </ChartCard>
+            <ChartCard title="Recurring donors — new vs churned">
+              <RecurringChurnChart data={charts.recurringChurn} />
+            </ChartCard>
+          </div>
+        </>
+      )}
     </div>
   );
 }
