@@ -2,6 +2,7 @@ import donation from "./donation";
 import donor from "./donor";
 import recurringDonation from "./recurringDonation";
 import transfer from "./transfer";
+import organization from "./organization";
 
 export default {
   "donation-router": {
@@ -19,5 +20,9 @@ export default {
   "transfer-router": {
     type: "content-api",
     routes: transfer.routes,
+  },
+  "organization-router": {
+    type: "content-api",
+    routes: organization.routes,
   },
 };
