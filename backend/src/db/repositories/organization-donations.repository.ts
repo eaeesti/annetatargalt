@@ -1,6 +1,11 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db, type Database } from "../client";
-import { organizationDonations, type OrganizationDonation, type NewOrganizationDonation } from "../schema";
+import {
+  organizationDonations,
+  donations,
+  type OrganizationDonation,
+  type NewOrganizationDonation,
+} from "../schema";
 
 export class OrganizationDonationsRepository {
   constructor(private database: Database = db) {}
@@ -31,11 +36,13 @@ export class OrganizationDonationsRepository {
   /**
    * Find organization donations by organization internal ID
    */
-  async findByOrganizationInternalId(organizationInternalId: string): Promise<OrganizationDonation[]> {
+  async findByOrganizationInternalId(
+    organizationInternalId: string,
+  ): Promise<OrganizationDonation[]> {
     return this.database.query.organizationDonations.findMany({
       where: eq(
         organizationDonations.organizationInternalId,
-        organizationInternalId
+        organizationInternalId,
       ),
     });
   }
@@ -43,7 +50,9 @@ export class OrganizationDonationsRepository {
   /**
    * Create organization donations (junction records)
    */
-  async createMany(data: NewOrganizationDonation[]): Promise<OrganizationDonation[]> {
+  async createMany(
+    data: NewOrganizationDonation[],
+  ): Promise<OrganizationDonation[]> {
     if (data.length === 0) return [];
 
     return this.database.insert(organizationDonations).values(data).returning();
@@ -67,7 +76,7 @@ export class OrganizationDonationsRepository {
    */
   async updateForDonation(
     donationId: number,
-    data: Omit<NewOrganizationDonation, "donationId">[]
+    data: Omit<NewOrganizationDonation, "donationId">[],
   ): Promise<OrganizationDonation[]> {
     // Delete existing
     await this.database
@@ -81,7 +90,7 @@ export class OrganizationDonationsRepository {
       data.map((item) => ({
         donationId,
         ...item,
-      }))
+      })),
     );
   }
 
@@ -95,17 +104,43 @@ export class OrganizationDonationsRepository {
   }
 
   /**
+   * Aggregate per-org stats across all finalized donations.
+   * Returns one row per organizationInternalId: totalDonated, donationCount, lastDonationDate.
+   */
+  async getStats() {
+    return this.database
+      .select({
+        organizationInternalId: organizationDonations.organizationInternalId,
+        totalDonated:
+          sql<number>`cast(coalesce(sum(${organizationDonations.amount}), 0) as int)`.as(
+            "total_donated",
+          ),
+        donationCount: sql<number>`cast(count(*) as int)`.as("donation_count"),
+        lastDonationDate: sql<string | null>`max(${donations.datetime})`.as(
+          "last_donation_date",
+        ),
+      })
+      .from(organizationDonations)
+      .innerJoin(donations, eq(organizationDonations.donationId, donations.id))
+      .where(sql`${donations.finalized} = true`)
+      .groupBy(organizationDonations.organizationInternalId);
+  }
+
+  /**
    * Check if an organization has any donations
    */
-  async organizationHasDonations(organizationInternalId: string): Promise<boolean> {
+  async organizationHasDonations(
+    organizationInternalId: string,
+  ): Promise<boolean> {
     const result = await this.database.query.organizationDonations.findFirst({
       where: eq(
         organizationDonations.organizationInternalId,
-        organizationInternalId
+        organizationInternalId,
       ),
     });
     return !!result;
   }
 }
 
-export const organizationDonationsRepository = new OrganizationDonationsRepository();
+export const organizationDonationsRepository =
+  new OrganizationDonationsRepository();

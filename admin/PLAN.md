@@ -318,14 +318,12 @@ Until Phase 8, the root route shows a simple placeholder ("Dashboard coming soon
 - ✅ `/transfers/[id]` — detail with metadata, per-org totals section (org names resolved, amounts, donation counts, %, progress bars, grand total row), and full linked donations list.
 - ✅ Transfers added to sidebar nav.
 
-### Phase 7 — Organizations view (stats + detail)
+### Phase 7 — Organizations view (stats + detail) ✅
 
-Backend: `GET /api/admin-panel/organizations/stats`.
-
-- Entirely new query: GROUP BY `organizationInternalId` across `organizationDonations` joined with finalized donations — total donated, donation count, last donation date per org.
-- No existing repository method covers this.
-
-Frontend: augment the Phase 1 org list page — merge stats from the new endpoint into the existing table, and add the detail view (sheet + `/organizations/[id]` full page) with org info from Strapi, full list of donations allocated to this org, and monthly totals chart.
+- ✅ `OrganizationDonationsRepository.getStats()` — single GROUP BY query across finalized `organizationDonations` joined with `donations`; returns totalDonated, donationCount, lastDonationDate per org.
+- ✅ `GET /api/admin-panel/organizations/stats` with audit logging; `organization.stats` permission added to DonationAdmin role.
+- ✅ `/organizations` list — augmented with three stats columns (total donated, donations, last donation); sorted by totalDonated desc; rows link to detail page. Stats fetched in parallel with Strapi org list.
+- ✅ `/organizations/[internalId]` detail — org info (logo, internal ID, website), stats section, recent donations list (most recent 50, with "see all" link to `/donations?orgId=...` when more exist). Uses `internalId` as URL slug.
 
 ### Phase 8 — Dashboard summary cards + period comparisons
 
