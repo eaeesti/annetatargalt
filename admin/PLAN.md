@@ -325,18 +325,9 @@ Until Phase 8, the root route shows a simple placeholder ("Dashboard coming soon
 - ✅ `/organizations` list — augmented with three stats columns (total donated, donations, last donation); sorted by totalDonated desc; rows link to detail page. Stats fetched in parallel with Strapi org list.
 - ✅ `/organizations/[internalId]` detail — org info (logo, internal ID, website), stats section, recent donations list (most recent 50, with "see all" link to `/donations?orgId=...` when more exist). Uses `internalId` as URL slug.
 
-### Phase 8 — Dashboard summary cards + period comparisons
+### ✅ Phase 8 — Dashboard summary cards + period comparisons
 
-Backend: `GET /api/admin-panel/dashboard/stats`. Several new queries needed alongside existing ones:
-
-- Total finalized donations count + sum — reuse `countFinalized()` + `sumFinalizedDonations()` (already exist)
-- Total unique donors with ≥1 finalized donation — new query
-- Active donors (donated in last 12 months) — new query
-- MRR — sum of `organizationRecurringDonations.amount` for active recurring donations allocated to the Anneta Targalt org — new query joining recurring donations and their org splits
-- Period comparisons — reuse `sumFinalizedDonationsInRange()` (already exists), called twice per period (current vs prior)
-- Unit tests required for all of the above.
-
-Frontend: card layout (replaces the placeholder on `/`)
+`DashboardRepository` with `getTotalDonations`, `getTotalDonors`, `getActiveDonors`, `getMrr`, `getPeriodStats`, `getStats` (parallel). 10 integration tests (66 total passing). `GET /api/admin-panel/dashboard/stats`. Dashboard page replaced with 4 KPI cards + period comparison table with trend badges (vs prior period).
 
 ### Phase 9 — Dashboard charts
 
