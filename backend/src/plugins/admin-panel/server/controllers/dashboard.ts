@@ -6,4 +6,9 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
     const data = await dashboardRepository.getStats();
     ctx.body = { data };
   },
+
+  async charts(ctx: { body: unknown }) {
+    const data = await dashboardRepository.getCharts();
+    ctx.body = { data };
+  },
 });

@@ -1,10 +1,35 @@
 import { eq, sql, and, gte, isNotNull } from "drizzle-orm";
 import { db, type Database } from "../client";
-import { donations, donors, recurringDonations } from "../schema";
+import { donations, recurringDonations } from "../schema";
 
 export type PeriodStats = {
   total: number;
   count: number;
+};
+
+export type MonthlyTotalsRow = {
+  month: string; // "YYYY-MM"
+  total: number; // sum of amounts in cents
+  count: number;
+  avgAmount: number; // average amount in cents
+};
+
+export type ActiveDonorsRow = {
+  month: string; // "YYYY-MM"
+  activeDonors: number; // distinct donors with ≥1 finalized donation in trailing 12 months
+};
+
+export type RecurringChurnRow = {
+  month: string; // "YYYY-MM"
+  active: number; // donors with a recurring donation payment this month
+  newDonors: number; // appeared this month, not last
+  churned: number; // appeared last month, not this month
+};
+
+export type DashboardCharts = {
+  monthlyTotals: MonthlyTotalsRow[];
+  activeDonorsPerMonth: ActiveDonorsRow[];
+  recurringChurn: RecurringChurnRow[];
 };
 
 export type DashboardStats = {
@@ -96,6 +121,128 @@ export class DashboardRepository {
         ),
       );
     return { count: row?.count ?? 0, total: row?.total ?? 0 };
+  }
+
+  /** Monthly donation totals, counts, and averages — all time, ascending. */
+  async getMonthlyTotals(): Promise<MonthlyTotalsRow[]> {
+    const result = await this.database.execute(sql`
+      SELECT
+        to_char(datetime, 'YYYY-MM') AS month,
+        cast(sum(amount) as int)     AS total,
+        cast(count(*) as int)        AS count,
+        cast(avg(amount) as int)     AS avg_amount
+      FROM donations
+      WHERE finalized = true
+      GROUP BY to_char(datetime, 'YYYY-MM')
+      ORDER BY month ASC
+    `);
+    return (result.rows as Array<Record<string, unknown>>).map((r) => ({
+      month: r.month as string,
+      total: Number(r.total),
+      count: Number(r.count),
+      avgAmount: Number(r.avg_amount),
+    }));
+  }
+
+  /**
+   * For each of the last 24 months: count distinct donors with ≥1 finalized
+   * donation in the trailing 12-month window ending that month (inclusive).
+   */
+  async getActiveDonorsPerMonth(): Promise<ActiveDonorsRow[]> {
+    const result = await this.database.execute(sql`
+      WITH months AS (
+        SELECT generate_series(
+          date_trunc('month', now()) - interval '23 months',
+          date_trunc('month', now()),
+          interval '1 month'
+        ) AS month
+      )
+      SELECT
+        to_char(m.month, 'YYYY-MM') AS month,
+        cast(count(distinct d.donor_id) as int) AS active_donors
+      FROM months m
+      LEFT JOIN donations d
+        ON  d.finalized  = true
+        AND d.donor_id   IS NOT NULL
+        AND d.datetime  >= m.month - interval '11 months'
+        AND d.datetime   < m.month  + interval '1 month'
+      GROUP BY m.month
+      ORDER BY m.month ASC
+    `);
+    return (result.rows as Array<Record<string, unknown>>).map((r) => ({
+      month: r.month as string,
+      activeDonors: Number(r.active_donors),
+    }));
+  }
+
+  /**
+   * For each of the last 24 months: count recurring-linked donor payments,
+   * plus donors who are new (not in prior month) and churned (in prior month
+   * but not this month).
+   */
+  async getRecurringChurn(): Promise<RecurringChurnRow[]> {
+    const result = await this.database.execute(sql`
+      WITH months AS (
+        SELECT generate_series(
+          date_trunc('month', now()) - interval '23 months',
+          date_trunc('month', now()),
+          interval '1 month'
+        ) AS month
+      ),
+      monthly_active AS (
+        SELECT
+          date_trunc('month', d.datetime) AS month,
+          d.donor_id
+        FROM donations d
+        WHERE d.finalized              = true
+          AND d.donor_id               IS NOT NULL
+          AND d.recurring_donation_id  IS NOT NULL
+        GROUP BY date_trunc('month', d.datetime), d.donor_id
+      )
+      SELECT
+        to_char(m.month, 'YYYY-MM') AS month,
+        cast(coalesce((
+          SELECT count(distinct ma.donor_id)
+          FROM monthly_active ma WHERE ma.month = m.month
+        ), 0) as int) AS active,
+        cast(coalesce((
+          SELECT count(distinct ma.donor_id)
+          FROM monthly_active ma
+          WHERE ma.month = m.month
+            AND ma.donor_id NOT IN (
+              SELECT ma2.donor_id FROM monthly_active ma2
+              WHERE ma2.month = m.month - interval '1 month'
+            )
+        ), 0) as int) AS new_donors,
+        cast(coalesce((
+          SELECT count(distinct ma.donor_id)
+          FROM monthly_active ma
+          WHERE ma.month = m.month - interval '1 month'
+            AND ma.donor_id NOT IN (
+              SELECT ma2.donor_id FROM monthly_active ma2
+              WHERE ma2.month = m.month
+            )
+        ), 0) as int) AS churned
+      FROM months m
+      ORDER BY m.month ASC
+    `);
+    return (result.rows as Array<Record<string, unknown>>).map((r) => ({
+      month: r.month as string,
+      active: Number(r.active),
+      newDonors: Number(r.new_donors),
+      churned: Number(r.churned),
+    }));
+  }
+
+  /** Fetch all chart series in parallel. */
+  async getCharts(): Promise<DashboardCharts> {
+    const [monthlyTotals, activeDonorsPerMonth, recurringChurn] =
+      await Promise.all([
+        this.getMonthlyTotals(),
+        this.getActiveDonorsPerMonth(),
+        this.getRecurringChurn(),
+      ]);
+    return { monthlyTotals, activeDonorsPerMonth, recurringChurn };
   }
 
   /** Fetch all dashboard stats in parallel. */
