@@ -23,7 +23,7 @@
 
 - **Data tables**: Standard Next.js App Router pattern — server component reads `searchParams`, fetches data from the backend with those params, passes results to a thin client component that uses TanStack Table for column definitions and rendering (`manualPagination`, `manualSorting`, `manualFiltering` all true). Pagination/sort state changes via `router.push` with updated search params. **All table state (page, sort, filters) lives in URL search params** — this makes every filtered/sorted view automatically bookmarkable and shareable. Always use URL params, never local state, for table state.
 - **Page size**: default **50** across all tables. User-selectable options: 25 / 50 / 100 / 250. State lives in URL params.
-- **Column visibility**: built into TanStack Table; each table has a dropdown to show/hide columns. Persisted per-table in `localStorage` (it's a personal UI preference, not a shareable view). Company name and company code are hidden by default.
+- **Column visibility**: built into TanStack Table; each table has a "Columns" dropdown (shadcn dropdown-menu, Base UI) to show/hide each column individually. Persisted per-table in `localStorage` (it's a personal UI preference, not a shareable view). In the donations table, ID, Status, Payment method, Company, and Company code are hidden by default.
 - **Filtering (Phase 2)**: simple fixed filters per table — date range, status, and other common cases as dropdowns/inputs above the table. Filter state lives in URL params.
 - **Filter builder (Phase 11)**: Strapi-style "Add filter" UI — pick column → pick operator → enter value, stackable, removable. Built once as a shared reusable component, then applied to all tables. Each column type has appropriate operators: text (contains / equals / starts with), number (= / ≠ / > / < / between), boolean (is true / is false), date (before / after / between). Filter state lives in URL params.
 - **Charts**: shadcn Charts (Recharts-based, theme-aware)
@@ -274,7 +274,7 @@ Until Phase 8, the root route shows a simple placeholder ("Dashboard coming soon
 - ✅ Plugin registered in `backend/config/plugins.js` pointing to the dist path (`./dist/src/plugins/admin-panel`).
 - ✅ **Strapi v5 plugin route fix**: routes must be exported as a named-router object with `type: "content-api"` — a flat array silently registers routes under the admin prefix (`/admin/...`) instead of `/api/...`.
 - ✅ **Next.js 16 proxy convention**: `proxy.ts` with `export function proxy(...)` is the correct Next.js 16 middleware file name. `middleware.ts` is deprecated and causes Turbopack panics.
-- ✅ Frontend: TanStack Table with URL-driven state (page, sort, pageSize in URL params), optional company columns toggle (hidden by default), org names resolved via Phase 1 utility.
+- ✅ Frontend: TanStack Table with URL-driven state (page, sort, pageSize in URL params), per-column visibility dropdown (shadcn dropdown-menu, Base UI), hidden by default: ID, Status, Payment method, Company, Company code. Org names resolved via Phase 1 utility.
 - ⏳ `admin_audit_log` Drizzle table + migration — deferred to Phase 3.
 
 ### Phase 3 — Donation detail + audit log ✅
@@ -338,9 +338,9 @@ Until Phase 8, the root route shows a simple placeholder ("Dashboard coming soon
 - Line chart: active donors per month (rolling 12-month window per month, CTE + generate_series)
 - Composed chart: recurring donors new/churned (bars) + active count (line)
 
-### ✅ Phase 10 — Recurring donations grid
+### ✅ Phase 10 — Donations grid
 
-`getGrid()` on RecurringDonationsRepository: single query with `array_agg(DISTINCT to_char(...)) FILTER` returning all active recurring donors with their covered months. `GET /api/admin-panel/recurring-donations/grid`. Frontend at `/recurring-donations/grid`: horizontally-scrollable table with sticky donor column, month columns colour-coded (green ✓ paid / red ✗ gap / blank before-start), gap count column, rows sorted by gap count descending so worst cases are at the top, 12/24/36-month range selector, legend. "Grid view →" toggle added to the list page header.
+`getGrid()` on RecurringDonationsRepository: CTE + `json_object_agg` query returning all donors with any finalized donation, grouped by donor. Returns `monthAmounts: Record<string, number>` (month → total cents). `GET /api/admin-panel/recurring-donations/grid`. Frontend at `/recurring-donations/grid`: horizontally-scrollable table with sticky donor column, month columns showing actual donated amount in green (e.g. €20) or ✗ for gaps / blank before first donation. Rows sorted by first donation month then name. 12/24/36/All-month range selector (All spans from earliest donor's first donation to today). Column visibility: no €/mo column — amounts shown per cell. "Grid view →" toggle added to the recurring donations list page header.
 
 ### Phase 11 — Filter builder
 
