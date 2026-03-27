@@ -1,6 +1,6 @@
 import { eq, sql, and, gte, isNotNull } from "drizzle-orm";
 import { db, type Database } from "../client";
-import { donations, recurringDonations } from "../schema";
+import { donations } from "../schema";
 
 export type PeriodStats = {
   total: number;
@@ -94,15 +94,22 @@ export class DashboardRepository {
     return row?.count ?? 0;
   }
 
-  /** Sum of amounts across all active recurring donations (cents/month). */
+  /**
+   * Sum of amounts for recurring donations that had a finalized payment in the
+   * last 60 days — payment-based activity, not the deprecated `active` flag.
+   */
   async getMrr(): Promise<number> {
-    const [row] = await this.database
-      .select({
-        total: sql<number>`cast(coalesce(sum(${recurringDonations.amount}), 0) as int)`,
-      })
-      .from(recurringDonations)
-      .where(eq(recurringDonations.active, true));
-    return row?.total ?? 0;
+    const result = await this.database.execute(sql`
+      SELECT cast(coalesce(sum(rd.amount), 0) as int) AS total
+      FROM recurring_donations rd
+      WHERE EXISTS (
+        SELECT 1 FROM donations d
+        WHERE d.recurring_donation_id = rd.id
+          AND d.finalized = true
+          AND d.datetime >= now() - interval '60 days'
+      )
+    `);
+    return Number((result.rows[0] as Record<string, unknown>)?.total ?? 0);
   }
 
   /** Sum + count of finalized donations within [from, to). */
