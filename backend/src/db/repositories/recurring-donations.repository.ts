@@ -261,6 +261,47 @@ export class RecurringDonationsRepository {
       .delete(recurringDonations)
       .where(eq(recurringDonations.id, id));
   }
+
+  /**
+   * Compact grid dataset: all active recurring donations with the set of months
+   * that have a linked finalized donation, ordered by donor last/first name.
+   */
+  async getGrid(): Promise<
+    Array<{
+      donorId: number;
+      donorName: string;
+      startMonth: string; // "YYYY-MM" of the donor's first finalized donation
+      monthAmounts: Record<string, number>; // "YYYY-MM" -> total cents donated that month
+    }>
+  > {
+    const result = await this.database.execute(sql`
+      WITH monthly AS (
+        SELECT
+          don.donor_id,
+          to_char(don.datetime, 'YYYY-MM')  AS month,
+          cast(sum(don.amount) as int)       AS total
+        FROM donations don
+        WHERE don.finalized = true
+          AND don.donor_id IS NOT NULL
+        GROUP BY don.donor_id, to_char(don.datetime, 'YYYY-MM')
+      )
+      SELECT
+        d.id                                                  AS "donorId",
+        concat(d.first_name, ' ', d.last_name)               AS "donorName",
+        min(m.month)                                          AS "startMonth",
+        json_object_agg(m.month, m.total)                     AS "monthAmounts"
+      FROM donors d
+      JOIN monthly m ON m.donor_id = d.id
+      GROUP BY d.id
+      ORDER BY d.last_name, d.first_name, d.id
+    `);
+    return (result.rows as Array<Record<string, unknown>>).map((r) => ({
+      donorId: Number(r.donorId),
+      donorName: String(r.donorName),
+      startMonth: String(r.startMonth),
+      monthAmounts: (r.monthAmounts as Record<string, number>) ?? {},
+    }));
+  }
 }
 
 export const recurringDonationsRepository = new RecurringDonationsRepository();
