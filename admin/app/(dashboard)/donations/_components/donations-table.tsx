@@ -10,9 +10,18 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
+import { ChevronDown, ChevronUp, ChevronsUpDown, Columns3 } from "lucide-react";
 import { Badge } from "../../../../components/ui/badge";
 import { Button } from "../../../../components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../../../../components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -117,6 +126,9 @@ export function DonationsTable({
   const searchParams = useSearchParams();
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
+    id: false,
+    finalized: false,
+    paymentMethod: false,
     companyName: false,
     companyCode: false,
   });
@@ -289,8 +301,17 @@ export function DonationsTable({
     onColumnVisibilityChange: setColumnVisibility,
   });
 
-  const showingCompanyCols =
-    columnVisibility.companyName || columnVisibility.companyCode;
+  const columnLabels: Record<string, string> = {
+    id: "ID",
+    datetime: "Date",
+    amount: "Amount",
+    donor: "Donor",
+    organizations: "Organizations",
+    finalized: "Status",
+    paymentMethod: "Payment method",
+    companyName: "Company",
+    companyCode: "Company code",
+  };
 
   return (
     <div className="space-y-4">
@@ -299,19 +320,31 @@ export function DonationsTable({
         <p className="text-sm text-muted-foreground">
           {pagination.total.toLocaleString()} donations
         </p>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() =>
-            setColumnVisibility((v) => ({
-              ...v,
-              companyName: !showingCompanyCols,
-              companyCode: !showingCompanyCols,
-            }))
-          }
-        >
-          {showingCompanyCols ? "Hide" : "Show"} company columns
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button variant="outline" size="sm">
+                <Columns3 className="h-4 w-4 mr-1.5" />
+                Columns
+              </Button>
+            }
+          />
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {table.getAllColumns().map((col) => (
+                <DropdownMenuCheckboxItem
+                  key={col.id}
+                  checked={col.getIsVisible()}
+                  onCheckedChange={(val) => col.toggleVisibility(!!val)}
+                >
+                  {columnLabels[col.id] ?? col.id}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Table */}
