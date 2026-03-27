@@ -338,10 +338,9 @@ Until Phase 8, the root route shows a simple placeholder ("Dashboard coming soon
 - Line chart: active donors per month (rolling 12-month window per month, CTE + generate_series)
 - Composed chart: recurring donors new/churned (bars) + active count (line)
 
-### Phase 10 — Recurring donations grid
+### ✅ Phase 10 — Recurring donations grid
 
-Backend: ensure the recurring donations list endpoint supports fetching enough rows for the grid (up to all active donors — probably a few hundred). No new query structure needed beyond Phase 5's paginated list.
-Frontend: grid with pagination and dynamic column range
+`getGrid()` on RecurringDonationsRepository: single query with `array_agg(DISTINCT to_char(...)) FILTER` returning all active recurring donors with their covered months. `GET /api/admin-panel/recurring-donations/grid`. Frontend at `/recurring-donations/grid`: horizontally-scrollable table with sticky donor column, month columns colour-coded (green ✓ paid / red ✗ gap / blank before-start), gap count column, rows sorted by gap count descending so worst cases are at the top, 12/24/36-month range selector, legend. "Grid view →" toggle added to the list page header.
 
 ### Phase 11 — Filter builder
 

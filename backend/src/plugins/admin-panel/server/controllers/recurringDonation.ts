@@ -117,4 +117,10 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
       },
     });
   },
+
+  async grid(ctx: Context) {
+    const rows = await recurringDonationsRepository.getGrid();
+    await auditLog(ctx, "recurringDonations.grid");
+    return ctx.send({ data: rows });
+  },
 });

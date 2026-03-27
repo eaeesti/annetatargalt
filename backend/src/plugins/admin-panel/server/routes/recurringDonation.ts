@@ -8,6 +8,12 @@ export default {
     },
     {
       method: "GET",
+      path: "/recurring-donations/grid",
+      handler: "recurringDonation.grid",
+      config: {},
+    },
+    {
+      method: "GET",
       path: "/recurring-donations/:id",
       handler: "recurringDonation.findOne",
       config: {},
