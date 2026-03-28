@@ -98,7 +98,7 @@ export function TransfersTable({
   const searchParams = useSearchParams();
 
   function pushUrl(updates: Record<string, string | undefined>) {
-    const sp = new URLSearchParams(searchParams.toString());
+    const sp = new URLSearchParams(window.location.search);
     for (const [key, value] of Object.entries(updates)) {
       if (value === undefined) sp.delete(key);
       else sp.set(key, value);
