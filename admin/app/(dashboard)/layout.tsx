@@ -15,13 +15,17 @@ async function getCurrentUser(): Promise<StrapiUser | null> {
   try {
     const res = await strapiAdmin("/api/users/me");
     if (!res.ok) return null;
-    return res.json() as Promise<StrapiUser>;
+    return (await res.json()) as StrapiUser;
   } catch {
     return null;
   }
 }
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const user = await getCurrentUser();
 
   if (!user) {

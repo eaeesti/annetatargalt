@@ -81,7 +81,9 @@ export default async function RecurringGridPage({
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">Recurring Grid</h1>
-        <p className="text-destructive">Failed to load grid ({res.status}).</p>
+        <p className="text-destructive">
+          Failed to load grid. Please try again later.
+        </p>
       </div>
     );
   }
@@ -105,8 +107,8 @@ export default async function RecurringGridPage({
           let y = ey,
             m = em;
           while (true) {
-            result.push(`${y}-${String(m).padStart(2, "0")}`);
             const key = `${y}-${String(m).padStart(2, "0")}`;
+            result.push(key);
             if (key === currentMonth) break;
             m++;
             if (m > 12) {
