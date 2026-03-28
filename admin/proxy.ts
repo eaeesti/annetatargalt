@@ -4,10 +4,13 @@ import { COOKIE_NAME } from "./lib/auth";
 
 export function proxy(request: NextRequest) {
   const token = request.cookies.get(COOKIE_NAME);
-  const isLoginPage = request.nextUrl.pathname.startsWith("/login");
-  const isApiRoute = request.nextUrl.pathname.startsWith("/api");
+  const { pathname } = request.nextUrl;
+  const isLoginPage = pathname.startsWith("/login");
+  // Only the login and logout endpoints are intentionally unauthenticated
+  const isPublicApiRoute =
+    pathname === "/api/login" || pathname === "/api/logout";
 
-  if (!token && !isLoginPage && !isApiRoute) {
+  if (!token && !isLoginPage && !isPublicApiRoute) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
