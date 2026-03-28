@@ -1,7 +1,7 @@
 import type { Core } from "@strapi/strapi";
 import type { Context } from "koa";
 import { donationTransfersRepository } from "../../../../db/repositories/donation-transfers.repository";
-import { adminAuditLogRepository } from "../../../../db/repositories/adminAuditLog.repository";
+import { auditLog } from "../utils/audit-log";
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
 const VALID_SORT_COLS = new Set([
@@ -10,23 +10,6 @@ const VALID_SORT_COLS = new Set([
   "donationCount",
   "totalAmount",
 ]);
-
-async function auditLog(ctx: Context, action: string, recordId?: string) {
-  try {
-    const user = ctx.state.user as { id: number; email: string } | undefined;
-    if (!user) return;
-    const ip = ctx.ip || null;
-    await adminAuditLogRepository.log({
-      userId: String(user.id),
-      userEmail: user.email,
-      action,
-      recordId: recordId ?? null,
-      ip,
-    });
-  } catch {
-    // Never fail the request due to audit logging errors
-  }
-}
 
 export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
   async list(ctx: Context) {
@@ -41,9 +24,13 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
     const dateFromRaw = q.dateFrom ? String(q.dateFrom) : undefined;
     const dateToRaw = q.dateTo ? String(q.dateTo) : undefined;
     const dateFrom =
-      dateFromRaw && !isNaN(Date.parse(dateFromRaw)) ? dateFromRaw : undefined;
+      dateFromRaw && !isNaN(new Date(dateFromRaw).getTime())
+        ? dateFromRaw
+        : undefined;
     const dateTo =
-      dateToRaw && !isNaN(Date.parse(dateToRaw)) ? dateToRaw : undefined;
+      dateToRaw && !isNaN(new Date(dateToRaw).getTime())
+        ? dateToRaw
+        : undefined;
 
     const { data, total } = await donationTransfersRepository.findPaginated({
       page,
