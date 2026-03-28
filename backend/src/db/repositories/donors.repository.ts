@@ -162,7 +162,9 @@ export class DonorsRepository {
         case "donationCount":
           return d(sql`coalesce(${statsSq.donationCount}, 0)`);
         case "lastDonationDate":
-          return sql`${statsSq.lastDonationDate} ${sql.raw(sortDir)} nulls last`;
+          return sortDir === "desc"
+            ? sql`${statsSq.lastDonationDate} desc nulls last`
+            : sql`${statsSq.lastDonationDate} asc nulls last`;
         default:
           return d(donors.id);
       }
