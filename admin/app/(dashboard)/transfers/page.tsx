@@ -60,7 +60,7 @@ export default async function TransfersPage({
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">Transfers</h1>
         <p className="text-destructive">
-          Failed to load transfers ({res.status}). Check that Strapi is running.
+          Failed to load transfers. Please try again later.
         </p>
       </div>
     );

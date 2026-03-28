@@ -72,11 +72,21 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
     // Step 1: Validate against Strapi admin auth (reuse its exact logic)
     const port = process.env.PORT ?? 1337;
-    const adminRes = await fetch(`http://localhost:${port}/admin/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+    const abortController = new AbortController();
+    const timeout = setTimeout(() => abortController.abort(), 5000);
+    let adminRes: Response;
+    try {
+      adminRes = await fetch(`http://localhost:${port}/admin/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+        signal: abortController.signal,
+      });
+    } catch {
+      return ctx.internalServerError("Login service unavailable");
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!adminRes.ok) {
       recordFailedAttempt(ctx.request.ip);
