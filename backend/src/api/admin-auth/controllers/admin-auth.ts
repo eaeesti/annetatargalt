@@ -3,7 +3,7 @@ import type { Context } from "koa";
 import crypto from "node:crypto";
 
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
-const LOGIN_MAX_ATTEMPTS = 10;
+const LOGIN_MAX_ATTEMPTS = 5;
 const loginAttempts = new Map<string, { count: number; resetAt: number }>();
 
 // Prune expired entries once per window to prevent unbounded memory growth
@@ -65,7 +65,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
     if (checkRateLimit(ctx.request.ip)) {
       ctx.status = 429;
-      return ctx.send({ error: "Too many login attempts. Try again in 15 minutes." });
+      return ctx.send({
+        error: "Too many login attempts. Try again in 15 minutes.",
+      });
     }
 
     // Step 1: Validate against Strapi admin auth (reuse its exact logic)
@@ -86,7 +88,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     // Step 2: Find or create users-permissions user with the same email
     let user = (await strapi.db
       .query("plugin::users-permissions.user")
-      .findOne({ where: { email: normalizedEmail } })) as UserPermissionsUser | null;
+      .findOne({
+        where: { email: normalizedEmail },
+      })) as UserPermissionsUser | null;
 
     if (!user) {
       // Assign the DonationAdmin role — not "authenticated", which public registrants also get
