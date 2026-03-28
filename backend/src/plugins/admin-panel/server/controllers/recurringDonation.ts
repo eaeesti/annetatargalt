@@ -1,7 +1,7 @@
 import type { Core } from "@strapi/strapi";
 import type { Context } from "koa";
 import { recurringDonationsRepository } from "../../../../db/repositories/recurring-donations.repository";
-import { adminAuditLogRepository } from "../../../../db/repositories/adminAuditLog.repository";
+import { auditLog } from "../utils/audit-log";
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
 const VALID_SORT_COLS = new Set([
@@ -13,23 +13,6 @@ const VALID_SORT_COLS = new Set([
   "donationCount",
   "lastDonationDate",
 ]);
-
-async function auditLog(ctx: Context, action: string, recordId?: string) {
-  try {
-    const user = ctx.state.user as { id: number; email: string } | undefined;
-    if (!user) return;
-    const ip = ctx.ip || null;
-    await adminAuditLogRepository.log({
-      userId: String(user.id),
-      userEmail: user.email,
-      action,
-      recordId: recordId ?? null,
-      ip,
-    });
-  } catch {
-    // Never fail the request due to audit logging errors
-  }
-}
 
 export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
   async list(ctx: Context) {
