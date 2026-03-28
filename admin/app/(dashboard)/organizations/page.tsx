@@ -160,7 +160,7 @@ export default async function OrganizationsPage() {
                 colSpan={7}
                 className="text-center text-muted-foreground py-8"
               >
-                No organizations found. Check that Strapi is running.
+                No organizations found.
               </TableCell>
             </TableRow>
           )}

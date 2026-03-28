@@ -44,8 +44,16 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
 
     const finalized =
       q.finalized !== undefined ? String(q.finalized) === "true" : undefined;
-    const dateFrom = q.dateFrom ? new Date(String(q.dateFrom)) : undefined;
-    const dateTo = q.dateTo ? new Date(String(q.dateTo)) : undefined;
+    const dateFromParsed = q.dateFrom
+      ? new Date(String(q.dateFrom))
+      : undefined;
+    const dateToParsed = q.dateTo ? new Date(String(q.dateTo)) : undefined;
+    const dateFrom =
+      dateFromParsed && !isNaN(dateFromParsed.getTime())
+        ? dateFromParsed
+        : undefined;
+    const dateTo =
+      dateToParsed && !isNaN(dateToParsed.getTime()) ? dateToParsed : undefined;
     const donorId = q.donorId ? Number(q.donorId) : undefined;
     const transferId = q.transferId ? Number(q.transferId) : undefined;
     const hasTransfer =

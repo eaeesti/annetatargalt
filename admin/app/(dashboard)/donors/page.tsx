@@ -61,7 +61,7 @@ export default async function DonorsPage({
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">Donors</h1>
         <p className="text-destructive">
-          Failed to load donors ({res.status}). Check that Strapi is running.
+          Failed to load donors. Please try again later.
         </p>
       </div>
     );

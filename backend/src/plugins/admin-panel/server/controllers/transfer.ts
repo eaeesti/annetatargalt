@@ -38,8 +38,12 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
     const sortByRaw = String(q.sortBy ?? "datetime");
     const sortBy = VALID_SORT_COLS.has(sortByRaw) ? sortByRaw : "datetime";
     const sortDir = q.sortDir === "asc" ? ("asc" as const) : ("desc" as const);
-    const dateFrom = q.dateFrom ? String(q.dateFrom) : undefined;
-    const dateTo = q.dateTo ? String(q.dateTo) : undefined;
+    const dateFromRaw = q.dateFrom ? String(q.dateFrom) : undefined;
+    const dateToRaw = q.dateTo ? String(q.dateTo) : undefined;
+    const dateFrom =
+      dateFromRaw && !isNaN(Date.parse(dateFromRaw)) ? dateFromRaw : undefined;
+    const dateTo =
+      dateToRaw && !isNaN(Date.parse(dateToRaw)) ? dateToRaw : undefined;
 
     const { data, total } = await donationTransfersRepository.findPaginated({
       page,
