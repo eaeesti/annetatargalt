@@ -1,4 +1,4 @@
-import { eq, or, asc, desc, and, sql } from "drizzle-orm";
+import { eq, or, asc, desc, and, sql, ilike } from "drizzle-orm";
 import { db, type Database } from "../client";
 import { donors, donations, type Donor, type NewDonor } from "../schema";
 
@@ -110,6 +110,7 @@ export class DonorsRepository {
     sortBy?: string;
     sortDir?: "asc" | "desc";
     recurringDonor?: boolean;
+    search?: string;
   }) {
     const { page, pageSize, sortBy = "id", sortDir = "asc" } = options;
 
@@ -134,6 +135,16 @@ export class DonorsRepository {
     const conditions = [];
     if (options.recurringDonor !== undefined) {
       conditions.push(eq(donors.recurringDonor, options.recurringDonor));
+    }
+    if (options.search) {
+      const term = `%${options.search}%`;
+      conditions.push(
+        or(
+          ilike(donors.firstName, term),
+          ilike(donors.lastName, term),
+          ilike(donors.email, term),
+        ),
+      );
     }
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 

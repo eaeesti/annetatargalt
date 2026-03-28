@@ -1,9 +1,20 @@
 import { strapiAdmin } from "../../../lib/api";
 import { resolveOrgNames } from "../../../lib/orgs";
-import { DonationsTable, type DonationRow, type Pagination } from "./_components/donations-table";
+import {
+  DonationsTable,
+  type DonationRow,
+  type Pagination,
+} from "./_components/donations-table";
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
-const VALID_SORT_COLS = new Set(["id", "datetime", "amount", "finalized", "paymentMethod", "companyName"]);
+const VALID_SORT_COLS = new Set([
+  "id",
+  "datetime",
+  "amount",
+  "finalized",
+  "paymentMethod",
+  "companyName",
+]);
 
 interface ListResponse {
   data: DonationRow[];
@@ -16,7 +27,11 @@ function str(val: string | string[] | undefined): string | undefined {
   return Array.isArray(val) ? val[0] : val;
 }
 
-export default async function DonationsPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function DonationsPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
   const params = await searchParams;
 
   const page = Math.max(1, Number(str(params.page) ?? 1));
@@ -24,13 +39,25 @@ export default async function DonationsPage({ searchParams }: { searchParams: Se
   const pageSize = VALID_PAGE_SIZES.includes(pageSizeRaw) ? pageSizeRaw : 50;
   const sortByRaw = str(params.sortBy) ?? "datetime";
   const sortBy = VALID_SORT_COLS.has(sortByRaw) ? sortByRaw : "datetime";
-  const sortDir = str(params.sortDir) === "asc" ? ("asc" as const) : ("desc" as const);
+  const sortDir =
+    str(params.sortDir) === "asc" ? ("asc" as const) : ("desc" as const);
+
+  const finalized = str(params.finalized);
+  const dateFrom = str(params.dateFrom);
+  const dateTo = str(params.dateTo);
+  const hasCompany = str(params.hasCompany);
+  const hasTransfer = str(params.hasTransfer);
 
   const qs = new URLSearchParams({
     page: String(page),
     pageSize: String(pageSize),
     sortBy,
     sortDir,
+    ...(finalized !== undefined && { finalized }),
+    ...(dateFrom && { dateFrom }),
+    ...(dateTo && { dateTo }),
+    ...(hasCompany !== undefined && { hasCompany }),
+    ...(hasTransfer !== undefined && { hasTransfer }),
   });
 
   const res = await strapiAdmin(`/api/admin-panel/donations/list?${qs}`, {
@@ -52,7 +79,9 @@ export default async function DonationsPage({ searchParams }: { searchParams: Se
 
   const allOrgIds = [
     ...new Set(
-      data.flatMap((d) => d.organizationDonations.map((od) => od.organizationInternalId))
+      data.flatMap((d) =>
+        d.organizationDonations.map((od) => od.organizationInternalId),
+      ),
     ),
   ];
   const orgNamesMap = await resolveOrgNames(allOrgIds);
