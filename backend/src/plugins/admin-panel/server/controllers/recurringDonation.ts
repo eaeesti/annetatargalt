@@ -18,8 +18,7 @@ async function auditLog(ctx: Context, action: string, recordId?: string) {
   try {
     const user = ctx.state.user as { id: number; email: string } | undefined;
     if (!user) return;
-    const ip =
-      ctx.get("X-Forwarded-For").split(",")[0]?.trim() || ctx.ip || null;
+    const ip = ctx.ip || null;
     await adminAuditLogRepository.log({
       userId: String(user.id),
       userEmail: user.email,
