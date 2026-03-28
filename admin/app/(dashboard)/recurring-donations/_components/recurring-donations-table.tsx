@@ -10,7 +10,6 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
-import { Badge } from "../../../../components/ui/badge";
 import { Button } from "../../../../components/ui/button";
 import {
   Table,
@@ -107,7 +106,7 @@ export function RecurringDonationsTable({
   const searchParams = useSearchParams();
 
   function pushUrl(updates: Record<string, string | undefined>) {
-    const sp = new URLSearchParams(searchParams.toString());
+    const sp = new URLSearchParams(window.location.search);
     for (const [key, value] of Object.entries(updates)) {
       if (value === undefined) sp.delete(key);
       else sp.set(key, value);
@@ -154,17 +153,6 @@ export function RecurringDonationsTable({
             #{row.original.id}
           </span>
         ),
-      },
-      {
-        id: "active",
-        accessorKey: "active",
-        header: () => <SortableHeader col="active">Status</SortableHeader>,
-        cell: ({ row }) =>
-          row.original.active ? (
-            <Badge variant="default">Active</Badge>
-          ) : (
-            <Badge variant="secondary">Inactive</Badge>
-          ),
       },
       {
         id: "donorLastName",

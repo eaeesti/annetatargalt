@@ -41,7 +41,7 @@ export default async function RecurringDonationsPage({
   const sortByRaw = str(params.sortBy) ?? "id";
   const sortBy = VALID_SORT_COLS.has(sortByRaw) ? sortByRaw : "id";
   const sortDir =
-    str(params.sortDir) === "desc" ? ("desc" as const) : ("asc" as const);
+    str(params.sortDir) === "asc" ? ("asc" as const) : ("desc" as const);
 
   const qs = new URLSearchParams({
     page: String(page),

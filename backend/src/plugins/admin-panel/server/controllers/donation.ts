@@ -56,6 +56,13 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
     const hasCompany =
       q.hasCompany !== undefined ? String(q.hasCompany) === "true" : undefined;
     const orgId = q.orgId ? String(q.orgId) : undefined;
+    // UI sends euros; DB stores cents
+    const amountMin = q.amountMin
+      ? Math.round(Number(q.amountMin) * 100)
+      : undefined;
+    const amountMax = q.amountMax
+      ? Math.round(Number(q.amountMax) * 100)
+      : undefined;
 
     const { data, total } = await donationsRepository.findWithFilters({
       page,
@@ -70,6 +77,8 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
       hasTransfer,
       hasCompany,
       orgId,
+      amountMin,
+      amountMax,
     });
 
     await auditLog(ctx, "donations.list");
