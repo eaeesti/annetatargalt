@@ -39,12 +39,16 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
     const sortByRaw = String(q.sortBy ?? "datetime");
     const sortBy = VALID_SORT_COLS.has(sortByRaw) ? sortByRaw : "datetime";
     const sortDir = q.sortDir === "asc" ? ("asc" as const) : ("desc" as const);
+    const dateFrom = q.dateFrom ? String(q.dateFrom) : undefined;
+    const dateTo = q.dateTo ? String(q.dateTo) : undefined;
 
     const { data, total } = await donationTransfersRepository.findPaginated({
       page,
       pageSize,
       sortBy,
       sortDir,
+      dateFrom,
+      dateTo,
     });
 
     await auditLog(ctx, "transfers.list");
