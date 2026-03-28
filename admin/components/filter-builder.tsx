@@ -40,7 +40,19 @@ export type TextFilterDef = {
   placeholder?: string;
 };
 
-export type FilterDef = BooleanFilterDef | DateRangeFilterDef | TextFilterDef;
+export type NumberRangeFilterDef = {
+  type: "number-range";
+  label: string;
+  fromKey: string;
+  toKey: string;
+  unit?: string;
+};
+
+export type FilterDef =
+  | BooleanFilterDef
+  | DateRangeFilterDef
+  | TextFilterDef
+  | NumberRangeFilterDef;
 
 export interface FilterBuilderProps {
   filters: FilterDef[];
@@ -53,11 +65,14 @@ export interface FilterBuilderProps {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function filterId(f: FilterDef): string {
-  return f.type === "date-range" ? `${f.fromKey}:${f.toKey}` : f.key;
+  if (f.type === "date-range" || f.type === "number-range")
+    return `${f.fromKey}:${f.toKey}`;
+  return f.key;
 }
 
 function isActive(f: FilterDef, params: Record<string, string>): boolean {
-  if (f.type === "date-range") return !!(params[f.fromKey] || params[f.toKey]);
+  if (f.type === "date-range" || f.type === "number-range")
+    return !!(params[f.fromKey] || params[f.toKey]);
   return f.key in params;
 }
 
@@ -73,17 +88,24 @@ function activeLabel(f: FilterDef, params: Record<string, string>): string {
     if (from) return `${f.label}: from ${from}`;
     return `${f.label}: to ${to}`;
   }
+  if (f.type === "number-range") {
+    const u = f.unit ?? "";
+    const from = params[f.fromKey];
+    const to = params[f.toKey];
+    if (from && to) return `${f.label}: ${u}${from} – ${u}${to}`;
+    if (from) return `${f.label}: ≥ ${u}${from}`;
+    return `${f.label}: ≤ ${u}${to}`;
+  }
   return `${f.label}: ${params[f.key]}`;
 }
 
 function clearUpdates(f: FilterDef): Record<string, undefined> {
-  if (f.type === "date-range")
+  if (f.type === "date-range" || f.type === "number-range")
     return { [f.fromKey]: undefined, [f.toKey]: undefined };
   return { [f.key]: undefined };
 }
 
 function toIsoDate(d: Date): string {
-  // YYYY-MM-DD in local time
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
@@ -92,7 +114,7 @@ function toIsoDate(d: Date): string {
 
 function parseIsoDate(s: string | undefined): Date | undefined {
   if (!s) return undefined;
-  const d = new Date(`${s}T12:00:00`); // noon to avoid TZ shift
+  const d = new Date(`${s}T12:00:00`);
   return isNaN(d.getTime()) ? undefined : d;
 }
 
@@ -118,9 +140,8 @@ function DateRangeForm({
   });
 
   function rangeLabel() {
-    if (range?.from && range?.to) {
+    if (range?.from && range?.to)
       return `${toIsoDate(range.from)} – ${toIsoDate(range.to)}`;
-    }
     if (range?.from) return `from ${toIsoDate(range.from)}`;
     if (range?.to) return `to ${toIsoDate(range.to)}`;
     return "Pick a date range";
@@ -184,6 +205,80 @@ function DateRangeForm({
   );
 }
 
+// ── NumberRangeForm ───────────────────────────────────────────────────────────
+
+function NumberRangeForm({
+  filter,
+  initialFrom,
+  initialTo,
+  onApply,
+  onCancel,
+}: {
+  filter: NumberRangeFilterDef;
+  initialFrom?: string;
+  initialTo?: string;
+  onApply: (updates: Record<string, string | undefined>) => void;
+  onCancel: () => void;
+}) {
+  const [from, setFrom] = useState(initialFrom ?? "");
+  const [to, setTo] = useState(initialTo ?? "");
+
+  const rowCls =
+    "flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1.5 shadow-sm";
+
+  return (
+    <form
+      className={rowCls}
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!from && !to) return;
+        onApply({
+          [filter.fromKey]: from || undefined,
+          [filter.toKey]: to || undefined,
+        });
+      }}
+    >
+      <span className="text-sm text-muted-foreground mr-0.5">
+        {filter.label}:
+      </span>
+      {filter.unit && (
+        <span className="text-xs text-muted-foreground">{filter.unit}</span>
+      )}
+      <Input
+        type="number"
+        min="0"
+        step="any"
+        value={from}
+        onChange={(e) => setFrom(e.target.value)}
+        placeholder="Min"
+        className="h-6 w-20 px-1.5 text-xs"
+        autoFocus
+      />
+      <span className="text-muted-foreground text-xs">–</span>
+      <Input
+        type="number"
+        min="0"
+        step="any"
+        value={to}
+        onChange={(e) => setTo(e.target.value)}
+        placeholder="Max"
+        className="h-6 w-20 px-1.5 text-xs"
+      />
+      <Button size="sm" type="submit" className="h-6 px-2.5 text-xs">
+        Apply
+      </Button>
+      <button
+        type="button"
+        onClick={onCancel}
+        className="text-muted-foreground hover:text-foreground transition-colors"
+        aria-label="Cancel"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+    </form>
+  );
+}
+
 // ── AddFilterForm ─────────────────────────────────────────────────────────────
 
 function AddFilterForm({
@@ -239,6 +334,18 @@ function AddFilterForm({
   if (filter.type === "date-range") {
     return (
       <DateRangeForm
+        filter={filter}
+        initialFrom={initialValues?.[filter.fromKey]}
+        initialTo={initialValues?.[filter.toKey]}
+        onApply={onApply}
+        onCancel={onCancel}
+      />
+    );
+  }
+
+  if (filter.type === "number-range") {
+    return (
+      <NumberRangeForm
         filter={filter}
         initialFrom={initialValues?.[filter.fromKey]}
         initialTo={initialValues?.[filter.toKey]}
@@ -308,7 +415,7 @@ export function FilterBuilder({
   }
 
   function getInitialValues(f: FilterDef): Record<string, string> {
-    if (f.type === "date-range") {
+    if (f.type === "date-range" || f.type === "number-range") {
       const vals: Record<string, string> = {};
       if (params[f.fromKey]) vals[f.fromKey] = params[f.fromKey];
       if (params[f.toKey]) vals[f.toKey] = params[f.toKey];
