@@ -39,6 +39,11 @@ module.exports = ({ env }) => ({
     enabled: true,
     resolve: "./dist/src/plugins/admin-panel",
   },
+  "users-permissions": {
+    config: {
+      jwt: { expiresIn: "8h" },
+    },
+  },
   "deep-populate": {
     enabled: true,
     config: {
