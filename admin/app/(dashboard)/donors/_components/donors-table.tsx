@@ -13,6 +13,10 @@ import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
 import { Badge } from "../../../../components/ui/badge";
 import { Button } from "../../../../components/ui/button";
 import {
+  FilterBuilder,
+  type FilterDef,
+} from "../../../../components/filter-builder";
+import {
   Table,
   TableBody,
   TableCell,
@@ -236,12 +240,36 @@ export function DonorsTable({
     state: { sorting },
   });
 
+  const FILTER_DEFS: FilterDef[] = [
+    {
+      type: "text",
+      key: "search",
+      label: "Search",
+      placeholder: "Name or email…",
+    },
+  ];
+
+  const FILTER_KEYS = ["search"];
+  const filterParams = Object.fromEntries(
+    FILTER_KEYS.filter((k) => searchParams.has(k)).map((k) => [
+      k,
+      searchParams.get(k)!,
+    ]),
+  );
+
   return (
     <div className="space-y-4">
       {/* Toolbar */}
-      <p className="text-sm text-muted-foreground">
-        {pagination.total.toLocaleString()} donors
-      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="text-sm text-muted-foreground">
+          {pagination.total.toLocaleString()} donors
+        </p>
+        <FilterBuilder
+          filters={FILTER_DEFS}
+          params={filterParams}
+          onChange={pushUrl}
+        />
+      </div>
 
       {/* Table */}
       <div className="rounded-md border">

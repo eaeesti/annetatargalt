@@ -1,4 +1,4 @@
-import { eq, desc, asc, sql, count, sum } from "drizzle-orm";
+import { eq, desc, asc, sql, count, sum, and, gte, lte } from "drizzle-orm";
 import { db, type Database } from "../client";
 import {
   donationTransfers,
@@ -23,6 +23,8 @@ export class DonationTransfersRepository {
     pageSize: number;
     sortBy?: string;
     sortDir?: "asc" | "desc";
+    dateFrom?: string;
+    dateTo?: string;
   }) {
     const { page, pageSize, sortBy = "datetime", sortDir = "desc" } = options;
     const offset = (page - 1) * pageSize;
@@ -54,6 +56,13 @@ export class DonationTransfersRepository {
 
     const orderCol = colMap[sortBy] ?? donationTransfers.datetime;
 
+    const conditions = [];
+    if (options.dateFrom)
+      conditions.push(gte(donationTransfers.datetime, options.dateFrom));
+    if (options.dateTo)
+      conditions.push(lte(donationTransfers.datetime, options.dateTo));
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
     const [rows, countRows] = await Promise.all([
       this.database
         .select({
@@ -67,10 +76,14 @@ export class DonationTransfersRepository {
         })
         .from(donationTransfers)
         .leftJoin(statsSq, eq(donationTransfers.id, statsSq.transferId))
+        .where(whereClause)
         .orderBy(dir(orderCol))
         .limit(pageSize)
         .offset(offset),
-      this.database.select({ total: count() }).from(donationTransfers),
+      this.database
+        .select({ total: count() })
+        .from(donationTransfers)
+        .where(whereClause),
     ]);
 
     return { data: rows, total: countRows[0]?.total ?? 0 };

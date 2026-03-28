@@ -12,6 +12,10 @@ import {
 import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
 import { Button } from "../../../../components/ui/button";
 import {
+  FilterBuilder,
+  type FilterDef,
+} from "../../../../components/filter-builder";
+import {
   Table,
   TableBody,
   TableCell,
@@ -205,11 +209,35 @@ export function TransfersTable({
     state: { sorting },
   });
 
+  const FILTER_DEFS: FilterDef[] = [
+    {
+      type: "date-range",
+      label: "Date",
+      fromKey: "dateFrom",
+      toKey: "dateTo",
+    },
+  ];
+
+  const FILTER_KEYS = ["dateFrom", "dateTo"];
+  const filterParams = Object.fromEntries(
+    FILTER_KEYS.filter((k) => searchParams.has(k)).map((k) => [
+      k,
+      searchParams.get(k)!,
+    ]),
+  );
+
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        {pagination.total.toLocaleString()} transfers
-      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="text-sm text-muted-foreground">
+          {pagination.total.toLocaleString()} transfers
+        </p>
+        <FilterBuilder
+          filters={FILTER_DEFS}
+          params={filterParams}
+          onChange={pushUrl}
+        />
+      </div>
 
       <div className="rounded-md border">
         <Table>
