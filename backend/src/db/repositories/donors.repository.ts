@@ -158,11 +158,11 @@ export class DonorsRepository {
         case "recurringDonor":
           return d(donors.recurringDonor);
         case "totalDonated":
-          return d(statsSq.totalDonated);
+          return d(sql`coalesce(${statsSq.totalDonated}, 0)`);
         case "donationCount":
-          return d(statsSq.donationCount);
+          return d(sql`coalesce(${statsSq.donationCount}, 0)`);
         case "lastDonationDate":
-          return d(statsSq.lastDonationDate);
+          return sql`${statsSq.lastDonationDate} ${sql.raw(sortDir)} nulls last`;
         default:
           return d(donors.id);
       }

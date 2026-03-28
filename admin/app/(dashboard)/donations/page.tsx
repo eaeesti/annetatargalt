@@ -37,8 +37,8 @@ export default async function DonationsPage({
   const page = Math.max(1, Number(str(params.page) ?? 1));
   const pageSizeRaw = Number(str(params.pageSize) ?? 50);
   const pageSize = VALID_PAGE_SIZES.includes(pageSizeRaw) ? pageSizeRaw : 50;
-  const sortByRaw = str(params.sortBy) ?? "datetime";
-  const sortBy = VALID_SORT_COLS.has(sortByRaw) ? sortByRaw : "datetime";
+  const sortByRaw = str(params.sortBy) ?? "id";
+  const sortBy = VALID_SORT_COLS.has(sortByRaw) ? sortByRaw : "id";
   const sortDir =
     str(params.sortDir) === "asc" ? ("asc" as const) : ("desc" as const);
 
@@ -47,6 +47,8 @@ export default async function DonationsPage({
   const dateTo = str(params.dateTo);
   const hasCompany = str(params.hasCompany);
   const hasTransfer = str(params.hasTransfer);
+  const amountMin = str(params.amountMin);
+  const amountMax = str(params.amountMax);
 
   const qs = new URLSearchParams({
     page: String(page),
@@ -58,6 +60,8 @@ export default async function DonationsPage({
     ...(dateTo && { dateTo }),
     ...(hasCompany !== undefined && { hasCompany }),
     ...(hasTransfer !== undefined && { hasTransfer }),
+    ...(amountMin && { amountMin }),
+    ...(amountMax && { amountMax }),
   });
 
   const res = await strapiAdmin(`/api/admin-panel/donations/list?${qs}`, {

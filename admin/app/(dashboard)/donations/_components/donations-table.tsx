@@ -130,15 +130,14 @@ export function DonationsTable({
   const searchParams = useSearchParams();
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
-    id: false,
-    finalized: false,
+    organizations: false,
     paymentMethod: false,
     companyName: false,
     companyCode: false,
   });
 
   function pushUrl(updates: Record<string, string | undefined>) {
-    const sp = new URLSearchParams(searchParams.toString());
+    const sp = new URLSearchParams(window.location.search);
     for (const [key, value] of Object.entries(updates)) {
       if (value === undefined) sp.delete(key);
       else sp.set(key, value);
@@ -345,6 +344,13 @@ export function DonationsTable({
       trueLabel: "Has transfer",
       falseLabel: "No transfer",
     },
+    {
+      type: "number-range",
+      label: "Amount",
+      fromKey: "amountMin",
+      toKey: "amountMax",
+      unit: "€",
+    },
   ];
 
   const FILTER_KEYS = [
@@ -353,6 +359,8 @@ export function DonationsTable({
     "finalized",
     "hasCompany",
     "hasTransfer",
+    "amountMin",
+    "amountMax",
   ];
   const filterParams = Object.fromEntries(
     FILTER_KEYS.filter((k) => searchParams.has(k)).map((k) => [
