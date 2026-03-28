@@ -39,11 +39,16 @@ export default async function TransfersPage({
   const sortDir =
     str(params.sortDir) === "asc" ? ("asc" as const) : ("desc" as const);
 
+  const dateFrom = str(params.dateFrom);
+  const dateTo = str(params.dateTo);
+
   const qs = new URLSearchParams({
     page: String(page),
     pageSize: String(pageSize),
     sortBy,
     sortDir,
+    ...(dateFrom && { dateFrom }),
+    ...(dateTo && { dateTo }),
   });
 
   const res = await strapiAdmin(`/api/admin-panel/transfers/list?${qs}`, {

@@ -42,11 +42,14 @@ export default async function DonorsPage({
   const sortDir =
     str(params.sortDir) === "desc" ? ("desc" as const) : ("asc" as const);
 
+  const search = str(params.search);
+
   const qs = new URLSearchParams({
     page: String(page),
     pageSize: String(pageSize),
     sortBy,
     sortDir,
+    ...(search && { search }),
   });
 
   const res = await strapiAdmin(`/api/admin-panel/donors/list?${qs}`, {

@@ -342,9 +342,18 @@ Until Phase 8, the root route shows a simple placeholder ("Dashboard coming soon
 
 `getGrid()` on RecurringDonationsRepository: CTE + `json_object_agg` query returning all donors with any finalized donation, grouped by donor. Returns `monthAmounts: Record<string, number>` (month → total cents). `GET /api/admin-panel/recurring-donations/grid`. Frontend at `/recurring-donations/grid`: horizontally-scrollable table with sticky donor column, month columns showing actual donated amount in green (e.g. €20) or ✗ for gaps / blank before first donation. Rows sorted by first donation month then name. 12/24/36/All-month range selector (All spans from earliest donor's first donation to today). Column visibility: no €/mo column — amounts shown per cell. "Grid view →" toggle added to the recurring donations list page header.
 
-### Phase 11 — Filter builder
+### ✅ Phase 11 — Filter builder
 
-Build the reusable "Add filter" component and roll it out across all tables. Each column type gets appropriate operators (text: contains/equals/starts with; number: =/≠/>/</between; boolean: is true/is false; date: before/after/between). Filter state lives in URL params.
+Shared `FilterBuilder` component (`admin/components/filter-builder.tsx`) with three filter types: text (inline form with Apply), boolean (two-button instant apply), date-range (two date inputs + Apply). Active filters shown as removable badge chips. "Add filter" dropdown lists available (inactive) filters. Filter state lives in URL params; always resets to page 1.
+
+Rolled out to all four tables:
+
+- **Donations**: date range (dateFrom/dateTo), status (finalized), company (hasCompany), transfer (hasTransfer)
+- **Donors**: search text (name/email via ilike), recurring donor boolean
+- **Transfers**: date range (dateFrom/dateTo)
+- **Recurring donations**: (no additional filters — table already has active/inactive filtering via sort)
+
+Backend changes: `donors.findPaginated` added `search` param (ilike on firstName/lastName/email); `donationTransfers.findPaginated` added `dateFrom`/`dateTo` params (gte/lte on datetime).
 
 ### Cleanup (can be done any time)
 

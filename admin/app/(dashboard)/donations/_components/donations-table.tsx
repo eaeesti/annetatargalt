@@ -14,6 +14,10 @@ import { ChevronDown, ChevronUp, ChevronsUpDown, Columns3 } from "lucide-react";
 import { Badge } from "../../../../components/ui/badge";
 import { Button } from "../../../../components/ui/button";
 import {
+  FilterBuilder,
+  type FilterDef,
+} from "../../../../components/filter-builder";
+import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
@@ -313,13 +317,64 @@ export function DonationsTable({
     companyCode: "Company code",
   };
 
+  const FILTER_DEFS: FilterDef[] = [
+    {
+      type: "date-range",
+      label: "Date",
+      fromKey: "dateFrom",
+      toKey: "dateTo",
+    },
+    {
+      type: "boolean",
+      key: "finalized",
+      label: "Status",
+      trueLabel: "Finalized",
+      falseLabel: "Pending",
+    },
+    {
+      type: "boolean",
+      key: "hasCompany",
+      label: "Company",
+      trueLabel: "Has company",
+      falseLabel: "No company",
+    },
+    {
+      type: "boolean",
+      key: "hasTransfer",
+      label: "Transfer",
+      trueLabel: "Has transfer",
+      falseLabel: "No transfer",
+    },
+  ];
+
+  const FILTER_KEYS = [
+    "dateFrom",
+    "dateTo",
+    "finalized",
+    "hasCompany",
+    "hasTransfer",
+  ];
+  const filterParams = Object.fromEntries(
+    FILTER_KEYS.filter((k) => searchParams.has(k)).map((k) => [
+      k,
+      searchParams.get(k)!,
+    ]),
+  );
+
   return (
     <div className="space-y-4">
       {/* Toolbar */}
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm text-muted-foreground">
-          {pagination.total.toLocaleString()} donations
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm text-muted-foreground">
+            {pagination.total.toLocaleString()} donations
+          </p>
+          <FilterBuilder
+            filters={FILTER_DEFS}
+            params={filterParams}
+            onChange={pushUrl}
+          />
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger
             render={

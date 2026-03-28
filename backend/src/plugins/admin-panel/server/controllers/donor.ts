@@ -46,12 +46,14 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
       q.recurringDonor !== undefined
         ? String(q.recurringDonor) === "true"
         : undefined;
+    const search = q.search ? String(q.search).trim() : undefined;
 
     const { data, total } = await donorsRepository.findPaginated({
       page,
       pageSize,
       sortBy,
       sortDir,
+      search,
       recurringDonor,
     });
 
