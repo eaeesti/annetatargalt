@@ -60,8 +60,7 @@ export default async function RecurringDonationsPage({
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">Recurring Donations</h1>
         <p className="text-destructive">
-          Failed to load recurring donations ({res.status}). Check that Strapi
-          is running.
+          Failed to load recurring donations. Please try again later.
         </p>
       </div>
     );
