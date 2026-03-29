@@ -67,9 +67,11 @@ $RECYCLE.BIN/
 
 .tmp
 *.log
-*.sql
 *.sqlite
 *.sqlite3
+# SQL dump files — but NOT Drizzle migration files (src/db/migrations/*.sql)
+*.sql
+!src/db/migrations/*.sql
 
 
 ############################
