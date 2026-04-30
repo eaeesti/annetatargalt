@@ -66,6 +66,14 @@ export interface StrapiPerson {
   image: StrapiMedia | null;
 }
 
+export interface StrapiPartnerOrganization {
+  id: number;
+  name: string | null;
+  displayCountry: string | null;
+  mapCountry: string | null;
+  website: string | null;
+}
+
 export interface StrapiPowerColumn {
   id: number;
   title: string | null;
@@ -273,6 +281,15 @@ export interface StrapiHeroSection {
   buttons: StrapiButton[];
 }
 
+export interface StrapiMapSection {
+  id: number;
+  __component: "sections.map-section";
+  title: string | null;
+  subtitle: string | null;
+  defaultCountry: string | null;
+  partnerOrganizations: StrapiPartnerOrganization[];
+}
+
 export interface StrapiOrganizationsSection {
   id: number;
   __component: "sections.organizations-section";
@@ -407,6 +424,7 @@ export type StrapiSection =
   | StrapiOrganizationsSection
   | StrapiPartnerSection
   | StrapiForeignDonationSection
+  | StrapiMapSection
   | StrapiSpecialHeaderSection
   | StrapiCauseOrganizationsSection
   | StrapiEntityTextSection
