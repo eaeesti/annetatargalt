@@ -69,6 +69,19 @@ export interface ElementsLink extends Struct.ComponentSchema {
   };
 }
 
+export interface ElementsPartnerOrganisation extends Struct.ComponentSchema {
+  collectionName: 'components_elements_partner_organisations';
+  info: {
+    displayName: 'PartnerOrganization';
+  };
+  attributes: {
+    displayCountry: Schema.Attribute.String;
+    mapCountry: Schema.Attribute.String;
+    name: Schema.Attribute.String;
+    website: Schema.Attribute.String;
+  };
+}
+
 export interface ElementsPerson extends Struct.ComponentSchema {
   collectionName: 'components_elements_people';
   info: {
@@ -415,6 +428,23 @@ export interface SectionsHeroSection extends Struct.ComponentSchema {
   };
 }
 
+export interface SectionsMapSection extends Struct.ComponentSchema {
+  collectionName: 'components_sections_map_sections';
+  info: {
+    displayName: 'MapSection';
+    icon: 'earth';
+  };
+  attributes: {
+    defaultCountry: Schema.Attribute.String;
+    partnerOrganizations: Schema.Attribute.Component<
+      'elements.partner-organisation',
+      true
+    >;
+    subtitle: Schema.Attribute.String;
+    title: Schema.Attribute.String;
+  };
+}
+
 export interface SectionsOrganizationsSection extends Struct.ComponentSchema {
   collectionName: 'components_sections_organizations_sections';
   info: {
@@ -609,6 +639,7 @@ declare module '@strapi/strapi' {
       'elements.button': ElementsButton;
       'elements.footer-column': ElementsFooterColumn;
       'elements.link': ElementsLink;
+      'elements.partner-organisation': ElementsPartnerOrganisation;
       'elements.person': ElementsPerson;
       'elements.power-column': ElementsPowerColumn;
       'elements.question': ElementsQuestion;
@@ -628,6 +659,7 @@ declare module '@strapi/strapi' {
       'sections.foreign-donation-section': SectionsForeignDonationSection;
       'sections.header-section': SectionsHeaderSection;
       'sections.hero-section': SectionsHeroSection;
+      'sections.map-section': SectionsMapSection;
       'sections.organizations-section': SectionsOrganizationsSection;
       'sections.partner-section': SectionsPartnerSection;
       'sections.power-section': SectionsPowerSection;

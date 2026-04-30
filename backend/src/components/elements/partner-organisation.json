@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_elements_partner_organisations",
+  "info": {
+    "displayName": "PartnerOrganization"
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "displayCountry": {
+      "type": "string"
+    },
+    "mapCountry": {
+      "type": "string"
+    },
+    "website": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}
