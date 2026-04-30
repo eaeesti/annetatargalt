@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_sections_map_sections",
+  "info": {
+    "displayName": "MapSection",
+    "icon": "earth"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "subtitle": {
+      "type": "string"
+    },
+    "partnerOrganizations": {
+      "type": "component",
+      "component": "elements.partner-organisation",
+      "repeatable": true
+    },
+    "defaultCountry": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}

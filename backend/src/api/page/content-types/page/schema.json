@@ -21,8 +21,8 @@
     },
     "metadata": {
       "type": "component",
-      "repeatable": false,
-      "component": "meta.metadata"
+      "component": "meta.metadata",
+      "repeatable": false
     },
     "sections": {
       "type": "dynamiczone",
@@ -45,7 +45,8 @@
         "sections.blog-posts-section",
         "sections.organizations-section",
         "sections.partner-section",
-        "sections.foreign-donation-section"
+        "sections.foreign-donation-section",
+        "sections.map-section"
       ]
     }
   }
