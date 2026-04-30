@@ -804,6 +804,7 @@ export interface ApiPagePage extends Struct.CollectionTypeSchema {
         'sections.organizations-section',
         'sections.partner-section',
         'sections.foreign-donation-section',
+        'sections.map-section',
       ]
     >;
     slug: Schema.Attribute.String & Schema.Attribute.Unique;
