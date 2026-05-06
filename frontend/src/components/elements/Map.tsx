@@ -13,9 +13,8 @@ const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
 const EUROPE_IDS = new Set([
   8, 20, 40, 56, 70, 100, 112, 191, 196, 203, 208, 233, 246, 250, 276, 300,
   336, 348, 352, 372, 380, 383, 428, 438, 440, 442, 470, 492, 498, 499, 528, 578,
-  616, 620, 642, 643, 674, 688, 703, 705, 724, 752, 756, 804, 807, 826,
+  616, 620, 642, 643, 674, 688, 703, 705, 724, 752, 756, 792, 804, 807, 826,
 ]);
-
 
 interface PartnerInfo {
   name: string;
@@ -52,7 +51,7 @@ export default function Map({ partnerOrganizations = [], defaultCountry }: MapPr
   const info = selected;
 
   return (
-    <div className="flex flex-col-reverse gap-6 sm:flex-row sm:items-center">
+    <div className="relative flex flex-col-reverse gap-6 sm:flex-row sm:items-center">
       <div className="w-full shrink-0 flex flex-col items-center sm:items-start gap-1.5 text-center sm:text-left sm:w-32">
         {info && (
           <>
@@ -91,12 +90,16 @@ export default function Map({ partnerOrganizations = [], defaultCountry }: MapPr
                     const isSelected = countryName === selectedCountry;
                     const fill = isDefault ? "#475569" : isSelected ? "#065f46" : isPartner ? "#047857" : "#e2e8f0";
                     const fillHover = isDefault ? "#475569" : isPartner ? "#065f46" : "#e2e8f0";
+
                     return (
                       <Geography
                         key={geo.rsmKey}
                         geography={geo}
                         onClick={() => {
-                          if (partner) { setSelected(partner); setSelectedCountry(countryName); }
+                          if (partner) {
+                            setSelected(partner);
+                            setSelectedCountry(countryName);
+                          }
                         }}
                         cursor={isPartner && !isDefault ? "pointer" : "default"}
                         style={{
