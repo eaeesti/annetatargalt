@@ -58,20 +58,20 @@ export interface StrapiLink {
   newTab: boolean | null;
 }
 
-export interface StrapiPerson {
-  id: number;
-  name: string | null;
-  role: string | null;
-  text: string | null;
-  image: StrapiMedia | null;
-}
-
 export interface StrapiPartnerOrganization {
   id: number;
   name: string | null;
   displayCountry: string | null;
   mapCountry: string | null;
   website: string | null;
+}
+
+export interface StrapiPerson {
+  id: number;
+  name: string | null;
+  role: string | null;
+  text: string | null;
+  image: StrapiMedia | null;
 }
 
 export interface StrapiPowerColumn {
@@ -286,8 +286,8 @@ export interface StrapiMapSection {
   __component: "sections.map-section";
   title: string | null;
   subtitle: string | null;
-  defaultCountry: string | null;
   partnerOrganizations: StrapiPartnerOrganization[];
+  defaultCountry: string | null;
 }
 
 export interface StrapiOrganizationsSection {
