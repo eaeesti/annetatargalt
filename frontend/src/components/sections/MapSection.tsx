@@ -15,7 +15,9 @@ export default function MapSection({ title, subtitle, defaultCountry, partnerOrg
             <p className="text-base text-gray-600">{subtitle}</p>
           )}
         </div>
-        <Map partnerOrganizations={partnerOrganizations} defaultCountry={defaultCountry} />
+        <div className="-ml-4 sm:ml-0">
+          <Map partnerOrganizations={partnerOrganizations} defaultCountry={defaultCountry} />
+        </div>
         {partnerOrganizations.length > 0 && (
           <ul className="sr-only">
             {partnerOrganizations.map((org) => (
