@@ -51,7 +51,7 @@ export default function Map({ partnerOrganizations = [], defaultCountry }: MapPr
   const info = selected;
 
   return (
-    <div className="relative flex flex-col-reverse gap-6 sm:flex-row sm:items-center">
+    <div className="flex flex-col-reverse gap-6 sm:flex-row sm:items-center">
       <div className="w-full shrink-0 flex flex-col items-center sm:items-start gap-1.5 text-center sm:text-left sm:w-32">
         {info && (
           <>
