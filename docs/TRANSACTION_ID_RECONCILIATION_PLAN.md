@@ -288,129 +288,138 @@ since they spread the row.
 
 ---
 
-# Phase 2 — CSV import in the admin panel
+# Phase 2 — Statement import in the admin panel
 
-Replace `import_lhv_donations.py`. One CSV upload does two jobs:
+Replaces `import_lhv_donations.py` **and** `match_donations_to_lhv_transactions.py`.
+The primary job is **keeping the donation ledger current** — most of a monthly
+statement is recurring bank payments with no donation record yet (as of the
+backfill: ~150 payments / 4 months of backlog, dashboard stats stale). Assigning
+transaction IDs rides along.
 
-1. assign archiving codes to existing donations (reconciliation)
-2. create finalized donations for **recurring bank transfers** not yet in the DB
+## 2.0 What the categoriser does
 
-## 2.1 Endpoints — `admin-panel` plugin (first write paths)
+Parse the uploaded LHV CSV. For every credit line with an archiving code, in
+order:
 
-`backend/src/plugins/admin-panel/server/routes/reconciliation.ts`
-(`content-api`, `DonationAdmin`-gated, audit-logged):
+1. **already done** — some donation already has this `transaction_id`, or the
+   code is in the ignore list → count only, no action.
+2. **reconcile to existing donation** — the `matchDonations` engine (Phase 1.2)
+   finds exactly one still-unreconciled donation (`selgitus-id` or
+   `idcode-amount-date`) → propose assigning the code.
+3. **recurring import** — sender `idOrRegCode` matches a donor
+   (`donor.idCode`, or a recurring template's `companyCode`) who has a template
+   dated on/before the transaction → propose **creating** a finalized donation
+   from that template (amount from the payment, org split scaled — see 2.1).
+4. **card payout** — counterparty is Montonio / "Card payout …" / "STRIPE …
+   MONTONIO FINANCE" → resolve via the Montonio payouts API (2.2); assign the
+   code to every donation in the payout. Manual checklist fallback.
+5. **needs a decision** — donation-like `Selgitus` but no donor/template match
+   (new donor, unusual company) → **list only, no action** (handled
+   exceptionally, outside this tool).
+6. **not a donation** — everything else (interest, refunds, internal transfers)
+   → offer to add to the ignore list.
 
-### `POST /admin-panel/reconciliation/preview`
+## 2.1 Recurring import — mirror of `insertFromTransaction`
 
-Multipart CSV upload. Returns:
+Per [insertFromTransaction](../backend/src/plugins/donations/server/services/donation.ts):
 
-```jsonc
-{
-  "matched": [
-    { "donationId": 1337, "archivingCode": "...", "source": "selgitus-id" },
-  ],
-  "ambiguous": [
-    {
-      "donationId": 42,
-      "candidates": [
-        /* transaction rows */
-      ],
-    },
-  ],
-  "newRecurringDonations": [
-    {
-      "transaction": {
-        /* row */
-      },
-      "donorId": 12,
-      "recurringDonationId": 5,
-      "amountCents": 3000,
-      "date": "2026-01-15",
-    },
-  ],
-  "donationlessTransactions": [
-    /* rows, minus the newRecurring ones */
-  ],
-  "transactionlessDonations": [
-    { "id": 99, "date": "...", "amountCents": 3000, "donor": "..." },
-  ],
-}
-```
+- donor via `donor.findDonor(idOrRegCode)` (idCode, then recurring
+  `companyCode`)
+- templates via `recurringDonationsRepository.findByDonorId` (newest first);
+  pick the **first with `datetime <= transactionDate + 24h`**
+- new donation: `amount` = payment, `finalized: true`,
+  `companyName/companyCode` + `paymentMethod` (= `bank`) from the template,
+  `iban` = counterparty account, `transactionId` = archiving code,
+  `transactionMatchSource = 'recurring-import'`
+- org split: template's `organizationRecurringDonations` scaled by
+  `payment / template.amount` via `resizeOrganizationDonations` (rounding
+  fixup). **No operator adjustment** — amount drift (~25% of donors) is handled
+  by the proportional scale, same as the Python script does today.
+- ambiguity (donor has 2+ candidate templates, no template predates) → surfaces
+  in "needs a decision", not auto-created.
 
-`newRecurringDonations` detection reuses the logic from
-`donation.service` `insertFromTransaction` / `findTransactionDonation`:
-credit transaction whose `idOrRegCode` matches a donor with an active recurring
-template, no existing donation for that date/amount, template datetime on or
-before the transaction date.
+New `transaction_match_source` value: `'recurring-import'` (alongside
+`selgitus-id | idcode-amount-date | manual`).
 
-### `POST /admin-panel/reconciliation/apply`
+## 2.2 Montonio payouts client — `backend/src/utils/montonio.ts`
 
-```jsonc
-{
-  "assignments": [{ "donationId": 1337, "archivingCode": "..." }],
-  "createDonations": [
-    {
-      "transactionArchivingCode": "...",
-      "recurringDonationId": 5,
-      "idCode": "...",
-      "amountCents": 3000,
-      "date": "...",
-      "iban": "...",
-    },
-  ],
-}
-```
+- `GET {MONTONIO_URL}/stores/:storeUuid/payouts?limit&offset&order` — list
+- `GET …/payouts/:payoutUuid/export-json` — returns a download URL; fetch it for
+  the order list (each `merchantReference` = `<prefix> <donationId>`)
+- auth: JWT signed with `MONTONIO_PRIVATE`, `Authorization: Bearer <jwt>` (GET)
+- needs `MONTONIO_STORE_UUID` in config (new)
 
-- assignments → `donationsRepository.setTransactionId(..., 'manual')`
-  (operator-confirmed ⇒ `manual`; keep the engine's source only for
-  untouched auto-matches)
-- createDonations → extend
-  `donation.service.insertFromTransaction` to accept and store
-  `transactionId`, then call it per row
+**Spike first** — confirm the existing creds authorise these endpoints and the
+export contains merchant references. If not, section 4 stays a manual checklist
+(sum candidate card donations vs `payout / (1 - feeRate)`).
 
-Config: raise `multipart`/`formLimit` for these two routes (default 1 MB; the
-full statement is ~300 KB today but grows).
+The payout UUID is in the CSV `Selgitus` (`Card payout faab4de5-…`), often
+truncated — match by UUID prefix, else by amount+date against the payouts list.
 
-`id_code_replacement_map` (from `import_lhv_donations.py`) becomes a config
-value, not a hardcode.
+## 2.3 Ignore list
 
-## 2.2 Admin UI — `admin/app/(dashboard)/reconciliation/`
+New table `ignored_bank_transactions` (`archiving_code` PK, `reason`,
+`created_at`, `created_by`). Checked in step 1; populated from step 6. One-time
+bulk seed for the current backlog of non-donation credits.
 
-- **Upload** page → POSTs to `preview`.
-- **Review** screen:
-  - _Proposed matches_ — table, accept / reject / edit archiving code per row
-  - _Ambiguous_ — pick the correct transaction from candidates
-  - _New recurring donations_ — checkbox list; shows donor, amount, date,
-    target template
-  - _Unmatched_ (both directions) — informational, exportable to CSV
-  - **Apply** → POSTs to `apply`, shows a result summary
-- Nav entry in `admin/app/(dashboard)/layout.tsx`.
+## 2.4 Endpoints — `admin-panel` plugin (first write paths)
 
-## 2.3 Retire the Python scripts
+`content-api`, `DonationAdmin`-gated, `auditLog`ged.
 
-Once 2.2 is in use, delete from the private `Donations/` repo:
-`match_donations_to_lhv_transactions.py`, `import_lhv_donations.py`,
-`import_single_transaction.py`. Monthly flow becomes: export CSV from LHV →
-upload → review → apply.
+- `POST /admin-panel/statement/preview` — multipart CSV → the categorised
+  report (all six buckets; buckets 1 + auto-2 collapsed to counts). No writes.
+- `POST /admin-panel/statement/apply` — body: confirmed assignments, confirmed
+  recurring-imports, confirmed ignores. Runs in one transaction, returns a
+  summary. One click (per the locked decision).
+
+Raise the route's `multipart` limit (statement ~0.5 MB, grows).
+`id_code_replacement_map` → config value.
+
+## 2.5 Admin UI — `admin/app/(dashboard)/statement/`
+
+Upload (browser file-picker) → review page:
+
+- **Recurring payments to import** — donor · paid · template · scaled org split ·
+  `[import]`; "import all clean" bulk action
+- **Card payouts** — per payout: amount, fee, resolved donations (or manual
+  checklist with running total)
+- **Needs a decision** — read-only list
+- **Not a donation** — checkboxes → ignore
+- **Auto-reconciled / already done** — counts
+- **Apply** → `apply`, then a result summary
+
+Nav entry in `admin/app/(dashboard)/layout.tsx`.
+
+## 2.6 First run + retire the scripts
+
+First real use clears the ~4-month backlog. Then delete from the private
+`Donations/` repo: `match_donations_to_lhv_transactions.py`,
+`import_lhv_donations.py`, `import_single_transaction.py`. `reconcile.ts` /
+`yarn reconcile` stays for one-off DB-side fixes.
+
+## Build order
+
+1. Montonio payouts spike (verify creds + response shape)
+2. Categoriser + recurring-import computation — pure, unit-tested
+3. `ignored_bank_transactions` table + migration `0004`
+4. `statement` service (preview) wiring DB + engine
+5. `preview` / `apply` endpoints + routes
+6. Admin UI
+7. Card-payout resolution (Montonio client → categoriser)
 
 ---
 
 # Decisions locked in
 
-- `transaction_id` is nullable permanently (Montonio payouts lag; corrections).
-- `transaction_id` is **not** unique (batch payouts).
+- `transaction_id` nullable permanently, not unique.
 - Canonical CSV input = LHV Estonian headers; English export also accepted.
-- New dependency: `csv-parse` (backend).
-- Backfill writes directly to Postgres via the Drizzle client on the VPS; the
-  admin endpoints are for the ongoing monthly flow.
-- Operator-confirmed matches in the UI are stored as `source = 'manual'`.
-
-# Open questions
-
-- One-time prod check (see 1.1): does `admin_audit_log` exist and is `0002` in
-  `drizzle.__drizzle_migrations`? Determines nothing about the code — the
-  `IF NOT EXISTS` guard covers both — but good to confirm before deploying.
-- `overrides.csv`: caller's choice; the script only needs a path. Default to
-  keeping it in the private `Donations/` repo alongside the bank exports.
-- Phase 2 `apply`: create the missing recurring donations and reconcile in one
-  request, or two explicit operator steps? (Leaning: one request, one summary.)
+- Deps: `csv-parse` (backend).
+- Phase 1 backfill wrote directly to Postgres via `yarn reconcile`; Phase 2
+  endpoints are the ongoing flow.
+- Operator-confirmed matches → `source = 'manual'`; auto recurring creations →
+  `'recurring-import'`.
+- Recurring import: proportional org-split scaling, **no** per-line adjustment UI.
+- Unknown senders / no template: **listed, never auto-created** by this tool.
+- Card payouts: resolve via Montonio payouts API; manual checklist fallback.
+- Apply is one request / one click.
+- Ignore list persists in its own table.
