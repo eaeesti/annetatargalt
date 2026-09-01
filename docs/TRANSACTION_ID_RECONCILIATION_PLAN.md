@@ -296,6 +296,23 @@ statement is recurring bank payments with no donation record yet (as of the
 backfill: ~150 payments / 4 months of backlog, dashboard stats stale). Assigning
 transaction IDs rides along.
 
+**Status: built, not yet deployed.** Commits `f6d5c1e`, `7554d14`, `bcdff3d`,
+`7b8d8de`. Routing verified (403/404); service smoke-tested end-to-end against a
+scratch DB (preview + apply + idempotent re-run); 98 unit tests. Not yet
+exercised over HTTP with a real token, and the Montonio payouts API is coded but
+unverified against the live merchant account.
+
+**Before deploy:**
+
+- migration `0004` applies (`ignored_bank_transactions`) — same
+  `drizzle-kit migrate` step; `CREATE TABLE IF NOT EXISTS`
+- `MONTONIO_STORE_UUID` in the VPS `.env` (card-payout auto-resolve is off
+  without it — manual entry still works)
+- re-check `drizzle.__drizzle_migrations` count goes 4 → 5
+- verify the Montonio payouts endpoints accept the existing key pair; if not,
+  card payouts stay manual and that's fine for v1
+- first real run clears the recurring backlog and updates the dashboard
+
 ## 2.0 What the categoriser does
 
 Parse the uploaded LHV CSV. For every credit line with an archiving code, in
