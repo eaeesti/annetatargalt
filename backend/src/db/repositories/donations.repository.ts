@@ -12,6 +12,10 @@ import {
 } from "drizzle-orm";
 import { db, type Database } from "../client";
 import { donations, type Donation, type NewDonation } from "../schema";
+import type {
+  ReconcilableDonation,
+  MatchSource,
+} from "../../utils/reconciliation";
 
 interface FindAllOptions {
   limit?: number;
@@ -125,6 +129,8 @@ export class DonationsRepository {
     orgId?: string;
     amountMin?: number;
     amountMax?: number;
+    transactionId?: string;
+    hasTransactionId?: boolean;
   }) {
     const { page, pageSize, sortBy = "datetime", sortDir = "desc" } = options;
 
@@ -152,6 +158,12 @@ export class DonationsRepository {
       conditions.push(gte(donations.amount, options.amountMin));
     if (options.amountMax !== undefined)
       conditions.push(lte(donations.amount, options.amountMax));
+    if (options.transactionId)
+      conditions.push(eq(donations.transactionId, options.transactionId));
+    if (options.hasTransactionId === true)
+      conditions.push(isNotNull(donations.transactionId));
+    if (options.hasTransactionId === false)
+      conditions.push(isNull(donations.transactionId));
     if (options.orgId) {
       conditions.push(
         sql`EXISTS (
@@ -176,6 +188,8 @@ export class DonationsRepository {
           return donations.paymentMethod;
         case "companyName":
           return donations.companyName;
+        case "transactionId":
+          return donations.transactionId;
         default:
           return donations.datetime;
       }
@@ -293,6 +307,78 @@ export class DonationsRepository {
    */
   async finalize(id: number): Promise<Donation | undefined> {
     return this.update(id, { finalized: true });
+  }
+
+  /**
+   * Finalized donations in the shape the reconciliation engine expects
+   * (`src/utils/reconciliation.ts`), with the donor's ID code joined in.
+   */
+  async findForReconciliation(): Promise<ReconcilableDonation[]> {
+    const rows = await this.database.query.donations.findMany({
+      where: eq(donations.finalized, true),
+      orderBy: [asc(donations.id)],
+      with: { donor: { columns: { idCode: true } } },
+    });
+
+    return rows.map((d) => ({
+      id: d.id,
+      amountCents: d.amount,
+      datetime: d.datetime.toISOString(),
+      companyCode: d.companyCode,
+      donorIdCode: d.donor?.idCode ?? null,
+    }));
+  }
+
+  /**
+   * IDs of donations that already have a transaction ID recorded.
+   */
+  async findReconciledIds(): Promise<Set<number>> {
+    const rows = await this.database
+      .select({ id: donations.id })
+      .from(donations)
+      .where(isNotNull(donations.transactionId));
+    return new Set(rows.map((r) => r.id));
+  }
+
+  /**
+   * Record the bank transaction ID (LHV "Arhiveerimistunnus") a donation was
+   * reconciled against, and how the match was made.
+   */
+  async setTransactionId(
+    id: number,
+    transactionId: string,
+    source: MatchSource,
+  ): Promise<void> {
+    await this.database
+      .update(donations)
+      .set({
+        transactionId,
+        transactionMatchSource: source,
+        updatedAt: new Date(),
+      })
+      .where(eq(donations.id, id));
+  }
+
+  /**
+   * Bulk variant of {@link setTransactionId}, in a single transaction.
+   */
+  async setTransactionIds(
+    rows: { id: number; transactionId: string; source: MatchSource }[],
+  ): Promise<void> {
+    if (rows.length === 0) return;
+
+    await this.database.transaction(async (tx) => {
+      for (const row of rows) {
+        await tx
+          .update(donations)
+          .set({
+            transactionId: row.transactionId,
+            transactionMatchSource: row.source,
+            updatedAt: new Date(),
+          })
+          .where(eq(donations.id, row.id));
+      }
+    });
   }
 
   /**

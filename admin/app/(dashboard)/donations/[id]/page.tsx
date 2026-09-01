@@ -13,6 +13,8 @@ type DonationDetail = {
   finalized: boolean;
   paymentMethod: string | null;
   iban: string | null;
+  transactionId: string | null;
+  transactionMatchSource: string | null;
   comment: string | null;
   externalDonation: boolean;
   companyName: string | null;
@@ -155,6 +157,20 @@ export default async function DonationDetailPage({
             <span className="font-mono text-xs">{donation.iban}</span>
           </Field>
         )}
+        <Field label="Transaction ID">
+          {donation.transactionId ? (
+            <span className="font-mono text-xs">
+              {donation.transactionId}
+              {donation.transactionMatchSource && (
+                <span className="ml-2 text-muted-foreground">
+                  ({donation.transactionMatchSource})
+                </span>
+              )}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">Not reconciled</span>
+          )}
+        </Field>
         {donation.comment && <Field label="Comment">{donation.comment}</Field>}
         {donation.externalDonation && (
           <Field label="External">

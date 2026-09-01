@@ -45,6 +45,8 @@ export type DonationRow = {
   paymentMethod: string | null;
   companyName: string | null;
   companyCode: string | null;
+  transactionId: string | null;
+  transactionMatchSource: string | null;
   donor: {
     id: number;
     firstName: string | null;
@@ -288,6 +290,25 @@ export function DonationsTable({
           </span>
         ),
       },
+      {
+        id: "transactionId",
+        accessorKey: "transactionId",
+        enableSorting: true,
+        header: () => (
+          <SortableHeader col="transactionId">Transaction ID</SortableHeader>
+        ),
+        cell: ({ row }) =>
+          row.original.transactionId ? (
+            <span
+              className="font-mono text-xs"
+              title={row.original.transactionMatchSource ?? undefined}
+            >
+              {row.original.transactionId}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          ),
+      },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [orgNames, sortBy, sortDir],
@@ -314,6 +335,7 @@ export function DonationsTable({
     paymentMethod: "Payment method",
     companyName: "Company",
     companyCode: "Company code",
+    transactionId: "Transaction ID",
   };
 
   const FILTER_DEFS: FilterDef[] = [
@@ -345,6 +367,19 @@ export function DonationsTable({
       falseLabel: "No transfer",
     },
     {
+      type: "boolean",
+      key: "hasTransactionId",
+      label: "Reconciled",
+      trueLabel: "Has transaction ID",
+      falseLabel: "No transaction ID",
+    },
+    {
+      type: "text",
+      key: "transactionId",
+      label: "Transaction ID",
+      placeholder: "16-digit archiving code",
+    },
+    {
       type: "number-range",
       label: "Amount",
       fromKey: "amountMin",
@@ -359,6 +394,8 @@ export function DonationsTable({
     "finalized",
     "hasCompany",
     "hasTransfer",
+    "hasTransactionId",
+    "transactionId",
     "amountMin",
     "amountMax",
   ];

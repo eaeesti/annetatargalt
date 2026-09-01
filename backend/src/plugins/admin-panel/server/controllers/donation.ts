@@ -11,6 +11,7 @@ const VALID_SORT_COLS = new Set([
   "finalized",
   "paymentMethod",
   "companyName",
+  "transactionId",
 ]);
 
 export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
@@ -46,6 +47,11 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
     const hasCompany =
       q.hasCompany !== undefined ? String(q.hasCompany) === "true" : undefined;
     const orgId = q.orgId ? String(q.orgId) : undefined;
+    const transactionId = q.transactionId ? String(q.transactionId) : undefined;
+    const hasTransactionId =
+      q.hasTransactionId !== undefined
+        ? String(q.hasTransactionId) === "true"
+        : undefined;
     // UI sends euros; DB stores cents
     const amountMin = q.amountMin
       ? Math.round(Number(q.amountMin) * 100)
@@ -69,6 +75,8 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
       orgId,
       amountMin,
       amountMax,
+      transactionId,
+      hasTransactionId,
     });
 
     await auditLog(ctx, "donations.list");
