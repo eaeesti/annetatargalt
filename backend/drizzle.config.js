@@ -4,7 +4,7 @@ const sslEnabled = process.env.DATABASE_SSL === "true";
 
 /** @type {import('drizzle-kit').Config} */
 module.exports = {
-  schema: "./src/db/schema.js",
+  schema: "./src/db/schema.ts",
   out: "./src/db/migrations",
   dialect: "postgresql",
   dbCredentials: {

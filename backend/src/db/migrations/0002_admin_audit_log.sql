@@ -1,4 +1,4 @@
-CREATE TABLE "admin_audit_log" (
+CREATE TABLE IF NOT EXISTS "admin_audit_log" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"timestamp" timestamp DEFAULT now() NOT NULL,
 	"user_id" varchar(256) NOT NULL,
@@ -7,3 +7,5 @@ CREATE TABLE "admin_audit_log" (
 	"record_id" varchar(64),
 	"ip" varchar(64)
 );
+--> statement-breakpoint
+ALTER TABLE "recurring_donations" ALTER COLUMN "active" SET DEFAULT false;

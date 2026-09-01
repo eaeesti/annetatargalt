@@ -7,6 +7,7 @@ import {
   boolean,
   timestamp,
   date,
+  index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -50,31 +51,43 @@ export const donationTransfers = pgTable("donation_transfers", {
 });
 
 // Donations table (one-time donations)
-export const donations = pgTable("donations", {
-  id: serial("id").primaryKey(),
-  donorId: integer("donor_id").references(() => donors.id), // Can be null for old legacy donations
-  recurringDonationId: integer("recurring_donation_id").references(
-    () => recurringDonations.id
-  ),
-  donationTransferId: integer("donation_transfer_id").references(
-    () => donationTransfers.id
-  ),
-  datetime: timestamp("datetime").notNull(),
-  amount: integer("amount").notNull(), // in cents
-  finalized: boolean("finalized").default(false).notNull(),
-  paymentMethod: varchar("payment_method", { length: 64 }),
-  iban: varchar("iban", { length: 34 }),
-  comment: text("comment"),
-  companyName: varchar("company_name", { length: 128 }),
-  companyCode: varchar("company_code", { length: 128 }),
-  sentToOrganization: boolean("sent_to_organization").default(false).notNull(),
-  dedicationName: varchar("dedication_name", { length: 128 }),
-  dedicationEmail: varchar("dedication_email", { length: 256 }),
-  dedicationMessage: text("dedication_message"),
-  externalDonation: boolean("external_donation").default(false).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+export const donations = pgTable(
+  "donations",
+  {
+    id: serial("id").primaryKey(),
+    donorId: integer("donor_id").references(() => donors.id), // Can be null for old legacy donations
+    recurringDonationId: integer("recurring_donation_id").references(
+      () => recurringDonations.id,
+    ),
+    donationTransferId: integer("donation_transfer_id").references(
+      () => donationTransfers.id,
+    ),
+    datetime: timestamp("datetime").notNull(),
+    amount: integer("amount").notNull(), // in cents
+    finalized: boolean("finalized").default(false).notNull(),
+    paymentMethod: varchar("payment_method", { length: 64 }),
+    iban: varchar("iban", { length: 34 }),
+    comment: text("comment"),
+    companyName: varchar("company_name", { length: 128 }),
+    companyCode: varchar("company_code", { length: 128 }),
+    sentToOrganization: boolean("sent_to_organization")
+      .default(false)
+      .notNull(),
+    // Bank transaction ID (LHV "Arhiveerimistunnus" / archiving code) this donation
+    // was reconciled against. Nullable — Montonio payouts land days later; not
+    // unique — one bank transfer can cover many donations (batch payouts).
+    transactionId: varchar("transaction_id", { length: 20 }),
+    // How transactionId was assigned: 'selgitus-id' | 'idcode-amount-date' | 'manual'
+    transactionMatchSource: varchar("transaction_match_source", { length: 24 }),
+    dedicationName: varchar("dedication_name", { length: 128 }),
+    dedicationEmail: varchar("dedication_email", { length: 256 }),
+    dedicationMessage: text("dedication_message"),
+    externalDonation: boolean("external_donation").default(false).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [index("donations_transaction_id_idx").on(table.transactionId)],
+);
 
 // Organization donations junction table (splits donations across organizations)
 export const organizationDonations = pgTable("organization_donations", {
@@ -104,7 +117,7 @@ export const organizationRecurringDonations = pgTable(
     amount: integer("amount").notNull(), // in cents
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  }
+  },
 );
 
 // Relations for better query experience
@@ -138,12 +151,15 @@ export const recurringDonationsRelations = relations(
     }),
     donations: many(donations),
     organizationRecurringDonations: many(organizationRecurringDonations),
-  })
+  }),
 );
 
-export const donationTransfersRelations = relations(donationTransfers, ({ many }) => ({
-  donations: many(donations),
-}));
+export const donationTransfersRelations = relations(
+  donationTransfers,
+  ({ many }) => ({
+    donations: many(donations),
+  }),
+);
 
 export const organizationDonationsRelations = relations(
   organizationDonations,
@@ -152,7 +168,7 @@ export const organizationDonationsRelations = relations(
       fields: [organizationDonations.donationId],
       references: [donations.id],
     }),
-  })
+  }),
 );
 
 export const organizationRecurringDonationsRelations = relations(
@@ -162,7 +178,7 @@ export const organizationRecurringDonationsRelations = relations(
       fields: [organizationRecurringDonations.recurringDonationId],
       references: [recurringDonations.id],
     }),
-  })
+  }),
 );
 
 // Type exports - Drizzle auto-infers types from schema
@@ -181,8 +197,10 @@ export type NewDonationTransfer = typeof donationTransfers.$inferInsert;
 export type OrganizationDonation = typeof organizationDonations.$inferSelect;
 export type NewOrganizationDonation = typeof organizationDonations.$inferInsert;
 
-export type OrganizationRecurringDonation = typeof organizationRecurringDonations.$inferSelect;
-export type NewOrganizationRecurringDonation = typeof organizationRecurringDonations.$inferInsert;
+export type OrganizationRecurringDonation =
+  typeof organizationRecurringDonations.$inferSelect;
+export type NewOrganizationRecurringDonation =
+  typeof organizationRecurringDonations.$inferInsert;
 
 // Admin audit log — never deleted, append-only
 export const adminAuditLog = pgTable("admin_audit_log", {
@@ -191,7 +209,7 @@ export const adminAuditLog = pgTable("admin_audit_log", {
   userId: varchar("user_id", { length: 256 }).notNull(),
   userEmail: varchar("user_email", { length: 256 }).notNull(),
   action: varchar("action", { length: 128 }).notNull(), // e.g. "donations.list", "donors.view"
-  recordId: varchar("record_id", { length: 64 }),       // ID of the accessed record, if applicable
+  recordId: varchar("record_id", { length: 64 }), // ID of the accessed record, if applicable
   ip: varchar("ip", { length: 64 }),
 });
 

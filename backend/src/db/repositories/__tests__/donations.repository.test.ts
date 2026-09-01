@@ -121,7 +121,7 @@ describe("DonationsRepository", () => {
       });
 
       const found = await donationsRepository.findByIdWithRelations(
-        donation.id
+        donation.id,
       );
 
       expect(found).toBeDefined();
@@ -167,7 +167,7 @@ describe("DonationsRepository", () => {
 
       const updated = await donationsRepository.addToTransfer(
         [donation1.id, donation2.id, donation3.id],
-        transfer.id
+        transfer.id,
       );
 
       expect(updated).toHaveLength(3);
@@ -336,7 +336,7 @@ describe("DonationsRepository", () => {
 
       const donations = await donationsRepository.findByDateRange(
         "2025-01-01",
-        "2025-01-20"
+        "2025-01-20",
       );
 
       expect(donations).toHaveLength(2);
@@ -356,7 +356,7 @@ describe("DonationsRepository", () => {
 
       const donations = await donationsRepository.findByDateRange(
         "2025-01-01",
-        "2025-01-31"
+        "2025-01-31",
       );
 
       expect(donations).toHaveLength(1);
@@ -395,6 +395,85 @@ describe("DonationsRepository", () => {
       expect(donation.paymentMethod).toBeNull();
       expect(donation.iban).toBeNull();
       expect(donation.comment).toBeNull();
+    });
+  });
+
+  describe("reconciliation", () => {
+    it("findForReconciliation returns finalized donations with donor ID code", async () => {
+      const donor = await createTestDonor({ idCode: "39001010001" });
+      await createTestDonation({
+        donorId: donor.id,
+        amount: 2500,
+        finalized: true,
+        companyCode: "12345678",
+      });
+      await createTestDonation({ finalized: false });
+
+      const rows = await donationsRepository.findForReconciliation();
+
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({
+        amountCents: 2500,
+        companyCode: "12345678",
+        donorIdCode: "39001010001",
+      });
+      expect(typeof rows[0].datetime).toBe("string");
+    });
+
+    it("setTransactionId records the code and match source", async () => {
+      const donation = await createTestDonation();
+
+      await donationsRepository.setTransactionId(
+        donation.id,
+        "2024120199999999",
+        "selgitus-id",
+      );
+
+      const updated = await donationsRepository.findById(donation.id);
+      expect(updated?.transactionId).toBe("2024120199999999");
+      expect(updated?.transactionMatchSource).toBe("selgitus-id");
+    });
+
+    it("setTransactionIds applies many in one call and findReconciledIds reflects it", async () => {
+      const a = await createTestDonation();
+      const b = await createTestDonation();
+      const c = await createTestDonation();
+
+      await donationsRepository.setTransactionIds([
+        { id: a.id, transactionId: "AAA", source: "manual" },
+        { id: b.id, transactionId: "BBB", source: "idcode-amount-date" },
+      ]);
+
+      const reconciled = await donationsRepository.findReconciledIds();
+      expect(reconciled.has(a.id)).toBe(true);
+      expect(reconciled.has(b.id)).toBe(true);
+      expect(reconciled.has(c.id)).toBe(false);
+    });
+
+    it("findWithFilters filters by transactionId and hasTransactionId", async () => {
+      const matched = await createTestDonation();
+      await createTestDonation();
+      await donationsRepository.setTransactionId(
+        matched.id,
+        "CODE-1",
+        "manual",
+      );
+
+      const byId = await donationsRepository.findWithFilters({
+        page: 1,
+        pageSize: 25,
+        transactionId: "CODE-1",
+      });
+      expect(byId.total).toBe(1);
+      expect(byId.data[0].id).toBe(matched.id);
+
+      const unreconciled = await donationsRepository.findWithFilters({
+        page: 1,
+        pageSize: 25,
+        hasTransactionId: false,
+      });
+      expect(unreconciled.total).toBe(1);
+      expect(unreconciled.data[0].id).not.toBe(matched.id);
     });
   });
 });
