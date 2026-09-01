@@ -215,3 +215,17 @@ export const adminAuditLog = pgTable("admin_audit_log", {
 
 export type AdminAuditLog = typeof adminAuditLog.$inferSelect;
 export type NewAdminAuditLog = typeof adminAuditLog.$inferInsert;
+
+// Bank-statement credit lines the operator marked "not a donation" during a
+// statement import, so they stop resurfacing on the next upload.
+export const ignoredBankTransactions = pgTable("ignored_bank_transactions", {
+  archivingCode: varchar("archiving_code", { length: 20 }).primaryKey(),
+  reason: varchar("reason", { length: 256 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdBy: varchar("created_by", { length: 256 }),
+});
+
+export type IgnoredBankTransaction =
+  typeof ignoredBankTransactions.$inferSelect;
+export type NewIgnoredBankTransaction =
+  typeof ignoredBankTransactions.$inferInsert;
