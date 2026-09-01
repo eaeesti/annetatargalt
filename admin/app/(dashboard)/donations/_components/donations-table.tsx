@@ -136,6 +136,7 @@ export function DonationsTable({
     paymentMethod: false,
     companyName: false,
     companyCode: false,
+    transactionId: false,
   });
 
   function pushUrl(updates: Record<string, string | undefined>) {
