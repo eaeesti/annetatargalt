@@ -46,6 +46,12 @@ type ReconcileRow = {
   donorName: string | null;
 };
 
+type CardPayout = {
+  transaction: BankTxn;
+  resolvedDonationIds: number[];
+  resolved: boolean;
+};
+
 type Preview = {
   counts: {
     creditTransactions: number;
@@ -54,7 +60,7 @@ type Preview = {
   };
   reconcile: ReconcileRow[];
   recurringImports: RecurringImport[];
-  cardPayouts: BankTxn[];
+  cardPayouts: CardPayout[];
   needsDecision: { transaction: BankTxn; reason: string }[];
   notADonation: BankTxn[];
   donorNames: Record<string, string>;
@@ -126,7 +132,16 @@ export function StatementImport() {
       setImportSel(new Set(p.recurringImports.map((i) => i.archivingCode)));
       setReconcileSel(new Set(p.reconcile.map((r) => r.donationId)));
       setIgnoreSel(new Set(p.notADonation.map((t) => t.archivingCode)));
-      setPayoutIds({});
+      setPayoutIds(
+        Object.fromEntries(
+          p.cardPayouts
+            .filter((c) => c.resolvedDonationIds.length > 0)
+            .map((c) => [
+              c.transaction.archivingCode,
+              c.resolvedDonationIds.join(", "),
+            ]),
+        ),
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -345,25 +360,30 @@ export function StatementImport() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {preview.cardPayouts.map((t) => (
-                  <TableRow key={t.archivingCode}>
+                {preview.cardPayouts.map((c) => (
+                  <TableRow key={c.transaction.archivingCode}>
                     <TableCell className="whitespace-nowrap">
-                      {t.date}
+                      {c.transaction.date}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
-                      {eur(t.amountCents)}
+                      {eur(c.transaction.amountCents)}
                     </TableCell>
                     <TableCell className="max-w-xs truncate text-xs">
-                      {t.description}
+                      {c.resolved && (
+                        <Badge variant="secondary" className="mr-1">
+                          Montonio
+                        </Badge>
+                      )}
+                      {c.transaction.description}
                     </TableCell>
                     <TableCell>
                       <Input
                         placeholder="e.g. 1648, 1649"
-                        value={payoutIds[t.archivingCode] ?? ""}
+                        value={payoutIds[c.transaction.archivingCode] ?? ""}
                         onChange={(e) =>
                           setPayoutIds((m) => ({
                             ...m,
-                            [t.archivingCode]: e.target.value,
+                            [c.transaction.archivingCode]: e.target.value,
                           }))
                         }
                       />
