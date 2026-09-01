@@ -4,6 +4,7 @@ import recurringDonation from "./recurringDonation";
 import transfer from "./transfer";
 import organization from "./organization";
 import dashboard from "./dashboard";
+import statement from "./statement";
 
 export default {
   donation,
@@ -12,4 +13,5 @@ export default {
   transfer,
   organization,
   dashboard,
+  statement,
 };

@@ -278,6 +278,8 @@ export class DonationsRepository {
           data.externalDonation !== undefined ? data.externalDonation : false,
         recurringDonationId: data.recurringDonationId || null,
         donationTransferId: data.donationTransferId || null,
+        transactionId: data.transactionId || null,
+        transactionMatchSource: data.transactionMatchSource || null,
       })
       .returning();
     if (!donation) throw new Error("Failed to insert donation");
@@ -313,9 +315,15 @@ export class DonationsRepository {
    * Finalized donations in the shape the reconciliation engine expects
    * (`src/utils/reconciliation.ts`), with the donor's ID code joined in.
    */
-  async findForReconciliation(): Promise<ReconcilableDonation[]> {
+  async findForReconciliation(
+    opts: { onlyUnreconciled?: boolean } = {},
+  ): Promise<ReconcilableDonation[]> {
+    const where = opts.onlyUnreconciled
+      ? and(eq(donations.finalized, true), isNull(donations.transactionId))
+      : eq(donations.finalized, true);
+
     const rows = await this.database.query.donations.findMany({
-      where: eq(donations.finalized, true),
+      where,
       orderBy: [asc(donations.id)],
       with: { donor: { columns: { idCode: true } } },
     });
@@ -338,6 +346,20 @@ export class DonationsRepository {
       .from(donations)
       .where(isNotNull(donations.transactionId));
     return new Set(rows.map((r) => r.id));
+  }
+
+  /**
+   * The distinct set of bank transaction IDs (archiving codes) already recorded
+   * on donations — a code here means "this bank line is accounted for".
+   */
+  async reconciledTransactionIds(): Promise<Set<string>> {
+    const rows = await this.database
+      .selectDistinct({ code: donations.transactionId })
+      .from(donations)
+      .where(isNotNull(donations.transactionId));
+    return new Set(
+      rows.map((r) => r.code).filter((c): c is string => c !== null),
+    );
   }
 
   /**
