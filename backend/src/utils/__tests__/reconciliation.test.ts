@@ -106,6 +106,16 @@ describe("parseLhvCsv", () => {
       /LHV account statement/,
     );
   });
+
+  it("handles CRLF, and mixed line endings without a trailing newline", () => {
+    const crlf = ESTONIAN_CSV.replace(/\n/g, "\r\n");
+    expect(parseLhvCsv(crlf)).toHaveLength(3);
+
+    // header + first row CRLF, rest LF, no trailing newline (a hand-edited file)
+    const lines = ESTONIAN_CSV.trimEnd().split("\n");
+    const mixed = `${lines[0]}\r\n${lines.slice(1).join("\n")}`;
+    expect(parseLhvCsv(mixed)).toHaveLength(3);
+  });
 });
 
 // ─── matchDonations ──────────────────────────────────────────────────────────

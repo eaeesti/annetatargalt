@@ -93,6 +93,8 @@ export function parseLhvCsv(input: string | Buffer): BankTransaction[] {
     bom: true,
     skipEmptyLines: true,
     relaxColumnCount: true,
+    // accept LF / CRLF / CR and a hand-edited file with mixed endings
+    recordDelimiter: ["\n", "\r\n", "\r"],
     trim: true,
   });
 
