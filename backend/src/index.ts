@@ -109,6 +109,8 @@ async function bootstrapDonationPermissions(
     "plugin::admin-panel.organization.stats",
     "plugin::admin-panel.dashboard.stats",
     "plugin::admin-panel.dashboard.charts",
+    "plugin::admin-panel.statement.preview",
+    "plugin::admin-panel.statement.apply", // the one write path — bank-statement import
   ];
 
   // Write actions that must be actively revoked from DonationAdmin if previously granted
@@ -134,7 +136,8 @@ async function bootstrapDonationPermissions(
       .create({
         data: {
           name: ROLE_NAME,
-          description: "Read-only access to donation admin endpoints",
+          description:
+            "Donation admin panel access (read-only, plus the bank-statement import)",
           type: "donation_admin",
         },
       })) as Role;

@@ -4,8 +4,13 @@ import recurringDonation from "./recurringDonation";
 import transfer from "./transfer";
 import organization from "./organization";
 import dashboard from "./dashboard";
+import statement from "./statement";
 
 export default {
+  "statement-router": {
+    type: "content-api",
+    routes: statement.routes,
+  },
   "donation-router": {
     type: "content-api",
     routes: donation.routes,
