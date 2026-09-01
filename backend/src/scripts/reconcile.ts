@@ -27,6 +27,8 @@ function parseOverrides(path: string): Map<number, string> {
     columns: true,
     bom: true,
     skipEmptyLines: true,
+    relaxColumnCount: true,
+    recordDelimiter: ["\n", "\r\n", "\r"],
     trim: true,
   });
   const overrides = new Map<number, string>();
