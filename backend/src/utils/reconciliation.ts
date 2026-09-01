@@ -10,7 +10,12 @@
  */
 import { parse } from "csv-parse/sync";
 
-export type MatchSource = "selgitus-id" | "idcode-amount-date" | "manual";
+export type MatchSource =
+  | "selgitus-id"
+  | "idcode-amount-date"
+  | "manual"
+  | "recurring-import"
+  | "card-payout";
 
 export interface BankTransaction {
   /** Kuupäev, ISO `YYYY-MM-DD` */

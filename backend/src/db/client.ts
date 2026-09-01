@@ -1,4 +1,4 @@
-import { drizzle } from "drizzle-orm/node-postgres";
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool, PoolConfig } from "pg";
 import * as schema from "./schema";
 
@@ -33,8 +33,11 @@ export const pool = connectionString
 // Create Drizzle instance with schema for relational queries
 export const db = drizzle(pool, { schema });
 
-// Type exports for dependency injection
-export type Database = typeof db;
+// Type exports for dependency injection. `Database` covers both the pooled
+// client and a transaction handle, so repositories can be constructed with
+// either (e.g. `new DonationsRepository(tx)` inside `db.transaction(...)`).
+export type Database = NodePgDatabase<typeof schema>;
+export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 // Graceful shutdown handler
 export const closeDatabase = async (): Promise<void> => {
