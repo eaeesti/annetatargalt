@@ -20,6 +20,7 @@ const navLinks = [
   { href: "/recurring-donations", label: "Recurring" },
   { href: "/transfers", label: "Transfers" },
   { href: "/organizations", label: "Organizations" },
+  { href: "/statement", label: "Statement import" },
 ];
 
 type User = {
