@@ -17,15 +17,82 @@ import {
   organizationRecurringDonationsRepository,
   ignoredBankTransactionsRepository,
 } from "../../../../db/repositories";
-import { parseLhvCsv } from "../../../../utils/reconciliation";
+import {
+  parseLhvCsv,
+  type BankTransaction,
+} from "../../../../utils/reconciliation";
 import {
   categorizeStatement,
+  parsePayoutUuidPrefix,
   type RecurringTemplate,
   type DonorTemplates,
   type RecurringImport,
   type StatementReport,
 } from "../../../../utils/statement";
 import { createOrganizationResolver } from "../../../../utils/organization-resolver";
+import montonio from "../../../../utils/montonio";
+
+/** Trailing donation id in a Montonio merchant reference (`<prefix> <id>`). */
+function refToDonationId(ref: string | undefined): number | null {
+  if (!ref) return null;
+  const m = /(\d+)\s*$/.exec(ref);
+  return m ? Number(m[1]) : null;
+}
+
+export interface ResolvedCardPayout {
+  transaction: BankTransaction;
+  /** donation ids the Montonio payout says it covers, still unreconciled */
+  resolvedDonationIds: number[];
+  /** false when the Montonio lookup failed and manual entry is needed */
+  resolved: boolean;
+}
+
+async function resolveCardPayouts(
+  payouts: BankTransaction[],
+  unreconciledIds: Set<number>,
+): Promise<ResolvedCardPayout[]> {
+  if (payouts.length === 0 || !montonio.isPayoutsConfigured()) {
+    return payouts.map((transaction) => ({
+      transaction,
+      resolvedDonationIds: [],
+      resolved: false,
+    }));
+  }
+
+  const list = await montonio.listPayouts(100);
+
+  return Promise.all(
+    payouts.map(async (transaction) => {
+      const uuidPrefix = parsePayoutUuidPrefix(transaction.description);
+      const major = (transaction.amountCents / 100).toFixed(2);
+      const payout =
+        (uuidPrefix &&
+          list.find((p) => p.uuid.toLowerCase().startsWith(uuidPrefix))) ||
+        list.find((p) => String(p.amount) === major);
+
+      if (!payout) {
+        return { transaction, resolvedDonationIds: [], resolved: false };
+      }
+
+      const orders = await montonio.getPayoutOrders(payout.uuid);
+      if (!orders) {
+        return { transaction, resolvedDonationIds: [], resolved: false };
+      }
+
+      const ids = orders
+        .map((o) =>
+          refToDonationId(o.merchantReference ?? o.merchant_reference),
+        )
+        .filter((id): id is number => id !== null && unreconciledIds.has(id));
+
+      return {
+        transaction,
+        resolvedDonationIds: [...new Set(ids)],
+        resolved: true,
+      };
+    }),
+  );
+}
 
 export interface ApplyPayload {
   reconcile: { donationId: number; archivingCode: string; source: string }[];
@@ -166,11 +233,16 @@ export function createStatementService(strapi: Core.Strapi) {
         ),
       );
 
+      const cardPayouts = await resolveCardPayouts(
+        report.cardPayouts,
+        new Set(unreconciledDonations.map((d) => d.id)),
+      );
+
       return {
         counts: report.counts,
         reconcile: reconcileDetail,
         recurringImports: report.recurringImports,
-        cardPayouts: report.cardPayouts,
+        cardPayouts,
         needsDecision: report.needsDecision,
         notADonation: report.notADonation,
         donorNames,
