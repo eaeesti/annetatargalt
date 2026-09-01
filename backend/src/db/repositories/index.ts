@@ -19,3 +19,7 @@ export {
   donationTransfersRepository,
   DonationTransfersRepository,
 } from "./donation-transfers.repository";
+export {
+  ignoredBankTransactionsRepository,
+  IgnoredBankTransactionsRepository,
+} from "./ignored-bank-transactions.repository";
