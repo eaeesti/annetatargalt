@@ -29,6 +29,13 @@
       "when": 1788292590316,
       "tag": "0003_donation_transaction_id",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788299201679,
+      "tag": "0004_ignored_bank_transactions",
+      "breakpoints": true
     }
   ]
 }
