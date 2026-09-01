@@ -15,6 +15,20 @@
       "when": 1771175994674,
       "tag": "0001_skinny_white_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788292544273,
+      "tag": "0002_admin_audit_log",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788292590316,
+      "tag": "0003_donation_transaction_id",
+      "breakpoints": true
     }
   ]
 }

@@ -14,6 +14,7 @@ const VALID_SORT_COLS = new Set([
   "finalized",
   "paymentMethod",
   "companyName",
+  "transactionId",
 ]);
 
 interface ListResponse {
@@ -47,6 +48,8 @@ export default async function DonationsPage({
   const dateTo = str(params.dateTo);
   const hasCompany = str(params.hasCompany);
   const hasTransfer = str(params.hasTransfer);
+  const hasTransactionId = str(params.hasTransactionId);
+  const transactionId = str(params.transactionId);
   const amountMin = str(params.amountMin);
   const amountMax = str(params.amountMax);
 
@@ -60,6 +63,8 @@ export default async function DonationsPage({
     ...(dateTo && { dateTo }),
     ...(hasCompany !== undefined && { hasCompany }),
     ...(hasTransfer !== undefined && { hasTransfer }),
+    ...(hasTransactionId !== undefined && { hasTransactionId }),
+    ...(transactionId && { transactionId }),
     ...(amountMin && { amountMin }),
     ...(amountMax && { amountMax }),
   });
