@@ -161,9 +161,9 @@ export function StatementImport() {
   const cardPayoutAssignments = useMemo(() => {
     const out: { donationId: number; archivingCode: string }[] = [];
     for (const [code, raw] of Object.entries(payoutIds)) {
-      for (const part of raw.split(/[\s,]+/).filter(Boolean)) {
+      for (const part of raw.split(/[^0-9]+/).filter(Boolean)) {
         const id = Number(part);
-        if (Number.isInteger(id))
+        if (Number.isInteger(id) && id > 0)
           out.push({ donationId: id, archivingCode: code });
       }
     }
@@ -174,7 +174,7 @@ export function StatementImport() {
     const out: { donationId: number; archivingCode: string; source: string }[] =
       [];
     for (const [code, raw] of Object.entries(manualAssign)) {
-      const id = Number(raw.trim());
+      const id = Number(raw.replace(/[^0-9]/g, ""));
       if (Number.isInteger(id) && id > 0)
         out.push({ donationId: id, archivingCode: code, source: "manual" });
     }
@@ -191,7 +191,7 @@ export function StatementImport() {
     );
     const out: { transaction: BankTxn; donorId: number }[] = [];
     for (const [code, raw] of Object.entries(manualDonor)) {
-      const donorId = Number(raw.trim());
+      const donorId = Number(raw.replace(/[^0-9]/g, ""));
       const txn = byCode.get(code);
       if (txn && Number.isInteger(donorId) && donorId > 0)
         out.push({ transaction: txn, donorId });

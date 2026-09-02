@@ -43,6 +43,8 @@ export interface ReconcilableDonation {
   datetime: string;
   companyCode: string | null;
   donorIdCode: string | null;
+  /** display only — the matcher ignores these */
+  donorName?: string | null;
 }
 
 export interface ReconciliationReport {

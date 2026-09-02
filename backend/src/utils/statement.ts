@@ -135,6 +135,11 @@ export function planRecurringImport(
   txn: BankTransaction,
   template: RecurringTemplate,
 ): RecurringImport {
+  if (template.orgSplit.length === 0) {
+    throw new Error(
+      `Recurring template #${template.id} has no organization split`,
+    );
+  }
   const amountCents = txn.amountCents;
   const multiplier = amountCents / template.amount;
 
@@ -186,10 +191,39 @@ export function categorizeStatement(input: StatementInput): StatementReport {
     },
   };
 
-  // Step 2: assign codes to existing unreconciled donations.
+  // Step 2: assign codes to existing unreconciled donations — but never a code
+  // that is already on a donation or on the ignore list (matchDonations only
+  // sees `unreconciledDonations`, so it can still land on an in-window
+  // same-amount donation for a code the operator retired last time).
   const match = matchDonations(credits, input.unreconciledDonations);
-  report.reconcile = match.matched;
-  const claimedByReconcile = new Set(match.matched.map((m) => m.archivingCode));
+  const eligible = match.matched.filter(
+    (m) =>
+      !input.reconciledCodes.has(m.archivingCode) &&
+      !input.ignoredCodes.has(m.archivingCode),
+  );
+
+  // A single bank line matched to >1 existing donation by amount+date is
+  // almost always the wrong month, not a real batch — route those codes to
+  // "needs a decision" instead of auto-checking every donation. `selgitus-id`
+  // is exempt (it names a specific donation id).
+  const byCode = new Map<string, typeof eligible>();
+  for (const m of eligible) {
+    const arr = byCode.get(m.archivingCode) ?? [];
+    arr.push(m);
+    byCode.set(m.archivingCode, arr);
+  }
+  const ambiguousCodes = new Set<string>();
+  report.reconcile = [];
+  for (const [code, ms] of byCode) {
+    if (ms.length === 1 || ms.every((m) => m.source === "selgitus-id")) {
+      report.reconcile.push(...ms);
+    } else {
+      ambiguousCodes.add(code);
+    }
+  }
+  const claimedByReconcile = new Set(
+    report.reconcile.map((m) => m.archivingCode),
+  );
 
   for (const txn of credits) {
     const code = txn.archivingCode;
@@ -204,6 +238,13 @@ export function categorizeStatement(input: StatementInput): StatementReport {
     }
     if (claimedByReconcile.has(code)) {
       continue; // handled in report.reconcile
+    }
+    if (ambiguousCodes.has(code)) {
+      report.needsDecision.push({
+        transaction: txn,
+        reason: `matches ${byCode.get(code)?.length ?? 2} existing donations — assign one manually`,
+      });
+      continue;
     }
 
     // Step 4: card / processor payout — donations resolved later via Montonio.
@@ -229,6 +270,13 @@ export function categorizeStatement(input: StatementInput): StatementReport {
         report.needsDecision.push({
           transaction: txn,
           reason: "no recurring template predates this payment",
+        });
+        continue;
+      }
+      if (template.orgSplit.length === 0) {
+        report.needsDecision.push({
+          transaction: txn,
+          reason: "recurring template has no organization split",
         });
         continue;
       }
