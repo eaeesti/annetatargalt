@@ -65,14 +65,16 @@ async function resolveCardPayouts(
 
   const list = await montonio.listPayouts(100);
 
+  const toCents = (v: string | number | undefined) =>
+    v === undefined ? NaN : Math.round(Number(v) * 100);
+
   return Promise.all(
     payouts.map(async (transaction) => {
       const uuidPrefix = parsePayoutUuidPrefix(transaction.description);
-      const major = (transaction.amountCents / 100).toFixed(2);
       const payout =
         (uuidPrefix &&
           list.find((p) => p.uuid.toLowerCase().startsWith(uuidPrefix))) ||
-        list.find((p) => String(p.amount) === major);
+        list.find((p) => toCents(p.amount) === transaction.amountCents);
 
       if (!payout) {
         return { transaction, resolvedDonationIds: [], resolved: false };
@@ -113,7 +115,16 @@ export interface ApplyPayload {
   ignore: { archivingCode: string; reason?: string | null }[];
 }
 
-async function loadDonorsByCode(): Promise<Map<string, DonorTemplates>> {
+interface DonorTemplateIndex {
+  /** idCode / company code / learned alias → donor + templates */
+  byCode: Map<string, DonorTemplates>;
+  /** donor id → templates, newest first */
+  byDonor: Map<number, RecurringTemplate[]>;
+  /** donor id → display name */
+  donorName: Map<number, string>;
+}
+
+async function loadDonorTemplates(): Promise<DonorTemplateIndex> {
   const [donors, templates, orgSplits, aliases] = await Promise.all([
     donorsRepository.findAll(),
     recurringDonationsRepository.findAll(),
@@ -154,6 +165,12 @@ async function loadDonorsByCode(): Promise<Map<string, DonorTemplates>> {
   }
 
   const donorById = new Map(donors.map((d) => [d.id, d]));
+  const donorName = new Map(
+    donors.map((d) => [
+      d.id,
+      [d.firstName, d.lastName].filter(Boolean).join(" ") || `#${d.id}`,
+    ]),
+  );
   const byCode = new Map<string, DonorTemplates>();
   for (const [donorId, tmpls] of byDonor) {
     const donor = donorById.get(donorId);
@@ -169,33 +186,31 @@ async function loadDonorsByCode(): Promise<Map<string, DonorTemplates>> {
     if (tmpls && tmpls.length > 0)
       byCode.set(senderCode, { donorId, templates: tmpls });
   }
-  return byCode;
+  return { byCode, byDonor, donorName };
 }
 
-/** Templates + org splits for one donor, newest first. */
-async function loadTemplatesForDonor(
+/**
+ * Re-derive a recurring-import plan from trusted DB state — the template id the
+ * client asked for if it's still that donor's, else the one that predates the
+ * payment. Throws (aborting the apply) if there's no usable template.
+ */
+function planFromTemplateIndex(
+  index: DonorTemplateIndex,
+  transaction: BankTransaction,
   donorId: number,
-): Promise<RecurringTemplate[]> {
-  const templates = await recurringDonationsRepository.findByDonorId(donorId);
-  return Promise.all(
-    templates.map(async (t) => ({
-      id: t.id,
-      donorId: t.donorId,
-      datetime: new Date(t.datetime).toISOString(),
-      amount: t.amount,
-      companyName: t.companyName,
-      companyCode: t.companyCode,
-      bank: t.bank,
-      orgSplit: (
-        await organizationRecurringDonationsRepository.findByRecurringDonationId(
-          t.id,
-        )
-      ).map((o) => ({
-        organizationInternalId: o.organizationInternalId ?? "",
-        amount: o.amount,
-      })),
-    })),
-  );
+  preferredTemplateId?: number,
+): RecurringImport {
+  const templates = index.byDonor.get(donorId) ?? [];
+  const template =
+    (preferredTemplateId != null &&
+      templates.find((t) => t.id === preferredTemplateId)) ||
+    selectTemplate(templates, transaction.date);
+  if (!template) {
+    throw new Error(
+      `Donor #${donorId} has no recurring template dated on/before ${transaction.date.slice(0, 10)}`,
+    );
+  }
+  return planRecurringImport(transaction, template);
 }
 
 export function createStatementService(strapi: Core.Strapi) {
@@ -220,55 +235,38 @@ export function createStatementService(strapi: Core.Strapi) {
     async preview(csv: Buffer | string) {
       const transactions = parseLhvCsv(csv);
 
-      const [
-        unreconciledDonations,
-        reconciledCodes,
-        ignoredCodes,
-        donorsByCode,
-      ] = await Promise.all([
-        donationsRepository.findForReconciliation({ onlyUnreconciled: true }),
-        donationsRepository.reconciledTransactionIds(),
-        ignoredBankTransactionsRepository.codes(),
-        loadDonorsByCode(),
-      ]);
+      const [unreconciledDonations, reconciledCodes, ignoredCodes, index] =
+        await Promise.all([
+          donationsRepository.findForReconciliation({ onlyUnreconciled: true }),
+          donationsRepository.reconciledTransactionIds(),
+          ignoredBankTransactionsRepository.codes(),
+          loadDonorTemplates(),
+        ]);
 
       const report: StatementReport = categorizeStatement({
         transactions,
         unreconciledDonations,
         reconciledCodes,
         ignoredCodes,
-        donorsByCode,
+        donorsByCode: index.byCode,
       });
 
-      // ── enrichment for the review UI ──────────────────────────────────────
-      const donorIds = new Set<number>();
-      for (const i of report.recurringImports) donorIds.add(i.donorId);
-
-      const donationIds = report.reconcile.map((r) => r.donationId);
-      const [donations, donors] = await Promise.all([
-        Promise.all(
-          donationIds.map((id) =>
-            donationsRepository.findByIdWithRelations(id),
-          ),
-        ),
-        Promise.all([...donorIds].map((id) => donorsRepository.findById(id))),
-      ]);
+      // ── enrichment for the review UI (no extra queries) ───────────────────
+      const donationById = new Map(unreconciledDonations.map((d) => [d.id, d]));
 
       const donorNames: Record<number, string> = {};
-      for (const d of donors) {
-        if (!d) continue;
-        donorNames[d.id] = [d.firstName, d.lastName].filter(Boolean).join(" ");
+      for (const i of report.recurringImports) {
+        donorNames[i.donorId] =
+          index.donorName.get(i.donorId) ?? `#${i.donorId}`;
       }
 
-      const reconcileDetail = report.reconcile.map((r, idx) => {
-        const d = donations[idx];
+      const reconcileDetail = report.reconcile.map((r) => {
+        const d = donationById.get(r.donationId);
         return {
           ...r,
-          amountCents: d?.amount ?? null,
+          amountCents: d?.amountCents ?? null,
           datetime: d?.datetime ?? null,
-          donorName: d?.donor
-            ? [d.donor.firstName, d.donor.lastName].filter(Boolean).join(" ")
-            : null,
+          donorName: d?.donorName ?? null,
         };
       });
 
@@ -298,20 +296,24 @@ export function createStatementService(strapi: Core.Strapi) {
     async apply(payload: ApplyPayload, userEmail: string) {
       const summary = { reconciled: 0, created: 0, ignored: 0 };
 
-      // Resolve "needs a decision → this donor" into full plans up front
-      // (reads only), so the write transaction stays tight.
-      const manualPlans: RecurringImport[] = [];
-      for (const mr of payload.manualRecurring ?? []) {
-        const templates = await loadTemplatesForDonor(mr.donorId);
-        const template = selectTemplate(templates, mr.transaction.date);
-        if (!template) {
-          throw new Error(
-            `Donor #${mr.donorId} has no recurring template dated on/before ${mr.transaction.date}`,
-          );
-        }
-        manualPlans.push(planRecurringImport(mr.transaction, template));
-      }
-      const allImports = [...payload.recurringImports, ...manualPlans];
+      // Re-derive every recurring-import plan from current DB state — never
+      // trust the amounts / org splits the client sent back (the template or
+      // its split may have changed since preview). Done up front (reads only)
+      // so the write transaction stays tight.
+      const index = await loadDonorTemplates();
+      const allImports: RecurringImport[] = [
+        ...(payload.recurringImports ?? []).map((imp) =>
+          planFromTemplateIndex(
+            index,
+            imp.transaction,
+            imp.donorId,
+            imp.templateId,
+          ),
+        ),
+        ...(payload.manualRecurring ?? []).map((mr) =>
+          planFromTemplateIndex(index, mr.transaction, mr.donorId),
+        ),
+      ];
 
       await db.transaction(async (tx) => {
         const donationsRepo = new DonationsRepository(tx);
