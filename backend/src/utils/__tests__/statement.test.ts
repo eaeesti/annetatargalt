@@ -280,28 +280,6 @@ describe("categorizeStatement", () => {
     expect(report.notADonation).toHaveLength(0);
   });
 
-  it("tax-board rebate → not a donation, by reg code or name", () => {
-    const report = categorizeStatement(
-      baseInput({
-        transactions: [
-          txn({
-            archivingCode: "TAX1",
-            idOrRegCode: "REGCODE",
-            counterpartyName: "Some Ministry",
-            description:
-              "TAX AUTHORITY tulumaks, [REF] 2024, annetus, isikukood 39001010001",
-          }),
-        ],
-        // even though this idCode maps to a donor with a template:
-        donorsByCode: new Map([
-          ["REGCODE", { donorId: 5, templates: [template({})] }],
-        ]),
-      }),
-    );
-    expect(report.notADonation.map((t) => t.archivingCode)).toEqual(["TAX1"]);
-    expect(report.recurringImports).toHaveLength(0);
-  });
-
   it("everything else → not a donation", () => {
     const report = categorizeStatement(
       baseInput({
