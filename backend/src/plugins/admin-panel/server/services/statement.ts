@@ -283,19 +283,21 @@ export function createStatementService(strapi: Core.Strapi) {
         }
 
         for (const r of payload.reconcile) {
-          await donationsRepo.setTransactionId(
+          const ok = await donationsRepo.setTransactionId(
             r.donationId,
             r.archivingCode,
             (r.source as never) || "manual",
           );
+          if (!ok) throw new Error(`Donation #${r.donationId} not found`);
           summary.reconciled++;
         }
         for (const a of payload.cardPayoutAssignments) {
-          await donationsRepo.setTransactionId(
+          const ok = await donationsRepo.setTransactionId(
             a.donationId,
             a.archivingCode,
             "card-payout",
           );
+          if (!ok) throw new Error(`Donation #${a.donationId} not found`);
           summary.reconciled++;
         }
 
