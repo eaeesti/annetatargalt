@@ -103,20 +103,6 @@ export interface StatementReport {
 const DONATION_SELGITUS =
   /anneta\s*targalt|annetus|p[üu]siannetus|efektiivne\s*altruism/i;
 
-/**
- * Estonian Tax Board income-tax rebate on donations ("Fidek … tulumaks …
- * annetus, isikukood …"). Real money, but it already counted as the donor's
- * gift — no donation record is created for it.
- */
-function isTaxRebate(txn: BankTransaction): boolean {
-  const name = txn.counterpartyName.toLowerCase();
-  return (
-    txn.idOrRegCode === "70000272" ||
-    name.includes("rahandusministeerium") ||
-    txn.description.toLowerCase().includes("maksu ja tolliamet")
-  );
-}
-
 /** Montonio (incl. its Stripe-labelled card settlements) aggregated payout. */
 export function looksLikeCardPayout(txn: BankTransaction): boolean {
   const name = txn.counterpartyName.toLowerCase();
@@ -218,12 +204,6 @@ export function categorizeStatement(input: StatementInput): StatementReport {
     }
     if (claimedByReconcile.has(code)) {
       continue; // handled in report.reconcile
-    }
-
-    // Tax-board rebate — never a donation record.
-    if (isTaxRebate(txn)) {
-      report.notADonation.push(txn);
-      continue;
     }
 
     // Step 4: card / processor payout — donations resolved later via Montonio.
