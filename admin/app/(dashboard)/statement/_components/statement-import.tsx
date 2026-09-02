@@ -111,6 +111,8 @@ export function StatementImport() {
   const [reconcileSel, setReconcileSel] = useState<Set<number>>(new Set());
   const [ignoreSel, setIgnoreSel] = useState<Set<string>>(new Set());
   const [payoutIds, setPayoutIds] = useState<Record<string, string>>({});
+  // needs-a-decision: archivingCode → donation id typed by the operator
+  const [manualAssign, setManualAssign] = useState<Record<string, string>>({});
 
   async function analyse() {
     if (!file) return;
@@ -132,6 +134,7 @@ export function StatementImport() {
       setImportSel(new Set(p.recurringImports.map((i) => i.archivingCode)));
       setReconcileSel(new Set(p.reconcile.map((r) => r.donationId)));
       setIgnoreSel(new Set(p.notADonation.map((t) => t.archivingCode)));
+      setManualAssign({});
       setPayoutIds(
         Object.fromEntries(
           p.cardPayouts
@@ -161,11 +164,23 @@ export function StatementImport() {
     return out;
   }, [payoutIds]);
 
+  const manualAssignments = useMemo(() => {
+    const out: { donationId: number; archivingCode: string; source: string }[] =
+      [];
+    for (const [code, raw] of Object.entries(manualAssign)) {
+      const id = Number(raw.trim());
+      if (Number.isInteger(id) && id > 0)
+        out.push({ donationId: id, archivingCode: code, source: "manual" });
+    }
+    return out;
+  }, [manualAssign]);
+
   const totalChanges =
     importSel.size +
     reconcileSel.size +
     ignoreSel.size +
-    cardPayoutAssignments.length;
+    cardPayoutAssignments.length +
+    manualAssignments.length;
 
   async function apply() {
     if (!preview) return;
@@ -173,18 +188,24 @@ export function StatementImport() {
     setError(null);
     try {
       const payload = {
-        reconcile: preview.reconcile
-          .filter((r) => reconcileSel.has(r.donationId))
-          .map((r) => ({
-            donationId: r.donationId,
-            archivingCode: r.archivingCode,
-            source: r.source,
-          })),
+        reconcile: [
+          ...preview.reconcile
+            .filter((r) => reconcileSel.has(r.donationId))
+            .map((r) => ({
+              donationId: r.donationId,
+              archivingCode: r.archivingCode,
+              source: r.source,
+            })),
+          ...manualAssignments,
+        ],
         recurringImports: preview.recurringImports.filter((i) =>
           importSel.has(i.archivingCode),
         ),
         cardPayoutAssignments,
-        ignore: preview.notADonation
+        ignore: [
+          ...preview.notADonation,
+          ...preview.needsDecision.map((n) => n.transaction),
+        ]
           .filter((t) => ignoreSel.has(t.archivingCode))
           .map((t) => ({
             archivingCode: t.archivingCode,
@@ -395,7 +416,7 @@ export function StatementImport() {
           </Section>
 
           <Section
-            title="Needs a decision — handle these outside this tool"
+            title="Needs a decision"
             count={preview.needsDecision.length}
           >
             <Table>
@@ -404,26 +425,52 @@ export function StatementImport() {
                   <TableHead>Date</TableHead>
                   <TableHead>Sender</TableHead>
                   <TableHead>Amount</TableHead>
-                  <TableHead>Description</TableHead>
                   <TableHead>Why</TableHead>
+                  <TableHead className="w-40">Assign to donation #</TableHead>
+                  <TableHead className="w-16">Ignore</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {preview.needsDecision.map((n) => (
-                  <TableRow key={n.transaction.archivingCode}>
-                    <TableCell className="whitespace-nowrap">
-                      {n.transaction.date}
-                    </TableCell>
-                    <TableCell>{n.transaction.counterpartyName}</TableCell>
-                    <TableCell>{eur(n.transaction.amountCents)}</TableCell>
-                    <TableCell className="max-w-xs truncate text-xs">
-                      {n.transaction.description}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {n.reason}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {preview.needsDecision.map((n) => {
+                  const code = n.transaction.archivingCode;
+                  return (
+                    <TableRow key={code}>
+                      <TableCell className="whitespace-nowrap">
+                        {n.transaction.date}
+                      </TableCell>
+                      <TableCell>
+                        {n.transaction.counterpartyName}
+                        <span className="block max-w-xs truncate text-xs text-muted-foreground">
+                          {n.transaction.description}
+                        </span>
+                      </TableCell>
+                      <TableCell>{eur(n.transaction.amountCents)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {n.reason}
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          placeholder="#"
+                          value={manualAssign[code] ?? ""}
+                          disabled={ignoreSel.has(code)}
+                          onChange={(e) =>
+                            setManualAssign((m) => ({
+                              ...m,
+                              [code]: e.target.value,
+                            }))
+                          }
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <input
+                          type="checkbox"
+                          checked={ignoreSel.has(code)}
+                          onChange={() => toggle(ignoreSel, setIgnoreSel, code)}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </Section>
@@ -475,7 +522,8 @@ export function StatementImport() {
                 : `Apply ${totalChanges} change${totalChanges === 1 ? "" : "s"}`}
             </Button>
             <span className="text-xs text-muted-foreground">
-              {importSel.size} create · {reconcileSel.size} reconcile ·{" "}
+              {importSel.size} create ·{" "}
+              {reconcileSel.size + manualAssignments.length} reconcile ·{" "}
               {cardPayoutAssignments.length} card · {ignoreSel.size} ignore
             </span>
           </div>

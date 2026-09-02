@@ -370,15 +370,17 @@ export class DonationsRepository {
     id: number,
     transactionId: string,
     source: MatchSource,
-  ): Promise<void> {
-    await this.database
+  ): Promise<boolean> {
+    const updated = await this.database
       .update(donations)
       .set({
         transactionId,
         transactionMatchSource: source,
         updatedAt: new Date(),
       })
-      .where(eq(donations.id, id));
+      .where(eq(donations.id, id))
+      .returning({ id: donations.id });
+    return updated.length > 0;
   }
 
   /**
