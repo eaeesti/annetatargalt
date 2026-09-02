@@ -24,6 +24,8 @@ import {
 import {
   categorizeStatement,
   parsePayoutUuidPrefix,
+  selectTemplate,
+  planRecurringImport,
   type RecurringTemplate,
   type DonorTemplates,
   type RecurringImport,
@@ -97,6 +99,8 @@ async function resolveCardPayouts(
 export interface ApplyPayload {
   reconcile: { donationId: number; archivingCode: string; source: string }[];
   recurringImports: RecurringImport[];
+  /** operator pointed a "needs a decision" line at a donor → create from template */
+  manualRecurring: { transaction: BankTransaction; donorId: number }[];
   cardPayoutAssignments: { donationId: number; archivingCode: string }[];
   ignore: { archivingCode: string; reason?: string | null }[];
 }
@@ -151,6 +155,32 @@ async function loadDonorsByCode(): Promise<Map<string, DonorTemplates>> {
     }
   }
   return byCode;
+}
+
+/** Templates + org splits for one donor, newest first. */
+async function loadTemplatesForDonor(
+  donorId: number,
+): Promise<RecurringTemplate[]> {
+  const templates = await recurringDonationsRepository.findByDonorId(donorId);
+  return Promise.all(
+    templates.map(async (t) => ({
+      id: t.id,
+      donorId: t.donorId,
+      datetime: new Date(t.datetime).toISOString(),
+      amount: t.amount,
+      companyName: t.companyName,
+      companyCode: t.companyCode,
+      bank: t.bank,
+      orgSplit: (
+        await organizationRecurringDonationsRepository.findByRecurringDonationId(
+          t.id,
+        )
+      ).map((o) => ({
+        organizationInternalId: o.organizationInternalId ?? "",
+        amount: o.amount,
+      })),
+    })),
+  );
 }
 
 export function createStatementService(strapi: Core.Strapi) {
@@ -253,12 +283,27 @@ export function createStatementService(strapi: Core.Strapi) {
     async apply(payload: ApplyPayload, userEmail: string) {
       const summary = { reconciled: 0, created: 0, ignored: 0 };
 
+      // Resolve "needs a decision → this donor" into full plans up front
+      // (reads only), so the write transaction stays tight.
+      const manualPlans: RecurringImport[] = [];
+      for (const mr of payload.manualRecurring ?? []) {
+        const templates = await loadTemplatesForDonor(mr.donorId);
+        const template = selectTemplate(templates, mr.transaction.date);
+        if (!template) {
+          throw new Error(
+            `Donor #${mr.donorId} has no recurring template dated on/before ${mr.transaction.date}`,
+          );
+        }
+        manualPlans.push(planRecurringImport(mr.transaction, template));
+      }
+      const allImports = [...payload.recurringImports, ...manualPlans];
+
       await db.transaction(async (tx) => {
         const donationsRepo = new DonationsRepository(tx);
         const orgDonationsRepo = new OrganizationDonationsRepository(tx);
         const ignoredRepo = new IgnoredBankTransactionsRepository(tx);
 
-        for (const imp of payload.recurringImports) {
+        for (const imp of allImports) {
           const donation = await donationsRepo.create({
             donorId: imp.donorId,
             recurringDonationId: imp.templateId,
