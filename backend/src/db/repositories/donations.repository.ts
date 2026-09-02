@@ -325,7 +325,9 @@ export class DonationsRepository {
     const rows = await this.database.query.donations.findMany({
       where,
       orderBy: [asc(donations.id)],
-      with: { donor: { columns: { idCode: true } } },
+      with: {
+        donor: { columns: { idCode: true, firstName: true, lastName: true } },
+      },
     });
 
     return rows.map((d) => ({
@@ -334,6 +336,10 @@ export class DonationsRepository {
       datetime: d.datetime.toISOString(),
       companyCode: d.companyCode,
       donorIdCode: d.donor?.idCode ?? null,
+      donorName: d.donor
+        ? [d.donor.firstName, d.donor.lastName].filter(Boolean).join(" ") ||
+          null
+        : null,
     }));
   }
 
