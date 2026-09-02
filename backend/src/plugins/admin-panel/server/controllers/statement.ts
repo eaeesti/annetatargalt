@@ -42,6 +42,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
       const body = ctx.request.body as Partial<{
         reconcile: unknown[];
         recurringImports: unknown[];
+        manualRecurring: unknown[];
         cardPayoutAssignments: unknown[];
         ignore: unknown[];
       }>;
@@ -50,6 +51,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
         reconcile: Array.isArray(body.reconcile) ? body.reconcile : [],
         recurringImports: Array.isArray(body.recurringImports)
           ? body.recurringImports
+          : [],
+        manualRecurring: Array.isArray(body.manualRecurring)
+          ? body.manualRecurring
           : [],
         cardPayoutAssignments: Array.isArray(body.cardPayoutAssignments)
           ? body.cardPayoutAssignments
