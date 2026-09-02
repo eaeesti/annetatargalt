@@ -201,10 +201,19 @@ function planFromTemplateIndex(
   preferredTemplateId?: number,
 ): RecurringImport {
   const templates = index.byDonor.get(donorId) ?? [];
-  const template =
-    (preferredTemplateId != null &&
-      templates.find((t) => t.id === preferredTemplateId)) ||
-    selectTemplate(templates, transaction.date);
+  const dated = selectTemplate(templates, transaction.date);
+  // honour the client's template choice only if it's this donor's AND it also
+  // predates the payment; otherwise fall back to the date-selected one
+  const preferred =
+    preferredTemplateId != null
+      ? templates.find(
+          (t) =>
+            t.id === preferredTemplateId &&
+            dated != null &&
+            Date.parse(t.datetime) <= Date.parse(dated.datetime) + 1,
+        )
+      : undefined;
+  const template = preferred ?? dated;
   if (!template) {
     throw new Error(
       `Donor #${donorId} has no recurring template dated on/before ${transaction.date.slice(0, 10)}`,
