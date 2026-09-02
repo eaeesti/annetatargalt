@@ -23,3 +23,7 @@ export {
   ignoredBankTransactionsRepository,
   IgnoredBankTransactionsRepository,
 } from "./ignored-bank-transactions.repository";
+export {
+  senderDonorAliasesRepository,
+  SenderDonorAliasesRepository,
+} from "./sender-donor-aliases.repository";

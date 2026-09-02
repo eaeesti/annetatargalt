@@ -43,22 +43,19 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
         reconcile: unknown[];
         recurringImports: unknown[];
         manualRecurring: unknown[];
+        rememberSenders: unknown[];
         cardPayoutAssignments: unknown[];
         ignore: unknown[];
       }>;
 
+      const arr = (v: unknown) => (Array.isArray(v) ? v : []);
       const payload = {
-        reconcile: Array.isArray(body.reconcile) ? body.reconcile : [],
-        recurringImports: Array.isArray(body.recurringImports)
-          ? body.recurringImports
-          : [],
-        manualRecurring: Array.isArray(body.manualRecurring)
-          ? body.manualRecurring
-          : [],
-        cardPayoutAssignments: Array.isArray(body.cardPayoutAssignments)
-          ? body.cardPayoutAssignments
-          : [],
-        ignore: Array.isArray(body.ignore) ? body.ignore : [],
+        reconcile: arr(body.reconcile),
+        recurringImports: arr(body.recurringImports),
+        manualRecurring: arr(body.manualRecurring),
+        rememberSenders: arr(body.rememberSenders),
+        cardPayoutAssignments: arr(body.cardPayoutAssignments),
+        ignore: arr(body.ignore),
       };
 
       const user = ctx.state.user as { email?: string } | undefined;

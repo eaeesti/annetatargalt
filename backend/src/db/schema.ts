@@ -229,3 +229,19 @@ export type IgnoredBankTransaction =
   typeof ignoredBankTransactions.$inferSelect;
 export type NewIgnoredBankTransaction =
   typeof ignoredBankTransactions.$inferInsert;
+
+// "This bank sender code belongs to this donor" — learned during a statement
+// import when the code in the bank line doesn't match any donor/template
+// (e.g. a foreign company code). Lets future imports resolve it automatically.
+export const senderDonorAliases = pgTable("sender_donor_aliases", {
+  senderCode: varchar("sender_code", { length: 64 }).primaryKey(),
+  donorId: integer("donor_id")
+    .references(() => donors.id)
+    .notNull(),
+  note: varchar("note", { length: 256 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdBy: varchar("created_by", { length: 256 }),
+});
+
+export type SenderDonorAlias = typeof senderDonorAliases.$inferSelect;
+export type NewSenderDonorAlias = typeof senderDonorAliases.$inferInsert;
