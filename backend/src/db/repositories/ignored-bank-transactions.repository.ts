@@ -35,9 +35,9 @@ export class IgnoredBankTransactionsRepository {
       .insert(ignoredBankTransactions)
       .values(
         rows.map((r) => ({
-          archivingCode: r.archivingCode,
-          reason: r.reason ?? null,
-          createdBy: r.createdBy ?? null,
+          archivingCode: r.archivingCode.slice(0, 20),
+          reason: r.reason?.slice(0, 256) ?? null,
+          createdBy: r.createdBy?.slice(0, 256) ?? null,
         })),
       )
       .onConflictDoNothing();

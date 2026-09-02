@@ -165,6 +165,12 @@ describe("planRecurringImport", () => {
     );
     expect(plan.orgDonations.reduce((s, o) => s + o.amountCents, 0)).toBe(1000);
   });
+
+  it("throws on a template with no org split (rather than crashing on resize)", () => {
+    expect(() =>
+      planRecurringImport(txn({}), template({ orgSplit: [] })),
+    ).toThrow(/no organization split/);
+  });
 });
 
 // ─── categorizeStatement ─────────────────────────────────────────────────────
@@ -195,6 +201,63 @@ describe("categorizeStatement", () => {
     expect(report.counts).toMatchObject({ alreadyReconciled: 1, ignored: 1 });
     expect(report.recurringImports).toHaveLength(0);
     expect(report.notADonation).toHaveLength(0);
+  });
+
+  it("never re-reconciles a code that is already on a donation or ignored, even if matchDonations finds a same-amount donation in the window", () => {
+    const report = categorizeStatement(
+      baseInput({
+        transactions: [
+          txn({ archivingCode: "DONE", amountCents: 3000, date: "2026-06-15" }),
+          txn({
+            archivingCode: "IGN",
+            amountCents: 3000,
+            date: "2026-06-15",
+            idOrRegCode: "38000000000",
+          }),
+        ],
+        unreconciledDonations: [
+          donation({ id: 7, amountCents: 3000, donorIdCode: "39001010001" }),
+          donation({ id: 8, amountCents: 3000, donorIdCode: "38000000000" }),
+        ],
+        reconciledCodes: new Set(["DONE"]),
+        ignoredCodes: new Set(["IGN"]),
+      }),
+    );
+    expect(report.reconcile).toHaveLength(0);
+    expect(report.counts).toMatchObject({ alreadyReconciled: 1, ignored: 1 });
+  });
+
+  it("a code matching >1 existing donation goes to needs-a-decision, not auto-reconcile", () => {
+    const report = categorizeStatement(
+      baseInput({
+        transactions: [
+          txn({ archivingCode: "DUP", amountCents: 3000, date: "2026-06-15" }),
+        ],
+        unreconciledDonations: [
+          donation({ id: 7, amountCents: 3000 }),
+          donation({ id: 8, amountCents: 3000 }),
+        ],
+      }),
+    );
+    expect(report.reconcile).toHaveLength(0);
+    expect(report.needsDecision).toHaveLength(1);
+    expect(report.needsDecision[0].reason).toMatch(/matches 2 existing/);
+  });
+
+  it("recurring template with no org split → needs a decision, not a crash", () => {
+    const report = categorizeStatement(
+      baseInput({
+        transactions: [txn({ archivingCode: "NOSPLIT", amountCents: 3000 })],
+        donorsByCode: new Map<string, DonorTemplates>([
+          [
+            "39001010001",
+            { donorId: 10, templates: [template({ orgSplit: [] })] },
+          ],
+        ]),
+      }),
+    );
+    expect(report.recurringImports).toHaveLength(0);
+    expect(report.needsDecision[0].reason).toMatch(/no organization split/);
   });
 
   it("assigns a code to an existing unreconciled donation (step 2 wins over import)", () => {

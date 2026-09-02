@@ -32,17 +32,19 @@ export class SenderDonorAliasesRepository {
   ): Promise<void> {
     if (rows.length === 0) return;
     for (const r of rows) {
+      const senderCode = r.senderCode.slice(0, 64);
+      const note = r.note?.slice(0, 256) ?? null;
       await this.database
         .insert(senderDonorAliases)
         .values({
-          senderCode: r.senderCode,
+          senderCode,
           donorId: r.donorId,
-          note: r.note ?? null,
-          createdBy: r.createdBy ?? null,
+          note,
+          createdBy: r.createdBy?.slice(0, 256) ?? null,
         })
         .onConflictDoUpdate({
           target: senderDonorAliases.senderCode,
-          set: { donorId: r.donorId, note: r.note ?? null },
+          set: { donorId: r.donorId, note },
         });
     }
   }
