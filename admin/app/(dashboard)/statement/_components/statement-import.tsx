@@ -111,8 +111,10 @@ export function StatementImport() {
   const [reconcileSel, setReconcileSel] = useState<Set<number>>(new Set());
   const [ignoreSel, setIgnoreSel] = useState<Set<string>>(new Set());
   const [payoutIds, setPayoutIds] = useState<Record<string, string>>({});
-  // needs-a-decision: archivingCode → donation id typed by the operator
+  // needs-a-decision, per archivingCode: assign to an existing donation id,
+  // or create a donation from a donor's recurring template
   const [manualAssign, setManualAssign] = useState<Record<string, string>>({});
+  const [manualDonor, setManualDonor] = useState<Record<string, string>>({});
 
   async function analyse() {
     if (!file) return;
@@ -135,6 +137,7 @@ export function StatementImport() {
       setReconcileSel(new Set(p.reconcile.map((r) => r.donationId)));
       setIgnoreSel(new Set(p.notADonation.map((t) => t.archivingCode)));
       setManualAssign({});
+      setManualDonor({});
       setPayoutIds(
         Object.fromEntries(
           p.cardPayouts
@@ -175,12 +178,31 @@ export function StatementImport() {
     return out;
   }, [manualAssign]);
 
+  const manualRecurring = useMemo(() => {
+    if (!preview) return [] as { transaction: BankTxn; donorId: number }[];
+    const byCode = new Map(
+      preview.needsDecision.map((n) => [
+        n.transaction.archivingCode,
+        n.transaction,
+      ]),
+    );
+    const out: { transaction: BankTxn; donorId: number }[] = [];
+    for (const [code, raw] of Object.entries(manualDonor)) {
+      const donorId = Number(raw.trim());
+      const txn = byCode.get(code);
+      if (txn && Number.isInteger(donorId) && donorId > 0)
+        out.push({ transaction: txn, donorId });
+    }
+    return out;
+  }, [manualDonor, preview]);
+
   const totalChanges =
     importSel.size +
     reconcileSel.size +
     ignoreSel.size +
     cardPayoutAssignments.length +
-    manualAssignments.length;
+    manualAssignments.length +
+    manualRecurring.length;
 
   async function apply() {
     if (!preview) return;
@@ -201,6 +223,7 @@ export function StatementImport() {
         recurringImports: preview.recurringImports.filter((i) =>
           importSel.has(i.archivingCode),
         ),
+        manualRecurring,
         cardPayoutAssignments,
         ignore: [
           ...preview.notADonation,
@@ -426,13 +449,18 @@ export function StatementImport() {
                   <TableHead>Sender</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Why</TableHead>
-                  <TableHead className="w-40">Assign to donation #</TableHead>
+                  <TableHead className="w-32">→ donation #</TableHead>
+                  <TableHead className="w-40">→ create for donor #</TableHead>
                   <TableHead className="w-16">Ignore</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {preview.needsDecision.map((n) => {
                   const code = n.transaction.archivingCode;
+                  const resolved =
+                    ignoreSel.has(code) ||
+                    !!manualAssign[code]?.trim() ||
+                    !!manualDonor[code]?.trim();
                   return (
                     <TableRow key={code}>
                       <TableCell className="whitespace-nowrap">
@@ -452,9 +480,26 @@ export function StatementImport() {
                         <Input
                           placeholder="#"
                           value={manualAssign[code] ?? ""}
-                          disabled={ignoreSel.has(code)}
+                          disabled={
+                            ignoreSel.has(code) || !!manualDonor[code]?.trim()
+                          }
                           onChange={(e) =>
                             setManualAssign((m) => ({
+                              ...m,
+                              [code]: e.target.value,
+                            }))
+                          }
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          placeholder="donor #"
+                          value={manualDonor[code] ?? ""}
+                          disabled={
+                            ignoreSel.has(code) || !!manualAssign[code]?.trim()
+                          }
+                          onChange={(e) =>
+                            setManualDonor((m) => ({
                               ...m,
                               [code]: e.target.value,
                             }))
@@ -467,6 +512,14 @@ export function StatementImport() {
                           checked={ignoreSel.has(code)}
                           onChange={() => toggle(ignoreSel, setIgnoreSel, code)}
                         />
+                        {!resolved && (
+                          <span
+                            className="ml-1 text-xs text-amber-600"
+                            title="unresolved — will not be touched"
+                          >
+                            •
+                          </span>
+                        )}
                       </TableCell>
                     </TableRow>
                   );
@@ -522,7 +575,7 @@ export function StatementImport() {
                 : `Apply ${totalChanges} change${totalChanges === 1 ? "" : "s"}`}
             </Button>
             <span className="text-xs text-muted-foreground">
-              {importSel.size} create ·{" "}
+              {importSel.size + manualRecurring.length} create ·{" "}
               {reconcileSel.size + manualAssignments.length} reconcile ·{" "}
               {cardPayoutAssignments.length} card · {ignoreSel.size} ignore
             </span>
