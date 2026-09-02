@@ -36,6 +36,13 @@
       "when": 1788299201679,
       "tag": "0004_ignored_bank_transactions",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788377829277,
+      "tag": "0005_sender_donor_aliases",
+      "breakpoints": true
     }
   ]
 }

@@ -115,6 +115,8 @@ export function StatementImport() {
   // or create a donation from a donor's recurring template
   const [manualAssign, setManualAssign] = useState<Record<string, string>>({});
   const [manualDonor, setManualDonor] = useState<Record<string, string>>({});
+  // archivingCodes whose sender→donor mapping should be persisted
+  const [rememberSel, setRememberSel] = useState<Set<string>>(new Set());
 
   async function analyse() {
     if (!file) return;
@@ -138,6 +140,7 @@ export function StatementImport() {
       setIgnoreSel(new Set(p.notADonation.map((t) => t.archivingCode)));
       setManualAssign({});
       setManualDonor({});
+      setRememberSel(new Set());
       setPayoutIds(
         Object.fromEntries(
           p.cardPayouts
@@ -196,6 +199,22 @@ export function StatementImport() {
     return out;
   }, [manualDonor, preview]);
 
+  const rememberSenders = useMemo(
+    () =>
+      manualRecurring
+        .filter(
+          (mr) =>
+            rememberSel.has(mr.transaction.archivingCode) &&
+            mr.transaction.idOrRegCode,
+        )
+        .map((mr) => ({
+          senderCode: mr.transaction.idOrRegCode,
+          donorId: mr.donorId,
+          note: mr.transaction.counterpartyName,
+        })),
+    [manualRecurring, rememberSel],
+  );
+
   const totalChanges =
     importSel.size +
     reconcileSel.size +
@@ -224,6 +243,7 @@ export function StatementImport() {
           importSel.has(i.archivingCode),
         ),
         manualRecurring,
+        rememberSenders,
         cardPayoutAssignments,
         ignore: [
           ...preview.notADonation,
@@ -505,6 +525,19 @@ export function StatementImport() {
                             }))
                           }
                         />
+                        {!!manualDonor[code]?.trim() &&
+                          !!n.transaction.idOrRegCode && (
+                            <label className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                              <input
+                                type="checkbox"
+                                checked={rememberSel.has(code)}
+                                onChange={() =>
+                                  toggle(rememberSel, setRememberSel, code)
+                                }
+                              />
+                              remember {n.transaction.idOrRegCode}
+                            </label>
+                          )}
                       </TableCell>
                       <TableCell>
                         <input
