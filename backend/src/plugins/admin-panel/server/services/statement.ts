@@ -11,11 +11,13 @@ import {
   DonationsRepository,
   OrganizationDonationsRepository,
   IgnoredBankTransactionsRepository,
+  SenderDonorAliasesRepository,
   donationsRepository,
   donorsRepository,
   recurringDonationsRepository,
   organizationRecurringDonationsRepository,
   ignoredBankTransactionsRepository,
+  senderDonorAliasesRepository,
 } from "../../../../db/repositories";
 import {
   parseLhvCsv,
@@ -101,15 +103,22 @@ export interface ApplyPayload {
   recurringImports: RecurringImport[];
   /** operator pointed a "needs a decision" line at a donor → create from template */
   manualRecurring: { transaction: BankTransaction; donorId: number }[];
+  /** persist "this sender code is this donor" so future imports auto-resolve */
+  rememberSenders: {
+    senderCode: string;
+    donorId: number;
+    note?: string | null;
+  }[];
   cardPayoutAssignments: { donationId: number; archivingCode: string }[];
   ignore: { archivingCode: string; reason?: string | null }[];
 }
 
 async function loadDonorsByCode(): Promise<Map<string, DonorTemplates>> {
-  const [donors, templates, orgSplits] = await Promise.all([
+  const [donors, templates, orgSplits, aliases] = await Promise.all([
     donorsRepository.findAll(),
     recurringDonationsRepository.findAll(),
     organizationRecurringDonationsRepository.findAll(),
+    senderDonorAliasesRepository.map(),
   ]);
 
   const splitByTemplate = new Map<
@@ -153,6 +162,12 @@ async function loadDonorsByCode(): Promise<Map<string, DonorTemplates>> {
       if (t.companyCode)
         byCode.set(t.companyCode, { donorId, templates: tmpls });
     }
+  }
+  // learned aliases (foreign codes etc.) — only useful if that donor has a template
+  for (const [senderCode, donorId] of aliases) {
+    const tmpls = byDonor.get(donorId);
+    if (tmpls && tmpls.length > 0)
+      byCode.set(senderCode, { donorId, templates: tmpls });
   }
   return byCode;
 }
@@ -302,6 +317,7 @@ export function createStatementService(strapi: Core.Strapi) {
         const donationsRepo = new DonationsRepository(tx);
         const orgDonationsRepo = new OrganizationDonationsRepository(tx);
         const ignoredRepo = new IgnoredBankTransactionsRepository(tx);
+        const aliasRepo = new SenderDonorAliasesRepository(tx);
 
         for (const imp of allImports) {
           const donation = await donationsRepo.create({
@@ -354,6 +370,17 @@ export function createStatementService(strapi: Core.Strapi) {
           })),
         );
         summary.ignored = payload.ignore.length;
+
+        await aliasRepo.add(
+          (payload.rememberSenders ?? [])
+            .filter((s) => s.senderCode && Number.isInteger(s.donorId))
+            .map((s) => ({
+              senderCode: s.senderCode,
+              donorId: s.donorId,
+              note: s.note ?? null,
+              createdBy: userEmail,
+            })),
+        );
       });
 
       return summary;
