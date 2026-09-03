@@ -52,7 +52,6 @@ type CardPayout = {
   resolved: boolean;
   grossCents: number | null;
   feeCents: number | null;
-  feeByDonationId: Record<number, number>;
 };
 
 type Preview = {
@@ -354,7 +353,7 @@ export function StatementImport() {
               </span>
             )}
             {preview.counts.outgoing > 0 && (
-              <span>{preview.counts.outgoing} outgoing payments recorded</span>
+              <span>{preview.counts.outgoing} outgoing (debit) lines</span>
             )}
           </div>
 

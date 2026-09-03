@@ -173,12 +173,15 @@ async function main(): Promise<void> {
     };
   });
 
+  let bankInserted = 0;
   await db.transaction(async (tx) => {
-    await new BankTransactionsRepository(tx).upsertMany(bankRows);
+    bankInserted = await new BankTransactionsRepository(tx).upsertMany(
+      bankRows,
+    );
     await new DonationsRepository(tx).setTransactionIds(toWrite);
   });
   console.log(
-    `\nApplied: ${toWrite.length} donation(s) updated${skipped ? `, ${skipped} skipped (already reconciled; use --force to overwrite)` : ""}, ${bankRows.length} bank_transactions row(s) recorded.\n`,
+    `\nApplied: ${toWrite.length} donation(s) updated${skipped ? `, ${skipped} skipped (already reconciled; use --force to overwrite)` : ""}, ${bankInserted} new bank_transactions row(s).\n`,
   );
 }
 

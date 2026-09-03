@@ -12,10 +12,15 @@ const VALID_SORT_COLS = new Set([
   "importedAt",
 ]);
 
+/** Strict `YYYY-MM-DD` — anything else is dropped (never forwarded to Postgres). */
 const isoDate = (v: unknown): string | undefined => {
-  if (!v) return undefined;
-  const s = String(v);
-  return isNaN(new Date(s).getTime()) ? undefined : s;
+  if (typeof v !== "string" && typeof v !== "number") return undefined;
+  const s = String(v).trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return undefined;
+  const d = new Date(`${s}T00:00:00Z`);
+  return Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== s
+    ? undefined
+    : s;
 };
 
 export default ({ strapi }: { strapi: Core.Strapi }) => {
