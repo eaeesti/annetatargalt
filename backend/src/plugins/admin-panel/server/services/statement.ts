@@ -101,7 +101,9 @@ async function resolveCardPayouts(
           donationId: refToDonationId(
             o.merchantReference ?? o.merchant_reference,
           ),
-          grossCents: toCents(o.grandTotal),
+          grossCents: toCents(
+            o.grandTotal ?? o.grand_total ?? o.amount ?? o.total,
+          ),
         }))
         .filter(
           (o): o is { donationId: number; grossCents: number } =>

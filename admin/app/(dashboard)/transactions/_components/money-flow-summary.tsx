@@ -16,6 +16,7 @@ export type MoneyFlow = {
   transferred: number;
   undecidedInflow: number;
   outgoingTotal: number;
+  unimportedRows: number;
   unlinkedDonationCount: number;
   unlinkedDonationCents: number;
   discrepancy: number;
@@ -126,8 +127,20 @@ export function MoneyFlowSummary({ summary: s }: { summary: MoneyFlow }) {
           />
         </div>
 
-        {(s.undecidedInflow > 0 || s.unlinkedDonationCount > 0) && (
+        {(s.undecidedInflow > 0 ||
+          s.unlinkedDonationCount > 0 ||
+          s.unimportedRows > 0) && (
           <div className="flex flex-wrap gap-x-6 gap-y-1 border-t pt-3 text-xs">
+            {s.unimportedRows > 0 && (
+              <Link
+                href={listHref("unimported")}
+                className="text-muted-foreground hover:underline"
+              >
+                {s.unimportedRows} code
+                {s.unimportedRows === 1 ? "" : "s"} whose bank line isn&apos;t
+                imported yet — re-import that period to include them
+              </Link>
+            )}
             {s.undecidedInflow > 0 && (
               <Link
                 href={listHref("undecided")}

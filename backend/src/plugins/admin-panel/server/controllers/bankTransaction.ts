@@ -30,13 +30,17 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
     async list(ctx: Context) {
       const q = ctx.request.query;
 
-      const page = Math.max(1, Number(q.page ?? 1));
+      const pageRaw = Number(q.page ?? 1);
+      const page = Number.isFinite(pageRaw)
+        ? Math.max(1, Math.floor(pageRaw))
+        : 1;
       // pageSize=all → 0 (repo returns every row)
+      const pageSizeNum = Number(q.pageSize ?? 50);
       const pageSize =
         String(q.pageSize) === "all"
           ? 0
-          : VALID_PAGE_SIZES.includes(Number(q.pageSize ?? 50))
-            ? Number(q.pageSize)
+          : VALID_PAGE_SIZES.includes(pageSizeNum)
+            ? pageSizeNum
             : 50;
       const sortByRaw = String(q.sortBy ?? "date");
       const sortBy = VALID_SORT_COLS.has(sortByRaw) ? sortByRaw : "date";

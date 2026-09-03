@@ -78,6 +78,25 @@ type Preview = {
 const eur = (cents: number | null) =>
   cents == null ? "—" : `€${(cents / 100).toFixed(2)}`;
 
+/** "7.37" | "12,50" | "1 234,56" | "1,234.56" → cents, or null. */
+function euroInputToCents(raw: string): number | null {
+  const s = raw.trim().replace(/[\s ]/g, "");
+  if (!s) return null;
+  const lastComma = s.lastIndexOf(",");
+  const lastDot = s.lastIndexOf(".");
+  let normalized = s;
+  if (lastComma > -1 && lastDot > -1) {
+    // both present → the later one is the decimal separator
+    const dec = lastComma > lastDot ? "," : ".";
+    const thou = dec === "," ? "." : ",";
+    normalized = s.split(thou).join("").replace(dec, ".");
+  } else if (lastComma > -1) {
+    normalized = s.replace(",", "."); // Estonian decimal comma
+  }
+  const n = Number.parseFloat(normalized);
+  return Number.isFinite(n) ? Math.round(n * 100) : null;
+}
+
 function Section({
   title,
   count,
@@ -260,16 +279,13 @@ export function StatementImport() {
         cardPayoutAssignments,
         cardPayouts: preview.cardPayouts.map((c) => {
           const code = c.transaction.archivingCode;
-          const manual = payoutFees[code];
           const feeCents = c.resolved
             ? c.feeCents
-            : manual && manual.trim()
-              ? Math.round(parseFloat(manual.replace(",", ".")) * 100)
-              : null;
+            : euroInputToCents(payoutFees[code] ?? "");
           return {
             archivingCode: code,
             grossCents: c.grossCents,
-            feeCents: Number.isFinite(feeCents) ? feeCents : null,
+            feeCents,
           };
         }),
         ignore: [

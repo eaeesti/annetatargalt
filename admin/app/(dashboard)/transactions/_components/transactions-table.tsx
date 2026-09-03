@@ -35,7 +35,7 @@ export type BankTransactionRow = {
   linkedDonationCount: number;
   allocatedCents: number;
   linkedGrossCents: number;
-  balanced: boolean;
+  balanced: boolean | null;
 };
 
 export type Pagination = {
@@ -67,7 +67,10 @@ const CATEGORIES = [
   "outgoing",
   "ignored",
   "undecided",
+  "unimported",
 ] as const;
+/** categories an operator can set a row to via the drawer (not 'unimported') */
+const RECLASSIFY_CATEGORIES = CATEGORIES.filter((c) => c !== "unimported");
 const PAGE_SIZES = [25, 50, 100, 250, "all"] as const;
 
 const eur = (cents: number | null) =>
@@ -82,7 +85,7 @@ function categoryVariant(
 ): "default" | "secondary" | "destructive" | "outline" {
   if (c === "donation") return "default";
   if (c === "card-payout" || c === "outgoing") return "secondary";
-  if (c === "ignored") return "outline";
+  if (c === "ignored" || c === "unimported") return "outline";
   return "destructive"; // undecided — needs attention
 }
 
@@ -335,7 +338,7 @@ export function TransactionsTable({
                           : "—"}
                       </TableCell>
                       <TableCell className="text-center">
-                        {row.linkedDonationCount === 0 ? (
+                        {row.balanced == null ? (
                           <span className="text-muted-foreground">·</span>
                         ) : row.balanced ? (
                           <span className="text-emerald-600">✓</span>
@@ -364,11 +367,16 @@ export function TransactionsTable({
                                     }))
                                   }
                                 >
-                                  {CATEGORIES.map((c) => (
+                                  {RECLASSIFY_CATEGORIES.map((c) => (
                                     <option key={c} value={c}>
                                       {c}
                                     </option>
                                   ))}
+                                  {row.category === "unimported" && (
+                                    <option value="unimported">
+                                      unimported
+                                    </option>
+                                  )}
                                 </select>
                               </label>
                               <label className="flex-1 text-xs">
