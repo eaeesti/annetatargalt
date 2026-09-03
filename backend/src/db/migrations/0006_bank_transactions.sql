@@ -23,9 +23,12 @@ SELECT "archiving_code", 'ignored', "reason", "created_by", "created_at", "creat
 FROM "ignored_bank_transactions"
 ON CONFLICT ("archiving_code") DO NOTHING;--> statement-breakpoint
 -- stub a row for every archiving code already recorded on a donation, so the FK
--- below can be added; real bank fields get filled in by a later statement upload
+-- below can be added. category 'unimported' = "we know a donation points here
+-- but the bank line has not been imported yet"; the first real statement import
+-- of that period overwrites it with the true category + bank fields, and
+-- money-flow excludes it entirely until then.
 INSERT INTO "bank_transactions" ("archiving_code", "category")
-SELECT DISTINCT "transaction_id", 'donation'
+SELECT DISTINCT "transaction_id", 'unimported'
 FROM "donations"
 WHERE "transaction_id" IS NOT NULL
 ON CONFLICT ("archiving_code") DO NOTHING;--> statement-breakpoint

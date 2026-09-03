@@ -10,7 +10,17 @@ import {
 } from "../../../../db/repositories";
 import { createOrganizationResolver } from "../../../../utils/organization-resolver";
 
-const CATEGORIES: BankTransactionCategory[] = [
+/** categories a row can be filtered by */
+const FILTER_CATEGORIES: string[] = [
+  "donation",
+  "card-payout",
+  "outgoing",
+  "ignored",
+  "undecided",
+  "unimported",
+];
+/** categories an operator can manually set a row to ('unimported' is migration-only) */
+const RECLASSIFY_CATEGORIES: BankTransactionCategory[] = [
   "donation",
   "card-payout",
   "outgoing",
@@ -33,7 +43,7 @@ export function createBankTransactionService(strapi: Core.Strapi) {
       search?: string;
     }) {
       const category =
-        opts.category && CATEGORIES.includes(opts.category as never)
+        opts.category && FILTER_CATEGORIES.includes(opts.category)
           ? opts.category
           : undefined;
       return bankTransactionsRepository.findPaginated({ ...opts, category });
@@ -94,7 +104,7 @@ export function createBankTransactionService(strapi: Core.Strapi) {
       note: string | null,
       by: string | null,
     ) {
-      if (!CATEGORIES.includes(category as never)) {
+      if (!RECLASSIFY_CATEGORIES.includes(category as never)) {
         return { ok: false as const, reason: "bad-category" as const };
       }
       return bankTransactionsRepository.setCategory(

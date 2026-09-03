@@ -174,7 +174,11 @@ export interface MontonioPayout {
 export interface MontonioPayoutOrder {
   merchantReference?: string;
   merchant_reference?: string;
+  /** order gross — Montonio's exact key varies by export version */
   grandTotal?: string | number;
+  grand_total?: string | number;
+  amount?: string | number;
+  total?: string | number;
   [key: string]: unknown;
 }
 
