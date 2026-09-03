@@ -16,6 +16,7 @@
     "start": "strapi start",
     "strapi": "strapi",
     "reconcile": "dotenv -e .env -- node dist/src/scripts/reconcile.js",
+    "montonio-payouts-check": "dotenv -e .env -- node dist/src/scripts/montonio-payouts-check.js",
     "test": "yarn test:unit",
     "test:unit": "vitest run",
     "test:integration": "dotenv -e .env.test -- vitest run repositories",
