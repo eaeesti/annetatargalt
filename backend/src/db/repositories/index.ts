@@ -20,9 +20,13 @@ export {
   DonationTransfersRepository,
 } from "./donation-transfers.repository";
 export {
-  ignoredBankTransactionsRepository,
-  IgnoredBankTransactionsRepository,
-} from "./ignored-bank-transactions.repository";
+  bankTransactionsRepository,
+  BankTransactionsRepository,
+  type BankTransactionCategory,
+  type BankTransactionUpsert,
+  type BankTransactionRow,
+  type MoneyFlow,
+} from "./bank-transactions.repository";
 export {
   senderDonorAliasesRepository,
   SenderDonorAliasesRepository,

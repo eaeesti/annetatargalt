@@ -5,11 +5,16 @@ import transfer from "./transfer";
 import organization from "./organization";
 import dashboard from "./dashboard";
 import statement from "./statement";
+import bankTransaction from "./bankTransaction";
 
 export default {
   "statement-router": {
     type: "content-api",
     routes: statement.routes,
+  },
+  "bank-transaction-router": {
+    type: "content-api",
+    routes: bankTransaction.routes,
   },
   "donation-router": {
     type: "content-api",

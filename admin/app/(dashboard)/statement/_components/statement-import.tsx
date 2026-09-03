@@ -50,6 +50,9 @@ type CardPayout = {
   transaction: BankTxn;
   resolvedDonationIds: number[];
   resolved: boolean;
+  grossCents: number | null;
+  feeCents: number | null;
+  feeByDonationId: Record<number, number>;
 };
 
 type Preview = {
@@ -57,12 +60,14 @@ type Preview = {
     creditTransactions: number;
     alreadyReconciled: number;
     ignored: number;
+    unrecorded: number;
   };
   reconcile: ReconcileRow[];
   recurringImports: RecurringImport[];
   cardPayouts: CardPayout[];
   needsDecision: { transaction: BankTxn; reason: string }[];
   notADonation: BankTxn[];
+  allCredits: BankTxn[];
   donorNames: Record<string, string>;
   orgNames: Record<string, string>;
 };
@@ -104,6 +109,7 @@ export function StatementImport() {
     created: number;
     reconciled: number;
     ignored: number;
+    recorded: number;
   } | null>(null);
 
   // selections
@@ -111,6 +117,8 @@ export function StatementImport() {
   const [reconcileSel, setReconcileSel] = useState<Set<number>>(new Set());
   const [ignoreSel, setIgnoreSel] = useState<Set<string>>(new Set());
   const [payoutIds, setPayoutIds] = useState<Record<string, string>>({});
+  // card-payout code → manually entered fee in euros (only when Montonio didn't resolve)
+  const [payoutFees, setPayoutFees] = useState<Record<string, string>>({});
   // needs-a-decision, per archivingCode: assign to an existing donation id,
   // or create a donation from a donor's recurring template
   const [manualAssign, setManualAssign] = useState<Record<string, string>>({});
@@ -141,6 +149,7 @@ export function StatementImport() {
       setManualAssign({});
       setManualDonor({});
       setRememberSel(new Set());
+      setPayoutFees({});
       setPayoutIds(
         Object.fromEntries(
           p.cardPayouts
@@ -245,6 +254,20 @@ export function StatementImport() {
         manualRecurring,
         rememberSenders,
         cardPayoutAssignments,
+        cardPayouts: preview.cardPayouts.map((c) => {
+          const code = c.transaction.archivingCode;
+          const manual = payoutFees[code];
+          const feeCents = c.resolved
+            ? c.feeCents
+            : manual && manual.trim()
+              ? Math.round(parseFloat(manual.replace(",", ".")) * 100)
+              : null;
+          return {
+            archivingCode: code,
+            grossCents: c.grossCents,
+            feeCents: Number.isFinite(feeCents) ? feeCents : null,
+          };
+        }),
         ignore: [
           ...preview.notADonation,
           ...preview.needsDecision.map((n) => n.transaction),
@@ -254,6 +277,7 @@ export function StatementImport() {
             archivingCode: t.archivingCode,
             reason: t.description,
           })),
+        allCredits: preview.allCredits,
       };
       const res = await fetch("/api/statement/apply", {
         method: "POST",
@@ -306,7 +330,8 @@ export function StatementImport() {
         <div className="rounded-md border border-green-600/30 bg-green-600/5 p-4 text-sm">
           Applied: <strong>{result.created}</strong> donations created,{" "}
           <strong>{result.reconciled}</strong> reconciled,{" "}
-          <strong>{result.ignored}</strong> ignored.
+          <strong>{result.ignored}</strong> ignored,{" "}
+          <strong>{result.recorded}</strong> bank rows recorded.
         </div>
       )}
 
@@ -316,6 +341,12 @@ export function StatementImport() {
             <span>{preview.counts.creditTransactions} credit lines</span>
             <span>{preview.counts.alreadyReconciled} already done</span>
             <span>{preview.counts.ignored} previously ignored</span>
+            {preview.counts.unrecorded > 0 && (
+              <span className="text-foreground">
+                {preview.counts.unrecorded} new bank row
+                {preview.counts.unrecorded === 1 ? "" : "s"} will be recorded
+              </span>
+            )}
           </div>
 
           <Section
@@ -419,6 +450,7 @@ export function StatementImport() {
                 <TableRow>
                   <TableHead>Date</TableHead>
                   <TableHead>Net</TableHead>
+                  <TableHead>Fee</TableHead>
                   <TableHead>Reference</TableHead>
                   <TableHead>Donation IDs it covers</TableHead>
                 </TableRow>
@@ -431,6 +463,23 @@ export function StatementImport() {
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
                       {eur(c.transaction.amountCents)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {c.resolved ? (
+                        <span className="text-sm">{eur(c.feeCents)}</span>
+                      ) : (
+                        <Input
+                          className="w-24"
+                          placeholder="fee €"
+                          value={payoutFees[c.transaction.archivingCode] ?? ""}
+                          onChange={(e) =>
+                            setPayoutFees((m) => ({
+                              ...m,
+                              [c.transaction.archivingCode]: e.target.value,
+                            }))
+                          }
+                        />
+                      )}
                     </TableCell>
                     <TableCell className="max-w-xs truncate text-xs">
                       {c.resolved && (

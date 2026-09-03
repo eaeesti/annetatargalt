@@ -21,6 +21,7 @@ const navLinks = [
   { href: "/transfers", label: "Transfers" },
   { href: "/organizations", label: "Organizations" },
   { href: "/statement", label: "Statement import" },
+  { href: "/transactions", label: "Transactions" },
 ];
 
 type User = {
