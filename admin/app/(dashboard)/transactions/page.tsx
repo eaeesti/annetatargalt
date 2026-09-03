@@ -23,6 +23,7 @@ const VALID_CATEGORIES = new Set([
   "outgoing",
   "ignored",
   "undecided",
+  "unimported",
 ]);
 
 interface ListResponse {
@@ -43,7 +44,8 @@ export default async function TransactionsPage({
 }) {
   const params = await searchParams;
 
-  const page = Math.max(1, Number(str(params.page) ?? 1));
+  const pageNum = Number(str(params.page) ?? 1);
+  const page = Number.isFinite(pageNum) ? Math.max(1, Math.floor(pageNum)) : 1;
   const pageSizeParam = str(params.pageSize) ?? "50";
   const pageSize =
     pageSizeParam === "all"
@@ -58,9 +60,11 @@ export default async function TransactionsPage({
   const category = VALID_CATEGORIES.has(str(params.category) ?? "")
     ? str(params.category)
     : undefined;
-  const dateFrom = str(params.dateFrom);
-  const dateTo = str(params.dateTo);
-  const search = str(params.search);
+  const isoish = (v: string | undefined) =>
+    v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : undefined;
+  const dateFrom = isoish(str(params.dateFrom));
+  const dateTo = isoish(str(params.dateTo));
+  const search = str(params.search)?.slice(0, 128);
 
   const qs = new URLSearchParams({
     page: String(page),

@@ -19,7 +19,9 @@ module.exports = [
   "strapi::cors",
   "strapi::poweredBy",
   "strapi::query",
-  { name: "strapi::body", config: { jsonLimit: "1mb", formLimit: "1mb" } },
+  // statement-import `apply` posts the parsed statement back as JSON (every
+  // credit + debit line); a multi-year LHV export is well under 5mb.
+  { name: "strapi::body", config: { jsonLimit: "5mb", formLimit: "5mb" } },
   "strapi::session",
   "strapi::favicon",
   "strapi::public",

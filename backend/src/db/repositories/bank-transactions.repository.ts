@@ -7,7 +7,8 @@ export type BankTransactionCategory =
   | "card-payout"
   | "outgoing" // debit — money leaving the account (org transfer, fee, refund, tax)
   | "ignored"
-  | "undecided";
+  | "undecided"
+  | "unimported"; // migration stub — a donation points here, bank line not yet imported
 
 /** Higher wins when an upload's decision meets an existing row. */
 const CATEGORY_PRECEDENCE: Record<string, number> = {
@@ -16,6 +17,7 @@ const CATEGORY_PRECEDENCE: Record<string, number> = {
   "card-payout": 2,
   ignored: 1,
   undecided: 0,
+  unimported: -1, // any real import wins over a migration stub
 };
 const prec = (c: string) => CATEGORY_PRECEDENCE[c] ?? 0;
 
@@ -44,8 +46,8 @@ export interface BankTransactionRow extends BankTransaction {
   allocatedCents: number;
   /** Σ donation.amount (gross) for those donations */
   linkedGrossCents: number;
-  /** bank `amount` ≈ linked gross − fee, within rounding */
-  balanced: boolean;
+  /** bank `amount` ≈ linked gross − fee, within rounding; null when not assessable */
+  balanced: boolean | null;
 }
 
 export interface MoneyFlow {
@@ -69,6 +71,8 @@ export interface MoneyFlow {
   undecidedInflow: number;
   /** Σ amount, category = 'outgoing' (debits — money that left the account) */
   outgoingTotal: number;
+  /** codes still 'unimported' (migration stubs whose bank line hasn't been imported) — not date-filtered */
+  unimportedRows: number;
   /** finalized donations with no transaction_id at all (standing backlog, not date-filtered) */
   unlinkedDonationCount: number;
   unlinkedDonationCents: number;
@@ -95,10 +99,11 @@ function mapRow(r: Record<string, unknown>): BankTransactionRow {
   const linkedDonationCount = num(r.linked_donation_count);
   const linkedGrossCents = num(r.linked_gross_cents);
   const expectedNet = linkedGrossCents - (feeAmount ?? 0);
+  // null = not assessable yet (no linked donations, or bank line not imported)
   const balanced =
-    linkedDonationCount > 0 &&
-    amount != null &&
-    Math.abs(amount - expectedNet) <= Math.max(1, linkedDonationCount);
+    linkedDonationCount === 0 || amount == null
+      ? null
+      : Math.abs(amount - expectedNet) <= Math.max(1, linkedDonationCount);
 
   return {
     archivingCode: r.archiving_code as string,
@@ -246,7 +251,8 @@ export class BankTransactionsRepository {
 
   /**
    * Reclassify one code from the /transactions UI. Refuses to move a code away
-   * from 'donation' while finalized donations still reference it.
+   * from a donation-bearing category while ANY donation (finalized or not) still
+   * references it — a pending donation could be finalized later.
    */
   async setCategory(
     code: string,
@@ -254,10 +260,10 @@ export class BankTransactionsRepository {
     note: string | null,
     by: string | null,
   ): Promise<{ ok: boolean; reason?: "not-found" | "has-donations" }> {
-    if (category !== "donation") {
+    if (category !== "donation" && category !== "card-payout") {
       const [linked] = await this.database
         .execute(
-          sql`SELECT cast(count(*) as int) as n FROM donations WHERE transaction_id = ${code} AND finalized = true`,
+          sql`SELECT cast(count(*) as int) as n FROM donations WHERE transaction_id = ${code}`,
         )
         .then((r) => r.rows as { n: number }[]);
       if (num(linked?.n) > 0) return { ok: false, reason: "has-donations" };
@@ -380,7 +386,8 @@ export class BankTransactionsRepository {
       FROM organization_donations od
       JOIN donations d ON d.id = od.donation_id AND d.finalized = true
       JOIN bank_transactions bt ON bt.archiving_code = d.transaction_id
-      WHERE bt.category IN ('donation', 'card-payout') ${btDateClause}
+      WHERE bt.category IN ('donation', 'card-payout')
+        AND bt.amount IS NOT NULL ${btDateClause}
     `)
     ).rows as Record<string, unknown>[];
 
@@ -401,6 +408,13 @@ export class BankTransactionsRepository {
     `)
     ).rows as Record<string, unknown>[];
 
+    const [stubs] = (
+      await this.database.execute(sql`
+      SELECT cast(count(*) as int) as cnt
+      FROM bank_transactions WHERE category = 'unimported'
+    `)
+    ).rows as Record<string, unknown>[];
+
     const received = num(bank?.received);
     const cardPayoutNet = num(bank?.card_payout_net);
     const cardFees = num(bank?.card_fees);
@@ -418,6 +432,7 @@ export class BankTransactionsRepository {
       transferred: num(alloc?.transferred),
       undecidedInflow: num(bank?.undecided_inflow),
       outgoingTotal: num(bank?.outgoing_total),
+      unimportedRows: num(stubs?.cnt),
       unlinkedDonationCount: num(unlinked?.cnt),
       unlinkedDonationCents: num(unlinked?.total),
       discrepancy: allocated - (received + cardPayoutNet + cardFees),

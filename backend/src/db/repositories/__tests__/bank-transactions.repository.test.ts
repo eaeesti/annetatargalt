@@ -66,6 +66,26 @@ describe("BankTransactionsRepository", () => {
       expect(row.category).toBe("donation");
     });
 
+    it("a migration stub ('unimported') is overwritten by any real import", async () => {
+      await bankTransactionsRepository.upsertMany([
+        { archivingCode: "STUB", category: "unimported" },
+      ]);
+      // the real statement line turns out to be a card payout
+      await bankTransactionsRepository.upsertMany([
+        {
+          archivingCode: "STUB",
+          category: "card-payout",
+          date: "2026-05-11",
+          amountCents: 29263,
+          grossAmountCents: 30000,
+          feeAmountCents: 737,
+        },
+      ]);
+      const [row] = await bankTransactionsRepository.findAll();
+      expect(row.category).toBe("card-payout");
+      expect(row.feeAmount).toBe(737);
+    });
+
     it("raises a category's precedence (ignored → donation)", async () => {
       await bankTransactionsRepository.upsertMany([
         { archivingCode: "D", category: "ignored" },
@@ -131,6 +151,42 @@ describe("BankTransactionsRepository", () => {
         "tester",
       );
       expect(res).toEqual({ ok: false, reason: "has-donations" });
+    });
+
+    it("refuses to un-donation a code with a still-pending donation", async () => {
+      await createTestBankTransaction({
+        archivingCode: "PENDING",
+        category: "donation",
+        amount: 1000,
+      });
+      const d = await createTestDonation({ amount: 1000, finalized: false });
+      await donationsRepository.setTransactionId(d.id, "PENDING", "manual");
+
+      const res = await bankTransactionsRepository.setCategory(
+        "PENDING",
+        "ignored",
+        null,
+        "tester",
+      );
+      expect(res).toEqual({ ok: false, reason: "has-donations" });
+    });
+
+    it("allows donation ↔ card-payout even with linked donations", async () => {
+      await createTestBankTransaction({
+        archivingCode: "SWAP",
+        category: "donation",
+        amount: 1000,
+      });
+      const d = await createTestDonation({ amount: 1000, finalized: true });
+      await donationsRepository.setTransactionId(d.id, "SWAP", "manual");
+
+      const res = await bankTransactionsRepository.setCategory(
+        "SWAP",
+        "card-payout",
+        null,
+        "tester",
+      );
+      expect(res.ok).toBe(true);
     });
 
     it("allows reclassifying an unlinked code", async () => {
@@ -359,6 +415,31 @@ describe("BankTransactionsRepository", () => {
         dateTo: "2026-05-31",
       });
       expect(mf.received).toBe(100);
+    });
+
+    it("migration stubs ('unimported', null amount) don't inflate the discrepancy", async () => {
+      const donor = await createTestDonor();
+      // simulate post-migration state: a finalized donation linked to a stub row
+      await bankTransactionsRepository.upsertMany([
+        { archivingCode: "STUB1", category: "unimported" },
+      ]);
+      const d = await createTestDonation({
+        donorId: donor.id,
+        amount: 5000,
+        finalized: true,
+      });
+      await donationsRepository.setTransactionId(d.id, "STUB1", "manual");
+      await createTestOrganizationDonation({
+        donationId: d.id,
+        organizationInternalId: "AMF",
+        amount: 5000,
+      });
+
+      const mf = await bankTransactionsRepository.moneyFlow({});
+      expect(mf.received).toBe(0);
+      expect(mf.allocated).toBe(0); // stub excluded from both sides
+      expect(mf.discrepancy).toBe(0);
+      expect(mf.unimportedRows).toBe(1);
     });
   });
 });
