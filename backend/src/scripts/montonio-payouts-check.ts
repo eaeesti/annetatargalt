@@ -43,7 +43,7 @@ async function main() {
     return;
   }
 
-  const listUrl = `${base}/stores/${storeUuid}/payouts?limit=10&offset=0&order=DESC`;
+  const listUrl = `${base}/stores/${storeUuid}/payouts?limit=149&offset=0&order=DESC`;
   console.log(`\nGET ${listUrl}`);
   const list = await hit(listUrl);
   console.log("  status:", list.status, list.ok ? "OK" : "FAIL");
@@ -72,10 +72,16 @@ async function main() {
     uuid?: string;
     totalAmount?: string;
     createdAt?: string;
+    settlementType?: string;
   }[];
-  console.log(`\n${rows.length} payouts. Newest few:`);
-  for (const p of rows.slice(0, 5)) {
-    console.log(`  ${p.createdAt?.slice(0, 10)}  ${p.totalAmount}  ${p.uuid}`);
+  rows.sort(
+    (x, y) => Date.parse(y.createdAt ?? "") - Date.parse(x.createdAt ?? ""),
+  );
+  console.log(`\n${rows.length} payouts. Newest 8:`);
+  for (const p of rows.slice(0, 8)) {
+    console.log(
+      `  ${p.createdAt?.slice(0, 10)}  ${String(p.totalAmount).padStart(9)}  ${p.settlementType}  ${p.uuid}`,
+    );
   }
   const first = rows[0];
   if (!first?.uuid) {
@@ -87,9 +93,30 @@ async function main() {
   console.log(`\nGET ${exportUrl}`);
   const exp = await hit(exportUrl);
   console.log("  status:", exp.status, exp.ok ? "OK" : "FAIL");
-  console.log("  body  :", JSON.stringify(exp.body, null, 2).slice(0, 3000));
+
+  const file = (exp.body as { url?: string })?.url;
+  if (file) {
+    const fres = await fetch(file);
+    const ftext = await fres.text();
+    let fbody: unknown = ftext;
+    try {
+      fbody = JSON.parse(ftext);
+    } catch {
+      /* text */
+    }
+    const orderRows = Array.isArray(fbody)
+      ? fbody
+      : ((fbody as { orders?: unknown[] })?.orders ?? []);
+    console.log(`  → file ${fres.status}, ${orderRows.length} order rows`);
+    console.log(
+      "  first 2:",
+      JSON.stringify(orderRows.slice(0, 2), null, 2).slice(0, 2000),
+    );
+  } else {
+    console.log("  body:", JSON.stringify(exp.body, null, 2).slice(0, 2000));
+  }
   console.log(
-    "\nExpect either an array of order rows (with merchantReference / a trailing donation id) or { url: <download link> to a JSON file of those rows }.",
+    "\nWhat matters: which field on an order row carries our merchant reference / trailing donation id.",
   );
 }
 
