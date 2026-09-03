@@ -154,7 +154,8 @@ export class BankTransactionsRepository {
    * (coalesced — a real line fills in a blind ignore); `category` never drops
    * below what's already recorded (precedence donation > card-payout > ignored >
    * undecided), so a re-upload can't silently un-ignore or un-link a code.
-   * Returns the number of distinct codes touched.
+   * Returns the number of codes that were newly inserted (0 on a re-run of an
+   * already-recorded statement).
    */
   async upsertMany(rows: BankTransactionUpsert[]): Promise<number> {
     if (rows.length === 0) return 0;
@@ -194,46 +195,53 @@ export class BankTransactionsRepository {
       groups.set(finalCat, arr);
     }
 
+    // ~12 bind params per row; stay well under Postgres' 65535 limit so a
+    // full-history backfill (thousands of codes in one group) doesn't fail.
+    const CHUNK = 1000;
+
     for (const [finalCat, groupRows] of groups) {
-      await this.database
-        .insert(bankTransactions)
-        .values(
-          groupRows.map((r) => ({
-            archivingCode: r.archivingCode,
-            date: r.date ?? null,
-            amount: r.amountCents ?? null,
-            description: r.description ?? null,
-            counterpartyName: trunc(r.counterpartyName, 256),
-            counterpartyAccount: trunc(r.counterpartyAccount, 64),
-            senderCode: trunc(r.senderCode, 64),
-            category: finalCat,
-            grossAmount: r.grossAmountCents ?? null,
-            feeAmount: r.feeAmountCents ?? null,
-            note: trunc(r.note, 512),
-            importedBy: trunc(r.importedBy, 256),
-          })),
-        )
-        .onConflictDoUpdate({
-          target: bankTransactions.archivingCode,
-          set: {
-            date: sql`coalesce(excluded."date", ${bankTransactions.date})`,
-            amount: sql`coalesce(excluded."amount", ${bankTransactions.amount})`,
-            description: sql`coalesce(excluded."description", ${bankTransactions.description})`,
-            counterpartyName: sql`coalesce(excluded."counterparty_name", ${bankTransactions.counterpartyName})`,
-            counterpartyAccount: sql`coalesce(excluded."counterparty_account", ${bankTransactions.counterpartyAccount})`,
-            senderCode: sql`coalesce(excluded."sender_code", ${bankTransactions.senderCode})`,
-            category: finalCat,
-            grossAmount: sql`coalesce(excluded."gross_amount", ${bankTransactions.grossAmount})`,
-            feeAmount: sql`coalesce(excluded."fee_amount", ${bankTransactions.feeAmount})`,
-            note: sql`coalesce(excluded."note", ${bankTransactions.note})`,
-            importedBy: sql`coalesce(excluded."imported_by", ${bankTransactions.importedBy})`,
-            importedAt: sql`now()`,
-            updatedAt: sql`now()`,
-          },
-        });
+      for (let i = 0; i < groupRows.length; i += CHUNK) {
+        await this.database
+          .insert(bankTransactions)
+          .values(
+            groupRows.slice(i, i + CHUNK).map((r) => ({
+              archivingCode: r.archivingCode,
+              date: r.date ?? null,
+              amount: r.amountCents ?? null,
+              description: r.description ?? null,
+              counterpartyName: trunc(r.counterpartyName, 256),
+              counterpartyAccount: trunc(r.counterpartyAccount, 64),
+              senderCode: trunc(r.senderCode, 64),
+              category: finalCat,
+              grossAmount: r.grossAmountCents ?? null,
+              feeAmount: r.feeAmountCents ?? null,
+              note: trunc(r.note, 512),
+              importedBy: trunc(r.importedBy, 256),
+            })),
+          )
+          .onConflictDoUpdate({
+            target: bankTransactions.archivingCode,
+            set: {
+              date: sql`coalesce(excluded."date", ${bankTransactions.date})`,
+              amount: sql`coalesce(excluded."amount", ${bankTransactions.amount})`,
+              description: sql`coalesce(excluded."description", ${bankTransactions.description})`,
+              counterpartyName: sql`coalesce(excluded."counterparty_name", ${bankTransactions.counterpartyName})`,
+              counterpartyAccount: sql`coalesce(excluded."counterparty_account", ${bankTransactions.counterpartyAccount})`,
+              senderCode: sql`coalesce(excluded."sender_code", ${bankTransactions.senderCode})`,
+              category: finalCat,
+              grossAmount: sql`coalesce(excluded."gross_amount", ${bankTransactions.grossAmount})`,
+              feeAmount: sql`coalesce(excluded."fee_amount", ${bankTransactions.feeAmount})`,
+              note: sql`coalesce(excluded."note", ${bankTransactions.note})`,
+              importedBy: sql`coalesce(excluded."imported_by", ${bankTransactions.importedBy})`,
+              importedAt: sql`now()`,
+              updatedAt: sql`now()`,
+            },
+          });
+      }
     }
 
-    return deduped.length;
+    // rows that did not exist before this call
+    return deduped.length - existing.length;
   }
 
   /**

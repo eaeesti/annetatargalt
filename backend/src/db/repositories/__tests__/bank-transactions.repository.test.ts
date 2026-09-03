@@ -20,18 +20,38 @@ describe("BankTransactionsRepository", () => {
   });
 
   describe("upsertMany", () => {
-    it("inserts new rows and reports the count", async () => {
-      const n = await bankTransactionsRepository.upsertMany([
+    it("reports only newly-inserted rows (0 on a no-op re-run)", async () => {
+      const first = await bankTransactionsRepository.upsertMany([
         { archivingCode: "AAA", category: "undecided", amountCents: 500 },
         { archivingCode: "BBB", category: "ignored", amountCents: 700 },
       ]);
-      expect(n).toBe(2);
+      expect(first).toBe(2);
       expect(await bankTransactionsRepository.ignoredCodes()).toEqual(
         new Set(["BBB"]),
       );
-      expect(await bankTransactionsRepository.recordedCodes()).toEqual(
-        new Set(["AAA", "BBB"]),
-      );
+
+      const second = await bankTransactionsRepository.upsertMany([
+        { archivingCode: "AAA", category: "undecided", amountCents: 500 },
+        { archivingCode: "BBB", category: "ignored", amountCents: 700 },
+        { archivingCode: "CCC", category: "undecided", amountCents: 900 },
+      ]);
+      expect(second).toBe(1); // only CCC is new
+    });
+
+    it("chunks large batches (stays under the bind-parameter limit)", async () => {
+      const rows = Array.from({ length: 6000 }, (_, i) => ({
+        archivingCode: `BIG${i}`,
+        category: "undecided" as const,
+        amountCents: 100 + i,
+        date: "2026-01-01",
+      }));
+      const inserted = await bankTransactionsRepository.upsertMany(rows);
+      expect(inserted).toBe(6000);
+      const { total } = await bankTransactionsRepository.findPaginated({
+        page: 1,
+        pageSize: 0,
+      });
+      expect(total).toBe(6000);
     });
 
     it("never lowers a category's precedence on re-upload", async () => {

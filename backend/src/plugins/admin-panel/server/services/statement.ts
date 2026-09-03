@@ -34,7 +34,6 @@ import {
   looksLikeCardPayout,
   selectTemplate,
   planRecurringImport,
-  splitFeeProRata,
   type RecurringTemplate,
   type DonorTemplates,
   type RecurringImport,
@@ -63,8 +62,6 @@ export interface ResolvedCardPayout {
   grossCents: number | null;
   /** processor fee withheld (cents) = grossCents − bank net, when resolved */
   feeCents: number | null;
-  /** per-donation fee share for the resolved donations (cents) */
-  feeByDonationId: Record<number, number>;
 }
 
 async function resolveCardPayouts(
@@ -77,7 +74,6 @@ async function resolveCardPayouts(
     resolved: false,
     grossCents: null,
     feeCents: null,
-    feeByDonationId: {},
   });
 
   if (payouts.length === 0 || !montonio.isPayoutsConfigured()) {
@@ -117,19 +113,6 @@ async function resolveCardPayouts(
       const feeCents =
         grossCents != null ? grossCents - transaction.amountCents : null;
 
-      // pro-rata the whole payout fee across all its orders, then keep the
-      // shares for the donations we're actually assigning (still unreconciled)
-      const feeAll =
-        feeCents != null
-          ? splitFeeProRata(
-              feeCents,
-              orderRows.map((o) => ({
-                id: o.donationId,
-                grossCents: o.grossCents,
-              })),
-            )
-          : {};
-
       const resolvedDonationIds = [
         ...new Set(
           orderRows
@@ -137,9 +120,6 @@ async function resolveCardPayouts(
             .filter((id) => unreconciledById.has(id)),
         ),
       ];
-      const feeByDonationId: Record<number, number> = {};
-      for (const id of resolvedDonationIds)
-        feeByDonationId[id] = feeAll[id] ?? 0;
 
       return {
         transaction,
@@ -147,7 +127,6 @@ async function resolveCardPayouts(
         resolved: true,
         grossCents,
         feeCents,
-        feeByDonationId,
       };
     }),
   );
@@ -377,6 +356,48 @@ export function createStatementService(strapi: Core.Strapi) {
     async apply(payload: ApplyPayload, userEmail: string) {
       const summary = { reconciled: 0, created: 0, ignored: 0, recorded: 0 };
 
+      // ── validate the echoed statement lines ──────────────────────────────
+      // apply trusts the client for the bank-row metadata (date/amount/…) but
+      // not for which codes belong to the statement: every code the operator
+      // acted on must appear in an uploaded line, and the lines must be shaped
+      // like real statement rows.
+      const CODE_RE = /^[A-Za-z0-9_-]{1,20}$/;
+      const statementLines = [
+        ...(payload.allCredits ?? []),
+        ...(payload.allDebits ?? []),
+      ];
+      for (const t of statementLines) {
+        if (
+          !t ||
+          typeof t.archivingCode !== "string" ||
+          !CODE_RE.test(t.archivingCode) ||
+          !Number.isFinite(t.amountCents)
+        ) {
+          throw new Error("Malformed statement line in payload");
+        }
+      }
+      const statementCodes = new Set(
+        statementLines.map((t) => t.archivingCode),
+      );
+      const actionCodes = [
+        ...(payload.reconcile ?? []).map((r) => r.archivingCode),
+        ...(payload.cardPayoutAssignments ?? []).map((a) => a.archivingCode),
+        ...(payload.ignore ?? []).map((i) => i.archivingCode),
+        ...(payload.recurringImports ?? []).map(
+          (i) => i.transaction?.archivingCode,
+        ),
+        ...(payload.manualRecurring ?? []).map(
+          (m) => m.transaction?.archivingCode,
+        ),
+      ];
+      for (const code of actionCodes) {
+        if (!code || !statementCodes.has(code)) {
+          throw new Error(
+            `Code ${code ?? "(missing)"} is not a line in the uploaded statement — re-analyse and try again`,
+          );
+        }
+      }
+
       // Re-derive every recurring-import plan from current DB state — never
       // trust the amounts / org splits the client sent back. Reads only, up
       // front, so the write transaction stays tight.
@@ -452,8 +473,11 @@ export function createStatementService(strapi: Core.Strapi) {
         });
       }
 
-      // per-donation card-payout fee shares, recomputed server-side over the
-      // donations' own gross amounts (never trust a client split)
+      // per-donation card-payout fee, computed server-side. Each assigned
+      // donation gets its own slice of the payout fee, pro-rata against the
+      // whole payout's gross — NOT against just the donations being assigned
+      // now. A payout that also covers donations reconciled in an earlier run
+      // must not have its entire fee dumped onto the remaining subset.
       const assignmentsByCode = new Map<string, number[]>();
       for (const a of payload.cardPayoutAssignments ?? []) {
         const arr = assignmentsByCode.get(a.archivingCode) ?? [];
@@ -469,16 +493,26 @@ export function createStatementService(strapi: Core.Strapi) {
           ]),
         );
         for (const [code, donationIds] of assignmentsByCode) {
-          const feeCents = cardPayoutByCode.get(code)?.feeCents;
+          const cp = cardPayoutByCode.get(code);
+          const feeCents = cp?.feeCents;
           if (feeCents == null) continue;
-          const shares = splitFeeProRata(
-            feeCents,
-            donationIds.map((id) => ({
-              id,
-              grossCents: grossById.get(id) ?? 0,
-            })),
+          const grossByThisDonation = donationIds.map(
+            (id) => grossById.get(id) ?? 0,
           );
-          for (const id of donationIds) donationFee.set(id, shares[id] ?? 0);
+          // denominator: the whole payout's gross when known (Montonio
+          // resolved), else fall back to the assigned donations' gross (manual
+          // fee entry — the operator's number covers what they're assigning).
+          const denom =
+            cp?.grossCents && cp.grossCents > 0
+              ? cp.grossCents
+              : grossByThisDonation.reduce((s, g) => s + g, 0);
+          if (denom <= 0) continue;
+          donationIds.forEach((id, i) => {
+            donationFee.set(
+              id,
+              Math.round((feeCents * grossByThisDonation[i]) / denom),
+            );
+          });
         }
       }
 

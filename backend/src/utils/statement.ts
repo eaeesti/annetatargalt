@@ -181,37 +181,6 @@ export function planRecurringImport(
   };
 }
 
-// ─── Card-payout fee allocation ──────────────────────────────────────────────
-
-/**
- * Split a card payout's processor fee across the donations it settled,
- * pro-rata by each donation's gross amount. The remainder from rounding goes to
- * the largest donation, so the shares sum to exactly `feeCents`.
- */
-export function splitFeeProRata(
-  feeCents: number,
-  donations: { id: number; grossCents: number }[],
-): Record<number, number> {
-  const out: Record<number, number> = {};
-  if (donations.length === 0) return out;
-  const totalGross = donations.reduce((s, d) => s + d.grossCents, 0);
-  if (feeCents === 0 || totalGross <= 0) {
-    for (const d of donations) out[d.id] = 0;
-    return out;
-  }
-
-  let assigned = 0;
-  for (const d of donations) {
-    const share = Math.round((feeCents * d.grossCents) / totalGross);
-    out[d.id] = share;
-    assigned += share;
-  }
-
-  const largest = [...donations].sort((a, b) => b.grossCents - a.grossCents)[0];
-  out[largest.id] += feeCents - assigned;
-  return out;
-}
-
 // ─── Categoriser ─────────────────────────────────────────────────────────────
 
 export function categorizeStatement(input: StatementInput): StatementReport {
