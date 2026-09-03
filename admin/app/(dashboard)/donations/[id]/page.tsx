@@ -15,6 +15,7 @@ type DonationDetail = {
   iban: string | null;
   transactionId: string | null;
   transactionMatchSource: string | null;
+  processorFeeCents: number | null;
   comment: string | null;
   externalDonation: boolean;
   companyName: string | null;
@@ -171,6 +172,14 @@ export default async function DonationDetailPage({
             <span className="text-muted-foreground">Not reconciled</span>
           )}
         </Field>
+        {donation.processorFeeCents != null && (
+          <Field label="Card fee">
+            {formatAmount(donation.processorFeeCents)}
+            <span className="ml-2 text-muted-foreground">
+              (net {formatAmount(donation.amount - donation.processorFeeCents)})
+            </span>
+          </Field>
+        )}
         {donation.comment && <Field label="Comment">{donation.comment}</Field>}
         {donation.externalDonation && (
           <Field label="External">

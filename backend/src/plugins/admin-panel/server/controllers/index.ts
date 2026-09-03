@@ -5,6 +5,7 @@ import transfer from "./transfer";
 import organization from "./organization";
 import dashboard from "./dashboard";
 import statement from "./statement";
+import bankTransaction from "./bankTransaction";
 
 export default {
   donation,
@@ -14,4 +15,5 @@ export default {
   organization,
   dashboard,
   statement,
+  bankTransaction,
 };

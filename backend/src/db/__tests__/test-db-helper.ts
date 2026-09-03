@@ -13,6 +13,8 @@ import {
   recurringDonations,
   organizationRecurringDonations,
   donationTransfers,
+  bankTransactions,
+  senderDonorAliases,
   type Donor,
   type NewDonor,
   type Donation,
@@ -25,6 +27,8 @@ import {
   type NewOrganizationRecurringDonation,
   type DonationTransfer,
   type NewDonationTransfer,
+  type BankTransaction,
+  type NewBankTransaction,
 } from "../schema";
 import { sql } from "drizzle-orm";
 
@@ -35,7 +39,9 @@ import { sql } from "drizzle-orm";
 export async function cleanDatabase(): Promise<void> {
   // Delete in correct order to respect foreign key constraints
   await db.delete(organizationDonations);
-  await db.delete(donations);
+  await db.delete(donations); // FK → bank_transactions, donors, ...
+  await db.delete(bankTransactions);
+  await db.delete(senderDonorAliases);
   await db.delete(organizationRecurringDonations);
   await db.delete(recurringDonations);
   await db.delete(donationTransfers);
@@ -49,23 +55,25 @@ export async function resetSequences(): Promise<void> {
   await db.execute(sql`ALTER SEQUENCE donors_id_seq RESTART WITH 1`);
   await db.execute(sql`ALTER SEQUENCE donations_id_seq RESTART WITH 1`);
   await db.execute(
-    sql`ALTER SEQUENCE organization_donations_id_seq RESTART WITH 1`
+    sql`ALTER SEQUENCE organization_donations_id_seq RESTART WITH 1`,
   );
   await db.execute(
-    sql`ALTER SEQUENCE recurring_donations_id_seq RESTART WITH 1`
+    sql`ALTER SEQUENCE recurring_donations_id_seq RESTART WITH 1`,
   );
   await db.execute(
-    sql`ALTER SEQUENCE organization_recurring_donations_id_seq RESTART WITH 1`
+    sql`ALTER SEQUENCE organization_recurring_donations_id_seq RESTART WITH 1`,
   );
   await db.execute(
-    sql`ALTER SEQUENCE donation_transfers_id_seq RESTART WITH 1`
+    sql`ALTER SEQUENCE donation_transfers_id_seq RESTART WITH 1`,
   );
 }
 
 /**
  * Create a test donor
  */
-export async function createTestDonor(data: Partial<NewDonor> = {}): Promise<Donor> {
+export async function createTestDonor(
+  data: Partial<NewDonor> = {},
+): Promise<Donor> {
   const [donor] = await db
     .insert(donors)
     .values({
@@ -83,7 +91,9 @@ export async function createTestDonor(data: Partial<NewDonor> = {}): Promise<Don
 /**
  * Create a test donation
  */
-export async function createTestDonation(data: Partial<NewDonation> = {}): Promise<Donation> {
+export async function createTestDonation(
+  data: Partial<NewDonation> = {},
+): Promise<Donation> {
   const [donation] = await db
     .insert(donations)
     .values({
@@ -115,7 +125,7 @@ export async function createTestDonation(data: Partial<NewDonation> = {}): Promi
  * Create a test organization donation (junction record)
  */
 export async function createTestOrganizationDonation(
-  data: NewOrganizationDonation
+  data: NewOrganizationDonation,
 ): Promise<OrganizationDonation> {
   const [orgDonation] = await db
     .insert(organizationDonations)
@@ -125,7 +135,8 @@ export async function createTestOrganizationDonation(
       amount: data.amount,
     })
     .returning();
-  if (!orgDonation) throw new Error("Failed to insert test organization donation");
+  if (!orgDonation)
+    throw new Error("Failed to insert test organization donation");
   return orgDonation;
 }
 
@@ -133,7 +144,7 @@ export async function createTestOrganizationDonation(
  * Create a test recurring donation
  */
 export async function createTestRecurringDonation(
-  data: Partial<NewRecurringDonation> & { donorId: number }
+  data: Partial<NewRecurringDonation> & { donorId: number },
 ): Promise<RecurringDonation> {
   const [recurringDonation] = await db
     .insert(recurringDonations)
@@ -148,7 +159,8 @@ export async function createTestRecurringDonation(
       datetime: data.datetime ?? new Date(),
     })
     .returning();
-  if (!recurringDonation) throw new Error("Failed to insert test recurring donation");
+  if (!recurringDonation)
+    throw new Error("Failed to insert test recurring donation");
   return recurringDonation;
 }
 
@@ -156,7 +168,7 @@ export async function createTestRecurringDonation(
  * Create a test organization recurring donation (junction record)
  */
 export async function createTestOrganizationRecurringDonation(
-  data: NewOrganizationRecurringDonation
+  data: NewOrganizationRecurringDonation,
 ): Promise<OrganizationRecurringDonation> {
   const [orgRecurringDonation] = await db
     .insert(organizationRecurringDonations)
@@ -166,20 +178,48 @@ export async function createTestOrganizationRecurringDonation(
       amount: data.amount,
     })
     .returning();
-  if (!orgRecurringDonation) throw new Error("Failed to insert test organization recurring donation");
+  if (!orgRecurringDonation)
+    throw new Error("Failed to insert test organization recurring donation");
   return orgRecurringDonation;
+}
+
+/**
+ * Create a test bank transaction (statement credit line)
+ */
+export async function createTestBankTransaction(
+  data: Partial<NewBankTransaction> & { archivingCode: string },
+): Promise<BankTransaction> {
+  const [row] = await db
+    .insert(bankTransactions)
+    .values({
+      archivingCode: data.archivingCode,
+      date: data.date ?? "2026-01-15",
+      amount: data.amount ?? 1000,
+      description: data.description ?? null,
+      counterpartyName: data.counterpartyName ?? null,
+      counterpartyAccount: data.counterpartyAccount ?? null,
+      senderCode: data.senderCode ?? null,
+      category: data.category ?? "undecided",
+      grossAmount: data.grossAmount ?? null,
+      feeAmount: data.feeAmount ?? null,
+      note: data.note ?? null,
+      importedBy: data.importedBy ?? "test",
+    })
+    .returning();
+  if (!row) throw new Error("Failed to insert test bank transaction");
+  return row;
 }
 
 /**
  * Create a test donation transfer
  */
 export async function createTestDonationTransfer(
-  data: Partial<NewDonationTransfer> = {}
+  data: Partial<NewDonationTransfer> = {},
 ): Promise<DonationTransfer> {
   const [transfer] = await db
     .insert(donationTransfers)
     .values({
-      datetime: data.datetime ?? new Date().toISOString().split('T')[0],
+      datetime: data.datetime ?? new Date().toISOString().split("T")[0],
       recipient: data.recipient ?? "Test Recipient",
       notes: data.notes ?? null,
     })

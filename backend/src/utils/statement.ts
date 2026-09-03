@@ -45,8 +45,10 @@ export interface StatementInput {
   unreconciledDonations: ReconcilableDonation[];
   /** archiving codes already recorded on some donation */
   reconciledCodes: Set<string>;
-  /** archiving codes in `ignored_bank_transactions` */
+  /** archiving codes with `category = 'ignored'` in `bank_transactions` */
   ignoredCodes: Set<string>;
+  /** every archiving code already recorded in `bank_transactions` (any category) */
+  recordedCodes?: Set<string>;
   /** idCode OR company code → that donor and their templates (newest first) */
   donorsByCode: Map<string, DonorTemplates>;
 }
@@ -91,10 +93,14 @@ export interface StatementReport {
   needsDecision: { transaction: BankTransaction; reason: string }[];
   /** step 6 — offer to ignore */
   notADonation: BankTransaction[];
+  /** every credit line with an archiving code, deduped — persisted as bank_transactions rows on apply */
+  allCredits: BankTransaction[];
   counts: {
     creditTransactions: number;
     alreadyReconciled: number;
     ignored: number;
+    /** credit lines whose code is not yet in bank_transactions */
+    unrecorded: number;
   };
 }
 
@@ -171,6 +177,37 @@ export function planRecurringImport(
   };
 }
 
+// ─── Card-payout fee allocation ──────────────────────────────────────────────
+
+/**
+ * Split a card payout's processor fee across the donations it settled,
+ * pro-rata by each donation's gross amount. The remainder from rounding goes to
+ * the largest donation, so the shares sum to exactly `feeCents`.
+ */
+export function splitFeeProRata(
+  feeCents: number,
+  donations: { id: number; grossCents: number }[],
+): Record<number, number> {
+  const out: Record<number, number> = {};
+  if (donations.length === 0) return out;
+  const totalGross = donations.reduce((s, d) => s + d.grossCents, 0);
+  if (feeCents === 0 || totalGross <= 0) {
+    for (const d of donations) out[d.id] = 0;
+    return out;
+  }
+
+  let assigned = 0;
+  for (const d of donations) {
+    const share = Math.round((feeCents * d.grossCents) / totalGross);
+    out[d.id] = share;
+    assigned += share;
+  }
+
+  const largest = [...donations].sort((a, b) => b.grossCents - a.grossCents)[0];
+  out[largest.id] += feeCents - assigned;
+  return out;
+}
+
 // ─── Categoriser ─────────────────────────────────────────────────────────────
 
 export function categorizeStatement(input: StatementInput): StatementReport {
@@ -178,16 +215,25 @@ export function categorizeStatement(input: StatementInput): StatementReport {
     (t) => t.direction === "C" && t.archivingCode !== "",
   );
 
+  // every credit line, deduped by archiving code
+  const allCredits = [
+    ...new Map(credits.map((t) => [t.archivingCode, t])).values(),
+  ];
+  const recordedCodes = input.recordedCodes ?? new Set<string>();
+
   const report: StatementReport = {
     reconcile: [],
     recurringImports: [],
     cardPayouts: [],
     needsDecision: [],
     notADonation: [],
+    allCredits,
     counts: {
       creditTransactions: credits.length,
       alreadyReconciled: 0,
       ignored: 0,
+      unrecorded: allCredits.filter((t) => !recordedCodes.has(t.archivingCode))
+        .length,
     },
   };
 

@@ -43,6 +43,13 @@
       "when": 1788377829277,
       "tag": "0005_sender_donor_aliases",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788455362477,
+      "tag": "0006_bank_transactions",
+      "breakpoints": true
     }
   ]
 }

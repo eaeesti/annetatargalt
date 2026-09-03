@@ -1,0 +1,319 @@
+/**
+ * Integration tests for BankTransactionsRepository — upsert precedence, the
+ * money-flow summary, and the paginated ledger with its computed columns.
+ */
+import { describe, it, expect, beforeEach } from "vitest";
+import { bankTransactionsRepository } from "../bank-transactions.repository";
+import { donationsRepository } from "../donations.repository";
+import {
+  cleanDatabase,
+  createTestDonor,
+  createTestDonation,
+  createTestOrganizationDonation,
+  createTestDonationTransfer,
+  createTestBankTransaction,
+} from "../../__tests__/test-db-helper";
+
+describe("BankTransactionsRepository", () => {
+  beforeEach(async () => {
+    await cleanDatabase();
+  });
+
+  describe("upsertMany", () => {
+    it("inserts new rows and reports the count", async () => {
+      const n = await bankTransactionsRepository.upsertMany([
+        { archivingCode: "AAA", category: "undecided", amountCents: 500 },
+        { archivingCode: "BBB", category: "ignored", amountCents: 700 },
+      ]);
+      expect(n).toBe(2);
+      expect(await bankTransactionsRepository.ignoredCodes()).toEqual(
+        new Set(["BBB"]),
+      );
+      expect(await bankTransactionsRepository.recordedCodes()).toEqual(
+        new Set(["AAA", "BBB"]),
+      );
+    });
+
+    it("never lowers a category's precedence on re-upload", async () => {
+      await bankTransactionsRepository.upsertMany([
+        { archivingCode: "C", category: "donation", amountCents: 1000 },
+      ]);
+      // a later statement re-sees the line but the operator does nothing with it
+      await bankTransactionsRepository.upsertMany([
+        { archivingCode: "C", category: "undecided", amountCents: 1000 },
+      ]);
+      const [row] = await bankTransactionsRepository.findAll();
+      expect(row.category).toBe("donation");
+    });
+
+    it("raises a category's precedence (ignored → donation)", async () => {
+      await bankTransactionsRepository.upsertMany([
+        { archivingCode: "D", category: "ignored" },
+      ]);
+      await bankTransactionsRepository.upsertMany([
+        { archivingCode: "D", category: "donation", amountCents: 4200 },
+      ]);
+      const [row] = await bankTransactionsRepository.findAll();
+      expect(row.category).toBe("donation");
+      expect(row.amount).toBe(4200); // blind ignore's null bank fields filled in
+    });
+
+    it("coalesces bank fields — a real line fills in a blind ignore", async () => {
+      await bankTransactionsRepository.upsertMany([
+        { archivingCode: "E", category: "ignored", note: "misdirected" },
+      ]);
+      await bankTransactionsRepository.upsertMany([
+        {
+          archivingCode: "E",
+          category: "undecided",
+          date: "2026-03-03",
+          amountCents: 999,
+          counterpartyName: "Someone",
+        },
+      ]);
+      const [row] = await bankTransactionsRepository.findAll();
+      expect(row.category).toBe("ignored");
+      expect(row.date).toBe("2026-03-03");
+      expect(row.amount).toBe(999);
+      expect(row.note).toBe("misdirected");
+    });
+
+    it("stores card-payout gross/fee", async () => {
+      await bankTransactionsRepository.upsertMany([
+        {
+          archivingCode: "PAYOUT",
+          category: "card-payout",
+          amountCents: 29263,
+          grossAmountCents: 30000,
+          feeAmountCents: 737,
+        },
+      ]);
+      const [row] = await bankTransactionsRepository.findAll();
+      expect(row.grossAmount).toBe(30000);
+      expect(row.feeAmount).toBe(737);
+    });
+  });
+
+  describe("setCategory", () => {
+    it("refuses to un-donation a code with linked donations", async () => {
+      await createTestBankTransaction({
+        archivingCode: "LINKED",
+        category: "donation",
+        amount: 1000,
+      });
+      const d = await createTestDonation({ amount: 1000, finalized: true });
+      await donationsRepository.setTransactionId(d.id, "LINKED", "manual");
+
+      const res = await bankTransactionsRepository.setCategory(
+        "LINKED",
+        "ignored",
+        null,
+        "tester",
+      );
+      expect(res).toEqual({ ok: false, reason: "has-donations" });
+    });
+
+    it("allows reclassifying an unlinked code", async () => {
+      await createTestBankTransaction({
+        archivingCode: "FREE",
+        category: "undecided",
+        amount: 200,
+      });
+      const res = await bankTransactionsRepository.setCategory(
+        "FREE",
+        "ignored",
+        "interest",
+        "tester",
+      );
+      expect(res.ok).toBe(true);
+      expect(await bankTransactionsRepository.ignoredCodes()).toEqual(
+        new Set(["FREE"]),
+      );
+    });
+
+    it("returns not-found for an unknown code", async () => {
+      const res = await bankTransactionsRepository.setCategory(
+        "NOPE",
+        "ignored",
+        null,
+        "t",
+      );
+      expect(res).toEqual({ ok: false, reason: "not-found" });
+    });
+  });
+
+  describe("findPaginated", () => {
+    it("computes linked donation count / allocated / balanced", async () => {
+      const donor = await createTestDonor();
+      await createTestBankTransaction({
+        archivingCode: "BT1",
+        category: "donation",
+        date: "2026-02-10",
+        amount: 5000,
+      });
+      const d = await createTestDonation({
+        donorId: donor.id,
+        amount: 5000,
+        finalized: true,
+      });
+      await donationsRepository.setTransactionId(d.id, "BT1", "manual");
+      await createTestOrganizationDonation({
+        donationId: d.id,
+        organizationInternalId: "AMF",
+        amount: 5000,
+      });
+
+      const { data, total } = await bankTransactionsRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+      });
+      expect(total).toBe(1);
+      expect(data[0].linkedDonationCount).toBe(1);
+      expect(data[0].allocatedCents).toBe(5000);
+      expect(data[0].linkedGrossCents).toBe(5000);
+      expect(data[0].balanced).toBe(true);
+    });
+
+    it("findByCodeWithDonations returns the row with its linked donations", async () => {
+      const donor = await createTestDonor();
+      await createTestBankTransaction({
+        archivingCode: "WD",
+        category: "donation",
+        amount: 2000,
+      });
+      const d = await createTestDonation({
+        donorId: donor.id,
+        amount: 2000,
+        finalized: true,
+      });
+      await donationsRepository.setTransactionId(d.id, "WD", "manual");
+      await createTestOrganizationDonation({
+        donationId: d.id,
+        organizationInternalId: "AMF",
+        amount: 2000,
+      });
+
+      const row =
+        await bankTransactionsRepository.findByCodeWithDonations("WD");
+      expect(row?.category).toBe("donation");
+      expect(row?.donations).toHaveLength(1);
+      expect(row?.donations[0].id).toBe(d.id);
+      expect(row?.donations[0].organizationDonations).toHaveLength(1);
+    });
+
+    it("filters by category", async () => {
+      await createTestBankTransaction({
+        archivingCode: "X1",
+        category: "ignored",
+      });
+      await createTestBankTransaction({
+        archivingCode: "X2",
+        category: "undecided",
+      });
+      const { data } = await bankTransactionsRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+        category: "ignored",
+      });
+      expect(data.map((r) => r.archivingCode)).toEqual(["X1"]);
+    });
+  });
+
+  describe("moneyFlow", () => {
+    it("sums received / card fees / allocated / transferred and flags no discrepancy", async () => {
+      const donor = await createTestDonor();
+
+      // a plain bank donation: bank received 5000, allocated 5000
+      await createTestBankTransaction({
+        archivingCode: "M1",
+        category: "donation",
+        date: "2026-04-01",
+        amount: 5000,
+      });
+      const d1 = await createTestDonation({
+        donorId: donor.id,
+        amount: 5000,
+        finalized: true,
+      });
+      await donationsRepository.setTransactionId(d1.id, "M1", "manual");
+      await createTestOrganizationDonation({
+        donationId: d1.id,
+        organizationInternalId: "AMF",
+        amount: 5000,
+      });
+
+      // a card payout: bank received 9263 net, fee 737, donations gross 10000
+      await createTestBankTransaction({
+        archivingCode: "M2",
+        category: "card-payout",
+        date: "2026-04-05",
+        amount: 9263,
+        grossAmount: 10000,
+        feeAmount: 737,
+      });
+      const transfer = await createTestDonationTransfer({});
+      const d2 = await createTestDonation({
+        donorId: donor.id,
+        amount: 10000,
+        finalized: true,
+        donationTransferId: transfer.id,
+      });
+      await donationsRepository.setTransactionId(d2.id, "M2", "card-payout");
+      await donationsRepository.setProcessorFee(d2.id, 737);
+      await createTestOrganizationDonation({
+        donationId: d2.id,
+        organizationInternalId: "GD",
+        amount: 10000,
+      });
+
+      // an undecided inflow
+      await createTestBankTransaction({
+        archivingCode: "M3",
+        category: "undecided",
+        date: "2026-04-10",
+        amount: 1234,
+      });
+
+      // an unlinked finalized donation (money in the ledger, no bank line)
+      await createTestDonation({ amount: 800, finalized: true });
+
+      const mf = await bankTransactionsRepository.moneyFlow({
+        dateFrom: "2026-04-01",
+        dateTo: "2026-04-30",
+      });
+
+      expect(mf.received).toBe(5000);
+      expect(mf.cardPayoutNet).toBe(9263);
+      expect(mf.cardPayoutGross).toBe(10000);
+      expect(mf.cardFees).toBe(737);
+      expect(mf.cardFeesFromDonations).toBe(737);
+      expect(mf.allocated).toBe(15000);
+      expect(mf.transferred).toBe(10000);
+      expect(mf.undecidedInflow).toBe(1234);
+      expect(mf.unlinkedDonationCount).toBe(1);
+      expect(mf.unlinkedDonationCents).toBe(800);
+      // allocated 15000 − (received 5000 + net 9263 + fee 737) = 0
+      expect(mf.discrepancy).toBe(0);
+    });
+
+    it("respects the date range", async () => {
+      await createTestBankTransaction({
+        archivingCode: "IN",
+        category: "donation",
+        date: "2026-05-15",
+        amount: 100,
+      });
+      await createTestBankTransaction({
+        archivingCode: "OUT",
+        category: "donation",
+        date: "2026-07-15",
+        amount: 999,
+      });
+      const mf = await bankTransactionsRepository.moneyFlow({
+        dateFrom: "2026-05-01",
+        dateTo: "2026-05-31",
+      });
+      expect(mf.received).toBe(100);
+    });
+  });
+});

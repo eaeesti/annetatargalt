@@ -45,7 +45,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
         manualRecurring: unknown[];
         rememberSenders: unknown[];
         cardPayoutAssignments: unknown[];
+        cardPayouts: unknown[];
         ignore: unknown[];
+        allCredits: unknown[];
       }>;
 
       const arr = (v: unknown) => (Array.isArray(v) ? v : []);
@@ -55,7 +57,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
         manualRecurring: arr(body.manualRecurring),
         rememberSenders: arr(body.rememberSenders),
         cardPayoutAssignments: arr(body.cardPayoutAssignments),
+        cardPayouts: arr(body.cardPayouts),
         ignore: arr(body.ignore),
+        allCredits: arr(body.allCredits),
       };
 
       const user = ctx.state.user as { email?: string } | undefined;
@@ -73,7 +77,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
       await auditLog(
         ctx,
         "statement.apply",
-        `created=${summary.created} reconciled=${summary.reconciled} ignored=${summary.ignored}`,
+        `created=${summary.created} reconciled=${summary.reconciled} ignored=${summary.ignored} recorded=${summary.recorded}`,
       );
       return ctx.send(summary);
     },

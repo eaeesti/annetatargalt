@@ -75,10 +75,17 @@ export const donations = pgTable(
       .notNull(),
     // Bank transaction ID (LHV "Arhiveerimistunnus" / archiving code) this donation
     // was reconciled against. Nullable — Montonio payouts land days later; not
-    // unique — one bank transfer can cover many donations (batch payouts).
-    transactionId: varchar("transaction_id", { length: 20 }),
-    // How transactionId was assigned: 'selgitus-id' | 'idcode-amount-date' | 'manual'
+    // unique — one bank transfer can cover many donations (batch payouts). FK to
+    // bank_transactions.archiving_code (the persistent bank-side ledger).
+    transactionId: varchar("transaction_id", { length: 20 }).references(
+      () => bankTransactions.archivingCode,
+    ),
+    // How transactionId was assigned:
+    // 'selgitus-id' | 'idcode-amount-date' | 'manual' | 'recurring-import' | 'card-payout'
     transactionMatchSource: varchar("transaction_match_source", { length: 24 }),
+    // Per-donation share of a card-payout processor fee (cents), split pro-rata
+    // across the payout's batch. Null for non-card / unreconciled donations.
+    processorFeeCents: integer("processor_fee_cents"),
     dedicationName: varchar("dedication_name", { length: 128 }),
     dedicationEmail: varchar("dedication_email", { length: 256 }),
     dedicationMessage: text("dedication_message"),
@@ -138,6 +145,10 @@ export const donationsRelations = relations(donations, ({ one, many }) => ({
   donationTransfer: one(donationTransfers, {
     fields: [donations.donationTransferId],
     references: [donationTransfers.id],
+  }),
+  bankTransaction: one(bankTransactions, {
+    fields: [donations.transactionId],
+    references: [bankTransactions.archivingCode],
   }),
   organizationDonations: many(organizationDonations),
 }));
@@ -216,19 +227,51 @@ export const adminAuditLog = pgTable("admin_audit_log", {
 export type AdminAuditLog = typeof adminAuditLog.$inferSelect;
 export type NewAdminAuditLog = typeof adminAuditLog.$inferInsert;
 
-// Bank-statement credit lines the operator marked "not a donation" during a
-// statement import, so they stop resurfacing on the next upload.
-export const ignoredBankTransactions = pgTable("ignored_bank_transactions", {
-  archivingCode: varchar("archiving_code", { length: 20 }).primaryKey(),
-  reason: varchar("reason", { length: 256 }),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  createdBy: varchar("created_by", { length: 256 }),
-});
+// Every credit line ever seen in an imported LHV statement — the persistent
+// bank side of the ledger. One row per archiving code. `category` records what
+// the operator decided about it; this table also absorbs the old
+// `ignored_bank_transactions` ("not a donation") list.
+export const bankTransactions = pgTable(
+  "bank_transactions",
+  {
+    archivingCode: varchar("archiving_code", { length: 20 }).primaryKey(),
+    // Kuupäev — null until a real statement line is seen (e.g. an ignore added
+    // before the line showed up in an export).
+    date: date("date"),
+    amount: integer("amount"), // cents, credit as it hit the bank
+    description: text("description"), // Selgitus
+    counterpartyName: varchar("counterparty_name", { length: 256 }),
+    counterpartyAccount: varchar("counterparty_account", { length: 64 }),
+    senderCode: varchar("sender_code", { length: 64 }), // Isikukood või registrikood
+    // 'donation' | 'card-payout' | 'ignored' | 'undecided'
+    category: varchar("category", { length: 24 })
+      .notNull()
+      .default("undecided"),
+    // Card-payout rows only: total before the processor fee, and the fee itself
+    // (gross_amount - amount). Sourced from the Montonio payout at import time.
+    grossAmount: integer("gross_amount"),
+    feeAmount: integer("fee_amount"),
+    note: varchar("note", { length: 512 }), // ignore reason / free note
+    importedAt: timestamp("imported_at").defaultNow().notNull(),
+    importedBy: varchar("imported_by", { length: 256 }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (t) => [
+    index("bank_transactions_date_idx").on(t.date),
+    index("bank_transactions_category_idx").on(t.category),
+  ],
+);
 
-export type IgnoredBankTransaction =
-  typeof ignoredBankTransactions.$inferSelect;
-export type NewIgnoredBankTransaction =
-  typeof ignoredBankTransactions.$inferInsert;
+export type BankTransaction = typeof bankTransactions.$inferSelect;
+export type NewBankTransaction = typeof bankTransactions.$inferInsert;
+
+export const bankTransactionsRelations = relations(
+  bankTransactions,
+  ({ many }) => ({
+    donations: many(donations),
+  }),
+);
 
 // "This bank sender code belongs to this donor" — learned during a statement
 // import when the code in the bank line doesn't match any donor/template
