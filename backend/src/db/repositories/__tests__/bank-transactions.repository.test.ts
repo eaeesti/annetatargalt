@@ -86,16 +86,33 @@ describe("BankTransactionsRepository", () => {
       expect(row.feeAmount).toBe(737);
     });
 
-    it("raises a category's precedence (ignored → donation)", async () => {
+    it("a heuristic re-upload does NOT un-ignore a code", async () => {
       await bankTransactionsRepository.upsertMany([
         { archivingCode: "D", category: "ignored" },
       ]);
+      // a later import's looksLikeCardPayout heuristic fires — must not win
       await bankTransactionsRepository.upsertMany([
-        { archivingCode: "D", category: "donation", amountCents: 4200 },
+        { archivingCode: "D", category: "card-payout", amountCents: 4200 },
+      ]);
+      const [row] = await bankTransactionsRepository.findAll();
+      expect(row.category).toBe("ignored");
+      expect(row.amount).toBe(4200); // bank fields still coalesced
+    });
+
+    it("an explicit reclassify DOES un-ignore a code", async () => {
+      await bankTransactionsRepository.upsertMany([
+        { archivingCode: "D2", category: "ignored" },
+      ]);
+      await bankTransactionsRepository.upsertMany([
+        {
+          archivingCode: "D2",
+          category: "donation",
+          amountCents: 4200,
+          reclassify: true,
+        },
       ]);
       const [row] = await bankTransactionsRepository.findAll();
       expect(row.category).toBe("donation");
-      expect(row.amount).toBe(4200); // blind ignore's null bank fields filled in
     });
 
     it("coalesces bank fields — a real line fills in a blind ignore", async () => {
