@@ -21,7 +21,6 @@ import {
   bankTransactionsRepository,
   senderDonorAliasesRepository,
   type BankTransactionUpsert,
-  type BankTransactionCategory,
 } from "../../../../db/repositories";
 import {
   parseLhvCsv,
@@ -32,6 +31,7 @@ import {
   categorizeStatement,
   parsePayoutUuidPrefix,
   looksLikeCardPayout,
+  classifyCreditLine,
   selectTemplate,
   planRecurringImport,
   type RecurringTemplate,
@@ -95,25 +95,37 @@ async function resolveCardPayouts(
       const orders = await montonio.getPayoutOrders(payout.uuid);
       if (!orders) return unresolved(transaction);
 
-      // every PAYMENT order in the payout: donation id + its gross
-      const orderRows = orders
-        .map((o) => ({
-          donationId: refToDonationId(
-            o.merchantReference ?? o.merchant_reference,
-          ),
-          grossCents: toCents(
-            o.grandTotal ?? o.grand_total ?? o.amount ?? o.total,
-          ),
-        }))
-        .filter(
-          (o): o is { donationId: number; grossCents: number } =>
-            o.donationId !== null && Number.isFinite(o.grossCents),
-        );
+      // every order in the payout: donation id + its gross
+      const parsed = orders.map((o) => ({
+        donationId: refToDonationId(
+          o.merchantReference ?? o.merchant_reference,
+        ),
+        grossCents: toCents(
+          o.grandTotal ?? o.grand_total ?? o.amount ?? o.total,
+        ),
+      }));
+      const orderRows = parsed.filter(
+        (o): o is { donationId: number; grossCents: number } =>
+          o.donationId !== null && Number.isFinite(o.grossCents),
+      );
 
-      const grossCents =
-        orderRows.reduce((s, o) => s + o.grossCents, 0) || null;
-      const feeCents =
-        grossCents != null ? grossCents - transaction.amountCents : null;
+      // Only trust gross/fee if EVERY order parsed a gross (a partial sum
+      // understates gross → negative/absurd fee) and the implied fee is
+      // plausible (0 ≤ fee ≤ 15% of gross). Otherwise leave them null and let
+      // the operator enter the fee manually.
+      let grossCents: number | null = null;
+      let feeCents: number | null = null;
+      if (
+        parsed.length > 0 &&
+        parsed.every((o) => Number.isFinite(o.grossCents))
+      ) {
+        const grossSum = orderRows.reduce((s, o) => s + o.grossCents, 0);
+        const fee = grossSum - transaction.amountCents;
+        if (grossSum > 0 && fee >= 0 && fee <= grossSum * 0.15) {
+          grossCents = grossSum;
+          feeCents = fee;
+        }
+      }
 
       const resolvedDonationIds = [
         ...new Set(
@@ -358,28 +370,37 @@ export function createStatementService(strapi: Core.Strapi) {
     async apply(payload: ApplyPayload, userEmail: string) {
       const summary = { reconciled: 0, created: 0, ignored: 0, recorded: 0 };
 
-      // ── validate the echoed statement lines ──────────────────────────────
+      // ── validate + normalize the echoed statement lines ─────────────────
       // apply trusts the client for the bank-row metadata (date/amount/…) but
-      // not for which codes belong to the statement: every code the operator
-      // acted on must appear in an uploaded line, and the lines must be shaped
-      // like real statement rows.
+      // not for which codes belong to the statement, and every string field is
+      // coerced so downstream code (looksLikeCardPayout, .slice) can't throw.
       const CODE_RE = /^[A-Za-z0-9_-]{1,20}$/;
-      const statementLines = [
-        ...(payload.allCredits ?? []),
-        ...(payload.allDebits ?? []),
-      ];
-      for (const t of statementLines) {
+      const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}/;
+      const normalizeLine = (t: unknown): BankTransaction => {
+        const r = (t ?? {}) as Record<string, unknown>;
+        const str = (v: unknown) => (typeof v === "string" ? v : "");
         if (
-          !t ||
-          typeof t.archivingCode !== "string" ||
-          !CODE_RE.test(t.archivingCode) ||
-          !Number.isFinite(t.amountCents)
+          !CODE_RE.test(str(r.archivingCode)) ||
+          !Number.isFinite(r.amountCents) ||
+          (str(r.date) !== "" && !ISO_DATE_RE.test(str(r.date)))
         ) {
           throw new Error("Malformed statement line in payload");
         }
-      }
+        return {
+          archivingCode: str(r.archivingCode),
+          amountCents: r.amountCents as number,
+          date: str(r.date).slice(0, 10),
+          description: str(r.description),
+          counterpartyName: str(r.counterpartyName),
+          counterpartyAccount: str(r.counterpartyAccount),
+          idOrRegCode: str(r.idOrRegCode),
+          direction: r.direction === "D" ? "D" : "C",
+        };
+      };
+      const creditLines = (payload.allCredits ?? []).map(normalizeLine);
+      const debitLines = (payload.allDebits ?? []).map(normalizeLine);
       const statementCodes = new Set(
-        statementLines.map((t) => t.archivingCode),
+        [...creditLines, ...debitLines].map((t) => t.archivingCode),
       );
       const actionCodes = [
         ...(payload.reconcile ?? []).map((r) => r.archivingCode),
@@ -418,11 +439,19 @@ export function createStatementService(strapi: Core.Strapi) {
         ),
       ];
 
-      // ── classify every credit line for the bank_transactions upsert ───────
-      const donationCodes = new Set<string>();
+      // ── classify every line for the bank_transactions upsert ─────────────
+      // codes with hard evidence of being a donation: an explicit reconcile /
+      // recurring-import this run, OR a donation already points at the code.
+      const reconciledCodes =
+        await donationsRepository.reconciledTransactionIds();
+      const explicitDonationCodes = new Set<string>();
       for (const r of payload.reconcile ?? [])
-        donationCodes.add(r.archivingCode);
-      for (const imp of allImports) donationCodes.add(imp.archivingCode);
+        explicitDonationCodes.add(r.archivingCode);
+      for (const imp of allImports)
+        explicitDonationCodes.add(imp.archivingCode);
+      const cardAssignCodes = new Set(
+        (payload.cardPayoutAssignments ?? []).map((a) => a.archivingCode),
+      );
 
       const ignoreByCode = new Map(
         (payload.ignore ?? []).map((i) => [i.archivingCode, i.reason ?? null]),
@@ -431,39 +460,62 @@ export function createStatementService(strapi: Core.Strapi) {
         (payload.cardPayouts ?? []).map((c) => [c.archivingCode, c]),
       );
 
-      const bankRows: BankTransactionUpsert[] = (payload.allCredits ?? []).map(
-        (txn) => {
-          const code = txn.archivingCode;
-          let category: BankTransactionCategory = "undecided";
-          if (donationCodes.has(code)) category = "donation";
-          else if (looksLikeCardPayout(txn)) category = "card-payout";
-          else if (ignoreByCode.has(code)) category = "ignored";
+      const existingCategories = await (async () => {
+        const codes = [...creditLines, ...debitLines].map(
+          (t) => t.archivingCode,
+        );
+        if (codes.length === 0) return new Map<string, string>();
+        const rows = await bankTransactionsRepository.categoriesFor(codes);
+        return rows;
+      })();
 
-          const cp = cardPayoutByCode.get(code);
-          return {
-            archivingCode: code,
-            date: txn.date ? txn.date.slice(0, 10) : null,
-            amountCents: txn.amountCents,
-            description: txn.description || null,
-            counterpartyName: txn.counterpartyName || null,
-            counterpartyAccount: txn.counterpartyAccount || null,
-            senderCode: txn.idOrRegCode || null,
-            category,
-            note: category === "ignored" ? ignoreByCode.get(code) : null,
-            importedBy: userEmail,
-            grossAmountCents:
-              category === "card-payout" ? (cp?.grossCents ?? null) : null,
-            feeAmountCents:
-              category === "card-payout" ? (cp?.feeCents ?? null) : null,
-          };
-        },
-      );
+      const clampFee = (v: number | null | undefined) =>
+        typeof v === "number" && v >= 0 ? Math.round(v) : null;
+
+      const bankRows: BankTransactionUpsert[] = creditLines.map((txn) => {
+        const code = txn.archivingCode;
+        const { category, reclassify } = classifyCreditLine({
+          isCardPayout: looksLikeCardPayout(txn),
+          ignoredNow: ignoreByCode.has(code),
+          explicitDonation: explicitDonationCodes.has(code),
+          cardAssignedNow: cardAssignCodes.has(code),
+          alreadyLinked: reconciledCodes.has(code),
+          existingCategory: existingCategories.get(code),
+        });
+
+        const cp = cardPayoutByCode.get(code);
+        const feeAmountCents =
+          category === "card-payout" ? clampFee(cp?.feeCents) : null;
+        const grossAmountCents =
+          category === "card-payout"
+            ? (cp?.grossCents ??
+              (feeAmountCents != null
+                ? txn.amountCents + feeAmountCents
+                : null))
+            : null;
+
+        return {
+          archivingCode: code,
+          date: txn.date || null,
+          amountCents: txn.amountCents,
+          description: txn.description || null,
+          counterpartyName: txn.counterpartyName || null,
+          counterpartyAccount: txn.counterpartyAccount || null,
+          senderCode: txn.idOrRegCode || null,
+          category,
+          reclassify,
+          note: category === "ignored" ? ignoreByCode.get(code) : null,
+          importedBy: userEmail,
+          grossAmountCents,
+          feeAmountCents,
+        };
+      });
 
       // debit lines — always recorded as `outgoing` (amount stored positive)
-      for (const txn of payload.allDebits ?? []) {
+      for (const txn of debitLines) {
         bankRows.push({
           archivingCode: txn.archivingCode,
-          date: txn.date ? txn.date.slice(0, 10) : null,
+          date: txn.date || null,
           amountCents: Math.abs(txn.amountCents),
           description: txn.description || null,
           counterpartyName: txn.counterpartyName || null,
@@ -496,8 +548,8 @@ export function createStatementService(strapi: Core.Strapi) {
         );
         for (const [code, donationIds] of assignmentsByCode) {
           const cp = cardPayoutByCode.get(code);
-          const feeCents = cp?.feeCents;
-          if (feeCents == null) continue;
+          const feeCents = clampFee(cp?.feeCents);
+          if (feeCents == null || feeCents === 0) continue;
           const grossByThisDonation = donationIds.map(
             (id) => grossById.get(id) ?? 0,
           );

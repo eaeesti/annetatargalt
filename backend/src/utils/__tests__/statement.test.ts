@@ -4,6 +4,7 @@ import {
   selectTemplate,
   planRecurringImport,
   looksLikeCardPayout,
+  classifyCreditLine,
   parsePayoutUuidPrefix,
   type RecurringTemplate,
   type DonorTemplates,
@@ -185,6 +186,82 @@ function donation(o: Partial<ReconcilableDonation>): ReconcilableDonation {
     ...o,
   };
 }
+
+describe("classifyCreditLine", () => {
+  const base = {
+    isCardPayout: false,
+    ignoredNow: false,
+    explicitDonation: false,
+    cardAssignedNow: false,
+    alreadyLinked: false,
+    existingCategory: undefined as string | undefined,
+  };
+
+  it("an already-reconciled code re-imported with no action → donation (not undecided)", () => {
+    expect(
+      classifyCreditLine({
+        ...base,
+        alreadyLinked: true,
+        existingCategory: "unimported",
+      }),
+    ).toEqual({ category: "donation", reclassify: false });
+  });
+
+  it("an already-reconciled payout code → card-payout", () => {
+    expect(
+      classifyCreditLine({
+        ...base,
+        alreadyLinked: true,
+        isCardPayout: true,
+        existingCategory: "unimported",
+      }),
+    ).toEqual({ category: "card-payout", reclassify: false });
+  });
+
+  it("a heuristic payout match does NOT override an existing 'ignored'", () => {
+    expect(
+      classifyCreditLine({
+        ...base,
+        isCardPayout: true,
+        existingCategory: "ignored",
+      }),
+    ).toEqual({ category: "ignored", reclassify: false });
+  });
+
+  it("an explicit ignore this run → ignored + reclassify", () => {
+    expect(
+      classifyCreditLine({
+        ...base,
+        ignoredNow: true,
+        existingCategory: "card-payout",
+      }),
+    ).toEqual({ category: "ignored", reclassify: true });
+  });
+
+  it("an explicit reconcile of a previously-ignored code → donation + reclassify", () => {
+    expect(
+      classifyCreditLine({
+        ...base,
+        explicitDonation: true,
+        existingCategory: "ignored",
+      }),
+    ).toEqual({ category: "donation", reclassify: true });
+  });
+
+  it("a brand-new payout-looking line with no evidence → card-payout", () => {
+    expect(classifyCreditLine({ ...base, isCardPayout: true })).toEqual({
+      category: "card-payout",
+      reclassify: false,
+    });
+  });
+
+  it("a brand-new nondescript line → undecided", () => {
+    expect(classifyCreditLine(base)).toEqual({
+      category: "undecided",
+      reclassify: false,
+    });
+  });
+});
 
 describe("categorizeStatement", () => {
   it("counts already-reconciled and ignored codes, acts on neither", () => {

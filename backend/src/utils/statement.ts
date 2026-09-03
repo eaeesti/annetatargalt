@@ -115,8 +115,8 @@ const DONATION_SELGITUS =
 
 /** Montonio (incl. its Stripe-labelled card settlements) aggregated payout. */
 export function looksLikeCardPayout(txn: BankTransaction): boolean {
-  const name = txn.counterpartyName.toLowerCase();
-  const selg = txn.description.toLowerCase();
+  const name = (txn.counterpartyName ?? "").toLowerCase();
+  const selg = (txn.description ?? "").toLowerCase();
   if (name.includes("montonio")) return true;
   if (name === "stripe" && selg.includes("montonio")) return true;
   if (selg.includes("card payout") || selg.includes("payout ")) return true;
@@ -178,6 +178,53 @@ export function planRecurringImport(
       amountCents: o.amount,
     })),
     amountDrifted: amountCents !== template.amount,
+  };
+}
+
+// ─── Bank-row category (statement apply) ─────────────────────────────────────
+
+export type BankRowCategory =
+  | "donation"
+  | "card-payout"
+  | "ignored"
+  | "undecided";
+
+/**
+ * Decide the `bank_transactions` category for one credit line on apply, given
+ * what the operator did and the code's current state. `reclassify` marks an
+ * explicit decision that may override a stickier existing category (e.g. an
+ * operator reconciling a previously-ignored code).
+ */
+export function classifyCreditLine(ctx: {
+  isCardPayout: boolean;
+  /** operator ignored this code this run */
+  ignoredNow: boolean;
+  /** explicit reconcile / recurring-import this run */
+  explicitDonation: boolean;
+  /** operator assigned this card-payout code to donations this run */
+  cardAssignedNow: boolean;
+  /** a donation already points at this code */
+  alreadyLinked: boolean;
+  /** current bank_transactions category, if any */
+  existingCategory: string | undefined;
+}): { category: BankRowCategory; reclassify: boolean } {
+  if (ctx.ignoredNow) return { category: "ignored", reclassify: true };
+
+  if (ctx.explicitDonation || ctx.cardAssignedNow || ctx.alreadyLinked) {
+    return {
+      category: ctx.isCardPayout ? "card-payout" : "donation",
+      reclassify: ctx.explicitDonation || ctx.cardAssignedNow,
+    };
+  }
+
+  const e = ctx.existingCategory;
+  if (e && e !== "unimported" && e !== "undecided") {
+    // a settled decision must not be reclassified by a heuristic on re-upload
+    return { category: e as BankRowCategory, reclassify: false };
+  }
+  return {
+    category: ctx.isCardPayout ? "card-payout" : "undecided",
+    reclassify: false,
   };
 }
 

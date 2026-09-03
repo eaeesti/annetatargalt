@@ -10,14 +10,19 @@ export type BankTransactionCategory =
   | "undecided"
   | "unimported"; // migration stub — a donation points here, bank line not yet imported
 
-/** Higher wins when an upload's decision meets an existing row. */
+/**
+ * When a re-upload's heuristic category meets an existing row, higher wins.
+ * `ignored` is stickiest — a "not a donation" decision must not be reverted by
+ * a later import's `looksLikeCardPayout` heuristic. An explicit operator action
+ * (reconcile / ignore / recurring-import) sets `reclassify` and bypasses this.
+ */
 const CATEGORY_PRECEDENCE: Record<string, number> = {
+  ignored: 4,
   donation: 3,
+  "card-payout": 3, // peer of donation — allow the donation↔card-payout upgrade
   outgoing: 3, // debits never collide with credit codes; keep them pinned
-  "card-payout": 2,
-  ignored: 1,
-  undecided: 0,
-  unimported: -1, // any real import wins over a migration stub
+  undecided: 1,
+  unimported: 0, // any real import wins over a migration stub
 };
 const prec = (c: string) => CATEGORY_PRECEDENCE[c] ?? 0;
 
@@ -33,6 +38,8 @@ export interface BankTransactionUpsert {
   counterpartyAccount?: string | null;
   senderCode?: string | null;
   category: BankTransactionCategory;
+  /** explicit operator decision — set category verbatim, bypass precedence */
+  reclassify?: boolean;
   note?: string | null;
   importedBy?: string | null;
   grossAmountCents?: number | null; // card payouts only
@@ -148,6 +155,19 @@ export class BankTransactionsRepository {
     return new Set(rows.map((r) => r.code));
   }
 
+  /** code → current category, for the codes given. */
+  async categoriesFor(codes: string[]): Promise<Map<string, string>> {
+    if (codes.length === 0) return new Map();
+    const rows = await this.database
+      .select({
+        code: bankTransactions.archivingCode,
+        category: bankTransactions.category,
+      })
+      .from(bankTransactions)
+      .where(inArray(bankTransactions.archivingCode, codes));
+    return new Map(rows.map((r) => [r.code, r.category]));
+  }
+
   async findAll(): Promise<BankTransaction[]> {
     return this.database.query.bankTransactions.findMany({
       orderBy: (t, { desc }) => [desc(t.date)],
@@ -155,24 +175,26 @@ export class BankTransactionsRepository {
   }
 
   /**
-   * Idempotent upsert of statement credit lines. Bank fields are refreshed
-   * (coalesced — a real line fills in a blind ignore); `category` never drops
-   * below what's already recorded (precedence donation > card-payout > ignored >
-   * undecided), so a re-upload can't silently un-ignore or un-link a code.
-   * Returns the number of codes that were newly inserted (0 on a re-run of an
-   * already-recorded statement).
+   * Idempotent upsert of statement lines. Bank fields are refreshed (coalesced —
+   * a real line fills in a blind ignore). `category` follows precedence
+   * (ignored is stickiest) UNLESS the row is `reclassify` (an explicit operator
+   * decision), so a re-upload can't silently un-ignore a code but an operator
+   * still can. Returns the number of codes newly inserted (0 on a no-op re-run).
    */
   async upsertMany(rows: BankTransactionUpsert[]): Promise<number> {
     if (rows.length === 0) return 0;
 
-    // dedupe input by code — higher-precedence category wins
+    // dedupe input by code — a reclassify row, else the higher-precedence one
     const byCode = new Map<string, BankTransactionUpsert>();
     for (const r of rows) {
       const archivingCode = r.archivingCode.slice(0, 20);
       const prev = byCode.get(archivingCode);
-      if (!prev || prec(r.category) >= prec(prev.category)) {
-        byCode.set(archivingCode, { ...r, archivingCode });
-      }
+      const better =
+        !prev ||
+        (r.reclassify && !prev.reclassify) ||
+        (Boolean(r.reclassify) === Boolean(prev.reclassify) &&
+          prec(r.category) >= prec(prev.category));
+      if (better) byCode.set(archivingCode, { ...r, archivingCode });
     }
     const deduped = [...byCode.values()];
 
@@ -194,7 +216,8 @@ export class BankTransactionsRepository {
     const groups = new Map<string, BankTransactionUpsert[]>();
     for (const r of deduped) {
       const cur = existingCat.get(r.archivingCode);
-      const finalCat = cur && prec(cur) > prec(r.category) ? cur : r.category;
+      const finalCat =
+        !r.reclassify && cur && prec(cur) > prec(r.category) ? cur : r.category;
       const arr = groups.get(finalCat) ?? [];
       arr.push(r);
       groups.set(finalCat, arr);

@@ -17,11 +17,16 @@ CREATE TABLE IF NOT EXISTS "bank_transactions" (
 );
 --> statement-breakpoint
 ALTER TABLE "donations" ADD COLUMN IF NOT EXISTS "processor_fee_cents" integer;--> statement-breakpoint
--- carry the "not a donation" ignore list into the new table
-INSERT INTO "bank_transactions" ("archiving_code", "category", "note", "imported_by", "created_at", "imported_at", "updated_at")
-SELECT "archiving_code", 'ignored', "reason", "created_by", "created_at", "created_at", "created_at"
-FROM "ignored_bank_transactions"
-ON CONFLICT ("archiving_code") DO NOTHING;--> statement-breakpoint
+-- carry the "not a donation" ignore list into the new table (guarded — the
+-- source table may be absent if 0004 never landed on this database)
+DO $$ BEGIN
+ IF to_regclass('public.ignored_bank_transactions') IS NOT NULL THEN
+  INSERT INTO "bank_transactions" ("archiving_code", "category", "note", "imported_by", "created_at", "imported_at", "updated_at")
+  SELECT "archiving_code", 'ignored', "reason", "created_by", "created_at", "created_at", "created_at"
+  FROM "ignored_bank_transactions"
+  ON CONFLICT ("archiving_code") DO NOTHING;
+ END IF;
+END $$;--> statement-breakpoint
 -- stub a row for every archiving code already recorded on a donation, so the FK
 -- below can be added. category 'unimported' = "we know a donation points here
 -- but the bank line has not been imported yet"; the first real statement import
