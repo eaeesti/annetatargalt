@@ -63,7 +63,7 @@ async function resolveCardPayouts(
     }));
   }
 
-  const list = await montonio.listPayouts(100);
+  const list = await montonio.listPayouts();
 
   const toCents = (v: string | number | undefined) =>
     v === undefined ? NaN : Math.round(Number(v) * 100);
@@ -74,7 +74,7 @@ async function resolveCardPayouts(
       const payout =
         (uuidPrefix &&
           list.find((p) => p.uuid.toLowerCase().startsWith(uuidPrefix))) ||
-        list.find((p) => toCents(p.amount) === transaction.amountCents);
+        list.find((p) => toCents(p.totalAmount) === transaction.amountCents);
 
       if (!payout) {
         return { transaction, resolvedDonationIds: [], resolved: false };

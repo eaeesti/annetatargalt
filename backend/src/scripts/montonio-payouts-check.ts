@@ -67,10 +67,17 @@ async function main() {
     return;
   }
 
-  const rows = Array.isArray(list.body)
-    ? list.body
-    : ((list.body as { data?: unknown[] })?.data ?? []);
-  const first = rows[0] as { uuid?: string } | undefined;
+  const b = list.body as unknown[] | { payouts?: unknown[]; data?: unknown[] };
+  const rows = (Array.isArray(b) ? b : (b.payouts ?? b.data ?? [])) as {
+    uuid?: string;
+    totalAmount?: string;
+    createdAt?: string;
+  }[];
+  console.log(`\n${rows.length} payouts. Newest few:`);
+  for (const p of rows.slice(0, 5)) {
+    console.log(`  ${p.createdAt?.slice(0, 10)}  ${p.totalAmount}  ${p.uuid}`);
+  }
+  const first = rows[0];
   if (!first?.uuid) {
     console.log("\nNo payouts returned — nothing more to check.");
     return;
@@ -80,9 +87,9 @@ async function main() {
   console.log(`\nGET ${exportUrl}`);
   const exp = await hit(exportUrl);
   console.log("  status:", exp.status, exp.ok ? "OK" : "FAIL");
-  console.log("  body  :", JSON.stringify(exp.body, null, 2).slice(0, 2000));
+  console.log("  body  :", JSON.stringify(exp.body, null, 2).slice(0, 3000));
   console.log(
-    "\nExpect either an array of order rows (with merchantReference) or { url: <download link> }.",
+    "\nExpect either an array of order rows (with merchantReference / a trailing donation id) or { url: <download link> to a JSON file of those rows }.",
   );
 }
 

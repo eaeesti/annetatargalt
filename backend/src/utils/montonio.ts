@@ -103,7 +103,7 @@ const montonio = {
   /**
    * Recent payouts, newest first. `[]` on any failure.
    */
-  listPayouts: async (limit = 50): Promise<MontonioPayout[]> => {
+  listPayouts: async (limit = 149): Promise<MontonioPayout[]> => {
     if (!montonio.isPayoutsConfigured()) return [];
     const storeUuid = process.env.MONTONIO_STORE_UUID;
     try {
@@ -114,8 +114,14 @@ const montonio = {
       if (!res.ok) return [];
       const body = (await res.json()) as
         | MontonioPayout[]
-        | { data?: MontonioPayout[] };
-      return Array.isArray(body) ? body : (body.data ?? []);
+        | { payouts?: MontonioPayout[]; data?: MontonioPayout[] };
+      const rows = Array.isArray(body)
+        ? body
+        : (body.payouts ?? body.data ?? []);
+      // Montonio ignores `order=DESC`; sort newest-first ourselves.
+      return rows.sort(
+        (a, b) => Date.parse(b.createdAt ?? "") - Date.parse(a.createdAt ?? ""),
+      );
     } catch {
       return [];
     }
@@ -158,8 +164,9 @@ export interface MontonioPayout {
   uuid: string;
   status?: string;
   currency?: string;
-  /** major units, e.g. "673.10" */
-  amount?: string | number;
+  settlementType?: string;
+  /** major units, e.g. "673.10" — Montonio calls this `totalAmount` */
+  totalAmount?: string | number;
   createdAt?: string;
   [key: string]: unknown;
 }
