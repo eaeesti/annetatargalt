@@ -395,7 +395,8 @@ describe("categorizeStatement", () => {
       "OUT1",
       "OUT2",
     ]);
-    expect(report.counts.unrecorded).toBe(1); // only credit B is new
+    // B, OUT1, OUT2 are not in recordedCodes — all get written on apply
+    expect(report.counts.unrecorded).toBe(3);
     expect(report.counts.outgoing).toBe(2);
   });
 });

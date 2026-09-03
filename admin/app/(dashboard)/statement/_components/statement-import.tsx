@@ -226,13 +226,16 @@ export function StatementImport() {
     [manualRecurring, rememberSel],
   );
 
-  const totalChanges =
+  const selectionChanges =
     importSel.size +
     reconcileSel.size +
     ignoreSel.size +
     cardPayoutAssignments.length +
     manualAssignments.length +
     manualRecurring.length;
+  // bank_transactions rows that would be written even with nothing selected
+  const rowsToRecord = preview?.counts.unrecorded ?? 0;
+  const totalChanges = selectionChanges + rowsToRecord;
 
   async function apply() {
     if (!preview) return;
@@ -660,12 +663,15 @@ export function StatementImport() {
             <Button onClick={apply} disabled={loading || totalChanges === 0}>
               {loading
                 ? "Applying…"
-                : `Apply ${totalChanges} change${totalChanges === 1 ? "" : "s"}`}
+                : selectionChanges === 0 && rowsToRecord > 0
+                  ? `Record ${rowsToRecord} bank row${rowsToRecord === 1 ? "" : "s"}`
+                  : `Apply ${selectionChanges} change${selectionChanges === 1 ? "" : "s"}`}
             </Button>
             <span className="text-xs text-muted-foreground">
               {importSel.size + manualRecurring.length} create ·{" "}
               {reconcileSel.size + manualAssignments.length} reconcile ·{" "}
               {cardPayoutAssignments.length} card · {ignoreSel.size} ignore
+              {rowsToRecord > 0 && <> · {rowsToRecord} bank rows</>}
             </span>
           </div>
         </>
