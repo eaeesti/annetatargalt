@@ -372,14 +372,17 @@ describe("categorizeStatement", () => {
     expect(report.counts.creditTransactions).toBe(0);
   });
 
-  it("returns every credit line in allCredits (deduped) and counts the unrecorded ones", () => {
+  it("splits credit lines into allCredits and debit lines into allDebits (both deduped)", () => {
     const report = categorizeStatement(
       baseInput({
         transactions: [
           txn({ archivingCode: "A" }),
           txn({ archivingCode: "A" }), // dupe
           txn({ archivingCode: "B" }),
-          txn({ direction: "D", archivingCode: "C" }), // debit, excluded
+          txn({ direction: "D", archivingCode: "OUT1" }),
+          txn({ direction: "D", archivingCode: "OUT1" }), // dupe
+          txn({ direction: "D", archivingCode: "OUT2" }),
+          txn({ direction: "D", archivingCode: "" }), // no code, excluded
         ],
         recordedCodes: new Set(["A"]),
       }),
@@ -388,7 +391,12 @@ describe("categorizeStatement", () => {
       "A",
       "B",
     ]);
-    expect(report.counts.unrecorded).toBe(1); // only B is new
+    expect(report.allDebits.map((t) => t.archivingCode).sort()).toEqual([
+      "OUT1",
+      "OUT2",
+    ]);
+    expect(report.counts.unrecorded).toBe(1); // only credit B is new
+    expect(report.counts.outgoing).toBe(2);
   });
 });
 

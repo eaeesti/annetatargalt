@@ -15,6 +15,7 @@ export type MoneyFlow = {
   allocated: number;
   transferred: number;
   undecidedInflow: number;
+  outgoingTotal: number;
   unlinkedDonationCount: number;
   unlinkedDonationCents: number;
   discrepancy: number;
@@ -110,6 +111,12 @@ export function MoneyFlowSummary({ summary: s }: { summary: MoneyFlow }) {
             label="Transferred onward"
             value={eur(s.transferred)}
             hint={`float ${eur(s.allocated - s.transferred)}`}
+          />
+          <Figure
+            label="Outgoing (bank debits)"
+            value={eur(s.outgoingTotal)}
+            tone="muted"
+            hint="all debit lines"
           />
           <Figure
             label="Discrepancy"

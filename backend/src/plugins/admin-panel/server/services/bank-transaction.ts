@@ -13,6 +13,7 @@ import { createOrganizationResolver } from "../../../../utils/organization-resol
 const CATEGORIES: BankTransactionCategory[] = [
   "donation",
   "card-payout",
+  "outgoing",
   "ignored",
   "undecided",
 ];

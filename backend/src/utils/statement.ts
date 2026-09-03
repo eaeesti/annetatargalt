@@ -95,12 +95,16 @@ export interface StatementReport {
   notADonation: BankTransaction[];
   /** every credit line with an archiving code, deduped — persisted as bank_transactions rows on apply */
   allCredits: BankTransaction[];
+  /** every debit line with an archiving code, deduped — persisted as `outgoing` rows on apply */
+  allDebits: BankTransaction[];
   counts: {
     creditTransactions: number;
     alreadyReconciled: number;
     ignored: number;
     /** credit lines whose code is not yet in bank_transactions */
     unrecorded: number;
+    /** debit lines with a code (all recorded as `outgoing`) */
+    outgoing: number;
   };
 }
 
@@ -215,9 +219,16 @@ export function categorizeStatement(input: StatementInput): StatementReport {
     (t) => t.direction === "C" && t.archivingCode !== "",
   );
 
-  // every credit line, deduped by archiving code
+  // every credit / debit line, deduped by archiving code
   const allCredits = [
     ...new Map(credits.map((t) => [t.archivingCode, t])).values(),
+  ];
+  const allDebits = [
+    ...new Map(
+      input.transactions
+        .filter((t) => t.direction === "D" && t.archivingCode !== "")
+        .map((t) => [t.archivingCode, t]),
+    ).values(),
   ];
   const recordedCodes = input.recordedCodes ?? new Set<string>();
 
@@ -228,12 +239,14 @@ export function categorizeStatement(input: StatementInput): StatementReport {
     needsDecision: [],
     notADonation: [],
     allCredits,
+    allDebits,
     counts: {
       creditTransactions: credits.length,
       alreadyReconciled: 0,
       ignored: 0,
       unrecorded: allCredits.filter((t) => !recordedCodes.has(t.archivingCode))
         .length,
+      outgoing: allDebits.length,
     },
   };
 

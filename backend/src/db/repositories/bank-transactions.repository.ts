@@ -5,12 +5,14 @@ import { bankTransactions, type BankTransaction } from "../schema";
 export type BankTransactionCategory =
   | "donation"
   | "card-payout"
+  | "outgoing" // debit — money leaving the account (org transfer, fee, refund, tax)
   | "ignored"
   | "undecided";
 
 /** Higher wins when an upload's decision meets an existing row. */
 const CATEGORY_PRECEDENCE: Record<string, number> = {
   donation: 3,
+  outgoing: 3, // debits never collide with credit codes; keep them pinned
   "card-payout": 2,
   ignored: 1,
   undecided: 0,
@@ -65,6 +67,8 @@ export interface MoneyFlow {
   transferred: number;
   /** Σ amount, category = 'undecided' */
   undecidedInflow: number;
+  /** Σ amount, category = 'outgoing' (debits — money that left the account) */
+  outgoingTotal: number;
   /** finalized donations with no transaction_id at all (standing backlog, not date-filtered) */
   unlinkedDonationCount: number;
   unlinkedDonationCents: number;
@@ -291,6 +295,11 @@ export class BankTransactionsRepository {
     };
     const sortCol = sortCols[sortBy] ?? sql`bt.date`;
     const dir = sortDir === "asc" ? sql`asc` : sql`desc`;
+    // pageSize <= 0 means "all rows" (the /transactions "View all" option)
+    const limitClause =
+      pageSize > 0
+        ? sql`LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}`
+        : sql``;
 
     const rowsRes = await this.database.execute(sql`
       SELECT bt.*,
@@ -305,7 +314,7 @@ export class BankTransactionsRepository {
       FROM bank_transactions bt
       WHERE ${where}
       ORDER BY ${sortCol} ${dir} NULLS LAST, bt.archiving_code ${dir}
-      LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}
+      ${limitClause}
     `);
     const countRes = await this.database.execute(
       sql`SELECT cast(count(*) as int) as total FROM bank_transactions bt WHERE ${where}`,
@@ -348,7 +357,8 @@ export class BankTransactionsRepository {
         cast(coalesce(sum(bt.amount) filter (where bt.category = 'card-payout'), 0) as int) as card_payout_net,
         cast(coalesce(sum(coalesce(bt.gross_amount, bt.amount)) filter (where bt.category = 'card-payout'), 0) as int) as card_payout_gross,
         cast(coalesce(sum(bt.fee_amount) filter (where bt.category = 'card-payout'), 0) as int) as card_fees,
-        cast(coalesce(sum(bt.amount) filter (where bt.category = 'undecided'), 0) as int) as undecided_inflow
+        cast(coalesce(sum(bt.amount) filter (where bt.category = 'undecided'), 0) as int) as undecided_inflow,
+        cast(coalesce(sum(abs(bt.amount)) filter (where bt.category = 'outgoing'), 0) as int) as outgoing_total
       FROM bank_transactions bt
       WHERE bt.amount IS NOT NULL ${btDateClause}
     `)
@@ -399,6 +409,7 @@ export class BankTransactionsRepository {
       allocated,
       transferred: num(alloc?.transferred),
       undecidedInflow: num(bank?.undecided_inflow),
+      outgoingTotal: num(bank?.outgoing_total),
       unlinkedDonationCount: num(unlinked?.cnt),
       unlinkedDonationCents: num(unlinked?.total),
       discrepancy: allocated - (received + cardPayoutNet + cardFees),

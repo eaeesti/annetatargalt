@@ -48,6 +48,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
         cardPayouts: unknown[];
         ignore: unknown[];
         allCredits: unknown[];
+        allDebits: unknown[];
       }>;
 
       const arr = (v: unknown) => (Array.isArray(v) ? v : []);
@@ -60,6 +61,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
         cardPayouts: arr(body.cardPayouts),
         ignore: arr(body.ignore),
         allCredits: arr(body.allCredits),
+        allDebits: arr(body.allDebits),
       };
 
       const user = ctx.state.user as { email?: string } | undefined;
