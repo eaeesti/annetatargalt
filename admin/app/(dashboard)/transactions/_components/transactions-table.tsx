@@ -189,6 +189,8 @@ export function TransactionsTable({
       setExpanded(null);
       setEdit(null);
       router.refresh();
+    } catch {
+      alert("Failed to reclassify — check your connection and try again");
     } finally {
       setSaving(false);
     }
@@ -235,7 +237,7 @@ export function TransactionsTable({
         <FilterBuilder
           filters={FILTER_DEFS}
           params={filterParams}
-          onChange={pushUrl}
+          onChange={(u) => pushUrl({ ...u, page: "1" })}
         />
         <p className="ml-auto text-sm text-muted-foreground">
           {pagination.total.toLocaleString()} lines
