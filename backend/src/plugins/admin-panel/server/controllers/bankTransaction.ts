@@ -26,10 +26,13 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
       const q = ctx.request.query;
 
       const page = Math.max(1, Number(q.page ?? 1));
-      const pageSizeRaw = Number(q.pageSize ?? 50);
-      const pageSize = VALID_PAGE_SIZES.includes(pageSizeRaw)
-        ? pageSizeRaw
-        : 50;
+      // pageSize=all → 0 (repo returns every row)
+      const pageSize =
+        String(q.pageSize) === "all"
+          ? 0
+          : VALID_PAGE_SIZES.includes(Number(q.pageSize ?? 50))
+            ? Number(q.pageSize)
+            : 50;
       const sortByRaw = String(q.sortBy ?? "date");
       const sortBy = VALID_SORT_COLS.has(sortByRaw) ? sortByRaw : "date";
       const sortDir =
@@ -51,10 +54,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
       return ctx.send({
         data,
         pagination: {
-          page,
+          page: pageSize > 0 ? page : 1,
           pageSize,
           total,
-          pageCount: Math.ceil(total / pageSize),
+          pageCount: pageSize > 0 ? Math.ceil(total / pageSize) : 1,
         },
       });
     },

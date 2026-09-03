@@ -217,6 +217,22 @@ describe("BankTransactionsRepository", () => {
       });
       expect(data.map((r) => r.archivingCode)).toEqual(["X1"]);
     });
+
+    it("pageSize <= 0 returns every row", async () => {
+      for (let i = 0; i < 12; i++) {
+        await createTestBankTransaction({
+          archivingCode: `P${i}`,
+          category: "undecided",
+          date: `2026-01-${String(i + 1).padStart(2, "0")}`,
+        });
+      }
+      const { data, total } = await bankTransactionsRepository.findPaginated({
+        page: 1,
+        pageSize: 0,
+      });
+      expect(total).toBe(12);
+      expect(data).toHaveLength(12);
+    });
   });
 
   describe("moneyFlow", () => {
@@ -274,6 +290,14 @@ describe("BankTransactionsRepository", () => {
         amount: 1234,
       });
 
+      // an outgoing debit (transfer to an org)
+      await createTestBankTransaction({
+        archivingCode: "M4",
+        category: "outgoing",
+        date: "2026-04-20",
+        amount: 20000,
+      });
+
       // an unlinked finalized donation (money in the ledger, no bank line)
       await createTestDonation({ amount: 800, finalized: true });
 
@@ -290,6 +314,7 @@ describe("BankTransactionsRepository", () => {
       expect(mf.allocated).toBe(15000);
       expect(mf.transferred).toBe(10000);
       expect(mf.undecidedInflow).toBe(1234);
+      expect(mf.outgoingTotal).toBe(20000);
       expect(mf.unlinkedDonationCount).toBe(1);
       expect(mf.unlinkedDonationCents).toBe(800);
       // allocated 15000 − (received 5000 + net 9263 + fee 737) = 0

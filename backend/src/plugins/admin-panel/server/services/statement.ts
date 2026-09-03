@@ -174,6 +174,8 @@ export interface ApplyPayload {
   ignore: { archivingCode: string; reason?: string | null }[];
   /** every credit line in the statement — persisted as bank_transactions rows */
   allCredits: BankTransaction[];
+  /** every debit line — persisted as `outgoing` bank_transactions rows */
+  allDebits?: BankTransaction[];
 }
 
 interface DonorTemplateIndex {
@@ -366,6 +368,7 @@ export function createStatementService(strapi: Core.Strapi) {
         needsDecision: report.needsDecision,
         notADonation: report.notADonation,
         allCredits: report.allCredits,
+        allDebits: report.allDebits,
         donorNames,
         orgNames: names,
       };
@@ -432,6 +435,22 @@ export function createStatementService(strapi: Core.Strapi) {
           };
         },
       );
+
+      // debit lines — always recorded as `outgoing` (amount stored positive)
+      for (const txn of payload.allDebits ?? []) {
+        bankRows.push({
+          archivingCode: txn.archivingCode,
+          date: txn.date ? txn.date.slice(0, 10) : null,
+          amountCents: Math.abs(txn.amountCents),
+          description: txn.description || null,
+          counterpartyName: txn.counterpartyName || null,
+          counterpartyAccount: txn.counterpartyAccount || null,
+          senderCode: txn.idOrRegCode || null,
+          category: "outgoing",
+          note: null,
+          importedBy: userEmail,
+        });
+      }
 
       // per-donation card-payout fee shares, recomputed server-side over the
       // donations' own gross amounts (never trust a client split)
