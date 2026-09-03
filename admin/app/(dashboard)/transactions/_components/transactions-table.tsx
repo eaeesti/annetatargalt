@@ -61,8 +61,14 @@ type LinkedDonation = {
   }[];
 };
 
-const CATEGORIES = ["donation", "card-payout", "ignored", "undecided"] as const;
-const PAGE_SIZES = [25, 50, 100, 250] as const;
+const CATEGORIES = [
+  "donation",
+  "card-payout",
+  "outgoing",
+  "ignored",
+  "undecided",
+] as const;
+const PAGE_SIZES = [25, 50, 100, 250, "all"] as const;
 
 const eur = (cents: number | null) =>
   cents == null ? "—" : `€${(cents / 100).toFixed(2)}`;
@@ -75,7 +81,7 @@ function categoryVariant(
   c: string,
 ): "default" | "secondary" | "destructive" | "outline" {
   if (c === "donation") return "default";
-  if (c === "card-payout") return "secondary";
+  if (c === "card-payout" || c === "outgoing") return "secondary";
   if (c === "ignored") return "outline";
   return "destructive"; // undecided — needs attention
 }
@@ -488,17 +494,23 @@ export function TransactionsTable({
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>Rows per page:</span>
           <div className="flex gap-1">
-            {PAGE_SIZES.map((size) => (
-              <Button
-                key={size}
-                variant={pagination.pageSize === size ? "default" : "outline"}
-                size="sm"
-                className="h-7 w-10 px-0"
-                onClick={() => pushUrl({ pageSize: String(size), page: "1" })}
-              >
-                {size}
-              </Button>
-            ))}
+            {PAGE_SIZES.map((size) => {
+              const active =
+                size === "all"
+                  ? pagination.pageSize === 0
+                  : pagination.pageSize === size;
+              return (
+                <Button
+                  key={size}
+                  variant={active ? "default" : "outline"}
+                  size="sm"
+                  className="h-7 min-w-10 px-2"
+                  onClick={() => pushUrl({ pageSize: String(size), page: "1" })}
+                >
+                  {size === "all" ? "All" : size}
+                </Button>
+              );
+            })}
           </div>
         </div>
         <div className="flex items-center gap-2">

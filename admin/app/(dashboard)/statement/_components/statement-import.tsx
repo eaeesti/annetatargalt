@@ -61,6 +61,7 @@ type Preview = {
     alreadyReconciled: number;
     ignored: number;
     unrecorded: number;
+    outgoing: number;
   };
   reconcile: ReconcileRow[];
   recurringImports: RecurringImport[];
@@ -68,6 +69,7 @@ type Preview = {
   needsDecision: { transaction: BankTxn; reason: string }[];
   notADonation: BankTxn[];
   allCredits: BankTxn[];
+  allDebits: BankTxn[];
   donorNames: Record<string, string>;
   orgNames: Record<string, string>;
 };
@@ -278,6 +280,7 @@ export function StatementImport() {
             reason: t.description,
           })),
         allCredits: preview.allCredits,
+        allDebits: preview.allDebits,
       };
       const res = await fetch("/api/statement/apply", {
         method: "POST",
@@ -346,6 +349,9 @@ export function StatementImport() {
                 {preview.counts.unrecorded} new bank row
                 {preview.counts.unrecorded === 1 ? "" : "s"} will be recorded
               </span>
+            )}
+            {preview.counts.outgoing > 0 && (
+              <span>{preview.counts.outgoing} outgoing payments recorded</span>
             )}
           </div>
 

@@ -20,6 +20,7 @@ const VALID_SORT_COLS = new Set([
 const VALID_CATEGORIES = new Set([
   "donation",
   "card-payout",
+  "outgoing",
   "ignored",
   "undecided",
 ]);
@@ -43,8 +44,13 @@ export default async function TransactionsPage({
   const params = await searchParams;
 
   const page = Math.max(1, Number(str(params.page) ?? 1));
-  const pageSizeRaw = Number(str(params.pageSize) ?? 50);
-  const pageSize = VALID_PAGE_SIZES.includes(pageSizeRaw) ? pageSizeRaw : 50;
+  const pageSizeParam = str(params.pageSize) ?? "50";
+  const pageSize =
+    pageSizeParam === "all"
+      ? "all"
+      : VALID_PAGE_SIZES.includes(Number(pageSizeParam))
+        ? String(Number(pageSizeParam))
+        : "50";
   const sortByRaw = str(params.sortBy) ?? "date";
   const sortBy = VALID_SORT_COLS.has(sortByRaw) ? sortByRaw : "date";
   const sortDir = str(params.sortDir) === "asc" ? "asc" : "desc";
