@@ -101,7 +101,7 @@ export interface StatementReport {
     creditTransactions: number;
     alreadyReconciled: number;
     ignored: number;
-    /** credit lines whose code is not yet in bank_transactions */
+    /** credit + debit lines whose code is not yet in bank_transactions (recorded on apply) */
     unrecorded: number;
     /** debit lines with a code (all recorded as `outgoing`) */
     outgoing: number;
@@ -244,8 +244,9 @@ export function categorizeStatement(input: StatementInput): StatementReport {
       creditTransactions: credits.length,
       alreadyReconciled: 0,
       ignored: 0,
-      unrecorded: allCredits.filter((t) => !recordedCodes.has(t.archivingCode))
-        .length,
+      unrecorded: [...allCredits, ...allDebits].filter(
+        (t) => !recordedCodes.has(t.archivingCode),
+      ).length,
       outgoing: allDebits.length,
     },
   };
