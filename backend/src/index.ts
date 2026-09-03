@@ -110,7 +110,11 @@ async function bootstrapDonationPermissions(
     "plugin::admin-panel.dashboard.stats",
     "plugin::admin-panel.dashboard.charts",
     "plugin::admin-panel.statement.preview",
-    "plugin::admin-panel.statement.apply", // the one write path — bank-statement import
+    "plugin::admin-panel.statement.apply", // write path — bank-statement import
+    "plugin::admin-panel.bankTransaction.list",
+    "plugin::admin-panel.bankTransaction.summary",
+    "plugin::admin-panel.bankTransaction.findOne",
+    "plugin::admin-panel.bankTransaction.update", // write path — reclassify a bank line
   ];
 
   // Write actions that must be actively revoked from DonationAdmin if previously granted

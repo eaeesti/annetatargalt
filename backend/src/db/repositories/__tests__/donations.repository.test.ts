@@ -15,6 +15,7 @@ import {
   createTestDonation,
   createTestOrganizationDonation,
   createTestDonationTransfer,
+  createTestBankTransaction,
 } from "../../__tests__/test-db-helper";
 
 describe("DonationsRepository", () => {
@@ -422,6 +423,7 @@ describe("DonationsRepository", () => {
 
     it("setTransactionId records the code and match source", async () => {
       const donation = await createTestDonation();
+      await createTestBankTransaction({ archivingCode: "2024120199999999" });
 
       await donationsRepository.setTransactionId(
         donation.id,
@@ -438,6 +440,8 @@ describe("DonationsRepository", () => {
       const a = await createTestDonation();
       const b = await createTestDonation();
       const c = await createTestDonation();
+      await createTestBankTransaction({ archivingCode: "AAA" });
+      await createTestBankTransaction({ archivingCode: "BBB" });
 
       await donationsRepository.setTransactionIds([
         { id: a.id, transactionId: "AAA", source: "manual" },
@@ -453,6 +457,7 @@ describe("DonationsRepository", () => {
     it("findWithFilters filters by transactionId and hasTransactionId", async () => {
       const matched = await createTestDonation();
       await createTestDonation();
+      await createTestBankTransaction({ archivingCode: "CODE-1" });
       await donationsRepository.setTransactionId(
         matched.id,
         "CODE-1",

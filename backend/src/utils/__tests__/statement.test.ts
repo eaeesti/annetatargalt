@@ -5,6 +5,7 @@ import {
   planRecurringImport,
   looksLikeCardPayout,
   parsePayoutUuidPrefix,
+  splitFeeProRata,
   type RecurringTemplate,
   type DonorTemplates,
   type StatementInput,
@@ -369,5 +370,64 @@ describe("categorizeStatement", () => {
       }),
     );
     expect(report.counts.creditTransactions).toBe(0);
+  });
+
+  it("returns every credit line in allCredits (deduped) and counts the unrecorded ones", () => {
+    const report = categorizeStatement(
+      baseInput({
+        transactions: [
+          txn({ archivingCode: "A" }),
+          txn({ archivingCode: "A" }), // dupe
+          txn({ archivingCode: "B" }),
+          txn({ direction: "D", archivingCode: "C" }), // debit, excluded
+        ],
+        recordedCodes: new Set(["A"]),
+      }),
+    );
+    expect(report.allCredits.map((t) => t.archivingCode).sort()).toEqual([
+      "A",
+      "B",
+    ]);
+    expect(report.counts.unrecorded).toBe(1); // only B is new
+  });
+});
+
+describe("splitFeeProRata", () => {
+  it("splits pro-rata and sums to exactly the fee", () => {
+    const shares = splitFeeProRata(1000, [
+      { id: 1, grossCents: 3000 },
+      { id: 2, grossCents: 6000 },
+      { id: 3, grossCents: 1000 },
+    ]);
+    expect(shares[1] + shares[2] + shares[3]).toBe(1000);
+    expect(shares[2]).toBeGreaterThan(shares[1]);
+  });
+
+  it("puts the rounding remainder on the largest donation", () => {
+    const shares = splitFeeProRata(100, [
+      { id: 1, grossCents: 1 },
+      { id: 2, grossCents: 1 },
+      { id: 3, grossCents: 1 },
+    ]);
+    expect(shares[1] + shares[2] + shares[3]).toBe(100);
+  });
+
+  it("handles a single donation", () => {
+    expect(splitFeeProRata(737, [{ id: 9, grossCents: 10000 }])).toEqual({
+      9: 737,
+    });
+  });
+
+  it("handles a zero fee", () => {
+    expect(
+      splitFeeProRata(0, [
+        { id: 1, grossCents: 100 },
+        { id: 2, grossCents: 200 },
+      ]),
+    ).toEqual({ 1: 0, 2: 0 });
+  });
+
+  it("returns {} for no donations", () => {
+    expect(splitFeeProRata(500, [])).toEqual({});
   });
 });

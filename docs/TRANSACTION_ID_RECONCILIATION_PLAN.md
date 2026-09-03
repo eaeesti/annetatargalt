@@ -426,6 +426,92 @@ First real use clears the ~4-month backlog. Then delete from the private
 
 ---
 
+---
+
+# Phase 3 — Bank-transactions ledger & money-flow check
+
+**Status: built, not yet deployed.** Adds a persistent `bank_transactions` table
+(one row per statement credit line), FK-linked from `donations.transaction_id`,
+plus a `/transactions` admin view and a money-flow summary.
+
+## 3.1 Schema + migration `0006`
+
+- `bank_transactions` — PK `archiving_code`; `date` / `amount` nullable (a blind
+  ignore or a Phase-1 stub has no bank fields yet); `category`
+  (`donation | card-payout | ignored | undecided`, default `undecided`);
+  `gross_amount` / `fee_amount` (card payouts only); `note`, `imported_at/by`.
+  Absorbs and drops `ignored_bank_transactions`.
+- `donations.transaction_id` → real FK to `bank_transactions.archiving_code`
+  (`ON DELETE/UPDATE NO ACTION`). `donations.processor_fee_cents` added
+  (per-donation share of a card payout's fee).
+- Migration backfills a stub row (`category='donation'`) for every existing
+  `donations.transaction_id` **before** adding the FK, and copies the ignore
+  list in. `IF NOT EXISTS` / guarded `ADD CONSTRAINT` — idempotent. Verified on a
+  prod-DB copy: 1654 stub + 19 ignored rows, 0 FK orphans.
+- `drizzle.__drizzle_migrations` 6 → 7.
+
+## 3.2 Repository — `bank-transactions.repository.ts`
+
+Replaces `ignored-bank-transactions.repository.ts`.
+
+- `upsertMany(rows)` — idempotent; coalesces bank fields; `category` only ever
+  rises in precedence (`donation > card-payout > ignored > undecided`), so a
+  re-upload never un-ignores or un-links a code.
+- `setCategory(code, …)` — reclassify; refuses to move off `donation` while
+  finalized donations reference the code (→ 409).
+- `findPaginated` — filter by category / date / text; computes
+  `linkedDonationCount`, `allocatedCents`, `linkedGrossCents`, `balanced`.
+- `moneyFlow({dateFrom,dateTo})` — `received` (Σ donation-category amount),
+  `cardPayoutNet/Gross`, `cardFees` (Σ `fee_amount`), `cardFeesFromDonations`
+  (Σ `processor_fee_cents`, cross-check), `allocated` / `transferred`
+  (Σ org splits for linked donations), `undecidedInflow`,
+  `unlinkedDonation{Count,Cents}` (finalized, no `transaction_id`),
+  `discrepancy` = `allocated − (received + cardPayoutNet + cardFees)`.
+
+## 3.3 Statement import — now writes the ledger
+
+`categorizeStatement` returns `allCredits` (every deduped credit line) and
+`counts.unrecorded`. `splitFeeProRata(fee, donations)` splits a payout fee
+pro-rata by gross, remainder to the largest.
+
+`apply` (reordered — `bank_transactions` upsert **first**, for the FK):
+
+- one `upsertMany` over `allCredits`, category derived from what the operator
+  confirmed (applied reconcile / recurring-import → `donation`;
+  `looksLikeCardPayout` → `card-payout`; `ignore` → `ignored`; else `undecided`).
+- card-payout rows carry `gross_amount` / `fee_amount` (from Montonio, or a
+  manual fee typed in the UI). Per-assigned-donation `processor_fee_cents` is
+  recomputed server-side via `splitFeeProRata` over the donations' own amounts.
+- `summary` gains `recorded`.
+
+`resolveCardPayouts` also returns `grossCents` / `feeCents` / `feeByDonationId`.
+
+## 3.4 Endpoints + UI
+
+- `admin-panel` plugin: `GET /bank-transactions/{list,summary,:code}`,
+  `PATCH /bank-transactions/:code` (reclassify — the one write path).
+  Permissions added to `bootstrapDonationPermissions` allowedActions.
+- `admin/app/(dashboard)/transactions/` — money-flow summary card + filterable
+  ledger table with an expandable per-row drawer (linked donations, their card
+  fee, inline category/note edit). Nav entry added.
+- `/statement` UI: echoes `allCredits` back, shows "N new bank rows will be
+  recorded" + `recorded` in the result, editable fee on unresolved card payouts.
+- Donation detail page shows the card fee + net.
+- `reconcile.ts --apply` now upserts stub `bank_transactions` rows too (FK).
+
+## 3.5 Deploy + first run
+
+1. Dry-run `0006` on a prod-DB copy.
+2. `deploy-local.sh` (migrate 6 → 7) + `git push vercel main`.
+3. Upload the **full historical LHV export** through `/statement` — backfills
+   `date`/`amount`/`counterparty` on all the stub rows, 0 new donations,
+   idempotent on re-upload. Only then does the money-flow discrepancy read true
+   (stub rows have null `amount` until this runs).
+4. `/transactions` all-time: `discrepancy` within a few € of 0, `unlinkedDonations`
+   ≈ 2 (Bob W Aug), card-payout fees match Montonio.
+
+---
+
 # Decisions locked in
 
 - `transaction_id` nullable permanently, not unique.
