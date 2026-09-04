@@ -261,6 +261,16 @@ describe("classifyCreditLine", () => {
       reclassify: false,
     });
   });
+
+  it("an explicit card-payout assignment settles as card-payout even if the heuristic missed", () => {
+    expect(
+      classifyCreditLine({
+        ...base,
+        cardAssignedNow: true,
+        isCardPayout: false,
+      }),
+    ).toEqual({ category: "card-payout", reclassify: true });
+  });
 });
 
 describe("categorizeStatement", () => {
@@ -474,5 +484,20 @@ describe("categorizeStatement", () => {
     // B, OUT1, OUT2 are not in recordedCodes — all get written on apply
     expect(report.counts.unrecorded).toBe(3);
     expect(report.counts.outgoing).toBe(2);
+  });
+
+  it("counts migration stubs ('unimported') as unrecorded even though the code exists", () => {
+    const report = categorizeStatement(
+      baseInput({
+        transactions: [
+          txn({ archivingCode: "STUB" }),
+          txn({ archivingCode: "NEW" }),
+        ],
+        recordedCodes: new Set(["STUB"]),
+        unimportedCodes: new Set(["STUB"]),
+      }),
+    );
+    // STUB is a stub to overwrite, NEW is brand new — both get written
+    expect(report.counts.unrecorded).toBe(2);
   });
 });
