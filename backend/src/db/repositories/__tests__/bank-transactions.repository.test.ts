@@ -38,6 +38,21 @@ describe("BankTransactionsRepository", () => {
       expect(second).toBe(1); // only CCC is new
     });
 
+    it("counts a migration stub given a real category as newly written", async () => {
+      await bankTransactionsRepository.upsertMany([
+        { archivingCode: "S1", category: "unimported" },
+        { archivingCode: "S2", category: "unimported" },
+      ]);
+      const changed = await bankTransactionsRepository.upsertMany([
+        { archivingCode: "S1", category: "donation", amountCents: 1000 },
+        { archivingCode: "S2", category: "unimported" }, // still a stub
+      ]);
+      expect(changed).toBe(1); // S1 went stub → donation
+      expect(await bankTransactionsRepository.unimportedCodes()).toEqual(
+        new Set(["S2"]),
+      );
+    });
+
     it("chunks large batches (stays under the bind-parameter limit)", async () => {
       const rows = Array.from({ length: 6000 }, (_, i) => ({
         archivingCode: `BIG${i}`,
@@ -265,6 +280,35 @@ describe("BankTransactionsRepository", () => {
       expect(data[0].allocatedCents).toBe(5000);
       expect(data[0].linkedGrossCents).toBe(5000);
       expect(data[0].balanced).toBe(true);
+    });
+
+    it("balanced is null while a linked donation is still pending", async () => {
+      await createTestBankTransaction({
+        archivingCode: "PB",
+        category: "card-payout",
+        amount: 4900,
+        feeAmount: 100,
+      });
+      const done = await createTestDonation({ amount: 3000, finalized: true });
+      const pending = await createTestDonation({
+        amount: 2000,
+        finalized: false,
+      });
+      await donationsRepository.setTransactionId(done.id, "PB", "card-payout");
+      await donationsRepository.setTransactionId(
+        pending.id,
+        "PB",
+        "card-payout",
+      );
+
+      const { data } = await bankTransactionsRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+      });
+      const row = data.find((r) => r.archivingCode === "PB")!;
+      expect(row.linkedDonationCount).toBe(2); // both counted now
+      expect(row.linkedGrossCents).toBe(5000);
+      expect(row.balanced).toBeNull();
     });
 
     it("findByCodeWithDonations returns the row with its linked donations", async () => {

@@ -49,6 +49,8 @@ export interface StatementInput {
   ignoredCodes: Set<string>;
   /** every archiving code already recorded in `bank_transactions` (any category) */
   recordedCodes?: Set<string>;
+  /** codes still `category = 'unimported'` (migration stubs to be overwritten) */
+  unimportedCodes?: Set<string>;
   /** idCode OR company code → that donor and their templates (newest first) */
   donorsByCode: Map<string, DonorTemplates>;
 }
@@ -212,7 +214,10 @@ export function classifyCreditLine(ctx: {
 
   if (ctx.explicitDonation || ctx.cardAssignedNow || ctx.alreadyLinked) {
     return {
-      category: ctx.isCardPayout ? "card-payout" : "donation",
+      // an explicit card-payout assignment settles it as a payout even if the
+      // heuristic didn't fire
+      category:
+        ctx.isCardPayout || ctx.cardAssignedNow ? "card-payout" : "donation",
       reclassify: ctx.explicitDonation || ctx.cardAssignedNow,
     };
   }
@@ -247,6 +252,7 @@ export function categorizeStatement(input: StatementInput): StatementReport {
     ).values(),
   ];
   const recordedCodes = input.recordedCodes ?? new Set<string>();
+  const unimportedCodes = input.unimportedCodes ?? new Set<string>();
 
   const report: StatementReport = {
     reconcile: [],
@@ -260,8 +266,11 @@ export function categorizeStatement(input: StatementInput): StatementReport {
       creditTransactions: credits.length,
       alreadyReconciled: 0,
       ignored: 0,
+      // lines apply will materially write: never-seen codes + migration stubs
       unrecorded: [...allCredits, ...allDebits].filter(
-        (t) => !recordedCodes.has(t.archivingCode),
+        (t) =>
+          !recordedCodes.has(t.archivingCode) ||
+          unimportedCodes.has(t.archivingCode),
       ).length,
       outgoing: allDebits.length,
     },

@@ -305,12 +305,14 @@ export function createStatementService(strapi: Core.Strapi) {
         reconciledCodes,
         ignoredCodes,
         recordedCodes,
+        unimportedCodes,
         index,
       ] = await Promise.all([
         donationsRepository.findForReconciliation({ onlyUnreconciled: true }),
         donationsRepository.reconciledTransactionIds(),
         bankTransactionsRepository.ignoredCodes(),
         bankTransactionsRepository.recordedCodes(),
+        bankTransactionsRepository.unimportedCodes(),
         loadDonorTemplates(),
       ]);
 
@@ -320,6 +322,7 @@ export function createStatementService(strapi: Core.Strapi) {
         reconciledCodes,
         ignoredCodes,
         recordedCodes,
+        unimportedCodes,
         donorsByCode: index.byCode,
       });
 
@@ -456,21 +459,32 @@ export function createStatementService(strapi: Core.Strapi) {
       const ignoreByCode = new Map(
         (payload.ignore ?? []).map((i) => [i.archivingCode, i.reason ?? null]),
       );
+      // never let an operator ignore a code that has a donation on it — that
+      // would drop the donation's money from the money-flow summary silently
+      for (const code of ignoreByCode.keys()) {
+        if (reconciledCodes.has(code)) {
+          throw new Error(
+            `Code ${code} has a donation linked to it — reassign or delete the donation before ignoring the line`,
+          );
+        }
+      }
       const cardPayoutByCode = new Map(
         (payload.cardPayouts ?? []).map((c) => [c.archivingCode, c]),
       );
 
-      const existingCategories = await (async () => {
-        const codes = [...creditLines, ...debitLines].map(
-          (t) => t.archivingCode,
-        );
-        if (codes.length === 0) return new Map<string, string>();
-        const rows = await bankTransactionsRepository.categoriesFor(codes);
-        return rows;
-      })();
+      const existingCategories = await bankTransactionsRepository.categoriesFor(
+        [...creditLines, ...debitLines].map((t) => t.archivingCode),
+      );
 
-      const clampFee = (v: number | null | undefined) =>
-        typeof v === "number" && v >= 0 ? Math.round(v) : null;
+      /** reject a negative fee or one implausibly large vs the net credited */
+      const clampFee = (
+        v: number | null | undefined,
+        netCents: number,
+      ): number | null => {
+        if (typeof v !== "number" || !Number.isFinite(v) || v < 0) return null;
+        const cents = Math.round(v);
+        return cents > netCents * 0.2 ? null : cents;
+      };
 
       const bankRows: BankTransactionUpsert[] = creditLines.map((txn) => {
         const code = txn.archivingCode;
@@ -485,7 +499,9 @@ export function createStatementService(strapi: Core.Strapi) {
 
         const cp = cardPayoutByCode.get(code);
         const feeAmountCents =
-          category === "card-payout" ? clampFee(cp?.feeCents) : null;
+          category === "card-payout"
+            ? clampFee(cp?.feeCents, txn.amountCents)
+            : null;
         const grossAmountCents =
           category === "card-payout"
             ? (cp?.grossCents ??
@@ -527,6 +543,18 @@ export function createStatementService(strapi: Core.Strapi) {
         });
       }
 
+      // the fee we actually persisted per card-payout code (already clamped)
+      const persistedFeeByCode = new Map(
+        bankRows
+          .filter((r) => r.category === "card-payout")
+          .map((r) => [r.archivingCode, r.feeAmountCents ?? null]),
+      );
+      const persistedGrossByCode = new Map(
+        bankRows
+          .filter((r) => r.category === "card-payout")
+          .map((r) => [r.archivingCode, r.grossAmountCents ?? null]),
+      );
+
       // per-donation card-payout fee, computed server-side. Each assigned
       // donation gets its own slice of the payout fee, pro-rata against the
       // whole payout's gross — NOT against just the donations being assigned
@@ -547,9 +575,9 @@ export function createStatementService(strapi: Core.Strapi) {
           ]),
         );
         for (const [code, donationIds] of assignmentsByCode) {
-          const cp = cardPayoutByCode.get(code);
-          const feeCents = clampFee(cp?.feeCents);
+          const feeCents = persistedFeeByCode.get(code);
           if (feeCents == null || feeCents === 0) continue;
+          const payoutGross = persistedGrossByCode.get(code);
           const grossByThisDonation = donationIds.map(
             (id) => grossById.get(id) ?? 0,
           );
@@ -557,8 +585,8 @@ export function createStatementService(strapi: Core.Strapi) {
           // resolved), else fall back to the assigned donations' gross (manual
           // fee entry — the operator's number covers what they're assigning).
           const denom =
-            cp?.grossCents && cp.grossCents > 0
-              ? cp.grossCents
+            payoutGross && payoutGross > 0
+              ? payoutGross
               : grossByThisDonation.reduce((s, g) => s + g, 0);
           if (denom <= 0) continue;
           donationIds.forEach((id, i) => {

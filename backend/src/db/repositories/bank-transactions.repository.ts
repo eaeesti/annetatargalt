@@ -29,6 +29,10 @@ const prec = (c: string) => CATEGORY_PRECEDENCE[c] ?? 0;
 const trunc = (v: string | null | undefined, n: number) =>
   v == null ? null : v.slice(0, n);
 
+/** ~12 bind params per inserted row; 1 per code in a SELECT ... IN (...). */
+const INSERT_CHUNK = 1000;
+const SELECT_CHUNK = 10000;
+
 export interface BankTransactionUpsert {
   archivingCode: string;
   date?: string | null; // YYYY-MM-DD
@@ -47,11 +51,11 @@ export interface BankTransactionUpsert {
 }
 
 export interface BankTransactionRow extends BankTransaction {
-  /** finalized donations carrying this archiving code */
+  /** donations carrying this archiving code (finalized + pending) */
   linkedDonationCount: number;
-  /** Σ organization_donations.amount for those donations */
+  /** Σ organization_donations.amount for the finalized ones */
   allocatedCents: number;
-  /** Σ donation.amount (gross) for those donations */
+  /** Σ donation.amount (gross) across all linked donations */
   linkedGrossCents: number;
   /** bank `amount` ≈ linked gross − fee, within rounding; null when not assessable */
   balanced: boolean | null;
@@ -104,11 +108,13 @@ function mapRow(r: Record<string, unknown>): BankTransactionRow {
   const amount = r.amount == null ? null : num(r.amount);
   const feeAmount = r.fee_amount == null ? null : num(r.fee_amount);
   const linkedDonationCount = num(r.linked_donation_count);
+  const pendingDonationCount = num(r.pending_donation_count);
   const linkedGrossCents = num(r.linked_gross_cents);
   const expectedNet = linkedGrossCents - (feeAmount ?? 0);
-  // null = not assessable yet (no linked donations, or bank line not imported)
+  // null = not assessable yet: no linked donations, bank line not imported, or a
+  // linked donation isn't finalized (its amount can still change)
   const balanced =
-    linkedDonationCount === 0 || amount == null
+    linkedDonationCount === 0 || amount == null || pendingDonationCount > 0
       ? null
       : Math.abs(amount - expectedNet) <= Math.max(1, linkedDonationCount);
 
@@ -155,17 +161,37 @@ export class BankTransactionsRepository {
     return new Set(rows.map((r) => r.code));
   }
 
-  /** code → current category, for the codes given. */
-  async categoriesFor(codes: string[]): Promise<Map<string, string>> {
-    if (codes.length === 0) return new Map();
+  /** Codes still `category = 'unimported'` (migration stubs). */
+  async unimportedCodes(): Promise<Set<string>> {
     const rows = await this.database
-      .select({
-        code: bankTransactions.archivingCode,
-        category: bankTransactions.category,
-      })
+      .select({ code: bankTransactions.archivingCode })
       .from(bankTransactions)
-      .where(inArray(bankTransactions.archivingCode, codes));
-    return new Map(rows.map((r) => [r.code, r.category]));
+      .where(eq(bankTransactions.category, "unimported"));
+    return new Set(rows.map((r) => r.code));
+  }
+
+  /**
+   * code → current category, for the codes given. Chunked so a full-history
+   * lookup doesn't exceed Postgres' bind-parameter limit.
+   */
+  async categoriesFor(codes: string[]): Promise<Map<string, string>> {
+    const out = new Map<string, string>();
+    for (let i = 0; i < codes.length; i += SELECT_CHUNK) {
+      const rows = await this.database
+        .select({
+          code: bankTransactions.archivingCode,
+          category: bankTransactions.category,
+        })
+        .from(bankTransactions)
+        .where(
+          inArray(
+            bankTransactions.archivingCode,
+            codes.slice(i, i + SELECT_CHUNK),
+          ),
+        );
+      for (const r of rows) out.set(r.code, r.category);
+    }
+    return out;
   }
 
   async findAll(): Promise<BankTransaction[]> {
@@ -179,7 +205,8 @@ export class BankTransactionsRepository {
    * a real line fills in a blind ignore). `category` follows precedence
    * (ignored is stickiest) UNLESS the row is `reclassify` (an explicit operator
    * decision), so a re-upload can't silently un-ignore a code but an operator
-   * still can. Returns the number of codes newly inserted (0 on a no-op re-run).
+   * still can. Returns how many codes were newly written — inserted, or a
+   * migration stub ('unimported') given a real category (0 on a no-op re-run).
    */
   async upsertMany(rows: BankTransactionUpsert[]): Promise<number> {
     if (rows.length === 0) return 0;
@@ -198,41 +225,29 @@ export class BankTransactionsRepository {
     }
     const deduped = [...byCode.values()];
 
-    const existing = await this.database
-      .select({
-        code: bankTransactions.archivingCode,
-        category: bankTransactions.category,
-      })
-      .from(bankTransactions)
-      .where(
-        inArray(
-          bankTransactions.archivingCode,
-          deduped.map((r) => r.archivingCode),
-        ),
-      );
-    const existingCat = new Map(existing.map((e) => [e.code, e.category]));
+    const existingCat = await this.categoriesFor(
+      deduped.map((r) => r.archivingCode),
+    );
 
     // group by the resolved final category — one upsert statement per group
     const groups = new Map<string, BankTransactionUpsert[]>();
+    const finalCatByCode = new Map<string, string>();
     for (const r of deduped) {
       const cur = existingCat.get(r.archivingCode);
       const finalCat =
         !r.reclassify && cur && prec(cur) > prec(r.category) ? cur : r.category;
+      finalCatByCode.set(r.archivingCode, finalCat);
       const arr = groups.get(finalCat) ?? [];
       arr.push(r);
       groups.set(finalCat, arr);
     }
 
-    // ~12 bind params per row; stay well under Postgres' 65535 limit so a
-    // full-history backfill (thousands of codes in one group) doesn't fail.
-    const CHUNK = 1000;
-
     for (const [finalCat, groupRows] of groups) {
-      for (let i = 0; i < groupRows.length; i += CHUNK) {
+      for (let i = 0; i < groupRows.length; i += INSERT_CHUNK) {
         await this.database
           .insert(bankTransactions)
           .values(
-            groupRows.slice(i, i + CHUNK).map((r) => ({
+            groupRows.slice(i, i + INSERT_CHUNK).map((r) => ({
               archivingCode: r.archivingCode,
               date: r.date ?? null,
               amount: r.amountCents ?? null,
@@ -268,8 +283,14 @@ export class BankTransactionsRepository {
       }
     }
 
-    // rows that did not exist before this call
-    return deduped.length - existing.length;
+    // rows that went from nothing (or a migration stub) to a real category
+    return deduped.filter((r) => {
+      const cur = existingCat.get(r.archivingCode);
+      const final = finalCatByCode.get(r.archivingCode);
+      return (
+        (cur === undefined || cur === "unimported") && final !== "unimported"
+      );
+    }).length;
   }
 
   /**
@@ -341,13 +362,15 @@ export class BankTransactionsRepository {
     const rowsRes = await this.database.execute(sql`
       SELECT bt.*,
         (SELECT cast(count(*) as int) FROM donations d
-           WHERE d.transaction_id = bt.archiving_code AND d.finalized = true) as linked_donation_count,
+           WHERE d.transaction_id = bt.archiving_code) as linked_donation_count,
+        (SELECT cast(count(*) as int) FROM donations d
+           WHERE d.transaction_id = bt.archiving_code AND d.finalized = false) as pending_donation_count,
         (SELECT cast(coalesce(sum(od.amount), 0) as int)
            FROM organization_donations od
            JOIN donations d ON d.id = od.donation_id
            WHERE d.transaction_id = bt.archiving_code AND d.finalized = true) as allocated_cents,
         (SELECT cast(coalesce(sum(d.amount), 0) as int) FROM donations d
-           WHERE d.transaction_id = bt.archiving_code AND d.finalized = true) as linked_gross_cents
+           WHERE d.transaction_id = bt.archiving_code) as linked_gross_cents
       FROM bank_transactions bt
       WHERE ${where}
       ORDER BY ${sortCol} ${dir} NULLS LAST, bt.archiving_code ${dir}

@@ -279,9 +279,9 @@ export function StatementImport() {
         cardPayoutAssignments,
         cardPayouts: preview.cardPayouts.map((c) => {
           const code = c.transaction.archivingCode;
-          const feeCents = c.resolved
-            ? c.feeCents
-            : euroInputToCents(payoutFees[code] ?? "");
+          // a resolved payout whose fee couldn't be derived still needs manual entry
+          const feeCents =
+            c.feeCents ?? euroInputToCents(payoutFees[code] ?? "");
           return {
             archivingCode: code,
             grossCents: c.grossCents,
@@ -489,7 +489,7 @@ export function StatementImport() {
                       {eur(c.transaction.amountCents)}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
-                      {c.resolved ? (
+                      {c.feeCents != null ? (
                         <span className="text-sm">{eur(c.feeCents)}</span>
                       ) : (
                         <Input
