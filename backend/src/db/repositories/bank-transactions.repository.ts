@@ -84,6 +84,8 @@ export interface MoneyFlow {
   outgoingTotal: number;
   /** codes still 'unimported' (migration stubs whose bank line hasn't been imported) — not date-filtered */
   unimportedRows: number;
+  /** Σ amount of donation/card-payout bank rows linked to a still-pending donation — excluded from received/cardPayoutNet until it finalizes */
+  pendingLinkedCents: number;
   /** finalized donations with no transaction_id at all (standing backlog, not date-filtered) */
   unlinkedDonationCount: number;
   unlinkedDonationCents: number;
@@ -410,17 +412,29 @@ export class BankTransactionsRepository {
     const btDateClause =
       btDate.length > 0 ? sql`AND ${sql.join(btDate, sql` AND `)}` : sql``;
 
+    // A bank row with a still-pending linked donation can't be counted in
+    // `received`/card figures yet — its `allocated` counterpart excludes
+    // pending donations (org splits aren't final), so counting the bank side
+    // now would show a spurious discrepancy until the donation finalizes.
     const [bank] = (
       await this.database.execute(sql`
+      WITH bt_scope AS (
+        SELECT bt.*, EXISTS (
+          SELECT 1 FROM donations d
+          WHERE d.transaction_id = bt.archiving_code AND d.finalized = false
+        ) AS has_pending
+        FROM bank_transactions bt
+        WHERE bt.amount IS NOT NULL ${btDateClause}
+      )
       SELECT
-        cast(coalesce(sum(bt.amount) filter (where bt.category = 'donation'), 0) as int) as received,
-        cast(coalesce(sum(bt.amount) filter (where bt.category = 'card-payout'), 0) as int) as card_payout_net,
-        cast(coalesce(sum(coalesce(bt.gross_amount, bt.amount)) filter (where bt.category = 'card-payout'), 0) as int) as card_payout_gross,
-        cast(coalesce(sum(bt.fee_amount) filter (where bt.category = 'card-payout'), 0) as int) as card_fees,
-        cast(coalesce(sum(bt.amount) filter (where bt.category = 'undecided'), 0) as int) as undecided_inflow,
-        cast(coalesce(sum(abs(bt.amount)) filter (where bt.category = 'outgoing'), 0) as int) as outgoing_total
-      FROM bank_transactions bt
-      WHERE bt.amount IS NOT NULL ${btDateClause}
+        cast(coalesce(sum(amount) filter (where category = 'donation' and not has_pending), 0) as int) as received,
+        cast(coalesce(sum(amount) filter (where category = 'card-payout' and not has_pending), 0) as int) as card_payout_net,
+        cast(coalesce(sum(coalesce(gross_amount, amount)) filter (where category = 'card-payout' and not has_pending), 0) as int) as card_payout_gross,
+        cast(coalesce(sum(fee_amount) filter (where category = 'card-payout' and not has_pending), 0) as int) as card_fees,
+        cast(coalesce(sum(amount) filter (where category = 'undecided'), 0) as int) as undecided_inflow,
+        cast(coalesce(sum(abs(amount)) filter (where category = 'outgoing'), 0) as int) as outgoing_total,
+        cast(coalesce(sum(amount) filter (where has_pending and category in ('donation', 'card-payout')), 0) as int) as pending_linked_total
+      FROM bt_scope
     `)
     ).rows as Record<string, unknown>[];
 
@@ -478,6 +492,7 @@ export class BankTransactionsRepository {
       transferred: num(alloc?.transferred),
       undecidedInflow: num(bank?.undecided_inflow),
       outgoingTotal: num(bank?.outgoing_total),
+      pendingLinkedCents: num(bank?.pending_linked_total),
       unimportedRows: num(stubs?.cnt),
       unlinkedDonationCount: num(unlinked?.cnt),
       unlinkedDonationCents: num(unlinked?.total),

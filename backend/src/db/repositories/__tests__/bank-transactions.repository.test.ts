@@ -454,8 +454,34 @@ describe("BankTransactionsRepository", () => {
       expect(mf.outgoingTotal).toBe(20000);
       expect(mf.unlinkedDonationCount).toBe(1);
       expect(mf.unlinkedDonationCents).toBe(800);
+      expect(mf.pendingLinkedCents).toBe(0);
       // allocated 15000 − (received 5000 + net 9263 + fee 737) = 0
       expect(mf.discrepancy).toBe(0);
+    });
+
+    it("excludes a donation-category bank row from received while its linked donation is still pending", async () => {
+      const donor = await createTestDonor();
+      await createTestBankTransaction({
+        archivingCode: "PEND",
+        category: "donation",
+        date: "2026-06-01",
+        amount: 7500,
+      });
+      const d = await createTestDonation({
+        donorId: donor.id,
+        amount: 7500,
+        finalized: false,
+      });
+      await donationsRepository.setTransactionId(d.id, "PEND", "manual");
+
+      const mf = await bankTransactionsRepository.moneyFlow({
+        dateFrom: "2026-06-01",
+        dateTo: "2026-06-30",
+      });
+      expect(mf.received).toBe(0); // not counted until the donation finalizes
+      expect(mf.allocated).toBe(0);
+      expect(mf.discrepancy).toBe(0); // both sides excluded — no false red
+      expect(mf.pendingLinkedCents).toBe(7500);
     });
 
     it("respects the date range", async () => {
