@@ -32,6 +32,7 @@ import {
   parsePayoutUuidPrefix,
   looksLikeCardPayout,
   classifyCreditLine,
+  computePayoutGrossFee,
   selectTemplate,
   planRecurringImport,
   type RecurringTemplate,
@@ -109,23 +110,10 @@ async function resolveCardPayouts(
           o.donationId !== null && Number.isFinite(o.grossCents),
       );
 
-      // Only trust gross/fee if EVERY order parsed a gross (a partial sum
-      // understates gross → negative/absurd fee) and the implied fee is
-      // plausible (0 ≤ fee ≤ 15% of gross). Otherwise leave them null and let
-      // the operator enter the fee manually.
-      let grossCents: number | null = null;
-      let feeCents: number | null = null;
-      if (
-        parsed.length > 0 &&
-        parsed.every((o) => Number.isFinite(o.grossCents))
-      ) {
-        const grossSum = orderRows.reduce((s, o) => s + o.grossCents, 0);
-        const fee = grossSum - transaction.amountCents;
-        if (grossSum > 0 && fee >= 0 && fee <= grossSum * 0.15) {
-          grossCents = grossSum;
-          feeCents = fee;
-        }
-      }
+      const { grossCents, feeCents } = computePayoutGrossFee(
+        parsed,
+        transaction.amountCents,
+      );
 
       const resolvedDonationIds = [
         ...new Set(
@@ -382,15 +370,22 @@ export function createStatementService(strapi: Core.Strapi) {
       const normalizeLine = (t: unknown): BankTransaction => {
         const r = (t ?? {}) as Record<string, unknown>;
         const str = (v: unknown) => (typeof v === "string" ? v : "");
-        if (
-          !CODE_RE.test(str(r.archivingCode)) ||
-          !Number.isFinite(r.amountCents) ||
-          (str(r.date) !== "" && !ISO_DATE_RE.test(str(r.date)))
-        ) {
-          throw new Error("Malformed statement line in payload");
+        const code = str(r.archivingCode);
+        if (!CODE_RE.test(code)) {
+          throw new Error(
+            `Malformed statement line: bad archiving code ${JSON.stringify(r.archivingCode)}`,
+          );
+        }
+        if (!Number.isFinite(r.amountCents)) {
+          throw new Error(
+            `Malformed statement line ${code}: non-numeric amount — re-analyse the statement and try again`,
+          );
+        }
+        if (str(r.date) !== "" && !ISO_DATE_RE.test(str(r.date))) {
+          throw new Error(`Malformed statement line ${code}: bad date`);
         }
         return {
-          archivingCode: str(r.archivingCode),
+          archivingCode: code,
           amountCents: r.amountCents as number,
           date: str(r.date).slice(0, 10),
           description: str(r.description),

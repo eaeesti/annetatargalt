@@ -91,7 +91,12 @@ function euroInputToCents(raw: string): number | null {
     const thou = dec === "," ? "." : ",";
     normalized = s.split(thou).join("").replace(dec, ".");
   } else if (lastComma > -1) {
-    normalized = s.replace(",", "."); // Estonian decimal comma
+    normalized = s.replace(",", "."); // Estonian: comma is always decimal
+  } else if (lastDot > -1 && /^\d{1,3}(\.\d{3})+$/.test(s)) {
+    // a lone dot in an all-3-digit-grouped number ("1.234", "12.345.678")
+    // reads as an Estonian thousands separator — a fee is never entered to 3
+    // decimal places, so this can't be a fraction of a cent
+    normalized = s.split(".").join("");
   }
   const n = Number.parseFloat(normalized);
   return Number.isFinite(n) ? Math.round(n * 100) : null;
