@@ -183,6 +183,40 @@ export function planRecurringImport(
   };
 }
 
+// ─── Card-payout gross/fee (statement apply) ─────────────────────────────────
+
+export interface PayoutOrderGross {
+  donationId: number | null;
+  /** cents; NaN if the order's gross couldn't be parsed */
+  grossCents: number;
+}
+
+/**
+ * The payout's gross/fee, or both null if not trustworthy. Sums over EVERY
+ * order (not just ones with a recognised donation reference — a refund/fee
+ * line inside the payout still counts toward the true gross) and only trusts
+ * the result if every order parsed a gross and the implied fee is plausible
+ * (0 ≤ fee ≤ 15% of gross). A partial sum would understate gross and produce
+ * a negative or absurd fee.
+ */
+export function computePayoutGrossFee(
+  orders: PayoutOrderGross[],
+  netCents: number,
+): { grossCents: number | null; feeCents: number | null } {
+  if (
+    orders.length === 0 ||
+    !orders.every((o) => Number.isFinite(o.grossCents))
+  ) {
+    return { grossCents: null, feeCents: null };
+  }
+  const grossSum = orders.reduce((s, o) => s + o.grossCents, 0);
+  const fee = grossSum - netCents;
+  if (grossSum > 0 && fee >= 0 && fee <= grossSum * 0.15) {
+    return { grossCents: grossSum, feeCents: fee };
+  }
+  return { grossCents: null, feeCents: null };
+}
+
 // ─── Bank-row category (statement apply) ─────────────────────────────────────
 
 export type BankRowCategory =
@@ -215,9 +249,16 @@ export function classifyCreditLine(ctx: {
   if (ctx.explicitDonation || ctx.cardAssignedNow || ctx.alreadyLinked) {
     return {
       // an explicit card-payout assignment settles it as a payout even if the
-      // heuristic didn't fire
+      // heuristic didn't fire; so does an existing 'card-payout' row — an
+      // already-linked code re-imported with no action must not downgrade a
+      // payout an operator previously classified back to a plain 'donation'
+      // just because this line's heuristic doesn't independently agree.
       category:
-        ctx.isCardPayout || ctx.cardAssignedNow ? "card-payout" : "donation",
+        ctx.isCardPayout ||
+        ctx.cardAssignedNow ||
+        ctx.existingCategory === "card-payout"
+          ? "card-payout"
+          : "donation",
       reclassify: ctx.explicitDonation || ctx.cardAssignedNow,
     };
   }

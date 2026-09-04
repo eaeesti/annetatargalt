@@ -17,6 +17,7 @@ export type MoneyFlow = {
   undecidedInflow: number;
   outgoingTotal: number;
   unimportedRows: number;
+  pendingLinkedCents: number;
   unlinkedDonationCount: number;
   unlinkedDonationCents: number;
   discrepancy: number;
@@ -129,8 +130,15 @@ export function MoneyFlowSummary({ summary: s }: { summary: MoneyFlow }) {
 
         {(s.undecidedInflow > 0 ||
           s.unlinkedDonationCount > 0 ||
-          s.unimportedRows > 0) && (
+          s.unimportedRows > 0 ||
+          s.pendingLinkedCents > 0) && (
           <div className="flex flex-wrap gap-x-6 gap-y-1 border-t pt-3 text-xs">
+            {s.pendingLinkedCents > 0 && (
+              <span className="text-muted-foreground">
+                {eur(s.pendingLinkedCents)} linked to a still-pending donation —
+                excluded until it finalizes
+              </span>
+            )}
             {s.unimportedRows > 0 && (
               <Link
                 href={listHref("unimported")}

@@ -5,6 +5,7 @@ import {
   planRecurringImport,
   looksLikeCardPayout,
   classifyCreditLine,
+  computePayoutGrossFee,
   parsePayoutUuidPrefix,
   type RecurringTemplate,
   type DonorTemplates,
@@ -270,6 +271,69 @@ describe("classifyCreditLine", () => {
         isCardPayout: false,
       }),
     ).toEqual({ category: "card-payout", reclassify: true });
+  });
+
+  it("an already-linked code stays card-payout on re-import even without a matching heuristic", () => {
+    // an operator previously reclassified this batch line to card-payout via
+    // /transactions; re-importing it later must not downgrade it to donation
+    expect(
+      classifyCreditLine({
+        ...base,
+        alreadyLinked: true,
+        isCardPayout: false,
+        existingCategory: "card-payout",
+      }),
+    ).toEqual({ category: "card-payout", reclassify: false });
+  });
+});
+
+describe("computePayoutGrossFee", () => {
+  it("sums gross across every order, not just ones with a donation reference", () => {
+    // a refund/fee line with no donation id still counts toward gross
+    const { grossCents, feeCents } = computePayoutGrossFee(
+      [
+        { donationId: 1, grossCents: 5000 },
+        { donationId: null, grossCents: 2000 }, // no matched donation
+        { donationId: 2, grossCents: 3000 },
+      ],
+      9500, // net credited
+    );
+    expect(grossCents).toBe(10000);
+    expect(feeCents).toBe(500);
+  });
+
+  it("returns null/null when any order's gross didn't parse (partial sum would understate it)", () => {
+    const result = computePayoutGrossFee(
+      [
+        { donationId: 1, grossCents: 5000 },
+        { donationId: 2, grossCents: NaN },
+      ],
+      4000,
+    );
+    expect(result).toEqual({ grossCents: null, feeCents: null });
+  });
+
+  it("rejects an implausible fee (> 15% of gross)", () => {
+    const result = computePayoutGrossFee(
+      [{ donationId: 1, grossCents: 10000 }],
+      5000, // implies a 50% fee
+    );
+    expect(result).toEqual({ grossCents: null, feeCents: null });
+  });
+
+  it("rejects a negative fee (net exceeds gross)", () => {
+    const result = computePayoutGrossFee(
+      [{ donationId: 1, grossCents: 5000 }],
+      6000,
+    );
+    expect(result).toEqual({ grossCents: null, feeCents: null });
+  });
+
+  it("returns null/null for no orders", () => {
+    expect(computePayoutGrossFee([], 1000)).toEqual({
+      grossCents: null,
+      feeCents: null,
+    });
   });
 });
 
