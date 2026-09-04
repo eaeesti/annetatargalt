@@ -4,6 +4,8 @@ import {
   selectTemplate,
   planRecurringImport,
   looksLikeCardPayout,
+  classifyCreditLine,
+  computePayoutGrossFee,
   parsePayoutUuidPrefix,
   type RecurringTemplate,
   type DonorTemplates,
@@ -185,6 +187,155 @@ function donation(o: Partial<ReconcilableDonation>): ReconcilableDonation {
     ...o,
   };
 }
+
+describe("classifyCreditLine", () => {
+  const base = {
+    isCardPayout: false,
+    ignoredNow: false,
+    explicitDonation: false,
+    cardAssignedNow: false,
+    alreadyLinked: false,
+    existingCategory: undefined as string | undefined,
+  };
+
+  it("an already-reconciled code re-imported with no action → donation (not undecided)", () => {
+    expect(
+      classifyCreditLine({
+        ...base,
+        alreadyLinked: true,
+        existingCategory: "unimported",
+      }),
+    ).toEqual({ category: "donation", reclassify: false });
+  });
+
+  it("an already-reconciled payout code → card-payout", () => {
+    expect(
+      classifyCreditLine({
+        ...base,
+        alreadyLinked: true,
+        isCardPayout: true,
+        existingCategory: "unimported",
+      }),
+    ).toEqual({ category: "card-payout", reclassify: false });
+  });
+
+  it("a heuristic payout match does NOT override an existing 'ignored'", () => {
+    expect(
+      classifyCreditLine({
+        ...base,
+        isCardPayout: true,
+        existingCategory: "ignored",
+      }),
+    ).toEqual({ category: "ignored", reclassify: false });
+  });
+
+  it("an explicit ignore this run → ignored + reclassify", () => {
+    expect(
+      classifyCreditLine({
+        ...base,
+        ignoredNow: true,
+        existingCategory: "card-payout",
+      }),
+    ).toEqual({ category: "ignored", reclassify: true });
+  });
+
+  it("an explicit reconcile of a previously-ignored code → donation + reclassify", () => {
+    expect(
+      classifyCreditLine({
+        ...base,
+        explicitDonation: true,
+        existingCategory: "ignored",
+      }),
+    ).toEqual({ category: "donation", reclassify: true });
+  });
+
+  it("a brand-new payout-looking line with no evidence → card-payout", () => {
+    expect(classifyCreditLine({ ...base, isCardPayout: true })).toEqual({
+      category: "card-payout",
+      reclassify: false,
+    });
+  });
+
+  it("a brand-new nondescript line → undecided", () => {
+    expect(classifyCreditLine(base)).toEqual({
+      category: "undecided",
+      reclassify: false,
+    });
+  });
+
+  it("an explicit card-payout assignment settles as card-payout even if the heuristic missed", () => {
+    expect(
+      classifyCreditLine({
+        ...base,
+        cardAssignedNow: true,
+        isCardPayout: false,
+      }),
+    ).toEqual({ category: "card-payout", reclassify: true });
+  });
+
+  it("an already-linked code stays card-payout on re-import even without a matching heuristic", () => {
+    // an operator previously reclassified this batch line to card-payout via
+    // /transactions; re-importing it later must not downgrade it to donation
+    expect(
+      classifyCreditLine({
+        ...base,
+        alreadyLinked: true,
+        isCardPayout: false,
+        existingCategory: "card-payout",
+      }),
+    ).toEqual({ category: "card-payout", reclassify: false });
+  });
+});
+
+describe("computePayoutGrossFee", () => {
+  it("sums gross across every order, not just ones with a donation reference", () => {
+    // a refund/fee line with no donation id still counts toward gross
+    const { grossCents, feeCents } = computePayoutGrossFee(
+      [
+        { donationId: 1, grossCents: 5000 },
+        { donationId: null, grossCents: 2000 }, // no matched donation
+        { donationId: 2, grossCents: 3000 },
+      ],
+      9500, // net credited
+    );
+    expect(grossCents).toBe(10000);
+    expect(feeCents).toBe(500);
+  });
+
+  it("returns null/null when any order's gross didn't parse (partial sum would understate it)", () => {
+    const result = computePayoutGrossFee(
+      [
+        { donationId: 1, grossCents: 5000 },
+        { donationId: 2, grossCents: NaN },
+      ],
+      4000,
+    );
+    expect(result).toEqual({ grossCents: null, feeCents: null });
+  });
+
+  it("rejects an implausible fee (> 15% of gross)", () => {
+    const result = computePayoutGrossFee(
+      [{ donationId: 1, grossCents: 10000 }],
+      5000, // implies a 50% fee
+    );
+    expect(result).toEqual({ grossCents: null, feeCents: null });
+  });
+
+  it("rejects a negative fee (net exceeds gross)", () => {
+    const result = computePayoutGrossFee(
+      [{ donationId: 1, grossCents: 5000 }],
+      6000,
+    );
+    expect(result).toEqual({ grossCents: null, feeCents: null });
+  });
+
+  it("returns null/null for no orders", () => {
+    expect(computePayoutGrossFee([], 1000)).toEqual({
+      grossCents: null,
+      feeCents: null,
+    });
+  });
+});
 
 describe("categorizeStatement", () => {
   it("counts already-reconciled and ignored codes, acts on neither", () => {
@@ -369,5 +520,48 @@ describe("categorizeStatement", () => {
       }),
     );
     expect(report.counts.creditTransactions).toBe(0);
+  });
+
+  it("splits credit lines into allCredits and debit lines into allDebits (both deduped)", () => {
+    const report = categorizeStatement(
+      baseInput({
+        transactions: [
+          txn({ archivingCode: "A" }),
+          txn({ archivingCode: "A" }), // dupe
+          txn({ archivingCode: "B" }),
+          txn({ direction: "D", archivingCode: "OUT1" }),
+          txn({ direction: "D", archivingCode: "OUT1" }), // dupe
+          txn({ direction: "D", archivingCode: "OUT2" }),
+          txn({ direction: "D", archivingCode: "" }), // no code, excluded
+        ],
+        recordedCodes: new Set(["A"]),
+      }),
+    );
+    expect(report.allCredits.map((t) => t.archivingCode).sort()).toEqual([
+      "A",
+      "B",
+    ]);
+    expect(report.allDebits.map((t) => t.archivingCode).sort()).toEqual([
+      "OUT1",
+      "OUT2",
+    ]);
+    // B, OUT1, OUT2 are not in recordedCodes — all get written on apply
+    expect(report.counts.unrecorded).toBe(3);
+    expect(report.counts.outgoing).toBe(2);
+  });
+
+  it("counts migration stubs ('unimported') as unrecorded even though the code exists", () => {
+    const report = categorizeStatement(
+      baseInput({
+        transactions: [
+          txn({ archivingCode: "STUB" }),
+          txn({ archivingCode: "NEW" }),
+        ],
+        recordedCodes: new Set(["STUB"]),
+        unimportedCodes: new Set(["STUB"]),
+      }),
+    );
+    // STUB is a stub to overwrite, NEW is brand new — both get written
+    expect(report.counts.unrecorded).toBe(2);
   });
 });

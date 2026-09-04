@@ -18,8 +18,13 @@
  */
 import { readFileSync } from "node:fs";
 import { parse } from "csv-parse/sync";
-import { closeDatabase } from "../db/client";
+import { closeDatabase, db } from "../db/client";
+import { DonationsRepository } from "../db/repositories/donations.repository";
 import { donationsRepository } from "../db/repositories/donations.repository";
+import {
+  BankTransactionsRepository,
+  type BankTransactionUpsert,
+} from "../db/repositories/bank-transactions.repository";
 import { parseLhvCsv, matchDonations } from "../utils/reconciliation";
 
 function parseOverrides(path: string): Map<number, string> {
@@ -143,9 +148,40 @@ async function main(): Promise<void> {
     }));
   const skipped = report.matched.length - toWrite.length;
 
-  await donationsRepository.setTransactionIds(toWrite);
+  // The FK on donations.transaction_id needs a bank_transactions row for every
+  // code we're about to write. Stub one from the matched CSV line (or bare, for
+  // a manual override whose code isn't in this export).
+  const creditByCode = new Map(
+    transactions
+      .filter((t) => t.direction === "C" && t.archivingCode)
+      .map((t) => [t.archivingCode, t]),
+  );
+  const bankRows: BankTransactionUpsert[] = [
+    ...new Set(toWrite.map((w) => w.transactionId)),
+  ].map((code) => {
+    const t = creditByCode.get(code);
+    return {
+      archivingCode: code,
+      date: t ? t.date.slice(0, 10) : null,
+      amountCents: t ? t.amountCents : null,
+      description: t?.description || null,
+      counterpartyName: t?.counterpartyName || null,
+      counterpartyAccount: t?.counterpartyAccount || null,
+      senderCode: t?.idOrRegCode || null,
+      category: "donation" as const,
+      importedBy: "yarn reconcile",
+    };
+  });
+
+  let bankInserted = 0;
+  await db.transaction(async (tx) => {
+    bankInserted = await new BankTransactionsRepository(tx).upsertMany(
+      bankRows,
+    );
+    await new DonationsRepository(tx).setTransactionIds(toWrite);
+  });
   console.log(
-    `\nApplied: ${toWrite.length} donation(s) updated${skipped ? `, ${skipped} skipped (already reconciled; use --force to overwrite)` : ""}.\n`,
+    `\nApplied: ${toWrite.length} donation(s) updated${skipped ? `, ${skipped} skipped (already reconciled; use --force to overwrite)` : ""}, ${bankInserted} new bank_transactions row(s).\n`,
   );
 }
 

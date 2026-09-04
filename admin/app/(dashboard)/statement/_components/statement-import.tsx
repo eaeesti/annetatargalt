@@ -50,6 +50,8 @@ type CardPayout = {
   transaction: BankTxn;
   resolvedDonationIds: number[];
   resolved: boolean;
+  grossCents: number | null;
+  feeCents: number | null;
 };
 
 type Preview = {
@@ -57,12 +59,16 @@ type Preview = {
     creditTransactions: number;
     alreadyReconciled: number;
     ignored: number;
+    unrecorded: number;
+    outgoing: number;
   };
   reconcile: ReconcileRow[];
   recurringImports: RecurringImport[];
   cardPayouts: CardPayout[];
   needsDecision: { transaction: BankTxn; reason: string }[];
   notADonation: BankTxn[];
+  allCredits: BankTxn[];
+  allDebits: BankTxn[];
   donorNames: Record<string, string>;
   orgNames: Record<string, string>;
 };
@@ -71,6 +77,30 @@ type Preview = {
 
 const eur = (cents: number | null) =>
   cents == null ? "—" : `€${(cents / 100).toFixed(2)}`;
+
+/** "7.37" | "12,50" | "1 234,56" | "1,234.56" → cents, or null. */
+function euroInputToCents(raw: string): number | null {
+  const s = raw.trim().replace(/[\s ]/g, "");
+  if (!s) return null;
+  const lastComma = s.lastIndexOf(",");
+  const lastDot = s.lastIndexOf(".");
+  let normalized = s;
+  if (lastComma > -1 && lastDot > -1) {
+    // both present → the later one is the decimal separator
+    const dec = lastComma > lastDot ? "," : ".";
+    const thou = dec === "," ? "." : ",";
+    normalized = s.split(thou).join("").replace(dec, ".");
+  } else if (lastComma > -1) {
+    normalized = s.replace(",", "."); // Estonian: comma is always decimal
+  } else if (lastDot > -1 && /^\d{1,3}(\.\d{3})+$/.test(s)) {
+    // a lone dot in an all-3-digit-grouped number ("1.234", "12.345.678")
+    // reads as an Estonian thousands separator — a fee is never entered to 3
+    // decimal places, so this can't be a fraction of a cent
+    normalized = s.split(".").join("");
+  }
+  const n = Number.parseFloat(normalized);
+  return Number.isFinite(n) ? Math.round(n * 100) : null;
+}
 
 function Section({
   title,
@@ -104,6 +134,7 @@ export function StatementImport() {
     created: number;
     reconciled: number;
     ignored: number;
+    recorded: number;
   } | null>(null);
 
   // selections
@@ -111,6 +142,8 @@ export function StatementImport() {
   const [reconcileSel, setReconcileSel] = useState<Set<number>>(new Set());
   const [ignoreSel, setIgnoreSel] = useState<Set<string>>(new Set());
   const [payoutIds, setPayoutIds] = useState<Record<string, string>>({});
+  // card-payout code → manually entered fee in euros (only when Montonio didn't resolve)
+  const [payoutFees, setPayoutFees] = useState<Record<string, string>>({});
   // needs-a-decision, per archivingCode: assign to an existing donation id,
   // or create a donation from a donor's recurring template
   const [manualAssign, setManualAssign] = useState<Record<string, string>>({});
@@ -141,6 +174,7 @@ export function StatementImport() {
       setManualAssign({});
       setManualDonor({});
       setRememberSel(new Set());
+      setPayoutFees({});
       setPayoutIds(
         Object.fromEntries(
           p.cardPayouts
@@ -215,13 +249,16 @@ export function StatementImport() {
     [manualRecurring, rememberSel],
   );
 
-  const totalChanges =
+  const selectionChanges =
     importSel.size +
     reconcileSel.size +
     ignoreSel.size +
     cardPayoutAssignments.length +
     manualAssignments.length +
     manualRecurring.length;
+  // bank_transactions rows that would be written even with nothing selected
+  const rowsToRecord = preview?.counts.unrecorded ?? 0;
+  const totalChanges = selectionChanges + rowsToRecord;
 
   async function apply() {
     if (!preview) return;
@@ -245,6 +282,17 @@ export function StatementImport() {
         manualRecurring,
         rememberSenders,
         cardPayoutAssignments,
+        cardPayouts: preview.cardPayouts.map((c) => {
+          const code = c.transaction.archivingCode;
+          // a resolved payout whose fee couldn't be derived still needs manual entry
+          const feeCents =
+            c.feeCents ?? euroInputToCents(payoutFees[code] ?? "");
+          return {
+            archivingCode: code,
+            grossCents: c.grossCents,
+            feeCents,
+          };
+        }),
         ignore: [
           ...preview.notADonation,
           ...preview.needsDecision.map((n) => n.transaction),
@@ -254,6 +302,8 @@ export function StatementImport() {
             archivingCode: t.archivingCode,
             reason: t.description,
           })),
+        allCredits: preview.allCredits,
+        allDebits: preview.allDebits,
       };
       const res = await fetch("/api/statement/apply", {
         method: "POST",
@@ -306,7 +356,8 @@ export function StatementImport() {
         <div className="rounded-md border border-green-600/30 bg-green-600/5 p-4 text-sm">
           Applied: <strong>{result.created}</strong> donations created,{" "}
           <strong>{result.reconciled}</strong> reconciled,{" "}
-          <strong>{result.ignored}</strong> ignored.
+          <strong>{result.ignored}</strong> ignored,{" "}
+          <strong>{result.recorded}</strong> bank rows recorded.
         </div>
       )}
 
@@ -316,6 +367,15 @@ export function StatementImport() {
             <span>{preview.counts.creditTransactions} credit lines</span>
             <span>{preview.counts.alreadyReconciled} already done</span>
             <span>{preview.counts.ignored} previously ignored</span>
+            {preview.counts.unrecorded > 0 && (
+              <span className="text-foreground">
+                {preview.counts.unrecorded} new bank row
+                {preview.counts.unrecorded === 1 ? "" : "s"} will be recorded
+              </span>
+            )}
+            {preview.counts.outgoing > 0 && (
+              <span>{preview.counts.outgoing} outgoing (debit) lines</span>
+            )}
           </div>
 
           <Section
@@ -419,6 +479,7 @@ export function StatementImport() {
                 <TableRow>
                   <TableHead>Date</TableHead>
                   <TableHead>Net</TableHead>
+                  <TableHead>Fee</TableHead>
                   <TableHead>Reference</TableHead>
                   <TableHead>Donation IDs it covers</TableHead>
                 </TableRow>
@@ -431,6 +492,23 @@ export function StatementImport() {
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
                       {eur(c.transaction.amountCents)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {c.feeCents != null ? (
+                        <span className="text-sm">{eur(c.feeCents)}</span>
+                      ) : (
+                        <Input
+                          className="w-24"
+                          placeholder="fee €"
+                          value={payoutFees[c.transaction.archivingCode] ?? ""}
+                          onChange={(e) =>
+                            setPayoutFees((m) => ({
+                              ...m,
+                              [c.transaction.archivingCode]: e.target.value,
+                            }))
+                          }
+                        />
+                      )}
                     </TableCell>
                     <TableCell className="max-w-xs truncate text-xs">
                       {c.resolved && (
@@ -605,12 +683,15 @@ export function StatementImport() {
             <Button onClick={apply} disabled={loading || totalChanges === 0}>
               {loading
                 ? "Applying…"
-                : `Apply ${totalChanges} change${totalChanges === 1 ? "" : "s"}`}
+                : selectionChanges === 0 && rowsToRecord > 0
+                  ? `Record ${rowsToRecord} bank row${rowsToRecord === 1 ? "" : "s"}`
+                  : `Apply ${selectionChanges} change${selectionChanges === 1 ? "" : "s"}`}
             </Button>
             <span className="text-xs text-muted-foreground">
               {importSel.size + manualRecurring.length} create ·{" "}
               {reconcileSel.size + manualAssignments.length} reconcile ·{" "}
               {cardPayoutAssignments.length} card · {ignoreSel.size} ignore
+              {rowsToRecord > 0 && <> · {rowsToRecord} bank rows</>}
             </span>
           </div>
         </>

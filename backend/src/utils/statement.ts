@@ -45,8 +45,12 @@ export interface StatementInput {
   unreconciledDonations: ReconcilableDonation[];
   /** archiving codes already recorded on some donation */
   reconciledCodes: Set<string>;
-  /** archiving codes in `ignored_bank_transactions` */
+  /** archiving codes with `category = 'ignored'` in `bank_transactions` */
   ignoredCodes: Set<string>;
+  /** every archiving code already recorded in `bank_transactions` (any category) */
+  recordedCodes?: Set<string>;
+  /** codes still `category = 'unimported'` (migration stubs to be overwritten) */
+  unimportedCodes?: Set<string>;
   /** idCode OR company code → that donor and their templates (newest first) */
   donorsByCode: Map<string, DonorTemplates>;
 }
@@ -91,10 +95,18 @@ export interface StatementReport {
   needsDecision: { transaction: BankTransaction; reason: string }[];
   /** step 6 — offer to ignore */
   notADonation: BankTransaction[];
+  /** every credit line with an archiving code, deduped — persisted as bank_transactions rows on apply */
+  allCredits: BankTransaction[];
+  /** every debit line with an archiving code, deduped — persisted as `outgoing` rows on apply */
+  allDebits: BankTransaction[];
   counts: {
     creditTransactions: number;
     alreadyReconciled: number;
     ignored: number;
+    /** credit + debit lines whose code is not yet in bank_transactions (recorded on apply) */
+    unrecorded: number;
+    /** debit lines with a code (all recorded as `outgoing`) */
+    outgoing: number;
   };
 }
 
@@ -105,8 +117,8 @@ const DONATION_SELGITUS =
 
 /** Montonio (incl. its Stripe-labelled card settlements) aggregated payout. */
 export function looksLikeCardPayout(txn: BankTransaction): boolean {
-  const name = txn.counterpartyName.toLowerCase();
-  const selg = txn.description.toLowerCase();
+  const name = (txn.counterpartyName ?? "").toLowerCase();
+  const selg = (txn.description ?? "").toLowerCase();
   if (name.includes("montonio")) return true;
   if (name === "stripe" && selg.includes("montonio")) return true;
   if (selg.includes("card payout") || selg.includes("payout ")) return true;
@@ -171,6 +183,97 @@ export function planRecurringImport(
   };
 }
 
+// ─── Card-payout gross/fee (statement apply) ─────────────────────────────────
+
+export interface PayoutOrderGross {
+  donationId: number | null;
+  /** cents; NaN if the order's gross couldn't be parsed */
+  grossCents: number;
+}
+
+/**
+ * The payout's gross/fee, or both null if not trustworthy. Sums over EVERY
+ * order (not just ones with a recognised donation reference — a refund/fee
+ * line inside the payout still counts toward the true gross) and only trusts
+ * the result if every order parsed a gross and the implied fee is plausible
+ * (0 ≤ fee ≤ 15% of gross). A partial sum would understate gross and produce
+ * a negative or absurd fee.
+ */
+export function computePayoutGrossFee(
+  orders: PayoutOrderGross[],
+  netCents: number,
+): { grossCents: number | null; feeCents: number | null } {
+  if (
+    orders.length === 0 ||
+    !orders.every((o) => Number.isFinite(o.grossCents))
+  ) {
+    return { grossCents: null, feeCents: null };
+  }
+  const grossSum = orders.reduce((s, o) => s + o.grossCents, 0);
+  const fee = grossSum - netCents;
+  if (grossSum > 0 && fee >= 0 && fee <= grossSum * 0.15) {
+    return { grossCents: grossSum, feeCents: fee };
+  }
+  return { grossCents: null, feeCents: null };
+}
+
+// ─── Bank-row category (statement apply) ─────────────────────────────────────
+
+export type BankRowCategory =
+  | "donation"
+  | "card-payout"
+  | "ignored"
+  | "undecided";
+
+/**
+ * Decide the `bank_transactions` category for one credit line on apply, given
+ * what the operator did and the code's current state. `reclassify` marks an
+ * explicit decision that may override a stickier existing category (e.g. an
+ * operator reconciling a previously-ignored code).
+ */
+export function classifyCreditLine(ctx: {
+  isCardPayout: boolean;
+  /** operator ignored this code this run */
+  ignoredNow: boolean;
+  /** explicit reconcile / recurring-import this run */
+  explicitDonation: boolean;
+  /** operator assigned this card-payout code to donations this run */
+  cardAssignedNow: boolean;
+  /** a donation already points at this code */
+  alreadyLinked: boolean;
+  /** current bank_transactions category, if any */
+  existingCategory: string | undefined;
+}): { category: BankRowCategory; reclassify: boolean } {
+  if (ctx.ignoredNow) return { category: "ignored", reclassify: true };
+
+  if (ctx.explicitDonation || ctx.cardAssignedNow || ctx.alreadyLinked) {
+    return {
+      // an explicit card-payout assignment settles it as a payout even if the
+      // heuristic didn't fire; so does an existing 'card-payout' row — an
+      // already-linked code re-imported with no action must not downgrade a
+      // payout an operator previously classified back to a plain 'donation'
+      // just because this line's heuristic doesn't independently agree.
+      category:
+        ctx.isCardPayout ||
+        ctx.cardAssignedNow ||
+        ctx.existingCategory === "card-payout"
+          ? "card-payout"
+          : "donation",
+      reclassify: ctx.explicitDonation || ctx.cardAssignedNow,
+    };
+  }
+
+  const e = ctx.existingCategory;
+  if (e && e !== "unimported" && e !== "undecided") {
+    // a settled decision must not be reclassified by a heuristic on re-upload
+    return { category: e as BankRowCategory, reclassify: false };
+  }
+  return {
+    category: ctx.isCardPayout ? "card-payout" : "undecided",
+    reclassify: false,
+  };
+}
+
 // ─── Categoriser ─────────────────────────────────────────────────────────────
 
 export function categorizeStatement(input: StatementInput): StatementReport {
@@ -178,16 +281,39 @@ export function categorizeStatement(input: StatementInput): StatementReport {
     (t) => t.direction === "C" && t.archivingCode !== "",
   );
 
+  // every credit / debit line, deduped by archiving code
+  const allCredits = [
+    ...new Map(credits.map((t) => [t.archivingCode, t])).values(),
+  ];
+  const allDebits = [
+    ...new Map(
+      input.transactions
+        .filter((t) => t.direction === "D" && t.archivingCode !== "")
+        .map((t) => [t.archivingCode, t]),
+    ).values(),
+  ];
+  const recordedCodes = input.recordedCodes ?? new Set<string>();
+  const unimportedCodes = input.unimportedCodes ?? new Set<string>();
+
   const report: StatementReport = {
     reconcile: [],
     recurringImports: [],
     cardPayouts: [],
     needsDecision: [],
     notADonation: [],
+    allCredits,
+    allDebits,
     counts: {
       creditTransactions: credits.length,
       alreadyReconciled: 0,
       ignored: 0,
+      // lines apply will materially write: never-seen codes + migration stubs
+      unrecorded: [...allCredits, ...allDebits].filter(
+        (t) =>
+          !recordedCodes.has(t.archivingCode) ||
+          unimportedCodes.has(t.archivingCode),
+      ).length,
+      outgoing: allDebits.length,
     },
   };
 

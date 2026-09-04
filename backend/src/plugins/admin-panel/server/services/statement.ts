@@ -3,29 +3,36 @@
  * (`preview`) and commits the operator's confirmed decisions (`apply`).
  *
  * Wires the pure categoriser (`utils/statement.ts`) to the DB and enriches the
- * result with donor / organization names for the review UI.
+ * result with donor / organization names for the review UI. `apply` also
+ * persists a `bank_transactions` row for every credit line in the statement, so
+ * re-uploading the full history idempotently backfills the bank ledger.
  */
 import type { Core } from "@strapi/strapi";
 import { db } from "../../../../db/client";
 import {
   DonationsRepository,
   OrganizationDonationsRepository,
-  IgnoredBankTransactionsRepository,
+  BankTransactionsRepository,
   SenderDonorAliasesRepository,
   donationsRepository,
   donorsRepository,
   recurringDonationsRepository,
   organizationRecurringDonationsRepository,
-  ignoredBankTransactionsRepository,
+  bankTransactionsRepository,
   senderDonorAliasesRepository,
+  type BankTransactionUpsert,
 } from "../../../../db/repositories";
 import {
   parseLhvCsv,
   type BankTransaction,
+  type ReconcilableDonation,
 } from "../../../../utils/reconciliation";
 import {
   categorizeStatement,
   parsePayoutUuidPrefix,
+  looksLikeCardPayout,
+  classifyCreditLine,
+  computePayoutGrossFee,
   selectTemplate,
   planRecurringImport,
   type RecurringTemplate,
@@ -43,30 +50,38 @@ function refToDonationId(ref: string | undefined): number | null {
   return m ? Number(m[1]) : null;
 }
 
+const toCents = (v: string | number | undefined) =>
+  v === undefined || v === null ? NaN : Math.round(Number(v) * 100);
+
 export interface ResolvedCardPayout {
   transaction: BankTransaction;
   /** donation ids the Montonio payout says it covers, still unreconciled */
   resolvedDonationIds: number[];
   /** false when the Montonio lookup failed and manual entry is needed */
   resolved: boolean;
+  /** payout total before the processor fee (cents), when resolved */
+  grossCents: number | null;
+  /** processor fee withheld (cents) = grossCents − bank net, when resolved */
+  feeCents: number | null;
 }
 
 async function resolveCardPayouts(
   payouts: BankTransaction[],
-  unreconciledIds: Set<number>,
+  unreconciledById: Map<number, ReconcilableDonation>,
 ): Promise<ResolvedCardPayout[]> {
+  const unresolved = (transaction: BankTransaction): ResolvedCardPayout => ({
+    transaction,
+    resolvedDonationIds: [],
+    resolved: false,
+    grossCents: null,
+    feeCents: null,
+  });
+
   if (payouts.length === 0 || !montonio.isPayoutsConfigured()) {
-    return payouts.map((transaction) => ({
-      transaction,
-      resolvedDonationIds: [],
-      resolved: false,
-    }));
+    return payouts.map(unresolved);
   }
 
   const list = await montonio.listPayouts();
-
-  const toCents = (v: string | number | undefined) =>
-    v === undefined ? NaN : Math.round(Number(v) * 100);
 
   return Promise.all(
     payouts.map(async (transaction) => {
@@ -76,25 +91,44 @@ async function resolveCardPayouts(
           list.find((p) => p.uuid.toLowerCase().startsWith(uuidPrefix))) ||
         list.find((p) => toCents(p.totalAmount) === transaction.amountCents);
 
-      if (!payout) {
-        return { transaction, resolvedDonationIds: [], resolved: false };
-      }
+      if (!payout) return unresolved(transaction);
 
       const orders = await montonio.getPayoutOrders(payout.uuid);
-      if (!orders) {
-        return { transaction, resolvedDonationIds: [], resolved: false };
-      }
+      if (!orders) return unresolved(transaction);
 
-      const ids = orders
-        .map((o) =>
-          refToDonationId(o.merchantReference ?? o.merchant_reference),
-        )
-        .filter((id): id is number => id !== null && unreconciledIds.has(id));
+      // every order in the payout: donation id + its gross
+      const parsed = orders.map((o) => ({
+        donationId: refToDonationId(
+          o.merchantReference ?? o.merchant_reference,
+        ),
+        grossCents: toCents(
+          o.grandTotal ?? o.grand_total ?? o.amount ?? o.total,
+        ),
+      }));
+      const orderRows = parsed.filter(
+        (o): o is { donationId: number; grossCents: number } =>
+          o.donationId !== null && Number.isFinite(o.grossCents),
+      );
+
+      const { grossCents, feeCents } = computePayoutGrossFee(
+        parsed,
+        transaction.amountCents,
+      );
+
+      const resolvedDonationIds = [
+        ...new Set(
+          orderRows
+            .map((o) => o.donationId)
+            .filter((id) => unreconciledById.has(id)),
+        ),
+      ];
 
       return {
         transaction,
-        resolvedDonationIds: [...new Set(ids)],
+        resolvedDonationIds,
         resolved: true,
+        grossCents,
+        feeCents,
       };
     }),
   );
@@ -112,7 +146,17 @@ export interface ApplyPayload {
     note?: string | null;
   }[];
   cardPayoutAssignments: { donationId: number; archivingCode: string }[];
+  /** per card-payout code: totals echoed from preview (or a manual fee) */
+  cardPayouts?: {
+    archivingCode: string;
+    grossCents?: number | null;
+    feeCents?: number | null;
+  }[];
   ignore: { archivingCode: string; reason?: string | null }[];
+  /** every credit line in the statement — persisted as bank_transactions rows */
+  allCredits: BankTransaction[];
+  /** every debit line — persisted as `outgoing` bank_transactions rows */
+  allDebits?: BankTransaction[];
 }
 
 interface DonorTemplateIndex {
@@ -244,19 +288,29 @@ export function createStatementService(strapi: Core.Strapi) {
     async preview(csv: Buffer | string) {
       const transactions = parseLhvCsv(csv);
 
-      const [unreconciledDonations, reconciledCodes, ignoredCodes, index] =
-        await Promise.all([
-          donationsRepository.findForReconciliation({ onlyUnreconciled: true }),
-          donationsRepository.reconciledTransactionIds(),
-          ignoredBankTransactionsRepository.codes(),
-          loadDonorTemplates(),
-        ]);
+      const [
+        unreconciledDonations,
+        reconciledCodes,
+        ignoredCodes,
+        recordedCodes,
+        unimportedCodes,
+        index,
+      ] = await Promise.all([
+        donationsRepository.findForReconciliation({ onlyUnreconciled: true }),
+        donationsRepository.reconciledTransactionIds(),
+        bankTransactionsRepository.ignoredCodes(),
+        bankTransactionsRepository.recordedCodes(),
+        bankTransactionsRepository.unimportedCodes(),
+        loadDonorTemplates(),
+      ]);
 
       const report: StatementReport = categorizeStatement({
         transactions,
         unreconciledDonations,
         reconciledCodes,
         ignoredCodes,
+        recordedCodes,
+        unimportedCodes,
         donorsByCode: index.byCode,
       });
 
@@ -287,7 +341,7 @@ export function createStatementService(strapi: Core.Strapi) {
 
       const cardPayouts = await resolveCardPayouts(
         report.cardPayouts,
-        new Set(unreconciledDonations.map((d) => d.id)),
+        donationById,
       );
 
       return {
@@ -297,18 +351,77 @@ export function createStatementService(strapi: Core.Strapi) {
         cardPayouts,
         needsDecision: report.needsDecision,
         notADonation: report.notADonation,
+        allCredits: report.allCredits,
+        allDebits: report.allDebits,
         donorNames,
         orgNames: names,
       };
     },
 
     async apply(payload: ApplyPayload, userEmail: string) {
-      const summary = { reconciled: 0, created: 0, ignored: 0 };
+      const summary = { reconciled: 0, created: 0, ignored: 0, recorded: 0 };
+
+      // ── validate + normalize the echoed statement lines ─────────────────
+      // apply trusts the client for the bank-row metadata (date/amount/…) but
+      // not for which codes belong to the statement, and every string field is
+      // coerced so downstream code (looksLikeCardPayout, .slice) can't throw.
+      const CODE_RE = /^[A-Za-z0-9_-]{1,20}$/;
+      const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}/;
+      const normalizeLine = (t: unknown): BankTransaction => {
+        const r = (t ?? {}) as Record<string, unknown>;
+        const str = (v: unknown) => (typeof v === "string" ? v : "");
+        const code = str(r.archivingCode);
+        if (!CODE_RE.test(code)) {
+          throw new Error(
+            `Malformed statement line: bad archiving code ${JSON.stringify(r.archivingCode)}`,
+          );
+        }
+        if (!Number.isFinite(r.amountCents)) {
+          throw new Error(
+            `Malformed statement line ${code}: non-numeric amount — re-analyse the statement and try again`,
+          );
+        }
+        if (str(r.date) !== "" && !ISO_DATE_RE.test(str(r.date))) {
+          throw new Error(`Malformed statement line ${code}: bad date`);
+        }
+        return {
+          archivingCode: code,
+          amountCents: r.amountCents as number,
+          date: str(r.date).slice(0, 10),
+          description: str(r.description),
+          counterpartyName: str(r.counterpartyName),
+          counterpartyAccount: str(r.counterpartyAccount),
+          idOrRegCode: str(r.idOrRegCode),
+          direction: r.direction === "D" ? "D" : "C",
+        };
+      };
+      const creditLines = (payload.allCredits ?? []).map(normalizeLine);
+      const debitLines = (payload.allDebits ?? []).map(normalizeLine);
+      const statementCodes = new Set(
+        [...creditLines, ...debitLines].map((t) => t.archivingCode),
+      );
+      const actionCodes = [
+        ...(payload.reconcile ?? []).map((r) => r.archivingCode),
+        ...(payload.cardPayoutAssignments ?? []).map((a) => a.archivingCode),
+        ...(payload.ignore ?? []).map((i) => i.archivingCode),
+        ...(payload.recurringImports ?? []).map(
+          (i) => i.transaction?.archivingCode,
+        ),
+        ...(payload.manualRecurring ?? []).map(
+          (m) => m.transaction?.archivingCode,
+        ),
+      ];
+      for (const code of actionCodes) {
+        if (!code || !statementCodes.has(code)) {
+          throw new Error(
+            `Code ${code ?? "(missing)"} is not a line in the uploaded statement — re-analyse and try again`,
+          );
+        }
+      }
 
       // Re-derive every recurring-import plan from current DB state — never
-      // trust the amounts / org splits the client sent back (the template or
-      // its split may have changed since preview). Done up front (reads only)
-      // so the write transaction stays tight.
+      // trust the amounts / org splits the client sent back. Reads only, up
+      // front, so the write transaction stays tight.
       const index = await loadDonorTemplates();
       const allImports: RecurringImport[] = [
         ...(payload.recurringImports ?? []).map((imp) =>
@@ -324,11 +437,170 @@ export function createStatementService(strapi: Core.Strapi) {
         ),
       ];
 
+      // ── classify every line for the bank_transactions upsert ─────────────
+      // codes with hard evidence of being a donation: an explicit reconcile /
+      // recurring-import this run, OR a donation already points at the code.
+      const reconciledCodes =
+        await donationsRepository.reconciledTransactionIds();
+      const explicitDonationCodes = new Set<string>();
+      for (const r of payload.reconcile ?? [])
+        explicitDonationCodes.add(r.archivingCode);
+      for (const imp of allImports)
+        explicitDonationCodes.add(imp.archivingCode);
+      const cardAssignCodes = new Set(
+        (payload.cardPayoutAssignments ?? []).map((a) => a.archivingCode),
+      );
+
+      const ignoreByCode = new Map(
+        (payload.ignore ?? []).map((i) => [i.archivingCode, i.reason ?? null]),
+      );
+      // never let an operator ignore a code that has a donation on it — that
+      // would drop the donation's money from the money-flow summary silently
+      for (const code of ignoreByCode.keys()) {
+        if (reconciledCodes.has(code)) {
+          throw new Error(
+            `Code ${code} has a donation linked to it — reassign or delete the donation before ignoring the line`,
+          );
+        }
+      }
+      const cardPayoutByCode = new Map(
+        (payload.cardPayouts ?? []).map((c) => [c.archivingCode, c]),
+      );
+
+      const existingCategories = await bankTransactionsRepository.categoriesFor(
+        [...creditLines, ...debitLines].map((t) => t.archivingCode),
+      );
+
+      /** reject a negative fee or one implausibly large vs the net credited */
+      const clampFee = (
+        v: number | null | undefined,
+        netCents: number,
+      ): number | null => {
+        if (typeof v !== "number" || !Number.isFinite(v) || v < 0) return null;
+        const cents = Math.round(v);
+        return cents > netCents * 0.2 ? null : cents;
+      };
+
+      const bankRows: BankTransactionUpsert[] = creditLines.map((txn) => {
+        const code = txn.archivingCode;
+        const { category, reclassify } = classifyCreditLine({
+          isCardPayout: looksLikeCardPayout(txn),
+          ignoredNow: ignoreByCode.has(code),
+          explicitDonation: explicitDonationCodes.has(code),
+          cardAssignedNow: cardAssignCodes.has(code),
+          alreadyLinked: reconciledCodes.has(code),
+          existingCategory: existingCategories.get(code),
+        });
+
+        const cp = cardPayoutByCode.get(code);
+        const feeAmountCents =
+          category === "card-payout"
+            ? clampFee(cp?.feeCents, txn.amountCents)
+            : null;
+        const grossAmountCents =
+          category === "card-payout"
+            ? (cp?.grossCents ??
+              (feeAmountCents != null
+                ? txn.amountCents + feeAmountCents
+                : null))
+            : null;
+
+        return {
+          archivingCode: code,
+          date: txn.date || null,
+          amountCents: txn.amountCents,
+          description: txn.description || null,
+          counterpartyName: txn.counterpartyName || null,
+          counterpartyAccount: txn.counterpartyAccount || null,
+          senderCode: txn.idOrRegCode || null,
+          category,
+          reclassify,
+          note: category === "ignored" ? ignoreByCode.get(code) : null,
+          importedBy: userEmail,
+          grossAmountCents,
+          feeAmountCents,
+        };
+      });
+
+      // debit lines — always recorded as `outgoing` (amount stored positive)
+      for (const txn of debitLines) {
+        bankRows.push({
+          archivingCode: txn.archivingCode,
+          date: txn.date || null,
+          amountCents: Math.abs(txn.amountCents),
+          description: txn.description || null,
+          counterpartyName: txn.counterpartyName || null,
+          counterpartyAccount: txn.counterpartyAccount || null,
+          senderCode: txn.idOrRegCode || null,
+          category: "outgoing",
+          note: null,
+          importedBy: userEmail,
+        });
+      }
+
+      // the fee we actually persisted per card-payout code (already clamped)
+      const persistedFeeByCode = new Map(
+        bankRows
+          .filter((r) => r.category === "card-payout")
+          .map((r) => [r.archivingCode, r.feeAmountCents ?? null]),
+      );
+      const persistedGrossByCode = new Map(
+        bankRows
+          .filter((r) => r.category === "card-payout")
+          .map((r) => [r.archivingCode, r.grossAmountCents ?? null]),
+      );
+
+      // per-donation card-payout fee, computed server-side. Each assigned
+      // donation gets its own slice of the payout fee, pro-rata against the
+      // whole payout's gross — NOT against just the donations being assigned
+      // now. A payout that also covers donations reconciled in an earlier run
+      // must not have its entire fee dumped onto the remaining subset.
+      const assignmentsByCode = new Map<string, number[]>();
+      for (const a of payload.cardPayoutAssignments ?? []) {
+        const arr = assignmentsByCode.get(a.archivingCode) ?? [];
+        arr.push(a.donationId);
+        assignmentsByCode.set(a.archivingCode, arr);
+      }
+      const donationFee = new Map<number, number>();
+      if (assignmentsByCode.size > 0) {
+        const grossById = new Map(
+          (await donationsRepository.findForReconciliation()).map((d) => [
+            d.id,
+            d.amountCents,
+          ]),
+        );
+        for (const [code, donationIds] of assignmentsByCode) {
+          const feeCents = persistedFeeByCode.get(code);
+          if (feeCents == null || feeCents === 0) continue;
+          const payoutGross = persistedGrossByCode.get(code);
+          const grossByThisDonation = donationIds.map(
+            (id) => grossById.get(id) ?? 0,
+          );
+          // denominator: the whole payout's gross when known (Montonio
+          // resolved), else fall back to the assigned donations' gross (manual
+          // fee entry — the operator's number covers what they're assigning).
+          const denom =
+            payoutGross && payoutGross > 0
+              ? payoutGross
+              : grossByThisDonation.reduce((s, g) => s + g, 0);
+          if (denom <= 0) continue;
+          donationIds.forEach((id, i) => {
+            donationFee.set(
+              id,
+              Math.round((feeCents * grossByThisDonation[i]) / denom),
+            );
+          });
+        }
+      }
+
       await db.transaction(async (tx) => {
         const donationsRepo = new DonationsRepository(tx);
         const orgDonationsRepo = new OrganizationDonationsRepository(tx);
-        const ignoredRepo = new IgnoredBankTransactionsRepository(tx);
+        const bankRepo = new BankTransactionsRepository(tx);
         const aliasRepo = new SenderDonorAliasesRepository(tx);
+
+        // FIRST — the FK on donations.transaction_id needs these rows to exist
+        summary.recorded = await bankRepo.upsertMany(bankRows);
 
         for (const imp of allImports) {
           const donation = await donationsRepo.create({
@@ -354,7 +626,7 @@ export function createStatementService(strapi: Core.Strapi) {
           summary.created++;
         }
 
-        for (const r of payload.reconcile) {
+        for (const r of payload.reconcile ?? []) {
           const ok = await donationsRepo.setTransactionId(
             r.donationId,
             r.archivingCode,
@@ -363,24 +635,20 @@ export function createStatementService(strapi: Core.Strapi) {
           if (!ok) throw new Error(`Donation #${r.donationId} not found`);
           summary.reconciled++;
         }
-        for (const a of payload.cardPayoutAssignments) {
+        for (const a of payload.cardPayoutAssignments ?? []) {
           const ok = await donationsRepo.setTransactionId(
             a.donationId,
             a.archivingCode,
             "card-payout",
           );
           if (!ok) throw new Error(`Donation #${a.donationId} not found`);
+          const fee = donationFee.get(a.donationId);
+          if (fee != null)
+            await donationsRepo.setProcessorFee(a.donationId, fee);
           summary.reconciled++;
         }
 
-        await ignoredRepo.add(
-          payload.ignore.map((i) => ({
-            archivingCode: i.archivingCode,
-            reason: i.reason ?? null,
-            createdBy: userEmail,
-          })),
-        );
-        summary.ignored = payload.ignore.length;
+        summary.ignored = ignoreByCode.size;
 
         await aliasRepo.add(
           (payload.rememberSenders ?? [])

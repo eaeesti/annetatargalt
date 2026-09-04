@@ -1,0 +1,504 @@
+import { eq, inArray, sql } from "drizzle-orm";
+import { db, type Database } from "../client";
+import { bankTransactions, type BankTransaction } from "../schema";
+
+export type BankTransactionCategory =
+  | "donation"
+  | "card-payout"
+  | "outgoing" // debit — money leaving the account (org transfer, fee, refund, tax)
+  | "ignored"
+  | "undecided"
+  | "unimported"; // migration stub — a donation points here, bank line not yet imported
+
+/**
+ * When a re-upload's heuristic category meets an existing row, higher wins.
+ * `ignored` is stickiest — a "not a donation" decision must not be reverted by
+ * a later import's `looksLikeCardPayout` heuristic. An explicit operator action
+ * (reconcile / ignore / recurring-import) sets `reclassify` and bypasses this.
+ */
+const CATEGORY_PRECEDENCE: Record<string, number> = {
+  ignored: 4,
+  donation: 3,
+  "card-payout": 3, // peer of donation — allow the donation↔card-payout upgrade
+  outgoing: 3, // debits never collide with credit codes; keep them pinned
+  undecided: 1,
+  unimported: 0, // any real import wins over a migration stub
+};
+const prec = (c: string) => CATEGORY_PRECEDENCE[c] ?? 0;
+
+const trunc = (v: string | null | undefined, n: number) =>
+  v == null ? null : v.slice(0, n);
+
+/** ~12 bind params per inserted row; 1 per code in a SELECT ... IN (...). */
+const INSERT_CHUNK = 1000;
+const SELECT_CHUNK = 10000;
+
+export interface BankTransactionUpsert {
+  archivingCode: string;
+  date?: string | null; // YYYY-MM-DD
+  amountCents?: number | null;
+  description?: string | null;
+  counterpartyName?: string | null;
+  counterpartyAccount?: string | null;
+  senderCode?: string | null;
+  category: BankTransactionCategory;
+  /** explicit operator decision — set category verbatim, bypass precedence */
+  reclassify?: boolean;
+  note?: string | null;
+  importedBy?: string | null;
+  grossAmountCents?: number | null; // card payouts only
+  feeAmountCents?: number | null; // card payouts only
+}
+
+export interface BankTransactionRow extends BankTransaction {
+  /** donations carrying this archiving code (finalized + pending) */
+  linkedDonationCount: number;
+  /** Σ organization_donations.amount for the finalized ones */
+  allocatedCents: number;
+  /** Σ donation.amount (gross) across all linked donations */
+  linkedGrossCents: number;
+  /** bank `amount` ≈ linked gross − fee, within rounding; null when not assessable */
+  balanced: boolean | null;
+}
+
+export interface MoneyFlow {
+  dateFrom: string | null;
+  dateTo: string | null;
+  /** Σ amount, category = 'donation' */
+  received: number;
+  /** Σ amount, category = 'card-payout' (net, after processor fee) */
+  cardPayoutNet: number;
+  /** Σ gross_amount (→ amount where null), category = 'card-payout' */
+  cardPayoutGross: number;
+  /** Σ fee_amount, category = 'card-payout' (stored, from Montonio) */
+  cardFees: number;
+  /** Σ donations.processor_fee_cents for card-payout-linked donations — should match cardFees */
+  cardFeesFromDonations: number;
+  /** Σ organization_donations.amount for donations linked to in-range bank rows */
+  allocated: number;
+  /** …of which the donation is already in a donation_transfer */
+  transferred: number;
+  /** Σ amount, category = 'undecided' */
+  undecidedInflow: number;
+  /** Σ amount, category = 'outgoing' (debits — money that left the account) */
+  outgoingTotal: number;
+  /** codes still 'unimported' (migration stubs whose bank line hasn't been imported) — not date-filtered */
+  unimportedRows: number;
+  /** Σ amount of donation/card-payout bank rows linked to a still-pending donation — excluded from received/cardPayoutNet until it finalizes */
+  pendingLinkedCents: number;
+  /** finalized donations with no transaction_id at all (standing backlog, not date-filtered) */
+  unlinkedDonationCount: number;
+  unlinkedDonationCents: number;
+  /** allocated − (received + cardPayoutNet + cardFees) — should be ~0 */
+  discrepancy: number;
+}
+
+interface FindPaginatedOptions {
+  page: number;
+  pageSize: number;
+  sortBy?: string;
+  sortDir?: "asc" | "desc";
+  category?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  search?: string;
+}
+
+const num = (v: unknown) => Number(v ?? 0);
+
+function mapRow(r: Record<string, unknown>): BankTransactionRow {
+  const amount = r.amount == null ? null : num(r.amount);
+  const feeAmount = r.fee_amount == null ? null : num(r.fee_amount);
+  const linkedDonationCount = num(r.linked_donation_count);
+  const pendingDonationCount = num(r.pending_donation_count);
+  const linkedGrossCents = num(r.linked_gross_cents);
+  const expectedNet = linkedGrossCents - (feeAmount ?? 0);
+  // null = not assessable yet: no linked donations, bank line not imported, or a
+  // linked donation isn't finalized (its amount can still change)
+  const balanced =
+    linkedDonationCount === 0 || amount == null || pendingDonationCount > 0
+      ? null
+      : Math.abs(amount - expectedNet) <= Math.max(1, linkedDonationCount);
+
+  return {
+    archivingCode: r.archiving_code as string,
+    date: r.date as string | null,
+    amount,
+    description: (r.description as string | null) ?? null,
+    counterpartyName: (r.counterparty_name as string | null) ?? null,
+    counterpartyAccount: (r.counterparty_account as string | null) ?? null,
+    senderCode: (r.sender_code as string | null) ?? null,
+    category: r.category as string,
+    grossAmount: r.gross_amount == null ? null : num(r.gross_amount),
+    feeAmount,
+    note: (r.note as string | null) ?? null,
+    importedAt: r.imported_at as Date,
+    importedBy: (r.imported_by as string | null) ?? null,
+    createdAt: r.created_at as Date,
+    updatedAt: r.updated_at as Date,
+    linkedDonationCount,
+    allocatedCents: num(r.allocated_cents),
+    linkedGrossCents,
+    balanced,
+  };
+}
+
+export class BankTransactionsRepository {
+  constructor(private database: Database = db) {}
+
+  /** Codes currently marked "not a donation" — the old ignore list. */
+  async ignoredCodes(): Promise<Set<string>> {
+    const rows = await this.database
+      .select({ code: bankTransactions.archivingCode })
+      .from(bankTransactions)
+      .where(eq(bankTransactions.category, "ignored"));
+    return new Set(rows.map((r) => r.code));
+  }
+
+  /** Every archiving code already in the table (any category). */
+  async recordedCodes(): Promise<Set<string>> {
+    const rows = await this.database
+      .select({ code: bankTransactions.archivingCode })
+      .from(bankTransactions);
+    return new Set(rows.map((r) => r.code));
+  }
+
+  /** Codes still `category = 'unimported'` (migration stubs). */
+  async unimportedCodes(): Promise<Set<string>> {
+    const rows = await this.database
+      .select({ code: bankTransactions.archivingCode })
+      .from(bankTransactions)
+      .where(eq(bankTransactions.category, "unimported"));
+    return new Set(rows.map((r) => r.code));
+  }
+
+  /**
+   * code → current category, for the codes given. Chunked so a full-history
+   * lookup doesn't exceed Postgres' bind-parameter limit.
+   */
+  async categoriesFor(codes: string[]): Promise<Map<string, string>> {
+    const out = new Map<string, string>();
+    for (let i = 0; i < codes.length; i += SELECT_CHUNK) {
+      const rows = await this.database
+        .select({
+          code: bankTransactions.archivingCode,
+          category: bankTransactions.category,
+        })
+        .from(bankTransactions)
+        .where(
+          inArray(
+            bankTransactions.archivingCode,
+            codes.slice(i, i + SELECT_CHUNK),
+          ),
+        );
+      for (const r of rows) out.set(r.code, r.category);
+    }
+    return out;
+  }
+
+  async findAll(): Promise<BankTransaction[]> {
+    return this.database.query.bankTransactions.findMany({
+      orderBy: (t, { desc }) => [desc(t.date)],
+    });
+  }
+
+  /**
+   * Idempotent upsert of statement lines. Bank fields are refreshed (coalesced —
+   * a real line fills in a blind ignore). `category` follows precedence
+   * (ignored is stickiest) UNLESS the row is `reclassify` (an explicit operator
+   * decision), so a re-upload can't silently un-ignore a code but an operator
+   * still can. Returns how many codes were newly written — inserted, or a
+   * migration stub ('unimported') given a real category (0 on a no-op re-run).
+   */
+  async upsertMany(rows: BankTransactionUpsert[]): Promise<number> {
+    if (rows.length === 0) return 0;
+
+    // dedupe input by code — a reclassify row, else the higher-precedence one
+    const byCode = new Map<string, BankTransactionUpsert>();
+    for (const r of rows) {
+      const archivingCode = r.archivingCode.slice(0, 20);
+      const prev = byCode.get(archivingCode);
+      const better =
+        !prev ||
+        (r.reclassify && !prev.reclassify) ||
+        (Boolean(r.reclassify) === Boolean(prev.reclassify) &&
+          prec(r.category) >= prec(prev.category));
+      if (better) byCode.set(archivingCode, { ...r, archivingCode });
+    }
+    const deduped = [...byCode.values()];
+
+    const existingCat = await this.categoriesFor(
+      deduped.map((r) => r.archivingCode),
+    );
+
+    // group by the resolved final category — one upsert statement per group
+    const groups = new Map<string, BankTransactionUpsert[]>();
+    const finalCatByCode = new Map<string, string>();
+    for (const r of deduped) {
+      const cur = existingCat.get(r.archivingCode);
+      const finalCat =
+        !r.reclassify && cur && prec(cur) > prec(r.category) ? cur : r.category;
+      finalCatByCode.set(r.archivingCode, finalCat);
+      const arr = groups.get(finalCat) ?? [];
+      arr.push(r);
+      groups.set(finalCat, arr);
+    }
+
+    for (const [finalCat, groupRows] of groups) {
+      for (let i = 0; i < groupRows.length; i += INSERT_CHUNK) {
+        await this.database
+          .insert(bankTransactions)
+          .values(
+            groupRows.slice(i, i + INSERT_CHUNK).map((r) => ({
+              archivingCode: r.archivingCode,
+              date: r.date ?? null,
+              amount: r.amountCents ?? null,
+              description: r.description ?? null,
+              counterpartyName: trunc(r.counterpartyName, 256),
+              counterpartyAccount: trunc(r.counterpartyAccount, 64),
+              senderCode: trunc(r.senderCode, 64),
+              category: finalCat,
+              grossAmount: r.grossAmountCents ?? null,
+              feeAmount: r.feeAmountCents ?? null,
+              note: trunc(r.note, 512),
+              importedBy: trunc(r.importedBy, 256),
+            })),
+          )
+          .onConflictDoUpdate({
+            target: bankTransactions.archivingCode,
+            set: {
+              date: sql`coalesce(excluded."date", ${bankTransactions.date})`,
+              amount: sql`coalesce(excluded."amount", ${bankTransactions.amount})`,
+              description: sql`coalesce(excluded."description", ${bankTransactions.description})`,
+              counterpartyName: sql`coalesce(excluded."counterparty_name", ${bankTransactions.counterpartyName})`,
+              counterpartyAccount: sql`coalesce(excluded."counterparty_account", ${bankTransactions.counterpartyAccount})`,
+              senderCode: sql`coalesce(excluded."sender_code", ${bankTransactions.senderCode})`,
+              category: finalCat,
+              grossAmount: sql`coalesce(excluded."gross_amount", ${bankTransactions.grossAmount})`,
+              feeAmount: sql`coalesce(excluded."fee_amount", ${bankTransactions.feeAmount})`,
+              note: sql`coalesce(excluded."note", ${bankTransactions.note})`,
+              importedBy: sql`coalesce(excluded."imported_by", ${bankTransactions.importedBy})`,
+              importedAt: sql`now()`,
+              updatedAt: sql`now()`,
+            },
+          });
+      }
+    }
+
+    // rows that went from nothing (or a migration stub) to a real category
+    return deduped.filter((r) => {
+      const cur = existingCat.get(r.archivingCode);
+      const final = finalCatByCode.get(r.archivingCode);
+      return (
+        (cur === undefined || cur === "unimported") && final !== "unimported"
+      );
+    }).length;
+  }
+
+  /**
+   * Reclassify one code from the /transactions UI. Refuses to move a code away
+   * from a donation-bearing category while ANY donation (finalized or not) still
+   * references it — a pending donation could be finalized later.
+   */
+  async setCategory(
+    code: string,
+    category: BankTransactionCategory,
+    note: string | null,
+    by: string | null,
+  ): Promise<{ ok: boolean; reason?: "not-found" | "has-donations" }> {
+    if (category !== "donation" && category !== "card-payout") {
+      const [linked] = await this.database
+        .execute(
+          sql`SELECT cast(count(*) as int) as n FROM donations WHERE transaction_id = ${code}`,
+        )
+        .then((r) => r.rows as { n: number }[]);
+      if (num(linked?.n) > 0) return { ok: false, reason: "has-donations" };
+    }
+    const updated = await this.database
+      .update(bankTransactions)
+      .set({
+        category,
+        note: trunc(note, 512),
+        importedBy: trunc(by, 256),
+        updatedAt: new Date(),
+      })
+      .where(eq(bankTransactions.archivingCode, code))
+      .returning({ code: bankTransactions.archivingCode });
+    return updated.length > 0
+      ? { ok: true }
+      : { ok: false, reason: "not-found" };
+  }
+
+  async findPaginated(
+    opts: FindPaginatedOptions,
+  ): Promise<{ data: BankTransactionRow[]; total: number }> {
+    const { page, pageSize, sortBy = "date", sortDir = "desc" } = opts;
+
+    const conds = [sql`1 = 1`];
+    if (opts.category) conds.push(sql`bt.category = ${opts.category}`);
+    if (opts.dateFrom) conds.push(sql`bt.date >= ${opts.dateFrom}`);
+    if (opts.dateTo) conds.push(sql`bt.date <= ${opts.dateTo}`);
+    if (opts.search) {
+      const like = `%${opts.search}%`;
+      conds.push(
+        sql`(bt.archiving_code ilike ${like} or bt.counterparty_name ilike ${like} or bt.description ilike ${like} or bt.sender_code ilike ${like})`,
+      );
+    }
+    const where = sql.join(conds, sql` and `);
+
+    const sortCols: Record<string, ReturnType<typeof sql>> = {
+      date: sql`bt.date`,
+      amount: sql`bt.amount`,
+      category: sql`bt.category`,
+      counterpartyName: sql`bt.counterparty_name`,
+      importedAt: sql`bt.imported_at`,
+    };
+    const sortCol = sortCols[sortBy] ?? sql`bt.date`;
+    const dir = sortDir === "asc" ? sql`asc` : sql`desc`;
+    // pageSize <= 0 means "all rows" (the /transactions "View all" option)
+    const limitClause =
+      pageSize > 0
+        ? sql`LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}`
+        : sql``;
+
+    const rowsRes = await this.database.execute(sql`
+      SELECT bt.*,
+        (SELECT cast(count(*) as int) FROM donations d
+           WHERE d.transaction_id = bt.archiving_code) as linked_donation_count,
+        (SELECT cast(count(*) as int) FROM donations d
+           WHERE d.transaction_id = bt.archiving_code AND d.finalized = false) as pending_donation_count,
+        (SELECT cast(coalesce(sum(od.amount), 0) as int)
+           FROM organization_donations od
+           JOIN donations d ON d.id = od.donation_id
+           WHERE d.transaction_id = bt.archiving_code AND d.finalized = true) as allocated_cents,
+        (SELECT cast(coalesce(sum(d.amount), 0) as int) FROM donations d
+           WHERE d.transaction_id = bt.archiving_code) as linked_gross_cents
+      FROM bank_transactions bt
+      WHERE ${where}
+      ORDER BY ${sortCol} ${dir} NULLS LAST, bt.archiving_code ${dir}
+      ${limitClause}
+    `);
+    const countRes = await this.database.execute(
+      sql`SELECT cast(count(*) as int) as total FROM bank_transactions bt WHERE ${where}`,
+    );
+
+    return {
+      data: (rowsRes.rows as Record<string, unknown>[]).map(mapRow),
+      total: num((countRes.rows[0] as { total?: number })?.total),
+    };
+  }
+
+  async findByCodeWithDonations(code: string) {
+    return this.database.query.bankTransactions.findFirst({
+      where: eq(bankTransactions.archivingCode, code),
+      with: {
+        donations: {
+          with: { donor: true, organizationDonations: true },
+        },
+      },
+    });
+  }
+
+  async moneyFlow(opts: {
+    dateFrom?: string | null;
+    dateTo?: string | null;
+  }): Promise<MoneyFlow> {
+    const dateFrom = opts.dateFrom ?? null;
+    const dateTo = opts.dateTo ?? null;
+
+    const btDate = [];
+    if (dateFrom) btDate.push(sql`bt.date >= ${dateFrom}`);
+    if (dateTo) btDate.push(sql`bt.date <= ${dateTo}`);
+    const btDateClause =
+      btDate.length > 0 ? sql`AND ${sql.join(btDate, sql` AND `)}` : sql``;
+
+    // A bank row with a still-pending linked donation can't be counted in
+    // `received`/card figures yet — its `allocated` counterpart excludes
+    // pending donations (org splits aren't final), so counting the bank side
+    // now would show a spurious discrepancy until the donation finalizes.
+    const [bank] = (
+      await this.database.execute(sql`
+      WITH bt_scope AS (
+        SELECT bt.*, EXISTS (
+          SELECT 1 FROM donations d
+          WHERE d.transaction_id = bt.archiving_code AND d.finalized = false
+        ) AS has_pending
+        FROM bank_transactions bt
+        WHERE bt.amount IS NOT NULL ${btDateClause}
+      )
+      SELECT
+        cast(coalesce(sum(amount) filter (where category = 'donation' and not has_pending), 0) as int) as received,
+        cast(coalesce(sum(amount) filter (where category = 'card-payout' and not has_pending), 0) as int) as card_payout_net,
+        cast(coalesce(sum(coalesce(gross_amount, amount)) filter (where category = 'card-payout' and not has_pending), 0) as int) as card_payout_gross,
+        cast(coalesce(sum(fee_amount) filter (where category = 'card-payout' and not has_pending), 0) as int) as card_fees,
+        cast(coalesce(sum(amount) filter (where category = 'undecided'), 0) as int) as undecided_inflow,
+        cast(coalesce(sum(abs(amount)) filter (where category = 'outgoing'), 0) as int) as outgoing_total,
+        cast(coalesce(sum(amount) filter (where has_pending and category in ('donation', 'card-payout')), 0) as int) as pending_linked_total
+      FROM bt_scope
+    `)
+    ).rows as Record<string, unknown>[];
+
+    const [alloc] = (
+      await this.database.execute(sql`
+      SELECT
+        cast(coalesce(sum(od.amount), 0) as int) as allocated,
+        cast(coalesce(sum(od.amount) filter (where d.donation_transfer_id is not null), 0) as int) as transferred
+      FROM organization_donations od
+      JOIN donations d ON d.id = od.donation_id AND d.finalized = true
+      JOIN bank_transactions bt ON bt.archiving_code = d.transaction_id
+      WHERE bt.category IN ('donation', 'card-payout')
+        AND bt.amount IS NOT NULL ${btDateClause}
+    `)
+    ).rows as Record<string, unknown>[];
+
+    const [feeAgg] = (
+      await this.database.execute(sql`
+      SELECT cast(coalesce(sum(d.processor_fee_cents), 0) as int) as fee
+      FROM donations d
+      JOIN bank_transactions bt ON bt.archiving_code = d.transaction_id
+      WHERE bt.category = 'card-payout' AND d.finalized = true ${btDateClause}
+    `)
+    ).rows as Record<string, unknown>[];
+
+    const [unlinked] = (
+      await this.database.execute(sql`
+      SELECT cast(count(*) as int) as cnt, cast(coalesce(sum(amount), 0) as int) as total
+      FROM donations
+      WHERE finalized = true AND transaction_id IS NULL
+    `)
+    ).rows as Record<string, unknown>[];
+
+    const [stubs] = (
+      await this.database.execute(sql`
+      SELECT cast(count(*) as int) as cnt
+      FROM bank_transactions WHERE category = 'unimported'
+    `)
+    ).rows as Record<string, unknown>[];
+
+    const received = num(bank?.received);
+    const cardPayoutNet = num(bank?.card_payout_net);
+    const cardFees = num(bank?.card_fees);
+    const allocated = num(alloc?.allocated);
+
+    return {
+      dateFrom,
+      dateTo,
+      received,
+      cardPayoutNet,
+      cardPayoutGross: num(bank?.card_payout_gross),
+      cardFees,
+      cardFeesFromDonations: num(feeAgg?.fee),
+      allocated,
+      transferred: num(alloc?.transferred),
+      undecidedInflow: num(bank?.undecided_inflow),
+      outgoingTotal: num(bank?.outgoing_total),
+      pendingLinkedCents: num(bank?.pending_linked_total),
+      unimportedRows: num(stubs?.cnt),
+      unlinkedDonationCount: num(unlinked?.cnt),
+      unlinkedDonationCents: num(unlinked?.total),
+      discrepancy: allocated - (received + cardPayoutNet + cardFees),
+    };
+  }
+}
+
+export const bankTransactionsRepository = new BankTransactionsRepository();

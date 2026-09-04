@@ -280,6 +280,7 @@ export class DonationsRepository {
         donationTransferId: data.donationTransferId || null,
         transactionId: data.transactionId || null,
         transactionMatchSource: data.transactionMatchSource || null,
+        processorFeeCents: data.processorFeeCents ?? null,
       })
       .returning();
     if (!donation) throw new Error("Failed to insert donation");
@@ -384,6 +385,18 @@ export class DonationsRepository {
         transactionMatchSource: source,
         updatedAt: new Date(),
       })
+      .where(eq(donations.id, id))
+      .returning({ id: donations.id });
+    return updated.length > 0;
+  }
+
+  /**
+   * Record a donation's share of a card-payout processor fee (cents).
+   */
+  async setProcessorFee(id: number, cents: number): Promise<boolean> {
+    const updated = await this.database
+      .update(donations)
+      .set({ processorFeeCents: cents, updatedAt: new Date() })
       .where(eq(donations.id, id))
       .returning({ id: donations.id });
     return updated.length > 0;
