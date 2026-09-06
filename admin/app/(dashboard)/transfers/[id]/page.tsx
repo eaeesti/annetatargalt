@@ -20,6 +20,7 @@ type LinkedDonation = {
   amount: number;
   finalized: boolean;
   donorId: number | null;
+  transactionId: string | null;
   organizationDonations: { organizationInternalId: string; amount: number }[];
 };
 
@@ -127,6 +128,9 @@ export default async function TransferDetailPage({
 
   const grandTotal = transfer.orgTotals.reduce((s, o) => s + o.total, 0);
   const finalizedDonations = transfer.donations.filter((d) => d.finalized);
+  const reconciledCount = transfer.donations.filter(
+    (d) => d.transactionId,
+  ).length;
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -245,7 +249,13 @@ export default async function TransferDetailPage({
 
       {/* Donations list */}
       {transfer.donations.length > 0 && (
-        <Section title={`Included donations (${transfer.donations.length})`}>
+        <Section
+          title={`Included donations (${transfer.donations.length}${
+            reconciledCount < transfer.donations.length
+              ? `, ${reconciledCount} reconciled`
+              : ""
+          })`}
+        >
           <div className="space-y-2">
             {transfer.donations.map((d) => (
               <Link
@@ -254,6 +264,20 @@ export default async function TransferDetailPage({
                 className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-muted/50 -mx-2"
               >
                 <div className="flex items-center gap-3">
+                  <span
+                    className="w-3 text-center"
+                    title={
+                      d.transactionId
+                        ? `Reconciled to bank line ${d.transactionId}`
+                        : "Not reconciled to a bank transaction"
+                    }
+                  >
+                    {d.transactionId ? (
+                      <span className="text-emerald-600">✓</span>
+                    ) : (
+                      <span className="text-muted-foreground">·</span>
+                    )}
+                  </span>
                   <span className="font-mono text-xs text-muted-foreground w-14">
                     #{d.id}
                   </span>
