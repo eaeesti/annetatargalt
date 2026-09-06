@@ -408,7 +408,9 @@ export class DonationsRepository {
   }
 
   /**
-   * Add donations to a transfer batch
+   * Add donations to a transfer batch (unconditional — used by the data-import
+   * restore path). The admin flow uses {@link assignToTransfer}, which guards
+   * against non-finalized or already-assigned donations.
    */
   async addToTransfer(
     donationIds: number[],
@@ -424,6 +426,46 @@ export class DonationsRepository {
       })
       .where(inArray(donations.id, donationIds))
       .returning();
+  }
+
+  /**
+   * Attach donations to a transfer round, rejecting any that aren't eligible:
+   * only finalized donations that are either unassigned or already on this same
+   * round (idempotent). Nothing is written when there's a conflict — the caller
+   * gets the offending ids back and should 4xx. Run inside a transaction for
+   * isolation against a concurrent assignment.
+   */
+  async assignToTransfer(
+    donationIds: number[],
+    transferId: number,
+  ): Promise<{ ok: boolean; conflicting: number[] }> {
+    if (donationIds.length === 0) return { ok: true, conflicting: [] };
+
+    const rows = await this.database
+      .select({
+        id: donations.id,
+        finalized: donations.finalized,
+        donationTransferId: donations.donationTransferId,
+      })
+      .from(donations)
+      .where(inArray(donations.id, donationIds));
+
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    const conflicting = donationIds.filter((id) => {
+      const r = byId.get(id);
+      return (
+        !r ||
+        !r.finalized ||
+        (r.donationTransferId != null && r.donationTransferId !== transferId)
+      );
+    });
+    if (conflicting.length > 0) return { ok: false, conflicting };
+
+    await this.database
+      .update(donations)
+      .set({ donationTransferId: transferId, updatedAt: new Date() })
+      .where(inArray(donations.id, donationIds));
+    return { ok: true, conflicting: [] };
   }
 
   /**

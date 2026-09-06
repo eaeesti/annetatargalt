@@ -453,6 +453,45 @@ describe("DonationTransfersRepository", () => {
       expect(row.paymentCount).toBe(1);
       expect(row.balanced).toBe(true);
     });
+
+    it("'owed' (and balanced) match findByIdWithReconciliation when org splits != donation amount", async () => {
+      const transfer = await createTestDonationTransfer({
+        datetime: "2026-01-18",
+      });
+      // donation.amount 10000 but only 9000 is split to orgs (the rest a tip
+      // not recorded as an org_donation)
+      const d = await createTestDonation({
+        finalized: true,
+        amount: 10000,
+        donationTransferId: transfer.id,
+      });
+      await createTestOrganizationDonation({
+        donationId: d.id,
+        organizationInternalId: "AMF",
+        amount: 9000,
+      });
+      await createTestBankTransaction({
+        archivingCode: "OUT_OWED",
+        category: "outgoing",
+        amount: 9000, // matches what's owed to orgs
+        donationTransferId: transfer.id,
+      });
+
+      const { data } = await donationTransfersRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+      });
+      const row = data.find((r) => r.id === transfer.id)!;
+      const detail =
+        await donationTransfersRepository.findByIdWithReconciliation(
+          transfer.id,
+        );
+
+      expect(row.owedCents).toBe(9000);
+      expect(row.owedCents).toBe(detail!.owedCents);
+      expect(row.balanced).toBe(true); // paid 9000 == owed 9000
+      expect(detail!.balanced).toBe(true);
+    });
   });
 
   // ── listWithOwed ─────────────────────────────────────────────────────────────
