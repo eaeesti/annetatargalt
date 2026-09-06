@@ -201,7 +201,14 @@ export default async function TransferDetailPage({
               return (
                 <div key={o.organizationInternalId} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">{name}</span>
+                    <a
+                      href={`/organizations/${encodeURIComponent(o.organizationInternalId)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium hover:underline"
+                    >
+                      {name}
+                    </a>
                     <div className="flex items-center gap-3">
                       <span className="text-muted-foreground text-xs">
                         {o.donationCount} donation

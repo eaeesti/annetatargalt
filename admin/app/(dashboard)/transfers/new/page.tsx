@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { strapiAdmin } from "../../../../lib/api";
+import { fetchOrgs } from "../../../../lib/orgs";
 import { TransferBuilder } from "../_components/transfer-builder";
 
 /** Day after the given YYYY-MM-DD, as YYYY-MM-DD. */
@@ -13,14 +14,20 @@ export default async function NewTransferPage() {
   // Default the "from" date to the day after the most recent transfer round,
   // so consecutive rounds tile the timeline with no gap or overlap.
   let defaultFrom: string | undefined;
-  const res = await strapiAdmin(
-    "/api/admin-panel/transfers/list?pageSize=25&sortBy=datetime&sortDir=desc",
-    { cache: "no-store" },
-  );
+  const [res, orgs] = await Promise.all([
+    strapiAdmin(
+      "/api/admin-panel/transfers/list?pageSize=25&sortBy=datetime&sortDir=desc",
+      { cache: "no-store" },
+    ),
+    fetchOrgs(),
+  ]);
   if (res.ok) {
     const { data } = (await res.json()) as { data: { datetime: string }[] };
     if (data[0]?.datetime) defaultFrom = dayAfter(data[0].datetime);
   }
+  const orgNames: Record<string, string> = Object.fromEntries(
+    orgs.map((o) => [o.internalId, o.title ?? o.internalId]),
+  );
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -37,7 +44,7 @@ export default async function NewTransferPage() {
           donations, adjust it, then create the round.
         </p>
       </div>
-      <TransferBuilder defaultFrom={defaultFrom} />
+      <TransferBuilder defaultFrom={defaultFrom} orgNames={orgNames} />
     </div>
   );
 }
