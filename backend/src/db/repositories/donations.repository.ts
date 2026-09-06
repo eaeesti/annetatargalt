@@ -345,17 +345,6 @@ export class DonationsRepository {
   }
 
   /**
-   * IDs of donations that already have a transaction ID recorded.
-   */
-  async findReconciledIds(): Promise<Set<number>> {
-    const rows = await this.database
-      .select({ id: donations.id })
-      .from(donations)
-      .where(isNotNull(donations.transactionId));
-    return new Set(rows.map((r) => r.id));
-  }
-
-  /**
    * The distinct set of bank transaction IDs (archiving codes) already recorded
    * on donations — a code here means "this bank line is accounted for".
    */
@@ -400,28 +389,6 @@ export class DonationsRepository {
       .where(eq(donations.id, id))
       .returning({ id: donations.id });
     return updated.length > 0;
-  }
-
-  /**
-   * Bulk variant of {@link setTransactionId}, in a single transaction.
-   */
-  async setTransactionIds(
-    rows: { id: number; transactionId: string; source: MatchSource }[],
-  ): Promise<void> {
-    if (rows.length === 0) return;
-
-    await this.database.transaction(async (tx) => {
-      for (const row of rows) {
-        await tx
-          .update(donations)
-          .set({
-            transactionId: row.transactionId,
-            transactionMatchSource: row.source,
-            updatedAt: new Date(),
-          })
-          .where(eq(donations.id, row.id));
-      }
-    });
   }
 
   /**
