@@ -25,6 +25,7 @@ const VALID_CATEGORIES = new Set([
   "undecided",
   "unimported",
 ]);
+const VALID_BALANCED = new Set(["ok", "not-ok", "unknown"]);
 
 interface ListResponse {
   data: BankTransactionRow[];
@@ -60,6 +61,9 @@ export default async function TransactionsPage({
   const category = VALID_CATEGORIES.has(str(params.category) ?? "")
     ? str(params.category)
     : undefined;
+  const balanced = VALID_BALANCED.has(str(params.balanced) ?? "")
+    ? str(params.balanced)
+    : undefined;
   const isoish = (v: string | undefined) =>
     v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : undefined;
   const dateFrom = isoish(str(params.dateFrom));
@@ -72,6 +76,7 @@ export default async function TransactionsPage({
     sortBy,
     sortDir,
     ...(category && { category }),
+    ...(balanced && { balanced }),
     ...(dateFrom && { dateFrom }),
     ...(dateTo && { dateTo }),
     ...(search && { search }),
@@ -124,6 +129,7 @@ export default async function TransactionsPage({
         sortBy={sortBy}
         sortDir={sortDir as "asc" | "desc"}
         category={category ?? null}
+        balanced={balanced ?? null}
       />
     </div>
   );

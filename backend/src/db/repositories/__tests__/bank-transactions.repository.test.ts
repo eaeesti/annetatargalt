@@ -370,6 +370,112 @@ describe("BankTransactionsRepository", () => {
       expect(total).toBe(12);
       expect(data).toHaveLength(12);
     });
+
+    it("filters by the computed balanced state", async () => {
+      // OK — amount matches linked gross
+      await createTestBankTransaction({
+        archivingCode: "OK1",
+        category: "donation",
+        amount: 5000,
+      });
+      const dOk = await createTestDonation({ amount: 5000, finalized: true });
+      await donationsRepository.setTransactionId(dOk.id, "OK1", "manual");
+
+      // Not OK — card payout net short of linked gross, no fee recorded
+      await createTestBankTransaction({
+        archivingCode: "BAD1",
+        category: "card-payout",
+        amount: 4900,
+      });
+      const dBad = await createTestDonation({ amount: 5000, finalized: true });
+      await donationsRepository.setTransactionId(
+        dBad.id,
+        "BAD1",
+        "card-payout",
+      );
+
+      // Unknown — no linked donations
+      await createTestBankTransaction({
+        archivingCode: "UNK1",
+        category: "undecided",
+        amount: 1000,
+      });
+
+      const ok = await bankTransactionsRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+        balanced: "ok",
+      });
+      expect(ok.data.map((r) => r.archivingCode)).toEqual(["OK1"]);
+
+      const notOk = await bankTransactionsRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+        balanced: "not-ok",
+      });
+      expect(notOk.data.map((r) => r.archivingCode)).toEqual(["BAD1"]);
+
+      const unknown = await bankTransactionsRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+        balanced: "unknown",
+      });
+      expect(unknown.data.map((r) => r.archivingCode)).toEqual(["UNK1"]);
+    });
+  });
+
+  describe("card-fee backfill helpers", () => {
+    it("cardPayoutsMissingFee returns only card payouts with no fee_amount", async () => {
+      await createTestBankTransaction({
+        archivingCode: "CP-NOFEE",
+        category: "card-payout",
+        amount: 9263,
+        feeAmount: null,
+      });
+      await createTestBankTransaction({
+        archivingCode: "CP-HASFEE",
+        category: "card-payout",
+        amount: 9263,
+        feeAmount: 737,
+      });
+      await createTestBankTransaction({
+        archivingCode: "D-NOFEE",
+        category: "donation",
+        amount: 1000,
+        feeAmount: null,
+      });
+
+      const rows = await bankTransactionsRepository.cardPayoutsMissingFee();
+      expect(rows.map((r) => r.archivingCode)).toEqual(["CP-NOFEE"]);
+    });
+
+    it("recordPayoutTotals writes gross and fee", async () => {
+      await createTestBankTransaction({
+        archivingCode: "CP1",
+        category: "card-payout",
+        amount: 67310,
+        feeAmount: null,
+      });
+      const ok = await bankTransactionsRepository.recordPayoutTotals(
+        "CP1",
+        69000,
+        1690,
+      );
+      expect(ok).toBe(true);
+
+      const [row] = (
+        await bankTransactionsRepository.findPaginated({
+          page: 1,
+          pageSize: 25,
+        })
+      ).data;
+      expect(row.grossAmount).toBe(69000);
+      expect(row.feeAmount).toBe(1690);
+
+      expect(
+        await bankTransactionsRepository.recordPayoutTotals("nope", 1, 1),
+      ).toBe(false);
+    });
   });
 
   describe("moneyFlow", () => {
