@@ -83,7 +83,9 @@ export function createTransferService(_strapi: Core.Strapi) {
             throw new Error(
               r.reason === "not-outgoing"
                 ? "Only outgoing bank transactions can be linked to a transfer"
-                : "One or more archiving codes were not found",
+                : r.reason === "already-linked"
+                  ? "A payment is already linked to another transfer — unlink it there first"
+                  : "One or more archiving codes were not found",
             );
           }
         }

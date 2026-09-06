@@ -88,11 +88,5 @@ export default {
       handler: "donation.migrateTips",
       config: {},
     },
-    {
-      method: "PUT",
-      path: "/addDonationsToTransferByDate",
-      handler: "donation.addDonationsToTransferByDate",
-      config: {},
-    },
   ],
 };

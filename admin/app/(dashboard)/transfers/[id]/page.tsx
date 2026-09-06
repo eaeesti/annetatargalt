@@ -4,6 +4,7 @@ import { strapiAdmin } from "../../../../lib/api";
 import { resolveOrgNames } from "../../../../lib/orgs";
 import { Badge } from "../../../../components/ui/badge";
 import { TransferReconciliation } from "../_components/transfer-reconciliation";
+import { TransferMetaEditor } from "../_components/transfer-meta-editor";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -163,6 +164,13 @@ export default async function TransferDetailPage({
         <Field label="Total transferred">
           <span className="font-medium">{formatAmount(grandTotal)}</span>
         </Field>
+        <div className="pt-1">
+          <TransferMetaEditor
+            transferId={transfer.id}
+            datetime={transfer.datetime}
+            notes={transfer.notes}
+          />
+        </div>
       </Section>
 
       {/* Reconciliation — owed to orgs vs actually paid out */}

@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { strapiAdmin } from "../../../lib/api";
+import { buttonVariants } from "../../../components/ui/button";
 import {
   TransfersTable,
   type TransferRow,
@@ -70,7 +72,12 @@ export default async function TransfersPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Transfers</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Transfers</h1>
+        <Link href="/transfers/new" className={buttonVariants({ size: "sm" })}>
+          New transfer
+        </Link>
+      </div>
       <TransfersTable
         data={data}
         pagination={pagination}

@@ -1,6 +1,8 @@
 import type { Core } from "@strapi/strapi";
 import type { Context } from "koa";
-import montonio, { type MontonioDecodedToken } from "../../../../utils/montonio";
+import montonio, {
+  type MontonioDecodedToken,
+} from "../../../../utils/montonio";
 import { DonationsRepository } from "../../../../db/repositories/donations.repository";
 
 const donationsRepo = new DonationsRepository();
@@ -16,7 +18,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         .createDonation(donation);
       return ctx.send({ redirectURL });
     } catch (error: unknown) {
-      return ctx.badRequest(error instanceof Error ? error.message : String(error));
+      return ctx.badRequest(
+        error instanceof Error ? error.message : String(error),
+      );
     }
   },
 
@@ -26,7 +30,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       return ctx.badRequest("No return URL provided");
     }
 
-    const globalConfig = await strapi.documents("api::global.global").findFirst();
+    const globalConfig = await strapi
+      .documents("api::global.global")
+      .findFirst();
     if (!globalConfig) {
       return ctx.badRequest("Global config not found");
     }
@@ -49,7 +55,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         .createDonation(donation, returnUrl, true);
       return ctx.send({ redirectURL });
     } catch (error: unknown) {
-      return ctx.badRequest(error instanceof Error ? error.message : String(error));
+      return ctx.badRequest(
+        error instanceof Error ? error.message : String(error),
+      );
     }
   },
 
@@ -63,7 +71,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         .createForeignDonation(donation);
       return ctx.send({ redirectURL });
     } catch (error: unknown) {
-      return ctx.badRequest(error instanceof Error ? error.message : String(error));
+      return ctx.badRequest(
+        error instanceof Error ? error.message : String(error),
+      );
     }
   },
 
@@ -88,7 +98,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     }
 
     if (!decoded.merchant_reference) {
-      return ctx.badRequest("Invalid payment token: missing merchant reference");
+      return ctx.badRequest(
+        "Invalid payment token: missing merchant reference",
+      );
     }
     const id = Number(decoded.merchant_reference.split(" ").pop());
 
@@ -156,7 +168,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     }
 
     if (!decoded.merchant_reference) {
-      return ctx.badRequest("Invalid payment token: missing merchant reference");
+      return ctx.badRequest(
+        "Invalid payment token: missing merchant reference",
+      );
     }
     const id = Number(decoded.merchant_reference.split(" ").pop());
 
@@ -196,7 +210,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
     if (confirmation !== currentDateTime) {
       return ctx.badRequest(
-        `Confirmation must be the current date and time in the format 'YYYY-MM-DDTHH:MM' (${currentDateTime}). Instead got: '${confirmation}'`
+        `Confirmation must be the current date and time in the format 'YYYY-MM-DDTHH:MM' (${currentDateTime}). Instead got: '${confirmation}'`,
       );
     }
 
@@ -233,7 +247,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         .findTransactionDonation({ idCode, amount, date });
     } catch (error: unknown) {
       console.error(error);
-      return ctx.badRequest(error instanceof Error ? error.message : String(error));
+      return ctx.badRequest(
+        error instanceof Error ? error.message : String(error),
+      );
     }
 
     return ctx.send({ donation });
@@ -278,7 +294,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
   async list(ctx: Context) {
     const page = Math.max(1, Number(ctx.request.query.page ?? 1));
-    const pageSize = Math.min(100, Math.max(1, Number(ctx.request.query.pageSize ?? 25)));
+    const pageSize = Math.min(
+      100,
+      Math.max(1, Number(ctx.request.query.pageSize ?? 25)),
+    );
     const offset = (page - 1) * pageSize;
 
     const [data, total] = await Promise.all([
@@ -288,33 +307,12 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
     return ctx.send({
       data,
-      pagination: { page, pageSize, total, pageCount: Math.ceil(total / pageSize) },
-    });
-  },
-
-  async addDonationsToTransferByDate(ctx: Context) {
-    const { startDate, endDate, transferId } = ctx.request.body;
-
-    if (!startDate || !endDate || !transferId) {
-      return ctx.badRequest(
-        "Missing required fields (startDate, endDate, transferId)"
-      );
-    }
-
-    const donations = await strapi
-      .plugin("donations")
-      .service("donation")
-      .getDonationsInDateRange(startDate, endDate);
-
-    const donationIds = donations.map((donation: { id: number }) => donation.id);
-
-    await strapi
-      .plugin("donations")
-      .service("donation")
-      .addDonationsToTransfer(donationIds, transferId);
-
-    return ctx.send({
-      message: `Added ${donationIds.length} donations to transfer ${transferId}`,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        pageCount: Math.ceil(total / pageSize),
+      },
     });
   },
 });
