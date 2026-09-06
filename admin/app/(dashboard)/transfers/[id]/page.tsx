@@ -5,6 +5,7 @@ import { resolveOrgNames } from "../../../../lib/orgs";
 import { Badge } from "../../../../components/ui/badge";
 import { TransferReconciliation } from "../_components/transfer-reconciliation";
 import { TransferMetaEditor } from "../_components/transfer-meta-editor";
+import { ReconciledMark } from "../_components/reconciled-mark";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -264,20 +265,7 @@ export default async function TransferDetailPage({
                 className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-muted/50 -mx-2"
               >
                 <div className="flex items-center gap-3">
-                  <span
-                    className="w-3 text-center"
-                    title={
-                      d.transactionId
-                        ? `Reconciled to bank line ${d.transactionId}`
-                        : "Not reconciled to a bank transaction"
-                    }
-                  >
-                    {d.transactionId ? (
-                      <span className="text-emerald-600">✓</span>
-                    ) : (
-                      <span className="text-muted-foreground">·</span>
-                    )}
-                  </span>
+                  <ReconciledMark transactionId={d.transactionId} />
                   <span className="font-mono text-xs text-muted-foreground w-14">
                     #{d.id}
                   </span>
