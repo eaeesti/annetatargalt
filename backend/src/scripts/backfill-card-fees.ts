@@ -39,13 +39,6 @@ const eur = (c: number | null | undefined) =>
 const pct = (fee: number, gross: number) =>
   gross > 0 ? `${((fee / gross) * 100).toFixed(2)}%` : "—";
 
-/** Trailing donation id in a Montonio merchant reference (`<prefix> <id>`). */
-function refToDonationId(ref: string | undefined): number | null {
-  if (!ref) return null;
-  const m = /(\d+)\s*$/.exec(ref);
-  return m ? Number(m[1]) : null;
-}
-
 async function montonioTotals(
   row: {
     archivingCode: string;
@@ -57,16 +50,21 @@ async function montonioTotals(
   const prefix = row.description
     ? parsePayoutUuidPrefix(row.description)
     : null;
-  const payout =
-    (prefix && list.find((p) => p.uuid.toLowerCase().startsWith(prefix))) ||
-    list.find((p) => toCents(p.totalAmount) === row.amount);
+  const byPrefix = prefix
+    ? list.find((p) => p.uuid.toLowerCase().startsWith(prefix))
+    : undefined;
+  // amount is only a safe key when exactly one payout has that net total
+  const byAmount = list.filter((p) => toCents(p.totalAmount) === row.amount);
+  const payout = byPrefix ?? (byAmount.length === 1 ? byAmount[0] : undefined);
   if (!payout) return null;
 
   const orders = await montonio.getPayoutOrders(payout.uuid);
   if (!orders) return null;
 
+  // gross per order; the fee is split over the bank row's linked donations,
+  // not the Montonio order refs, so only grossCents is consumed here
   const parsed = orders.map((o) => ({
-    donationId: refToDonationId(o.merchantReference ?? o.merchant_reference),
+    donationId: null,
     grossCents: toCents(o.grandTotal ?? o.grand_total ?? o.amount ?? o.total),
   }));
   const { grossCents, feeCents } = computePayoutGrossFee(
@@ -99,8 +97,9 @@ async function main() {
   );
   if (rows.length === 0) return;
 
+  // the rows needing backfill are the oldest settlements — reach well back
   const list = montonio.isPayoutsConfigured()
-    ? await montonio.listPayouts()
+    ? await montonio.listPayouts(500)
     : [];
   if (list.length === 0) {
     console.log(
@@ -119,6 +118,17 @@ async function main() {
       amount: d.amount ?? 0,
     }));
     const linkedGross = donations.reduce((s, d) => s + d.amount, 0);
+
+    // Same guard as `mapRow` — a pending donation's amount can still change, so
+    // both the derived gross and the per-donation split would be provisional.
+    // Skip; a re-run picks the row up once its donations finalize.
+    if ((detail?.donations ?? []).some((d) => !d.finalized)) {
+      skipped.push({
+        code: row.archivingCode,
+        reason: "a linked donation is still pending",
+      });
+      continue;
+    }
 
     // 1. Montonio (authoritative gross)
     const m = list.length > 0 ? await montonioTotals(row, list) : null;
