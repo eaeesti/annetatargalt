@@ -17,11 +17,11 @@ type Candidate = {
 const eur = (c: number) => `€${(c / 100).toFixed(2)}`;
 const today = () => new Date().toISOString().slice(0, 10);
 
-export function TransferBuilder() {
+export function TransferBuilder({ defaultFrom }: { defaultFrom?: string }) {
   const router = useRouter();
 
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [dateFrom, setDateFrom] = useState(defaultFrom ?? "");
+  const [dateTo, setDateTo] = useState(today());
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [candidates, setCandidates] = useState<Candidate[] | null>(null);
@@ -44,7 +44,8 @@ export function TransferBuilder() {
       const rows = json.data as Candidate[];
       setCandidates(rows);
       setSelected(new Set(rows.map((r) => r.id)));
-      if (!transferDate) setTransferDate(dateTo);
+      // the round is conventionally dated at the end of the period it covers
+      setTransferDate(dateTo);
     } catch {
       setLoadError("Failed to load donations for that range.");
     } finally {
