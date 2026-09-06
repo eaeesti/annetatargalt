@@ -810,14 +810,14 @@ describe("BankTransactionsRepository", () => {
         category: "outgoing",
         amount: 100,
         date: "2026-02-15",
-        counterpartyName: "Giving What We Can UK",
+        counterpartyName: "Recipient Org",
       });
       await createTestBankTransaction({
         archivingCode: "OY",
         category: "outgoing",
         amount: 200,
         date: "2026-05-01",
-        counterpartyName: "Maksu- ja Tolliamet",
+        counterpartyName: "Some Vendor",
       });
 
       const byDate = await bankTransactionsRepository.findUnlinkedOutgoing({
@@ -827,7 +827,7 @@ describe("BankTransactionsRepository", () => {
       expect(byDate.map((r) => r.archivingCode)).toEqual(["OX"]);
 
       const bySearch = await bankTransactionsRepository.findUnlinkedOutgoing({
-        search: "giving what",
+        search: "recipient",
       });
       expect(bySearch.map((r) => r.archivingCode)).toEqual(["OX"]);
     });
