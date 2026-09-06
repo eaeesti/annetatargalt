@@ -106,6 +106,11 @@ async function bootstrapDonationPermissions(
     "plugin::admin-panel.recurringDonation.grid",
     "plugin::admin-panel.transfer.list",
     "plugin::admin-panel.transfer.findOne",
+    "plugin::admin-panel.transfer.preview",
+    "plugin::admin-panel.transfer.unlinkedOutgoing",
+    "plugin::admin-panel.transfer.create", // write path — create a transfer round
+    "plugin::admin-panel.transfer.update", // write path — attach donations / link payments
+    "plugin::admin-panel.transfer.remove", // write path — delete an empty transfer
     "plugin::admin-panel.organization.stats",
     "plugin::admin-panel.dashboard.stats",
     "plugin::admin-panel.dashboard.charts",
@@ -141,7 +146,7 @@ async function bootstrapDonationPermissions(
         data: {
           name: ROLE_NAME,
           description:
-            "Donation admin panel access (read-only, plus the bank-statement import)",
+            "Donation admin panel access (read-only, plus bank-statement import and transfer-round management)",
           type: "donation_admin",
         },
       })) as Role;

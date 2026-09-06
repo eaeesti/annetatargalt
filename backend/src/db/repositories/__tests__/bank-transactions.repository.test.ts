@@ -634,5 +634,140 @@ describe("BankTransactionsRepository", () => {
       expect(mf.discrepancy).toBe(0);
       expect(mf.unimportedRows).toBe(1);
     });
+
+    it("transferPaidOut / transferGap / notYetTransferred", async () => {
+      // a reconciled donation, allocated, assigned to a round, and paid out
+      await createTestBankTransaction({
+        archivingCode: "IN1",
+        category: "donation",
+        amount: 10000,
+      });
+      const transfer = await createTestDonationTransfer({
+        datetime: "2026-01-18",
+      });
+      const paid = await createTestDonation({
+        finalized: true,
+        amount: 10000,
+        donationTransferId: transfer.id,
+      });
+      await donationsRepository.setTransactionId(paid.id, "IN1", "manual");
+      await createTestOrganizationDonation({
+        donationId: paid.id,
+        organizationInternalId: "AMF",
+        amount: 10000,
+      });
+      await createTestBankTransaction({
+        archivingCode: "OUT_A",
+        category: "outgoing",
+        amount: 9000, // €10 short of owed → transferGap 1000
+        donationTransferId: transfer.id,
+      });
+
+      // a reconciled+allocated donation NOT yet in any round
+      await createTestBankTransaction({
+        archivingCode: "IN2",
+        category: "donation",
+        amount: 4000,
+      });
+      const backlog = await createTestDonation({
+        finalized: true,
+        amount: 4000,
+      });
+      await donationsRepository.setTransactionId(backlog.id, "IN2", "manual");
+      await createTestOrganizationDonation({
+        donationId: backlog.id,
+        organizationInternalId: "AMF",
+        amount: 4000,
+      });
+
+      const mf = await bankTransactionsRepository.moneyFlow({});
+      expect(mf.transferPaidOut).toBe(9000);
+      expect(mf.transferGap).toBe(1000);
+      expect(mf.notYetTransferred).toBe(4000);
+    });
+  });
+
+  describe("transfer link", () => {
+    it("setDonationTransfer links outgoing rows and rejects non-outgoing / unknown codes", async () => {
+      const transfer = await createTestDonationTransfer({
+        datetime: "2026-01-18",
+      });
+      await createTestBankTransaction({
+        archivingCode: "O1",
+        category: "outgoing",
+        amount: 500,
+      });
+      await createTestBankTransaction({
+        archivingCode: "O2",
+        category: "outgoing",
+        amount: 700,
+      });
+      await createTestBankTransaction({
+        archivingCode: "D1",
+        category: "donation",
+        amount: 900,
+      });
+
+      expect(
+        await bankTransactionsRepository.setDonationTransfer(
+          ["O1", "O2"],
+          transfer.id,
+        ),
+      ).toEqual({ ok: true });
+
+      // non-outgoing is rejected, nothing written
+      expect(
+        await bankTransactionsRepository.setDonationTransfer(
+          ["D1"],
+          transfer.id,
+        ),
+      ).toEqual({ ok: false, reason: "not-outgoing" });
+
+      // unknown code
+      expect(
+        await bankTransactionsRepository.setDonationTransfer(
+          ["NOPE"],
+          transfer.id,
+        ),
+      ).toEqual({ ok: false, reason: "not-found" });
+
+      // unlink
+      expect(
+        await bankTransactionsRepository.setDonationTransfer(["O1"], null),
+      ).toEqual({ ok: true });
+
+      const unlinked = await bankTransactionsRepository.findUnlinkedOutgoing(
+        {},
+      );
+      expect(unlinked.map((r) => r.archivingCode).sort()).toEqual(["O1"]);
+    });
+
+    it("findUnlinkedOutgoing filters by date and search", async () => {
+      await createTestBankTransaction({
+        archivingCode: "OX",
+        category: "outgoing",
+        amount: 100,
+        date: "2026-02-15",
+        counterpartyName: "Giving What We Can UK",
+      });
+      await createTestBankTransaction({
+        archivingCode: "OY",
+        category: "outgoing",
+        amount: 200,
+        date: "2026-05-01",
+        counterpartyName: "Maksu- ja Tolliamet",
+      });
+
+      const byDate = await bankTransactionsRepository.findUnlinkedOutgoing({
+        dateFrom: "2026-02-01",
+        dateTo: "2026-02-28",
+      });
+      expect(byDate.map((r) => r.archivingCode)).toEqual(["OX"]);
+
+      const bySearch = await bankTransactionsRepository.findUnlinkedOutgoing({
+        search: "giving what",
+      });
+      expect(bySearch.map((r) => r.archivingCode)).toEqual(["OX"]);
+    });
   });
 });
