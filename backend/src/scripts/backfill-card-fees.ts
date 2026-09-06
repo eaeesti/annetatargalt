@@ -1,12 +1,19 @@
 /**
- * Backfill `gross_amount` / `fee_amount` on card-payout `bank_transactions`
- * rows that are missing them — older Montonio settlements the statement import
- * couldn't resolve — plus each linked donation's `processor_fee_cents` slice.
+ * Fill `gross_amount` / `fee_amount` on `card-payout` `bank_transactions` rows
+ * that are missing them, plus each linked donation's `processor_fee_cents`
+ * slice.
  *
  *   yarn backfill-card-fees [--apply]
  *
+ * The monthly `/statement` import already resolves card-payout gross/fee from
+ * the Montonio payouts API at import time. This is the sweep for the leftovers:
+ * the historical backfill (payouts too old for the API when Phase 3 first ran),
+ * and any future payout the API couldn't resolve on the day (API down, payout
+ * outside the window) — those show as ✗ in `/transactions` until this runs.
+ *
  * Dry run by default: prints what it would write and changes nothing.
- * `--apply` commits, in one transaction.
+ * `--apply` commits, in one transaction. Idempotent — a row with a fee is no
+ * longer a candidate.
  *
  * For each `card-payout` row with `fee_amount IS NULL`:
  *   1. Try the Montonio payouts API — authoritative gross per order.

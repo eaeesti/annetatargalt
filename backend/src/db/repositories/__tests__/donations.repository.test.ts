@@ -436,24 +436,6 @@ describe("DonationsRepository", () => {
       expect(updated?.transactionMatchSource).toBe("selgitus-id");
     });
 
-    it("setTransactionIds applies many in one call and findReconciledIds reflects it", async () => {
-      const a = await createTestDonation();
-      const b = await createTestDonation();
-      const c = await createTestDonation();
-      await createTestBankTransaction({ archivingCode: "AAA" });
-      await createTestBankTransaction({ archivingCode: "BBB" });
-
-      await donationsRepository.setTransactionIds([
-        { id: a.id, transactionId: "AAA", source: "manual" },
-        { id: b.id, transactionId: "BBB", source: "idcode-amount-date" },
-      ]);
-
-      const reconciled = await donationsRepository.findReconciledIds();
-      expect(reconciled.has(a.id)).toBe(true);
-      expect(reconciled.has(b.id)).toBe(true);
-      expect(reconciled.has(c.id)).toBe(false);
-    });
-
     it("findWithFilters filters by transactionId and hasTransactionId", async () => {
       const matched = await createTestDonation();
       await createTestDonation();

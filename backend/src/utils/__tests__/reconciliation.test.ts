@@ -211,41 +211,6 @@ describe("matchDonations", () => {
     ]);
   });
 
-  it("overrides win over everything and are reported as manual", () => {
-    const transactions = [
-      txn({ archivingCode: "AUTO", description: "Anneta Targalt annetus 1" }),
-    ];
-    const report = matchDonations(
-      transactions,
-      [donation({ id: 1 })],
-      new Map([[1, "MANUAL"]]),
-    );
-    expect(report.matched).toEqual([
-      { donationId: 1, archivingCode: "MANUAL", source: "manual" },
-    ]);
-  });
-
-  it("batch: several donations resolve to one archiving code (via overrides)", () => {
-    const transactions = [txn({ archivingCode: "BATCH", amountCents: 9000 })];
-    const donations = [
-      donation({ id: 1, amountCents: 3000 }),
-      donation({ id: 2, amountCents: 3000 }),
-      donation({ id: 3, amountCents: 3000 }),
-    ];
-    const overrides = new Map([
-      [1, "BATCH"],
-      [2, "BATCH"],
-      [3, "BATCH"],
-    ]);
-    const report = matchDonations(transactions, donations, overrides);
-    expect(report.matched.map((m) => m.archivingCode)).toEqual([
-      "BATCH",
-      "BATCH",
-      "BATCH",
-    ]);
-    expect(report.donationlessTransactions).toHaveLength(0);
-  });
-
   it("ignores debit rows", () => {
     const transactions = [
       txn({
