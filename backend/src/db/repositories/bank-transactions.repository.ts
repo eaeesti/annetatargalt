@@ -1,4 +1,4 @@
-import { eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db, type Database } from "../client";
 import { bankTransactions, type BankTransaction } from "../schema";
 
@@ -93,6 +93,9 @@ export interface MoneyFlow {
   discrepancy: number;
 }
 
+/** The "OK" column state — see `mapRow` for how `balanced` is derived. */
+export type BalancedFilter = "ok" | "not-ok" | "unknown";
+
 interface FindPaginatedOptions {
   page: number;
   pageSize: number;
@@ -102,6 +105,8 @@ interface FindPaginatedOptions {
   dateFrom?: string;
   dateTo?: string;
   search?: string;
+  /** filter on the computed "OK" state */
+  balanced?: BalancedFilter;
 }
 
 const num = (v: unknown) => Number(v ?? 0);
@@ -329,6 +334,38 @@ export class BankTransactionsRepository {
       : { ok: false, reason: "not-found" };
   }
 
+  /** `card-payout` rows with no stored processor fee yet (backfill candidates). */
+  async cardPayoutsMissingFee(): Promise<BankTransaction[]> {
+    return this.database
+      .select()
+      .from(bankTransactions)
+      .where(
+        and(
+          eq(bankTransactions.category, "card-payout"),
+          isNull(bankTransactions.feeAmount),
+        ),
+      )
+      .orderBy(bankTransactions.date);
+  }
+
+  /** Set the gross/fee on a card-payout row (used by the fee backfill script). */
+  async recordPayoutTotals(
+    code: string,
+    grossCents: number,
+    feeCents: number,
+  ): Promise<boolean> {
+    const updated = await this.database
+      .update(bankTransactions)
+      .set({
+        grossAmount: grossCents,
+        feeAmount: feeCents,
+        updatedAt: new Date(),
+      })
+      .where(eq(bankTransactions.archivingCode, code))
+      .returning({ code: bankTransactions.archivingCode });
+    return updated.length > 0;
+  }
+
   async findPaginated(
     opts: FindPaginatedOptions,
   ): Promise<{ data: BankTransactionRow[]; total: number }> {
@@ -347,13 +384,13 @@ export class BankTransactionsRepository {
     const where = sql.join(conds, sql` and `);
 
     const sortCols: Record<string, ReturnType<typeof sql>> = {
-      date: sql`bt.date`,
-      amount: sql`bt.amount`,
-      category: sql`bt.category`,
-      counterpartyName: sql`bt.counterparty_name`,
-      importedAt: sql`bt.imported_at`,
+      date: sql`q.date`,
+      amount: sql`q.amount`,
+      category: sql`q.category`,
+      counterpartyName: sql`q.counterparty_name`,
+      importedAt: sql`q.imported_at`,
     };
-    const sortCol = sortCols[sortBy] ?? sql`bt.date`;
+    const sortCol = sortCols[sortBy] ?? sql`q.date`;
     const dir = sortDir === "asc" ? sql`asc` : sql`desc`;
     // pageSize <= 0 means "all rows" (the /transactions "View all" option)
     const limitClause =
@@ -361,7 +398,24 @@ export class BankTransactionsRepository {
         ? sql`LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}`
         : sql``;
 
-    const rowsRes = await this.database.execute(sql`
+    // Same "OK" test as `mapRow` — kept here only so the list can be filtered on
+    // it. A null feeAmount counts as a zero fee (matches `mapRow`).
+    const balancedState = sql`CASE
+      WHEN q.linked_donation_count = 0 OR q.amount IS NULL OR q.pending_donation_count > 0 THEN NULL
+      WHEN abs(q.amount - (q.linked_gross_cents - coalesce(q.fee_amount, 0))) <= greatest(1, q.linked_donation_count) THEN true
+      ELSE false
+    END`;
+    const balancedWhere =
+      opts.balanced === "ok"
+        ? sql`AND (${balancedState}) = true`
+        : opts.balanced === "not-ok"
+          ? sql`AND (${balancedState}) = false`
+          : opts.balanced === "unknown"
+            ? sql`AND (${balancedState}) IS NULL`
+            : sql``;
+
+    // inner query carries the computed columns the balanced test reads
+    const scored = sql`
       SELECT bt.*,
         (SELECT cast(count(*) as int) FROM donations d
            WHERE d.transaction_id = bt.archiving_code) as linked_donation_count,
@@ -374,13 +428,18 @@ export class BankTransactionsRepository {
         (SELECT cast(coalesce(sum(d.amount), 0) as int) FROM donations d
            WHERE d.transaction_id = bt.archiving_code) as linked_gross_cents
       FROM bank_transactions bt
-      WHERE ${where}
-      ORDER BY ${sortCol} ${dir} NULLS LAST, bt.archiving_code ${dir}
+      WHERE ${where}`;
+
+    const rowsRes = await this.database.execute(sql`
+      SELECT q.* FROM (${scored}) q
+      WHERE 1 = 1 ${balancedWhere}
+      ORDER BY ${sortCol} ${dir} NULLS LAST, q.archiving_code ${dir}
       ${limitClause}
     `);
-    const countRes = await this.database.execute(
-      sql`SELECT cast(count(*) as int) as total FROM bank_transactions bt WHERE ${where}`,
-    );
+    const countRes = await this.database.execute(sql`
+      SELECT cast(count(*) as int) as total FROM (${scored}) q
+      WHERE 1 = 1 ${balancedWhere}
+    `);
 
     return {
       data: (rowsRes.rows as Record<string, unknown>[]).map(mapRow),

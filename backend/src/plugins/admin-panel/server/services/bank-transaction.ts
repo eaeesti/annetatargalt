@@ -41,6 +41,7 @@ export function createBankTransactionService(strapi: Core.Strapi) {
       dateFrom?: string;
       dateTo?: string;
       search?: string;
+      balanced?: "ok" | "not-ok" | "unknown";
     }) {
       const category =
         opts.category && FILTER_CATEGORIES.includes(opts.category)

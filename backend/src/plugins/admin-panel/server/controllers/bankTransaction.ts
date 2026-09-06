@@ -4,6 +4,7 @@ import { createBankTransactionService } from "../services/bank-transaction";
 import { auditLog } from "../utils/audit-log";
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
+const VALID_BALANCED = new Set(["ok", "not-ok", "unknown"]);
 const VALID_SORT_COLS = new Set([
   "date",
   "amount",
@@ -56,6 +57,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
         dateFrom: isoDate(q.dateFrom),
         dateTo: isoDate(q.dateTo),
         search: q.search ? String(q.search).slice(0, 128) : undefined,
+        balanced: VALID_BALANCED.has(String(q.balanced))
+          ? (String(q.balanced) as "ok" | "not-ok" | "unknown")
+          : undefined,
       });
 
       await auditLog(ctx, "bankTransactions.list");

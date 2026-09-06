@@ -72,6 +72,11 @@ const CATEGORIES = [
 /** categories an operator can set a row to via the drawer (not 'unimported') */
 const RECLASSIFY_CATEGORIES = CATEGORIES.filter((c) => c !== "unimported");
 const PAGE_SIZES = [25, 50, 100, 250, "all"] as const;
+const BALANCED_FILTERS = [
+  { value: "ok", label: "✓ OK" },
+  { value: "not-ok", label: "✗ Not OK" },
+  { value: "unknown", label: "· Unknown" },
+] as const;
 
 const eur = (cents: number | null) =>
   cents == null ? "—" : `€${(cents / 100).toFixed(2)}`;
@@ -97,6 +102,7 @@ interface Props {
   sortBy: string;
   sortDir: "asc" | "desc";
   category: string | null;
+  balanced: string | null;
 }
 
 export function TransactionsTable({
@@ -105,6 +111,7 @@ export function TransactionsTable({
   sortBy,
   sortDir,
   category,
+  balanced,
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -234,6 +241,24 @@ export function TransactionsTable({
               onClick={() => pushUrl({ category: c, page: "1" })}
             >
               {c}
+            </Button>
+          ))}
+        </div>
+        <div className="flex gap-1">
+          {BALANCED_FILTERS.map((b) => (
+            <Button
+              key={b.value}
+              variant={balanced === b.value ? "default" : "outline"}
+              size="sm"
+              className="h-7"
+              onClick={() =>
+                pushUrl({
+                  balanced: balanced === b.value ? undefined : b.value,
+                  page: "1",
+                })
+              }
+            >
+              {b.label}
             </Button>
           ))}
         </div>
