@@ -130,10 +130,12 @@ describe("BankTransactionsRepository", () => {
       expect(row.category).toBe("donation");
     });
 
-    it("coalesces bank fields — a real line fills in a blind ignore", async () => {
+    it("fills in null bank fields but never overwrites existing ones on re-import", async () => {
+      // blind ignore: category + note only
       await bankTransactionsRepository.upsertMany([
         { archivingCode: "E", category: "ignored", note: "misdirected" },
       ]);
+      // first real sighting fills in the nulls
       await bankTransactionsRepository.upsertMany([
         {
           archivingCode: "E",
@@ -143,11 +145,24 @@ describe("BankTransactionsRepository", () => {
           counterpartyName: "Someone",
         },
       ]);
+      // a later re-upload with DIFFERENT data (e.g. a corrected amount was
+      // hand-fixed, or a currency line collides) must not clobber anything
+      await bankTransactionsRepository.upsertMany([
+        {
+          archivingCode: "E",
+          category: "undecided",
+          date: "2099-01-01",
+          amountCents: 5,
+          counterpartyName: "Wire fee",
+          note: "should not overwrite",
+        },
+      ]);
       const [row] = await bankTransactionsRepository.findAll();
-      expect(row.category).toBe("ignored");
-      expect(row.date).toBe("2026-03-03");
-      expect(row.amount).toBe(999);
-      expect(row.note).toBe("misdirected");
+      expect(row.category).toBe("ignored"); // precedence unchanged
+      expect(row.date).toBe("2026-03-03"); // frozen
+      expect(row.amount).toBe(999); // frozen — not 5
+      expect(row.counterpartyName).toBe("Someone"); // frozen
+      expect(row.note).toBe("misdirected"); // frozen
     });
 
     it("stores card-payout gross/fee", async () => {

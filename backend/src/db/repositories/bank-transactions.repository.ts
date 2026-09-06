@@ -289,18 +289,22 @@ export class BankTransactionsRepository {
           .onConflictDoUpdate({
             target: bankTransactions.archivingCode,
             set: {
-              date: sql`coalesce(excluded."date", ${bankTransactions.date})`,
-              amount: sql`coalesce(excluded."amount", ${bankTransactions.amount})`,
-              description: sql`coalesce(excluded."description", ${bankTransactions.description})`,
-              counterpartyName: sql`coalesce(excluded."counterparty_name", ${bankTransactions.counterpartyName})`,
-              counterpartyAccount: sql`coalesce(excluded."counterparty_account", ${bankTransactions.counterpartyAccount})`,
-              senderCode: sql`coalesce(excluded."sender_code", ${bankTransactions.senderCode})`,
+              // A bank line never changes once seen. On a re-import we only
+              // FILL IN fields that are still null (a migration stub or a
+              // blind ignore getting its first real data) — an existing value
+              // is frozen, so re-uploading a statement can't clobber a manual
+              // correction (e.g. a foreign-currency amount).
+              date: sql`coalesce(${bankTransactions.date}, excluded."date")`,
+              amount: sql`coalesce(${bankTransactions.amount}, excluded."amount")`,
+              description: sql`coalesce(${bankTransactions.description}, excluded."description")`,
+              counterpartyName: sql`coalesce(${bankTransactions.counterpartyName}, excluded."counterparty_name")`,
+              counterpartyAccount: sql`coalesce(${bankTransactions.counterpartyAccount}, excluded."counterparty_account")`,
+              senderCode: sql`coalesce(${bankTransactions.senderCode}, excluded."sender_code")`,
               category: finalCat,
-              grossAmount: sql`coalesce(excluded."gross_amount", ${bankTransactions.grossAmount})`,
-              feeAmount: sql`coalesce(excluded."fee_amount", ${bankTransactions.feeAmount})`,
-              note: sql`coalesce(excluded."note", ${bankTransactions.note})`,
-              importedBy: sql`coalesce(excluded."imported_by", ${bankTransactions.importedBy})`,
-              importedAt: sql`now()`,
+              grossAmount: sql`coalesce(${bankTransactions.grossAmount}, excluded."gross_amount")`,
+              feeAmount: sql`coalesce(${bankTransactions.feeAmount}, excluded."fee_amount")`,
+              note: sql`coalesce(${bankTransactions.note}, excluded."note")`,
+              importedBy: sql`coalesce(${bankTransactions.importedBy}, excluded."imported_by")`,
               updatedAt: sql`now()`,
             },
           });
