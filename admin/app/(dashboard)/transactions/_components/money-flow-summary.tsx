@@ -115,17 +115,12 @@ export function MoneyFlowSummary({ summary: s }: { summary: MoneyFlow }) {
           <Figure
             label="Assigned to a round"
             value={eur(s.transferred)}
-            hint={`not yet ${eur(s.notYetTransferred)}`}
+            hint="of allocated, in a transfer round"
           />
           <Figure
             label="Paid out to orgs"
             value={eur(s.transferPaidOut)}
-            tone={s.transferGap > 100 ? "warn" : undefined}
-            hint={
-              s.transferGap > 100
-                ? `${eur(s.transferGap)} owed but not yet paid`
-                : "linked outgoing debits"
-            }
+            hint="linked outgoing debits"
           />
           <Figure
             label="Outgoing (bank debits)"
@@ -144,8 +139,22 @@ export function MoneyFlowSummary({ summary: s }: { summary: MoneyFlow }) {
         {(s.undecidedInflow > 0 ||
           s.unlinkedDonationCount > 0 ||
           s.unimportedRows > 0 ||
-          s.pendingLinkedCents > 0) && (
+          s.pendingLinkedCents > 0 ||
+          s.notYetTransferred > 0 ||
+          s.transferGap > 100) && (
           <div className="flex flex-wrap gap-x-6 gap-y-1 border-t pt-3 text-xs">
+            {s.notYetTransferred > 0 && (
+              <span className="text-muted-foreground">
+                {eur(s.notYetTransferred)} allocated but not yet in any transfer
+                round (all time)
+              </span>
+            )}
+            {s.transferGap > 100 && (
+              <span className="text-amber-600">
+                {eur(s.transferGap)} across transfer rounds that started paying
+                out but don&apos;t reconcile (all time)
+              </span>
+            )}
             {s.pendingLinkedCents > 0 && (
               <span className="text-muted-foreground">
                 {eur(s.pendingLinkedCents)} linked to a still-pending donation —

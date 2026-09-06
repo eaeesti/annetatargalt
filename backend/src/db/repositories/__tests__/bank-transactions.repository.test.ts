@@ -659,8 +659,29 @@ describe("BankTransactionsRepository", () => {
       await createTestBankTransaction({
         archivingCode: "OUT_A",
         category: "outgoing",
-        amount: 9000, // €10 short of owed → transferGap 1000
+        amount: 7500, // €25 short of €100 owed — outside the €10/0.5% tolerance
         donationTransferId: transfer.id,
+      });
+
+      // a second round that is OVERpaid by the same amount — must NOT cancel
+      const transfer2 = await createTestDonationTransfer({
+        datetime: "2026-02-18",
+      });
+      const paid2 = await createTestDonation({
+        finalized: true,
+        amount: 10000,
+        donationTransferId: transfer2.id,
+      });
+      await createTestOrganizationDonation({
+        donationId: paid2.id,
+        organizationInternalId: "AMF",
+        amount: 10000,
+      });
+      await createTestBankTransaction({
+        archivingCode: "OUT_B",
+        category: "outgoing",
+        amount: 12500, // €25 over
+        donationTransferId: transfer2.id,
       });
 
       // a reconciled+allocated donation NOT yet in any round
@@ -681,9 +702,35 @@ describe("BankTransactionsRepository", () => {
       });
 
       const mf = await bankTransactionsRepository.moneyFlow({});
-      expect(mf.transferPaidOut).toBe(9000);
-      expect(mf.transferGap).toBe(1000);
+      expect(mf.transferPaidOut).toBe(20000);
+      // 2500 (under) + 2500 (over) — absolute, not cancelling
+      expect(mf.transferGap).toBe(5000);
       expect(mf.notYetTransferred).toBe(4000);
+    });
+
+    it("transferGap ignores rounds within tolerance", async () => {
+      const transfer = await createTestDonationTransfer({
+        datetime: "2026-01-18",
+      });
+      const d = await createTestDonation({
+        finalized: true,
+        amount: 10000,
+        donationTransferId: transfer.id,
+      });
+      await createTestOrganizationDonation({
+        donationId: d.id,
+        organizationInternalId: "AMF",
+        amount: 10000,
+      });
+      await createTestBankTransaction({
+        archivingCode: "OUT_C",
+        category: "outgoing",
+        amount: 9950, // €0.50 short — within the €10 floor
+        donationTransferId: transfer.id,
+      });
+
+      const mf = await bankTransactionsRepository.moneyFlow({});
+      expect(mf.transferGap).toBe(0);
     });
   });
 

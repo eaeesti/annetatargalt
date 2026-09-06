@@ -100,6 +100,24 @@ export class DonationTransfersRepository {
       .groupBy(bankTransactions.donationTransferId)
       .as("ps");
 
+    // "Owed to orgs" = Σ organization_donations of the round's finalized
+    // donations — the same figure `findByIdWithReconciliation` uses, so the
+    // list "OK" column and the detail page agree.
+    const owedSq = this.database
+      .select({
+        transferId: donations.donationTransferId,
+        owed: sql<number>`cast(coalesce(sum(${organizationDonations.amount}), 0) as int)`.as(
+          "owed",
+        ),
+      })
+      .from(organizationDonations)
+      .innerJoin(donations, eq(organizationDonations.donationId, donations.id))
+      .where(
+        sql`${donations.donationTransferId} is not null and ${donations.finalized} = true`,
+      )
+      .groupBy(donations.donationTransferId)
+      .as("os");
+
     const [rows, countRows] = await Promise.all([
       this.database
         .select({
@@ -110,11 +128,13 @@ export class DonationTransfersRepository {
           createdAt: donationTransfers.createdAt,
           donationCount: statsSq.donationCount,
           totalAmount: statsSq.totalAmount,
+          owedCents: owedSq.owed,
           paidOutCents: paidSq.paidOut,
           paymentCount: paidSq.paymentCount,
         })
         .from(donationTransfers)
         .leftJoin(statsSq, eq(donationTransfers.id, statsSq.transferId))
+        .leftJoin(owedSq, eq(donationTransfers.id, owedSq.transferId))
         .leftJoin(paidSq, eq(donationTransfers.id, paidSq.transferId))
         .where(whereClause)
         .orderBy(dir(orderCol))
@@ -127,11 +147,12 @@ export class DonationTransfersRepository {
     ]);
 
     const data = rows.map((r) => {
-      const owed = Number(r.totalAmount ?? 0);
+      const owed = Number(r.owedCents ?? 0);
       const paidOut = Number(r.paidOutCents ?? 0);
       const payments = Number(r.paymentCount ?? 0);
       return {
         ...r,
+        owedCents: owed,
         paidOutCents: paidOut,
         paymentCount: payments,
         // null = nothing linked yet (not assessable)
@@ -391,19 +412,33 @@ export class DonationTransfersRepository {
 
   /**
    * Delete a donation transfer. Refuses while any donation or bank transaction
-   * still references it — unlink those first.
+   * still references it — unlink those first. The FK also enforces this, so a
+   * link created between the check and the delete still surfaces as `has-links`
+   * (foreign_key_violation, SQLSTATE 23503) rather than a 500.
    */
   async delete(
     id: number,
   ): Promise<{ ok: true } | { ok: false; reason: "has-links" | "not-found" }> {
     if (await this.hasLinks(id)) return { ok: false, reason: "has-links" };
-    const deleted = await this.database
-      .delete(donationTransfers)
-      .where(eq(donationTransfers.id, id))
-      .returning({ id: donationTransfers.id });
-    return deleted.length > 0
-      ? { ok: true }
-      : { ok: false, reason: "not-found" };
+    try {
+      const deleted = await this.database
+        .delete(donationTransfers)
+        .where(eq(donationTransfers.id, id))
+        .returning({ id: donationTransfers.id });
+      return deleted.length > 0
+        ? { ok: true }
+        : { ok: false, reason: "not-found" };
+    } catch (err) {
+      if (
+        err &&
+        typeof err === "object" &&
+        "code" in err &&
+        (err as { code?: string }).code === "23503"
+      ) {
+        return { ok: false, reason: "has-links" };
+      }
+      throw err;
+    }
   }
 }
 

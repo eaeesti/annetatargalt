@@ -33,6 +33,7 @@ export type TransferRow = {
   notes: string | null;
   donationCount: number | null;
   totalAmount: number | null;
+  owedCents: number | null;
   paidOutCents: number | null;
   paymentCount: number | null;
   balanced: boolean | null;

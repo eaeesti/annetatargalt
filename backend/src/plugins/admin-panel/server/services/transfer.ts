@@ -45,7 +45,15 @@ export function createTransferService(_strapi: Core.Strapi) {
           recipient: null,
         });
         if (input.donationIds.length > 0) {
-          await donationsRepo.addToTransfer(input.donationIds, transfer.id);
+          const r = await donationsRepo.assignToTransfer(
+            input.donationIds,
+            transfer.id,
+          );
+          if (!r.ok) {
+            throw new Error(
+              `Donations ${r.conflicting.join(", ")} can't be added — not finalized, or already on another round`,
+            );
+          }
         }
         return transfer;
       });
@@ -71,7 +79,15 @@ export function createTransferService(_strapi: Core.Strapi) {
           await donationsRepo.removeFromTransfer(input.removeDonationIds);
         }
         if (input.addDonationIds?.length) {
-          await donationsRepo.addToTransfer(input.addDonationIds, id);
+          const r = await donationsRepo.assignToTransfer(
+            input.addDonationIds,
+            id,
+          );
+          if (!r.ok) {
+            throw new Error(
+              `Donations ${r.conflicting.join(", ")} can't be added — not finalized, or already on another round`,
+            );
+          }
         }
         if (input.unlinkCodes?.length) {
           const r = await bankRepo.setDonationTransfer(input.unlinkCodes, null);

@@ -87,11 +87,11 @@ export interface MoneyFlow {
   allocated: number;
   /** …of which the donation is already in a donation_transfer (assigned to a round) */
   transferred: number;
-  /** Σ amount of `outgoing` rows linked to a transfer round (money actually paid out) */
+  /** Σ amount of `outgoing` rows linked to a transfer round (money actually paid out) — date-scoped */
   transferPaidOut: number;
-  /** Σ (owed − paidOut) over rounds that have ≥1 linked payment but don't reconcile */
+  /** Σ |owed − paidOut| over rounds that have started paying out but sit outside tolerance — all-time */
   transferGap: number;
-  /** Σ organization_donations.amount for finalized, reconciled donations not yet in a round */
+  /** Σ organization_donations.amount for finalized, reconciled donations not yet in a round — all-time */
   notYetTransferred: number;
   /** Σ amount, category = 'undecided' */
   undecidedInflow: number;
@@ -640,6 +640,11 @@ export class BankTransactionsRepository {
     `)
     ).rows as Record<string, unknown>[];
 
+    // Σ of the ABSOLUTE owed↔paidOut gap over rounds that have started paying
+    // out but don't reconcile (gap beyond the same per-round tolerance the
+    // /transfers "OK" column uses). Absolute so an overpaid round can't cancel
+    // an underpaid one; per-round filter so a hundred within-tolerance rounds
+    // don't accumulate into a false warning.
     const [gap] = (
       await this.database.execute(sql`
       WITH per_transfer AS (
@@ -653,7 +658,10 @@ export class BankTransactionsRepository {
              WHERE bt.donation_transfer_id = dt.id) AS payment_count
         FROM donation_transfers dt
       )
-      SELECT cast(coalesce(sum(owed - paid_out) filter (where payment_count > 0), 0) as int) as gap
+      SELECT cast(coalesce(sum(abs(owed - paid_out)) filter (
+        where payment_count > 0
+          and abs(owed - paid_out) > greatest(1000, round(abs(owed) * 0.005))
+      ), 0) as int) as gap
       FROM per_transfer
     `)
     ).rows as Record<string, unknown>[];
