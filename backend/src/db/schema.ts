@@ -169,6 +169,7 @@ export const donationTransfersRelations = relations(
   donationTransfers,
   ({ many }) => ({
     donations: many(donations),
+    bankTransactions: many(bankTransactions),
   }),
 );
 
@@ -252,6 +253,11 @@ export const bankTransactions = pgTable(
     grossAmount: integer("gross_amount"),
     feeAmount: integer("fee_amount"),
     note: varchar("note", { length: 512 }), // ignore reason / free note
+    // Outgoing (debit) rows only: the transfer round this payment was part of.
+    // Set from the /transfers admin view or the backfill script.
+    donationTransferId: integer("donation_transfer_id").references(
+      () => donationTransfers.id,
+    ),
     importedAt: timestamp("imported_at").defaultNow().notNull(),
     importedBy: varchar("imported_by", { length: 256 }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -260,6 +266,7 @@ export const bankTransactions = pgTable(
   (t) => [
     index("bank_transactions_date_idx").on(t.date),
     index("bank_transactions_category_idx").on(t.category),
+    index("bank_transactions_donation_transfer_idx").on(t.donationTransferId),
   ],
 );
 
@@ -268,8 +275,12 @@ export type NewBankTransaction = typeof bankTransactions.$inferInsert;
 
 export const bankTransactionsRelations = relations(
   bankTransactions,
-  ({ many }) => ({
+  ({ one, many }) => ({
     donations: many(donations),
+    donationTransfer: one(donationTransfers, {
+      fields: [bankTransactions.donationTransferId],
+      references: [donationTransfers.id],
+    }),
   }),
 );
 

@@ -427,6 +427,22 @@ export class DonationsRepository {
   }
 
   /**
+   * Clear the transfer link on the given donations (undo `addToTransfer`).
+   */
+  async removeFromTransfer(donationIds: number[]): Promise<Donation[]> {
+    if (donationIds.length === 0) return [];
+
+    return this.database
+      .update(donations)
+      .set({
+        donationTransferId: null,
+        updatedAt: new Date(),
+      })
+      .where(inArray(donations.id, donationIds))
+      .returning();
+  }
+
+  /**
    * Sum of all finalized donations (excluding external donations and tips)
    * This is used for statistics
    */

@@ -50,6 +50,13 @@
       "when": 1788455362477,
       "tag": "0006_bank_transactions",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788699615621,
+      "tag": "0007_transfer_bank_link",
+      "breakpoints": true
     }
   ]
 }

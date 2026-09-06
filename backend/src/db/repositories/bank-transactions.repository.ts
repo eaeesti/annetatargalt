@@ -61,6 +61,15 @@ export interface BankTransactionRow extends BankTransaction {
   balanced: boolean | null;
 }
 
+export interface OutgoingRow {
+  archivingCode: string;
+  date: string | null;
+  amountCents: number | null;
+  counterpartyName: string | null;
+  description: string | null;
+  donationTransferId: number | null;
+}
+
 export interface MoneyFlow {
   dateFrom: string | null;
   dateTo: string | null;
@@ -76,8 +85,14 @@ export interface MoneyFlow {
   cardFeesFromDonations: number;
   /** Σ organization_donations.amount for donations linked to in-range bank rows */
   allocated: number;
-  /** …of which the donation is already in a donation_transfer */
+  /** …of which the donation is already in a donation_transfer (assigned to a round) */
   transferred: number;
+  /** Σ amount of `outgoing` rows linked to a transfer round (money actually paid out) */
+  transferPaidOut: number;
+  /** Σ (owed − paidOut) over rounds that have ≥1 linked payment but don't reconcile */
+  transferGap: number;
+  /** Σ organization_donations.amount for finalized, reconciled donations not yet in a round */
+  notYetTransferred: number;
   /** Σ amount, category = 'undecided' */
   undecidedInflow: number;
   /** Σ amount, category = 'outgoing' (debits — money that left the account) */
@@ -137,6 +152,8 @@ function mapRow(r: Record<string, unknown>): BankTransactionRow {
     grossAmount: r.gross_amount == null ? null : num(r.gross_amount),
     feeAmount,
     note: (r.note as string | null) ?? null,
+    donationTransferId:
+      r.donation_transfer_id == null ? null : num(r.donation_transfer_id),
     importedAt: r.imported_at as Date,
     importedBy: (r.imported_by as string | null) ?? null,
     createdAt: r.created_at as Date,
@@ -366,6 +383,70 @@ export class BankTransactionsRepository {
     return updated.length > 0;
   }
 
+  /**
+   * Link (or unlink, with `transferId = null`) `outgoing` bank rows to a
+   * transfer round. Refuses any code that isn't currently `category = 'outgoing'`
+   * — only real debits get attributed to a payout round.
+   */
+  async setDonationTransfer(
+    codes: string[],
+    transferId: number | null,
+  ): Promise<{ ok: boolean; reason?: "not-outgoing" | "not-found" }> {
+    if (codes.length === 0) return { ok: true };
+    const rows = await this.database
+      .select({
+        code: bankTransactions.archivingCode,
+        category: bankTransactions.category,
+      })
+      .from(bankTransactions)
+      .where(inArray(bankTransactions.archivingCode, codes));
+
+    if (rows.length !== codes.length) return { ok: false, reason: "not-found" };
+    if (rows.some((r) => r.category !== "outgoing"))
+      return { ok: false, reason: "not-outgoing" };
+
+    await this.database
+      .update(bankTransactions)
+      .set({ donationTransferId: transferId, updatedAt: new Date() })
+      .where(inArray(bankTransactions.archivingCode, codes));
+    return { ok: true };
+  }
+
+  /** `outgoing` rows not yet attributed to a transfer round — the "link a payment" picker. */
+  async findUnlinkedOutgoing(opts: {
+    dateFrom?: string;
+    dateTo?: string;
+    search?: string;
+  }): Promise<OutgoingRow[]> {
+    const conds = [
+      sql`category = 'outgoing'`,
+      sql`donation_transfer_id IS NULL`,
+    ];
+    if (opts.dateFrom) conds.push(sql`date >= ${opts.dateFrom}`);
+    if (opts.dateTo) conds.push(sql`date <= ${opts.dateTo}`);
+    if (opts.search) {
+      const like = `%${opts.search}%`;
+      conds.push(
+        sql`(counterparty_name ilike ${like} or description ilike ${like} or archiving_code ilike ${like})`,
+      );
+    }
+    const res = await this.database.execute(sql`
+      SELECT archiving_code, date, amount, counterparty_name, description, donation_transfer_id
+      FROM bank_transactions
+      WHERE ${sql.join(conds, sql` and `)}
+      ORDER BY date asc, archiving_code asc
+    `);
+    return (res.rows as Record<string, unknown>[]).map((r) => ({
+      archivingCode: r.archiving_code as string,
+      date: r.date as string | null,
+      amountCents: r.amount == null ? null : num(r.amount),
+      counterpartyName: (r.counterparty_name as string | null) ?? null,
+      description: (r.description as string | null) ?? null,
+      donationTransferId:
+        r.donation_transfer_id == null ? null : num(r.donation_transfer_id),
+    }));
+  }
+
   async findPaginated(
     opts: FindPaginatedOptions,
   ): Promise<{ data: BankTransactionRow[]; total: number }> {
@@ -492,6 +573,7 @@ export class BankTransactionsRepository {
         cast(coalesce(sum(fee_amount) filter (where category = 'card-payout' and not has_pending), 0) as int) as card_fees,
         cast(coalesce(sum(amount) filter (where category = 'undecided'), 0) as int) as undecided_inflow,
         cast(coalesce(sum(abs(amount)) filter (where category = 'outgoing'), 0) as int) as outgoing_total,
+        cast(coalesce(sum(abs(amount)) filter (where category = 'outgoing' and donation_transfer_id is not null), 0) as int) as transfer_paid_out,
         cast(coalesce(sum(amount) filter (where has_pending and category in ('donation', 'card-payout')), 0) as int) as pending_linked_total
       FROM bt_scope
     `)
@@ -534,6 +616,34 @@ export class BankTransactionsRepository {
     `)
     ).rows as Record<string, unknown>[];
 
+    // Standing "money in flight" figures — not date-filtered.
+    const [notYet] = (
+      await this.database.execute(sql`
+      SELECT cast(coalesce(sum(od.amount), 0) as int) as total
+      FROM organization_donations od
+      JOIN donations d ON d.id = od.donation_id AND d.finalized = true
+      WHERE d.donation_transfer_id IS NULL AND d.transaction_id IS NOT NULL
+    `)
+    ).rows as Record<string, unknown>[];
+
+    const [gap] = (
+      await this.database.execute(sql`
+      WITH per_transfer AS (
+        SELECT dt.id,
+          (SELECT coalesce(sum(od.amount), 0) FROM organization_donations od
+             JOIN donations d ON d.id = od.donation_id
+             WHERE d.donation_transfer_id = dt.id AND d.finalized = true) AS owed,
+          (SELECT coalesce(sum(abs(bt.amount)), 0) FROM bank_transactions bt
+             WHERE bt.donation_transfer_id = dt.id) AS paid_out,
+          (SELECT count(*) FROM bank_transactions bt
+             WHERE bt.donation_transfer_id = dt.id) AS payment_count
+        FROM donation_transfers dt
+      )
+      SELECT cast(coalesce(sum(owed - paid_out) filter (where payment_count > 0), 0) as int) as gap
+      FROM per_transfer
+    `)
+    ).rows as Record<string, unknown>[];
+
     const received = num(bank?.received);
     const cardPayoutNet = num(bank?.card_payout_net);
     const cardFees = num(bank?.card_fees);
@@ -549,6 +659,9 @@ export class BankTransactionsRepository {
       cardFeesFromDonations: num(feeAgg?.fee),
       allocated,
       transferred: num(alloc?.transferred),
+      transferPaidOut: num(bank?.transfer_paid_out),
+      transferGap: num(gap?.gap),
+      notYetTransferred: num(notYet?.total),
       undecidedInflow: num(bank?.undecided_inflow),
       outgoingTotal: num(bank?.outgoing_total),
       pendingLinkedCents: num(bank?.pending_linked_total),

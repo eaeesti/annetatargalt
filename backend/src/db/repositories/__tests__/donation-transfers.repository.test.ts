@@ -7,12 +7,15 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { donationTransfersRepository } from "../donation-transfers.repository";
+import { donationsRepository } from "../donations.repository";
+import { bankTransactionsRepository } from "../bank-transactions.repository";
 import {
   cleanDatabase,
   createTestDonor,
   createTestDonation,
   createTestOrganizationDonation,
   createTestDonationTransfer,
+  createTestBankTransaction,
 } from "../../__tests__/test-db-helper";
 
 describe("DonationTransfersRepository", () => {
@@ -241,6 +244,238 @@ describe("DonationTransfersRepository", () => {
 
       // Both finalized and unfinalized donations appear in the list
       expect(result!.donations).toHaveLength(2);
+    });
+  });
+
+  // ── previewDateRange ─────────────────────────────────────────────────────────
+
+  describe("previewDateRange", () => {
+    it("returns finalized, unassigned donations in the window with their org split", async () => {
+      const donor = await createTestDonor({
+        firstName: "Mari",
+        lastName: "Maasikas",
+      });
+      const inWindow = await createTestDonation({
+        donorId: donor.id,
+        finalized: true,
+        amount: 5000,
+        datetime: new Date("2026-02-10T12:00:00Z"),
+      });
+      await createTestOrganizationDonation({
+        donationId: inWindow.id,
+        organizationInternalId: "AMF",
+        amount: 5000,
+      });
+      // excluded: not finalized
+      await createTestDonation({
+        finalized: false,
+        amount: 3000,
+        datetime: new Date("2026-02-11T12:00:00Z"),
+      });
+      // excluded: already on a transfer
+      const t = await createTestDonationTransfer({ datetime: "2026-01-01" });
+      await createTestDonation({
+        finalized: true,
+        amount: 4000,
+        datetime: new Date("2026-02-12T12:00:00Z"),
+        donationTransferId: t.id,
+      });
+      // excluded: outside the window
+      await createTestDonation({
+        finalized: true,
+        amount: 2000,
+        datetime: new Date("2026-03-15T12:00:00Z"),
+      });
+
+      const rows = await donationTransfersRepository.previewDateRange({
+        dateFrom: "2026-02-01",
+        dateTo: "2026-02-28",
+      });
+
+      expect(rows.map((r) => r.id)).toEqual([inWindow.id]);
+      expect(rows[0].donorName).toBe("Mari Maasikas");
+      expect(rows[0].reconciled).toBe(false);
+      expect(rows[0].orgSplit).toEqual([
+        { internalId: "AMF", amountCents: 5000 },
+      ]);
+    });
+
+    it("flags reconciled donations", async () => {
+      await createTestBankTransaction({
+        archivingCode: "BTX",
+        category: "donation",
+      });
+      const d = await createTestDonation({
+        finalized: true,
+        amount: 1000,
+        datetime: new Date("2026-02-10T12:00:00Z"),
+      });
+      await donationsRepository.setTransactionId(d.id, "BTX", "manual");
+
+      const rows = await donationTransfersRepository.previewDateRange({
+        dateFrom: "2026-02-01",
+        dateTo: "2026-02-28",
+      });
+      expect(rows).toHaveLength(1);
+      expect(rows[0].reconciled).toBe(true);
+    });
+  });
+
+  // ── reconciliation (bank-payment link) ───────────────────────────────────────
+
+  describe("findByIdWithReconciliation", () => {
+    it("compares owed (Σ org totals) with paid out (Σ linked outgoing)", async () => {
+      const transfer = await createTestDonationTransfer({
+        datetime: "2026-01-18",
+      });
+      const d = await createTestDonation({
+        finalized: true,
+        amount: 10000,
+        donationTransferId: transfer.id,
+      });
+      await createTestOrganizationDonation({
+        donationId: d.id,
+        organizationInternalId: "AMF",
+        amount: 10000,
+      });
+      await createTestBankTransaction({
+        archivingCode: "OUT1",
+        category: "outgoing",
+        amount: 9950,
+        date: "2026-02-15",
+        donationTransferId: transfer.id,
+      });
+
+      const r = await donationTransfersRepository.findByIdWithReconciliation(
+        transfer.id,
+      );
+      expect(r!.owedCents).toBe(10000);
+      expect(r!.paidOutCents).toBe(9950);
+      expect(r!.differenceCents).toBe(50);
+      expect(r!.balanced).toBe(true); // 50c diff is within tolerance (max €10 / 0.5%)
+      expect(r!.linkedBankTransactions).toHaveLength(1);
+    });
+
+    it("balanced is null when no payments are linked", async () => {
+      const transfer = await createTestDonationTransfer({
+        datetime: "2026-01-18",
+      });
+      const d = await createTestDonation({
+        finalized: true,
+        amount: 10000,
+        donationTransferId: transfer.id,
+      });
+      await createTestOrganizationDonation({
+        donationId: d.id,
+        organizationInternalId: "AMF",
+        amount: 10000,
+      });
+
+      const r = await donationTransfersRepository.findByIdWithReconciliation(
+        transfer.id,
+      );
+      expect(r!.paidOutCents).toBe(0);
+      expect(r!.balanced).toBe(false); // no payments → not balanced (and callout shows the gap)
+    });
+  });
+
+  // ── delete guard ─────────────────────────────────────────────────────────────
+
+  describe("delete", () => {
+    it("refuses while a donation is still linked, succeeds once unlinked", async () => {
+      const transfer = await createTestDonationTransfer({
+        datetime: "2026-01-18",
+      });
+      const d = await createTestDonation({
+        finalized: true,
+        donationTransferId: transfer.id,
+      });
+
+      expect(await donationTransfersRepository.delete(transfer.id)).toEqual({
+        ok: false,
+        reason: "has-links",
+      });
+
+      await donationsRepository.removeFromTransfer([d.id]);
+      expect(await donationTransfersRepository.delete(transfer.id)).toEqual({
+        ok: true,
+      });
+    });
+
+    it("refuses while a bank payment is still linked", async () => {
+      const transfer = await createTestDonationTransfer({
+        datetime: "2026-01-18",
+      });
+      await createTestBankTransaction({
+        archivingCode: "OUT2",
+        category: "outgoing",
+        amount: 100,
+        donationTransferId: transfer.id,
+      });
+
+      expect(await donationTransfersRepository.delete(transfer.id)).toEqual({
+        ok: false,
+        reason: "has-links",
+      });
+    });
+  });
+
+  // ── findPaginated: reconciliation columns ────────────────────────────────────
+
+  describe("findPaginated reconciliation", () => {
+    it("returns paidOutCents / paymentCount / balanced per row", async () => {
+      const transfer = await createTestDonationTransfer({
+        datetime: "2026-01-18",
+      });
+      const d = await createTestDonation({
+        finalized: true,
+        amount: 8000,
+        donationTransferId: transfer.id,
+      });
+      await createTestOrganizationDonation({
+        donationId: d.id,
+        organizationInternalId: "AMF",
+        amount: 8000,
+      });
+      await createTestBankTransaction({
+        archivingCode: "OUT3",
+        category: "outgoing",
+        amount: 8000,
+        donationTransferId: transfer.id,
+      });
+
+      const { data } = await donationTransfersRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+      });
+      const row = data.find((r) => r.id === transfer.id)!;
+      expect(row.paidOutCents).toBe(8000);
+      expect(row.paymentCount).toBe(1);
+      expect(row.balanced).toBe(true);
+    });
+  });
+
+  // ── listWithOwed ─────────────────────────────────────────────────────────────
+
+  describe("listWithOwed", () => {
+    it("returns each round with its owed total, oldest first", async () => {
+      const t1 = await createTestDonationTransfer({ datetime: "2025-11-01" });
+      const t2 = await createTestDonationTransfer({ datetime: "2026-01-18" });
+      const d = await createTestDonation({
+        finalized: true,
+        amount: 3000,
+        donationTransferId: t2.id,
+      });
+      await createTestOrganizationDonation({
+        donationId: d.id,
+        organizationInternalId: "AMF",
+        amount: 3000,
+      });
+
+      const rows = await donationTransfersRepository.listWithOwed();
+      expect(rows.map((r) => r.id)).toEqual([t1.id, t2.id]);
+      expect(rows[1].owedCents).toBe(3000);
+      expect(rows[0].owedCents).toBe(0);
     });
   });
 });
