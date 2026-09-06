@@ -17,7 +17,13 @@ type Candidate = {
 const eur = (c: number) => `€${(c / 100).toFixed(2)}`;
 const today = () => new Date().toISOString().slice(0, 10);
 
-export function TransferBuilder({ defaultFrom }: { defaultFrom?: string }) {
+export function TransferBuilder({
+  defaultFrom,
+  orgNames = {},
+}: {
+  defaultFrom?: string;
+  orgNames?: Record<string, string>;
+}) {
   const router = useRouter();
 
   const [dateFrom, setDateFrom] = useState(defaultFrom ?? "");
@@ -236,7 +242,14 @@ export function TransferBuilder({ defaultFrom }: { defaultFrom?: string }) {
               <div className="mt-2 space-y-1">
                 {perOrg.map(([id, amt]) => (
                   <div key={id} className="flex justify-between">
-                    <span>{id}</span>
+                    <a
+                      href={`/organizations/${encodeURIComponent(id)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:underline"
+                    >
+                      {orgNames[id] ?? id}
+                    </a>
                     <span className="tabular-nums">{eur(amt)}</span>
                   </div>
                 ))}
