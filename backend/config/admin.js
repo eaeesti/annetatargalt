@@ -1,16 +1,16 @@
 module.exports = ({ env }) => ({
   auth: {
-    secret: env('ADMIN_JWT_SECRET'),
+    secret: env("ADMIN_JWT_SECRET"),
   },
   apiToken: {
-    salt: env('API_TOKEN_SALT'),
+    salt: env("API_TOKEN_SALT"),
   },
   transfer: {
     token: {
-      salt: env('TRANSFER_TOKEN_SALT'),
+      salt: env("TRANSFER_TOKEN_SALT"),
     },
   },
-  // Optimize Vite build for low-memory environment environments
+  // Optimize the Vite build for memory-constrained environments
   vite: {
     build: {
       // Disable minification for faster builds (admin panel, not critical for performance)
