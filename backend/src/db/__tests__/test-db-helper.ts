@@ -203,6 +203,7 @@ export async function createTestBankTransaction(
       grossAmount: data.grossAmount ?? null,
       feeAmount: data.feeAmount ?? null,
       note: data.note ?? null,
+      donationTransferId: data.donationTransferId ?? null,
       importedBy: data.importedBy ?? "test",
     })
     .returning();

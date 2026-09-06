@@ -14,6 +14,9 @@ export type MoneyFlow = {
   cardFeesFromDonations: number;
   allocated: number;
   transferred: number;
+  transferPaidOut: number;
+  transferGap: number;
+  notYetTransferred: number;
   undecidedInflow: number;
   outgoingTotal: number;
   unimportedRows: number;
@@ -87,7 +90,7 @@ export function MoneyFlowSummary({ summary: s }: { summary: MoneyFlow }) {
           <span className="text-xs text-muted-foreground">{range}</span>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           <Figure label="Received (bank transfers)" value={eur(s.received)} />
           <Figure
             label="Card payouts (net)"
@@ -110,9 +113,19 @@ export function MoneyFlowSummary({ summary: s }: { summary: MoneyFlow }) {
             hint="Σ organization splits"
           />
           <Figure
-            label="Transferred onward"
+            label="Assigned to a round"
             value={eur(s.transferred)}
-            hint={`float ${eur(s.allocated - s.transferred)}`}
+            hint={`not yet ${eur(s.notYetTransferred)}`}
+          />
+          <Figure
+            label="Paid out to orgs"
+            value={eur(s.transferPaidOut)}
+            tone={s.transferGap > 100 ? "warn" : undefined}
+            hint={
+              s.transferGap > 100
+                ? `${eur(s.transferGap)} owed but not yet paid`
+                : "linked outgoing debits"
+            }
           />
           <Figure
             label="Outgoing (bank debits)"

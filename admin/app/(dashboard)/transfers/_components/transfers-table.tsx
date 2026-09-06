@@ -33,6 +33,9 @@ export type TransferRow = {
   notes: string | null;
   donationCount: number | null;
   totalAmount: number | null;
+  paidOutCents: number | null;
+  paymentCount: number | null;
+  balanced: boolean | null;
 };
 
 export type Pagination = {
@@ -191,6 +194,32 @@ export function TransfersTable({
         cell: ({ row }) => (
           <span className="font-medium tabular-nums">
             {formatAmount(row.original.totalAmount)}
+          </span>
+        ),
+      },
+      {
+        id: "paidOut",
+        header: "Paid out",
+        cell: ({ row }) => (
+          <span className="tabular-nums text-sm text-muted-foreground">
+            {row.original.paymentCount
+              ? formatAmount(row.original.paidOutCents)
+              : "—"}
+          </span>
+        ),
+      },
+      {
+        id: "ok",
+        header: () => <span className="block text-center">OK</span>,
+        cell: ({ row }) => (
+          <span className="block text-center">
+            {row.original.balanced == null ? (
+              <span className="text-muted-foreground">·</span>
+            ) : row.original.balanced ? (
+              <span className="text-emerald-600">✓</span>
+            ) : (
+              <span className="text-amber-600">✗</span>
+            )}
           </span>
         ),
       },

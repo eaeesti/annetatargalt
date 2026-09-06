@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { strapiAdmin } from "../../../../lib/api";
 import { resolveOrgNames } from "../../../../lib/orgs";
 import { Badge } from "../../../../components/ui/badge";
+import { TransferReconciliation } from "../_components/transfer-reconciliation";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -21,6 +22,14 @@ type LinkedDonation = {
   organizationDonations: { organizationInternalId: string; amount: number }[];
 };
 
+type LinkedPayment = {
+  archivingCode: string;
+  date: string | null;
+  amountCents: number | null;
+  counterpartyName: string | null;
+  description: string | null;
+};
+
 type TransferDetail = {
   id: number;
   datetime: string;
@@ -29,6 +38,11 @@ type TransferDetail = {
   createdAt: string;
   donations: LinkedDonation[];
   orgTotals: OrgTotal[];
+  owedCents: number;
+  paidOutCents: number;
+  differenceCents: number;
+  balanced: boolean;
+  linkedBankTransactions: LinkedPayment[];
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -150,6 +164,17 @@ export default async function TransferDetailPage({
           <span className="font-medium">{formatAmount(grandTotal)}</span>
         </Field>
       </Section>
+
+      {/* Reconciliation — owed to orgs vs actually paid out */}
+      <TransferReconciliation
+        transferId={transfer.id}
+        transferDate={transfer.datetime}
+        owedCents={transfer.owedCents}
+        paidOutCents={transfer.paidOutCents}
+        differenceCents={transfer.differenceCents}
+        balanced={transfer.balanced}
+        linked={transfer.linkedBankTransactions}
+      />
 
       {/* Per-org totals — the key output */}
       {transfer.orgTotals.length > 0 && (

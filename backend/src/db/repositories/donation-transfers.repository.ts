@@ -1,15 +1,37 @@
-import { eq, desc, asc, sql, count, sum, and, gte, lte } from "drizzle-orm";
+import {
+  eq,
+  desc,
+  asc,
+  sql,
+  count,
+  sum,
+  and,
+  gte,
+  lte,
+  isNull,
+} from "drizzle-orm";
 import { db, type Database } from "../client";
 import {
   donationTransfers,
   donations,
   organizationDonations,
+  bankTransactions,
   type DonationTransfer,
   type NewDonationTransfer,
 } from "../schema";
 
 interface FindAllOptions {
   withDonations?: boolean;
+}
+
+/**
+ * How far `paid out` may drift from `owed` before a transfer round is flagged:
+ * the larger of €10 or 0.5% of the owed total. Card-fee absorption and the
+ * outgoing SEPA fee make a little slack normal; a bigger gap means a payment is
+ * missing or on the wrong round.
+ */
+export function transferBalanceToleranceCents(owedCents: number): number {
+  return Math.max(1000, Math.round(Math.abs(owedCents) * 0.005));
 }
 
 export class DonationTransfersRepository {
@@ -63,6 +85,21 @@ export class DonationTransfersRepository {
       conditions.push(lte(donationTransfers.datetime, options.dateTo));
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
+    // Σ abs(amount) of outgoing bank rows linked to the transfer + count
+    const paidSq = this.database
+      .select({
+        transferId: bankTransactions.donationTransferId,
+        paidOut:
+          sql<number>`cast(coalesce(sum(abs(${bankTransactions.amount})), 0) as int)`.as(
+            "paid_out",
+          ),
+        paymentCount: sql<number>`cast(count(*) as int)`.as("payment_count"),
+      })
+      .from(bankTransactions)
+      .where(sql`${bankTransactions.donationTransferId} is not null`)
+      .groupBy(bankTransactions.donationTransferId)
+      .as("ps");
+
     const [rows, countRows] = await Promise.all([
       this.database
         .select({
@@ -73,9 +110,12 @@ export class DonationTransfersRepository {
           createdAt: donationTransfers.createdAt,
           donationCount: statsSq.donationCount,
           totalAmount: statsSq.totalAmount,
+          paidOutCents: paidSq.paidOut,
+          paymentCount: paidSq.paymentCount,
         })
         .from(donationTransfers)
         .leftJoin(statsSq, eq(donationTransfers.id, statsSq.transferId))
+        .leftJoin(paidSq, eq(donationTransfers.id, paidSq.transferId))
         .where(whereClause)
         .orderBy(dir(orderCol))
         .limit(pageSize)
@@ -86,7 +126,23 @@ export class DonationTransfersRepository {
         .where(whereClause),
     ]);
 
-    return { data: rows, total: countRows[0]?.total ?? 0 };
+    const data = rows.map((r) => {
+      const owed = Number(r.totalAmount ?? 0);
+      const paidOut = Number(r.paidOutCents ?? 0);
+      const payments = Number(r.paymentCount ?? 0);
+      return {
+        ...r,
+        paidOutCents: paidOut,
+        paymentCount: payments,
+        // null = nothing linked yet (not assessable)
+        balanced:
+          payments === 0
+            ? null
+            : Math.abs(owed - paidOut) <= transferBalanceToleranceCents(owed),
+      };
+    });
+
+    return { data, total: countRows[0]?.total ?? 0 };
   }
 
   /**
@@ -131,6 +187,122 @@ export class DonationTransfersRepository {
       );
 
     return { ...transfer, orgTotals };
+  }
+
+  /**
+   * `findByIdWithPerOrgTotals` plus the outgoing bank payments linked to the
+   * round and a reconciliation summary: `owed` (Σ per-org totals) vs `paidOut`
+   * (Σ linked outgoing debits).
+   */
+  async findByIdWithReconciliation(id: number) {
+    const base = await this.findByIdWithPerOrgTotals(id);
+    if (!base) return undefined;
+
+    const linkedBankTransactions = await this.database
+      .select({
+        archivingCode: bankTransactions.archivingCode,
+        date: bankTransactions.date,
+        amountCents: bankTransactions.amount,
+        counterpartyName: bankTransactions.counterpartyName,
+        description: bankTransactions.description,
+      })
+      .from(bankTransactions)
+      .where(eq(bankTransactions.donationTransferId, id))
+      .orderBy(asc(bankTransactions.date));
+
+    const owedCents = base.orgTotals.reduce((s, o) => s + Number(o.total), 0);
+    const paidOutCents = linkedBankTransactions.reduce(
+      (s, r) => s + Math.abs(Number(r.amountCents ?? 0)),
+      0,
+    );
+    const differenceCents = owedCents - paidOutCents;
+
+    return {
+      ...base,
+      linkedBankTransactions,
+      owedCents,
+      paidOutCents,
+      differenceCents,
+      balanced:
+        linkedBankTransactions.length > 0 &&
+        Math.abs(differenceCents) <= transferBalanceToleranceCents(owedCents),
+    };
+  }
+
+  /**
+   * Finalized donations in a date window that are not yet on any transfer —
+   * the candidate list for building a new transfer round.
+   */
+  async previewDateRange(opts: { dateFrom: string; dateTo: string }) {
+    const from = new Date(opts.dateFrom);
+    const to = new Date(`${opts.dateTo}T23:59:59.999Z`);
+
+    const rows = await this.database.query.donations.findMany({
+      where: and(
+        eq(donations.finalized, true),
+        isNull(donations.donationTransferId),
+        gte(donations.datetime, from),
+        lte(donations.datetime, to),
+      ),
+      orderBy: [asc(donations.datetime)],
+      with: {
+        donor: { columns: { id: true, firstName: true, lastName: true } },
+        organizationDonations: {
+          columns: { organizationInternalId: true, amount: true },
+        },
+      },
+    });
+
+    return rows.map((d) => ({
+      id: d.id,
+      datetime: d.datetime,
+      amountCents: d.amount,
+      transactionId: d.transactionId,
+      reconciled: d.transactionId != null,
+      donorName: d.donor
+        ? [d.donor.firstName, d.donor.lastName].filter(Boolean).join(" ") ||
+          `#${d.donor.id}`
+        : null,
+      orgSplit: d.organizationDonations.map((o) => ({
+        internalId: o.organizationInternalId,
+        amountCents: o.amount,
+      })),
+    }));
+  }
+
+  /** Every round with its owed total (Σ org donations of its finalized donations), oldest first. */
+  async listWithOwed(): Promise<
+    { id: number; datetime: string; owedCents: number }[]
+  > {
+    const res = await this.database.execute(sql`
+      SELECT dt.id, dt.datetime,
+        cast(coalesce((
+          SELECT sum(od.amount) FROM organization_donations od
+          JOIN donations d ON d.id = od.donation_id
+          WHERE d.donation_transfer_id = dt.id AND d.finalized = true
+        ), 0) as int) as owed
+      FROM donation_transfers dt
+      ORDER BY dt.datetime asc
+    `);
+    return (res.rows as Record<string, unknown>[]).map((r) => ({
+      id: Number(r.id),
+      datetime: String(r.datetime),
+      owedCents: Number(r.owed),
+    }));
+  }
+
+  /** Is anything (a donation or a bank transaction) still linked to this transfer? */
+  async hasLinks(id: number): Promise<boolean> {
+    const [d] = await this.database
+      .select({ n: count() })
+      .from(donations)
+      .where(eq(donations.donationTransferId, id));
+    if (Number(d?.n ?? 0) > 0) return true;
+    const [b] = await this.database
+      .select({ n: count() })
+      .from(bankTransactions)
+      .where(eq(bankTransactions.donationTransferId, id));
+    return Number(b?.n ?? 0) > 0;
   }
 
   /**
@@ -218,12 +390,20 @@ export class DonationTransfersRepository {
   }
 
   /**
-   * Delete a donation transfer (only if no donations are linked)
+   * Delete a donation transfer. Refuses while any donation or bank transaction
+   * still references it — unlink those first.
    */
-  async delete(id: number): Promise<void> {
-    await this.database
+  async delete(
+    id: number,
+  ): Promise<{ ok: true } | { ok: false; reason: "has-links" | "not-found" }> {
+    if (await this.hasLinks(id)) return { ok: false, reason: "has-links" };
+    const deleted = await this.database
       .delete(donationTransfers)
-      .where(eq(donationTransfers.id, id));
+      .where(eq(donationTransfers.id, id))
+      .returning({ id: donationTransfers.id });
+    return deleted.length > 0
+      ? { ok: true }
+      : { ok: false, reason: "not-found" };
   }
 }
 
