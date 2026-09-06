@@ -391,12 +391,16 @@ export class BankTransactionsRepository {
   async setDonationTransfer(
     codes: string[],
     transferId: number | null,
-  ): Promise<{ ok: boolean; reason?: "not-outgoing" | "not-found" }> {
+  ): Promise<{
+    ok: boolean;
+    reason?: "not-outgoing" | "not-found" | "already-linked";
+  }> {
     if (codes.length === 0) return { ok: true };
     const rows = await this.database
       .select({
         code: bankTransactions.archivingCode,
         category: bankTransactions.category,
+        donationTransferId: bankTransactions.donationTransferId,
       })
       .from(bankTransactions)
       .where(inArray(bankTransactions.archivingCode, codes));
@@ -404,6 +408,16 @@ export class BankTransactionsRepository {
     if (rows.length !== codes.length) return { ok: false, reason: "not-found" };
     if (rows.some((r) => r.category !== "outgoing"))
       return { ok: false, reason: "not-outgoing" };
+    // linking (not unlinking): don't silently steal a payment from another round
+    if (
+      transferId != null &&
+      rows.some(
+        (r) =>
+          r.donationTransferId != null && r.donationTransferId !== transferId,
+      )
+    ) {
+      return { ok: false, reason: "already-linked" };
+    }
 
     await this.database
       .update(bankTransactions)

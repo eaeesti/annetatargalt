@@ -32,6 +32,7 @@ export type BankTransactionRow = {
   grossAmount: number | null;
   feeAmount: number | null;
   note: string | null;
+  donationTransferId: number | null;
   linkedDonationCount: number;
   allocatedCents: number;
   linkedGrossCents: number;
@@ -436,6 +437,24 @@ export function TransactionsTable({
                                   ` · gross ${eur(row.grossAmount)}`}
                               </span>
                             </div>
+
+                            {row.category === "outgoing" && (
+                              <p className="text-xs text-muted-foreground">
+                                {row.donationTransferId ? (
+                                  <>
+                                    Paid out in{" "}
+                                    <a
+                                      className="hover:underline"
+                                      href={`/transfers/${row.donationTransferId}`}
+                                    >
+                                      transfer #{row.donationTransferId}
+                                    </a>
+                                  </>
+                                ) : (
+                                  "Not linked to a transfer round — link it from the transfer's page."
+                                )}
+                              </p>
+                            )}
 
                             {d === "loading" && (
                               <p className="text-xs text-muted-foreground">

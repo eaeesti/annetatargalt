@@ -731,6 +731,21 @@ describe("BankTransactionsRepository", () => {
         ),
       ).toEqual({ ok: false, reason: "not-found" });
 
+      // can't steal a payment already linked to another round
+      const other = await createTestDonationTransfer({
+        datetime: "2026-02-01",
+      });
+      expect(
+        await bankTransactionsRepository.setDonationTransfer(["O2"], other.id),
+      ).toEqual({ ok: false, reason: "already-linked" });
+      // re-linking to the same round it's on is fine
+      expect(
+        await bankTransactionsRepository.setDonationTransfer(
+          ["O2"],
+          transfer.id,
+        ),
+      ).toEqual({ ok: true });
+
       // unlink
       expect(
         await bankTransactionsRepository.setDonationTransfer(["O1"], null),
