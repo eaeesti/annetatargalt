@@ -198,33 +198,24 @@ function idOrCompanyMatches(
   return false;
 }
 
-export interface MatchOptions {
-  /** date-window width for the id-code strategy (default 4, as in the script) */
-  maxDateWindowDays?: number;
-}
-
 /**
  * Match each donation against the transactions. Strategy order, first hit wins:
  *
- *  1. `manual`            — an entry in `overrides` (donationId → archivingCode)
- *  2. `selgitus-id`       — a credit whose Selgitus carries this donation's id
+ *  1. `selgitus-id`       — a credit whose Selgitus carries this donation's id
  *                           and whose amount equals the donation's
- *  3. `idcode-amount-date`— exactly one credit with matching id/reg code,
- *                           equal amount, and date within the window
+ *  2. `idcode-amount-date`— exactly one credit with matching id/reg code,
+ *                           equal amount, and date within a 4-day window
  *
- * More than one candidate in step 3 ⇒ `ambiguous`. None ⇒ transactionless.
+ * More than one candidate in step 2 ⇒ `ambiguous`. None ⇒ transactionless.
  */
 export function matchDonations(
   transactions: BankTransaction[],
   donations: ReconcilableDonation[],
-  overrides: Map<number, string> = new Map(),
-  options: MatchOptions = {},
 ): ReconciliationReport {
-  const maxDays = options.maxDateWindowDays ?? 4;
+  const maxDays = 4;
   const credits = transactions.filter(
     (t) => t.direction === "C" && t.archivingCode !== "",
   );
-  const codeExists = new Set(credits.map((t) => t.archivingCode));
 
   const matched: ReconciliationReport["matched"] = [];
   const ambiguous: ReconciliationReport["ambiguous"] = [];
@@ -232,17 +223,6 @@ export function matchDonations(
   const claimedCodes = new Set<string>();
 
   for (const donation of donations) {
-    const override = overrides.get(donation.id);
-    if (override !== undefined) {
-      matched.push({
-        donationId: donation.id,
-        archivingCode: override,
-        source: "manual",
-      });
-      if (codeExists.has(override)) claimedCodes.add(override);
-      continue;
-    }
-
     const selgitusHit = credits.find(
       (t) =>
         parseSelgitusDonationId(t.description) === donation.id &&
