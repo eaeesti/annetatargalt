@@ -6,7 +6,11 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { donationsRepository } from "../donations.repository";
+import { db } from "../../client";
+import {
+  donationsRepository,
+  DonationsRepository,
+} from "../donations.repository";
 import { donorsRepository } from "../donors.repository";
 import { organizationDonationsRepository } from "../organization-donations.repository";
 import {
@@ -199,7 +203,7 @@ describe("DonationsRepository", () => {
       expect(reloaded?.donationTransferId).toBe(transfer.id);
     });
 
-    it("rejects a non-finalized donation and one already on another round", async () => {
+    it("reports non-finalized / cross-round ids as conflicting", async () => {
       const t1 = await createTestDonationTransfer();
       const t2 = await createTestDonationTransfer();
       const ok = await createTestDonation({ finalized: true });
@@ -215,9 +219,36 @@ describe("DonationsRepository", () => {
       );
       expect(r.ok).toBe(false);
       expect(r.conflicting.sort()).toEqual([pending.id, onOther.id].sort());
-      // nothing is written on a conflict — not even the eligible one
-      const okReloaded = await donationsRepository.findById(ok.id);
-      expect(okReloaded?.donationTransferId).toBeNull();
+      // the eligible one IS written (the guard is the UPDATE's WHERE); the
+      // service runs this in a transaction and rolls back on !ok
+      expect(
+        (await donationsRepository.findById(ok.id))?.donationTransferId,
+      ).toBe(t1.id);
+      expect(
+        (await donationsRepository.findById(onOther.id))?.donationTransferId,
+      ).toBe(t2.id); // untouched
+    });
+
+    it("a transaction that throws on conflict rolls back the eligible writes too", async () => {
+      const t1 = await createTestDonationTransfer();
+      const t2 = await createTestDonationTransfer();
+      const ok = await createTestDonation({ finalized: true });
+      const onOther = await createTestDonation({
+        finalized: true,
+        donationTransferId: t2.id,
+      });
+
+      await expect(
+        db.transaction(async (tx) => {
+          const repo = new DonationsRepository(tx);
+          const r = await repo.assignToTransfer([ok.id, onOther.id], t1.id);
+          if (!r.ok) throw new Error("conflict");
+        }),
+      ).rejects.toThrow("conflict");
+
+      expect(
+        (await donationsRepository.findById(ok.id))?.donationTransferId,
+      ).toBeNull();
     });
 
     it("is idempotent for a donation already on the same round", async () => {
