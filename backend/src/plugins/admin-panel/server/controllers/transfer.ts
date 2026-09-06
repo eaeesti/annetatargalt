@@ -138,8 +138,17 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
       if (!id || isNaN(id)) return ctx.badRequest("Invalid transfer ID");
 
       const body = (ctx.request.body ?? {}) as Record<string, unknown>;
+
+      // a datetime that's present but unparseable is an error, not a silent skip
+      let datetime: string | undefined;
+      if (body.datetime !== undefined) {
+        datetime = isoDate(body.datetime);
+        if (!datetime)
+          return ctx.badRequest("Invalid date (expected YYYY-MM-DD)");
+      }
+
       const input = {
-        datetime: isoDate(body.datetime),
+        datetime,
         notes:
           body.notes === undefined
             ? undefined

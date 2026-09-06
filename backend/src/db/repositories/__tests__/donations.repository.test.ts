@@ -184,6 +184,53 @@ describe("DonationsRepository", () => {
     });
   });
 
+  describe("assignToTransfer (guarded)", () => {
+    it("assigns finalized, unassigned donations", async () => {
+      const transfer = await createTestDonationTransfer();
+      const a = await createTestDonation({ finalized: true });
+      const b = await createTestDonation({ finalized: true });
+
+      const r = await donationsRepository.assignToTransfer(
+        [a.id, b.id],
+        transfer.id,
+      );
+      expect(r).toEqual({ ok: true, conflicting: [] });
+      const reloaded = await donationsRepository.findById(a.id);
+      expect(reloaded?.donationTransferId).toBe(transfer.id);
+    });
+
+    it("rejects a non-finalized donation and one already on another round", async () => {
+      const t1 = await createTestDonationTransfer();
+      const t2 = await createTestDonationTransfer();
+      const ok = await createTestDonation({ finalized: true });
+      const pending = await createTestDonation({ finalized: false });
+      const onOther = await createTestDonation({
+        finalized: true,
+        donationTransferId: t2.id,
+      });
+
+      const r = await donationsRepository.assignToTransfer(
+        [ok.id, pending.id, onOther.id],
+        t1.id,
+      );
+      expect(r.ok).toBe(false);
+      expect(r.conflicting.sort()).toEqual([pending.id, onOther.id].sort());
+      // nothing is written on a conflict — not even the eligible one
+      const okReloaded = await donationsRepository.findById(ok.id);
+      expect(okReloaded?.donationTransferId).toBeNull();
+    });
+
+    it("is idempotent for a donation already on the same round", async () => {
+      const t = await createTestDonationTransfer();
+      const d = await createTestDonation({
+        finalized: true,
+        donationTransferId: t.id,
+      });
+      const r = await donationsRepository.assignToTransfer([d.id], t.id);
+      expect(r).toEqual({ ok: true, conflicting: [] });
+    });
+  });
+
   describe("sumFinalizedDonations", () => {
     it("should sum all finalized donations", async () => {
       const donor = await createTestDonor();
