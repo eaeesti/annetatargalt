@@ -1,6 +1,7 @@
 import {
   eq,
   and,
+  or,
   gte,
   lte,
   asc,
@@ -429,11 +430,14 @@ export class DonationsRepository {
   }
 
   /**
-   * Attach donations to a transfer round, rejecting any that aren't eligible:
-   * only finalized donations that are either unassigned or already on this same
-   * round (idempotent). Nothing is written when there's a conflict — the caller
-   * gets the offending ids back and should 4xx. Run inside a transaction for
-   * isolation against a concurrent assignment.
+   * Attach donations to a transfer round. Eligibility is the UPDATE's own WHERE
+   * clause — a single atomic statement, no check-then-act race: a finalized
+   * donation that is unassigned or already on this same round (idempotent) is
+   * updated; anything else is left untouched and reported in `conflicting`.
+   *
+   * The eligible subset IS written even when `conflicting` is non-empty, so the
+   * caller must run this inside a transaction and roll back (throw) on a
+   * conflict — which is what the transfer service does.
    */
   async assignToTransfer(
     donationIds: number[],
@@ -441,31 +445,24 @@ export class DonationsRepository {
   ): Promise<{ ok: boolean; conflicting: number[] }> {
     if (donationIds.length === 0) return { ok: true, conflicting: [] };
 
-    const rows = await this.database
-      .select({
-        id: donations.id,
-        finalized: donations.finalized,
-        donationTransferId: donations.donationTransferId,
-      })
-      .from(donations)
-      .where(inArray(donations.id, donationIds));
-
-    const byId = new Map(rows.map((r) => [r.id, r]));
-    const conflicting = donationIds.filter((id) => {
-      const r = byId.get(id);
-      return (
-        !r ||
-        !r.finalized ||
-        (r.donationTransferId != null && r.donationTransferId !== transferId)
-      );
-    });
-    if (conflicting.length > 0) return { ok: false, conflicting };
-
-    await this.database
+    const updated = await this.database
       .update(donations)
       .set({ donationTransferId: transferId, updatedAt: new Date() })
-      .where(inArray(donations.id, donationIds));
-    return { ok: true, conflicting: [] };
+      .where(
+        and(
+          inArray(donations.id, donationIds),
+          eq(donations.finalized, true),
+          or(
+            isNull(donations.donationTransferId),
+            eq(donations.donationTransferId, transferId),
+          ),
+        ),
+      )
+      .returning({ id: donations.id });
+
+    const assigned = new Set(updated.map((r) => r.id));
+    const conflicting = donationIds.filter((id) => !assigned.has(id));
+    return { ok: conflicting.length === 0, conflicting };
   }
 
   /**
