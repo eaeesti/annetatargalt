@@ -152,11 +152,11 @@ export default async function TransferDetailPage({
         {transfer.notes && <Field label="Notes">{transfer.notes}</Field>}
         <Field label="Donations">
           <span>
-            {finalizedDonations.length} finalized
+            {transfer.donations.length}
             {transfer.donations.length !== finalizedDonations.length && (
-              <span className="text-muted-foreground ml-1">
-                ({transfer.donations.length - finalizedDonations.length}{" "}
-                pending)
+              <span className="text-destructive ml-1">
+                ({transfer.donations.length - finalizedDonations.length} not
+                finalized)
               </span>
             )}
           </span>
@@ -260,13 +260,10 @@ export default async function TransferDetailPage({
                   <span className="text-muted-foreground whitespace-nowrap">
                     {formatDate(d.datetime, true)}
                   </span>
-                  {d.finalized ? (
-                    <Badge variant="default" className="text-xs">
-                      Finalized
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary" className="text-xs">
-                      Pending
+                  {/* every donation in a transfer is finalized — only flag the odd exception */}
+                  {!d.finalized && (
+                    <Badge variant="destructive" className="text-xs">
+                      Not finalized
                     </Badge>
                   )}
                 </div>
