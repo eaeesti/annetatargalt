@@ -1,6 +1,6 @@
 import { urlWithParams } from "./string";
 
-export type Bank = "swedbank" | "lhv" | "seb" | "coop";
+export type Bank = "swedbank" | "lhv" | "seb";
 
 export interface PaymentInfo {
   iban: string;
@@ -65,18 +65,6 @@ export function createRecurringPaymentLink(
       sofield3: "enddt",
       sovalue4: "CIF",
       sofield4: "paymtype",
-    };
-  } else if (bank === "coop") {
-    const redirectUrl = "https://i.cooppank.ee/permpmtnew";
-    baseUrl = "https://i.cooppank.ee/sso/";
-    params = {
-      return: urlWithParams(redirectUrl, {
-        SaajaKonto: paymentInfo.iban,
-        SaajaNimi: paymentInfo.recipient,
-        MaksePohjus: paymentInfo.description,
-        Vaaring: "EUR",
-        MakseSumma: amount,
-      }),
     };
   } else {
     throw new Error("Unknown bank");
