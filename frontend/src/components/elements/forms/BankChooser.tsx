@@ -51,7 +51,7 @@ export default function BankChooser({
       <RadioGroup.Label className="mb-2 block text-sm font-medium leading-6 text-slate-900">
         {bankText}
       </RadioGroup.Label>
-      <div className="grid grid-cols-3 gap-2 xs:gap-3">
+      <div className="grid grid-cols-4 gap-2 xs:gap-3">
         {banks.filter((b): b is typeof b & { bank: string } => b.bank !== null).map(({ bank, icon }) => (
           <BankChooserOption key={bank} value={bank} label={bank} icon={icon} />
         ))}
