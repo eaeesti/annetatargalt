@@ -11,6 +11,8 @@ import {
 } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
 import { Button } from "../../../../components/ui/button";
+import { EntityLink } from "../../../../components/entity-link";
+import { donorHref } from "../../../../lib/entity-links";
 import {
   Table,
   TableBody,
@@ -160,7 +162,13 @@ export function RecurringDonationsTable({
           <SortableHeader col="donorLastName">Donor</SortableHeader>
         ),
         cell: ({ row }) => (
-          <span className="text-sm">{donorName(row.original)}</span>
+          <EntityLink
+            href={donorHref(row.original.donorId)}
+            stopRowClick
+            className="text-sm hover:underline"
+          >
+            {donorName(row.original)}
+          </EntityLink>
         ),
       },
       {

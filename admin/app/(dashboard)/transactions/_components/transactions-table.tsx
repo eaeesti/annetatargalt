@@ -6,6 +6,8 @@ import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
 import { Button } from "../../../../components/ui/button";
 import { Badge } from "../../../../components/ui/badge";
 import { Input } from "../../../../components/ui/input";
+import { EntityLink } from "../../../../components/entity-link";
+import { donationHref, transferHref } from "../../../../lib/entity-links";
 import {
   FilterBuilder,
   type FilterDef,
@@ -443,12 +445,14 @@ export function TransactionsTable({
                                 {row.donationTransferId ? (
                                   <>
                                     Paid out in{" "}
-                                    <a
-                                      className="hover:underline"
-                                      href={`/transfers/${row.donationTransferId}`}
+                                    <EntityLink
+                                      href={transferHref(
+                                        row.donationTransferId,
+                                      )}
+                                      newTab
                                     >
                                       transfer #{row.donationTransferId}
-                                    </a>
+                                    </EntityLink>
                                   </>
                                 ) : (
                                   "Not linked to a transfer round — link it from the transfer's page."
@@ -496,12 +500,13 @@ export function TransactionsTable({
                                         className="border-t border-border/50"
                                       >
                                         <td className="py-1 pr-3">
-                                          <a
+                                          <EntityLink
+                                            href={donationHref(dn.id)}
+                                            newTab
                                             className="font-mono hover:underline"
-                                            href={`/donations/${dn.id}`}
                                           >
                                             #{dn.id}
-                                          </a>
+                                          </EntityLink>
                                         </td>
                                         <td className="py-1 pr-3">
                                           {dn.donorName ?? "—"}
@@ -523,9 +528,18 @@ export function TransactionsTable({
                                             .join(", ")}
                                         </td>
                                         <td className="py-1">
-                                          {dn.donationTransferId
-                                            ? `#${dn.donationTransferId}`
-                                            : "—"}
+                                          {dn.donationTransferId ? (
+                                            <EntityLink
+                                              href={transferHref(
+                                                dn.donationTransferId,
+                                              )}
+                                              newTab
+                                            >
+                                              #{dn.donationTransferId}
+                                            </EntityLink>
+                                          ) : (
+                                            "—"
+                                          )}
                                         </td>
                                       </tr>
                                     ))}

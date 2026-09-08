@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { strapiAdmin } from "../../../../lib/api";
 import { resolveOrgNames } from "../../../../lib/orgs";
 import { Badge } from "../../../../components/ui/badge";
+import { EntityLink } from "../../../../components/entity-link";
+import { recurringDonationHref } from "../../../../lib/entity-links";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -175,7 +177,9 @@ export default async function DonorDetailPage({ params }: { params: Params }) {
                 key={rd.id}
                 className="flex items-center justify-between text-sm"
               >
-                <span className="text-muted-foreground">#{rd.id}</span>
+                <EntityLink href={recurringDonationHref(rd.id)}>
+                  #{rd.id}
+                </EntityLink>
                 <span className="tabular-nums">
                   {formatAmount(rd.amount)}/mo
                 </span>

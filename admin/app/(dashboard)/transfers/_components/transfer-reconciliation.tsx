@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../../../components/ui/button";
 import { Input } from "../../../../components/ui/input";
+import { EntityLink } from "../../../../components/entity-link";
+import { bankTransactionHref } from "../../../../lib/entity-links";
 
 type LinkedPayment = {
   archivingCode: string;
@@ -175,7 +177,12 @@ export function TransferReconciliation({
             {linked.map((p) => (
               <tr key={p.archivingCode} className="border-t border-border/50">
                 <td className="py-1 pr-3 whitespace-nowrap">
-                  {fmtDate(p.date)}
+                  <EntityLink
+                    href={bankTransactionHref(p.archivingCode)}
+                    newTab
+                  >
+                    {fmtDate(p.date)}
+                  </EntityLink>
                 </td>
                 <td className="py-1 pr-3">{p.counterpartyName ?? "—"}</td>
                 <td className="py-1 pr-3 text-right tabular-nums">
@@ -301,7 +308,12 @@ export function TransferReconciliation({
                           />
                         </td>
                         <td className="py-1 pr-3 whitespace-nowrap align-top">
-                          {fmtDate(c.date)}
+                          <EntityLink
+                            href={bankTransactionHref(c.archivingCode)}
+                            newTab
+                          >
+                            {fmtDate(c.date)}
+                          </EntityLink>
                         </td>
                         <td className="py-1 pr-3">
                           <span className="block">

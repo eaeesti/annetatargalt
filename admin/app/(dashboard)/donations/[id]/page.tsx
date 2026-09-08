@@ -3,6 +3,14 @@ import { notFound } from "next/navigation";
 import { strapiAdmin } from "../../../../lib/api";
 import { resolveOrgNames } from "../../../../lib/orgs";
 import { Badge } from "../../../../components/ui/badge";
+import { EntityLink } from "../../../../components/entity-link";
+import {
+  bankTransactionHref,
+  donorHref,
+  organizationHref,
+  recurringDonationHref,
+  transferHref,
+} from "../../../../lib/entity-links";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -161,7 +169,9 @@ export default async function DonationDetailPage({
         <Field label="Transaction ID">
           {donation.transactionId ? (
             <span className="font-mono text-xs">
-              {donation.transactionId}
+              <EntityLink href={bankTransactionHref(donation.transactionId)}>
+                {donation.transactionId}
+              </EntityLink>
               {donation.transactionMatchSource && (
                 <span className="ml-2 text-muted-foreground">
                   ({donation.transactionMatchSource})
@@ -187,11 +197,19 @@ export default async function DonationDetailPage({
           </Field>
         )}
         {donation.donationTransfer && (
-          <Field label="Transfer">#{donation.donationTransfer.id}</Field>
+          <Field label="Transfer">
+            <EntityLink href={transferHref(donation.donationTransfer.id)}>
+              #{donation.donationTransfer.id}
+            </EntityLink>
+          </Field>
         )}
         {donation.recurringDonation && (
           <Field label="Recurring donation">
-            #{donation.recurringDonation.id}
+            <EntityLink
+              href={recurringDonationHref(donation.recurringDonation.id)}
+            >
+              #{donation.recurringDonation.id}
+            </EntityLink>
           </Field>
         )}
       </Section>
@@ -199,7 +217,15 @@ export default async function DonationDetailPage({
       {/* Donor */}
       {donation.donor && (
         <Section title="Donor">
-          <Field label="Name">{donorName(donation.donor) ?? "—"}</Field>
+          <Field label="Name">
+            {donorName(donation.donor) ? (
+              <EntityLink href={donorHref(donation.donor.id)}>
+                {donorName(donation.donor)}
+              </EntityLink>
+            ) : (
+              "—"
+            )}
+          </Field>
           {donation.donor.email && (
             <Field label="Email">{donation.donor.email}</Field>
           )}
@@ -251,10 +277,10 @@ export default async function DonationDetailPage({
                 key={od.organizationInternalId}
                 className="flex justify-between text-sm"
               >
-                <span>
+                <EntityLink href={organizationHref(od.organizationInternalId)}>
                   {orgNames.get(od.organizationInternalId) ??
                     od.organizationInternalId}
-                </span>
+                </EntityLink>
                 <span className="font-medium tabular-nums">
                   {formatAmount(od.amount)}
                 </span>

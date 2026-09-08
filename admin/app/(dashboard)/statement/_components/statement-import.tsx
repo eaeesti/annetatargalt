@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Button } from "../../../../components/ui/button";
 import { Badge } from "../../../../components/ui/badge";
 import { Input } from "../../../../components/ui/input";
+import { EntityLink } from "../../../../components/entity-link";
+import { donationHref, donorHref } from "../../../../lib/entity-links";
 import {
   Table,
   TableBody,
@@ -408,8 +410,10 @@ export function StatementImport() {
                       {i.transaction.date}
                     </TableCell>
                     <TableCell>
-                      {preview.donorNames[i.donorId] ??
-                        i.transaction.counterpartyName}
+                      <EntityLink href={donorHref(i.donorId)} newTab>
+                        {preview.donorNames[i.donorId] ??
+                          i.transaction.counterpartyName}
+                      </EntityLink>
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
                       {eur(i.amountCents)}
@@ -460,7 +464,9 @@ export function StatementImport() {
                       />
                     </TableCell>
                     <TableCell className="font-mono text-xs">
-                      #{r.donationId}
+                      <EntityLink href={donationHref(r.donationId)} newTab>
+                        #{r.donationId}
+                      </EntityLink>
                     </TableCell>
                     <TableCell>{r.donorName ?? "—"}</TableCell>
                     <TableCell>{eur(r.amountCents)}</TableCell>
