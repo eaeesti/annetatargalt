@@ -13,6 +13,8 @@ import {
 import { ChevronDown, ChevronUp, ChevronsUpDown, Columns3 } from "lucide-react";
 import { Badge } from "../../../../components/ui/badge";
 import { Button } from "../../../../components/ui/button";
+import { EntityLink } from "../../../../components/entity-link";
+import { donorHref, organizationHref } from "../../../../lib/entity-links";
 import {
   FilterBuilder,
   type FilterDef,
@@ -217,10 +219,18 @@ export function DonationsTable({
         header: "Donor",
         cell: ({ row }) => {
           const label = donorLabel(row.original);
-          return label ? (
-            <span className="text-sm">{label}</span>
+          if (!label) return <span className="text-muted-foreground">—</span>;
+          const donorId = row.original.donor?.id;
+          return donorId ? (
+            <EntityLink
+              href={donorHref(donorId)}
+              stopRowClick
+              className="text-sm hover:underline"
+            >
+              {label}
+            </EntityLink>
           ) : (
-            <span className="text-muted-foreground">—</span>
+            <span className="text-sm">{label}</span>
           );
         },
       },
@@ -234,12 +244,20 @@ export function DonationsTable({
             return <span className="text-muted-foreground">—</span>;
           return (
             <span className="text-sm">
-              {ods
-                .map(
-                  (od) =>
-                    `${orgNames[od.organizationInternalId] ?? od.organizationInternalId} (${formatAmount(od.amount)})`,
-                )
-                .join(", ")}
+              {ods.map((od, i) => (
+                <span key={od.organizationInternalId}>
+                  {i > 0 && ", "}
+                  <EntityLink
+                    href={organizationHref(od.organizationInternalId)}
+                    stopRowClick
+                    className="hover:underline"
+                  >
+                    {orgNames[od.organizationInternalId] ??
+                      od.organizationInternalId}
+                  </EntityLink>{" "}
+                  ({formatAmount(od.amount)})
+                </span>
+              ))}
             </span>
           );
         },
