@@ -14,24 +14,42 @@ function getSlug(params: PageParams): string {
   return params.slug.join("/");
 }
 
-export async function generateMetadata(
-  { params }: { params: Promise<PageParams> },
-): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<PageParams>;
+}): Promise<Metadata> {
   const resolvedParams = await params;
   const slug = getSlug(resolvedParams);
-  const global = await getGlobal();
-  const specialPage = await findSpecialPage(slug);
 
-  if (specialPage) {
-    return buildMetadata(global, specialPage.entity.metadata ?? {});
+  try {
+    const global = await getGlobal();
+    const specialPage = await findSpecialPage(slug);
+
+    if (specialPage) {
+      return buildMetadata(global, specialPage.entity.metadata ?? {});
+    }
+
+    const page = await getPageBySlug(slug);
+    return buildMetadata(global, page.metadata);
+  } catch (err) {
+    // let notFound()/redirect() through; swallow real fetch failures so the
+    // actionable error comes from the page render (→ error.tsx), not here
+    if (
+      err instanceof Error &&
+      typeof (err as { digest?: unknown }).digest === "string"
+    ) {
+      throw err;
+    }
+    return {};
   }
-
-  const page = await getPageBySlug(slug);
-
-  return buildMetadata(global, page.metadata);
 }
 
-export default async function SlugPage({ params }: { params: Promise<PageParams> }) {
+export default async function SlugPage({
+  params,
+}: {
+  params: Promise<PageParams>;
+}) {
   const resolvedParams = await params;
   const slug = getSlug(resolvedParams);
   const global = await getGlobal();

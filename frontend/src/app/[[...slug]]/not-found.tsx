@@ -5,9 +5,22 @@ import Markdown from "@/components/elements/Markdown";
 import { getGlobal } from "@/utils/strapi";
 
 export default async function NotFound() {
-  const global = await getGlobal();
+  const global = await getGlobal().catch(() => null);
 
-  if (!global.notFoundPage) return;
+  if (!global?.notFoundPage) {
+    return (
+      <main className="grid h-full flex-grow place-items-center px-6 py-24">
+        <div className="text-center">
+          <p className="text-base font-semibold text-primary-600 sm:text-2xl">
+            404
+          </p>
+          <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900">
+            Page not found
+          </h1>
+        </div>
+      </main>
+    );
+  }
 
   const { title, description, buttons } = global.notFoundPage;
 

@@ -2,9 +2,19 @@ import type { MetadataRoute } from "next";
 import { getGlobal } from "@/utils/strapi";
 
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
-  const global = await getGlobal();
+  const global = await getGlobal().catch(() => null);
 
   const icons: MetadataRoute.Manifest["icons"] = [];
+
+  if (!global) {
+    return {
+      theme_color: "#047857",
+      background_color: "#ffffff",
+      display: "standalone",
+      start_url: "/",
+      icons,
+    };
+  }
 
   // In Strapi v5, media is returned flat (not nested under data.attributes)
   if (global.chromeIcon192?.url) {
