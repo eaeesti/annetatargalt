@@ -18,14 +18,14 @@ export interface PaymentInfo {
 export function createRecurringPaymentLink(
   bank: Bank,
   paymentInfo: PaymentInfo,
-  amount: number
+  amount: number,
 ): string {
   let baseUrl: string;
   let params: Record<string, string | number>;
 
   if (bank === "swedbank") {
     baseUrl =
-      "https://www.swedbank.ee/private/d2d/payments2/standing_order/new";
+      "https://www.swedbank.ee/private/d2d/payments2/standing_order/new_foreign";
     params = {
       "standingOrder.beneficiaryAccountNumber": paymentInfo.iban,
       "standingOrder.beneficiaryName": paymentInfo.recipient,
