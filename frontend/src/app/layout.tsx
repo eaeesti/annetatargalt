@@ -5,9 +5,14 @@ import PlausibleProvider from "next-plausible";
 import "@fontsource-variable/inter/opsz-italic.css";
 
 export async function generateMetadata() {
-  const global = await getGlobal();
-
-  return buildMetadata(global, {});
+  try {
+    const global = await getGlobal();
+    return buildMetadata(global, {});
+  } catch {
+    // Let the page's own getGlobal()/getPage() call throw so error.tsx can show
+    // the actionable message — don't blow up metadata generation here.
+    return {};
+  }
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

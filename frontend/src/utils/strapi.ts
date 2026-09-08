@@ -45,12 +45,39 @@ export async function fetchAPI(
 
     // Trigger API call
     const response = await fetch(requestUrl, mergedOptions as RequestInit);
+
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new Error(
+          `Strapi rejected the API token (HTTP ${response.status}) for GET /api${path}. ` +
+            "This usually means NEXT_PUBLIC_STRAPI_API_TOKEN in frontend/.env no longer matches a token " +
+            "in the running Strapi database — which happens after restoring a production DB dump. " +
+            "Fix: open http://localhost:1337/admin → Settings → API Tokens → regenerate the token, " +
+            "put the new value in frontend/.env, and restart the frontend.",
+        );
+      }
+      const body = await response.text().catch(() => "");
+      throw new Error(
+        `Strapi returned HTTP ${response.status} for GET /api${path}` +
+          (body ? `: ${body.slice(0, 300)}` : ""),
+      );
+    }
+
     const data = await response.json();
     return data;
   } catch (error) {
+    // rethrow our own descriptive errors untouched
+    if (
+      error instanceof Error &&
+      (error.message.startsWith("Strapi rejected") ||
+        error.message.startsWith("Strapi returned"))
+    ) {
+      throw error;
+    }
     console.error(`Failed to fetch ${path}:`, error);
     throw new Error(
-      "Please check if your server is running and you set all the required tokens.",
+      `Could not reach Strapi at ${getStrapiURL()} for GET /api${path}. ` +
+        "Check that the backend is running (yarn develop) and NEXT_PUBLIC_STRAPI_API_URL is set.",
     );
   }
 }
