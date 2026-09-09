@@ -18,6 +18,7 @@ function txn(o: Partial<BankTransaction>): BankTransaction {
     date: "2026-06-15",
     amountCents: 3000,
     archivingCode: "2026061500000001",
+    entryReference: "",
     description: "Anneta Targalt püsiannetus",
     idOrRegCode: "39001010001",
     counterpartyAccount: "EE001",

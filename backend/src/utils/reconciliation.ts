@@ -22,8 +22,15 @@ export interface BankTransaction {
   date: string;
   /** Summa, in cents */
   amountCents: number;
-  /** Arhiveerimistunnus — the value stored on the donation */
+  /**
+   * Arhiveerimistunnus — the bank's unique key for this line, stored on the
+   * donation. Card payments and some bank-internal debits have none; for those
+   * `parseLhvCsv` fills it from the entry reference as `kv-<Kande viide>` so the
+   * row can still be recorded (kept ≤20 chars to fit the column + code regex).
+   */
   archivingCode: string;
+  /** Kande viide — LHV's entry reference; always present, unique. The archiving-code fallback. */
+  entryReference: string;
   /** Selgitus */
   description: string;
   /** Isikukood või registrikood */
@@ -67,6 +74,8 @@ const HEADER_ALIASES: Record<string, keyof BankTransaction | "ignore"> = {
   Amount: "amountCents",
   Arhiveerimistunnus: "archivingCode",
   "Archiving code": "archivingCode",
+  "Kande viide": "entryReference",
+  "Transaction reference": "entryReference",
   Selgitus: "description",
   Description: "description",
   "Isikukood või registrikood": "idOrRegCode",
@@ -128,6 +137,7 @@ export function parseLhvCsv(input: string | Buffer): BankTransaction[] {
       date: "",
       amountCents: 0,
       archivingCode: "",
+      entryReference: "",
       description: "",
       idOrRegCode: "",
       counterpartyAccount: "",
@@ -150,8 +160,15 @@ export function parseLhvCsv(input: string | Buffer): BankTransaction[] {
       }
     }
 
-    // Bank-generated lines (e.g. "Saadud intress") have no counterparty and no
-    // archiving code. Keep them — the matcher ignores rows without a code.
+    // Card payments and some bank-internal debits carry no Arhiveerimistunnus.
+    // Fall back to the entry reference (always present, unique) so the outgoing
+    // money still gets a stable key and is recorded. Codeless *credits* are
+    // bank interest — left without a code, the matcher ignores them and the
+    // statement importer keeps them out of the donation ledger.
+    if (!txn.archivingCode && txn.direction === "D" && txn.entryReference) {
+      txn.archivingCode = `kv-${txn.entryReference}`;
+    }
+
     return txn;
   });
 }
