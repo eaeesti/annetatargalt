@@ -657,15 +657,20 @@ export class BankTransactionsRepository {
     `)
     ).rows as Record<string, unknown>[];
 
-    // Σ of the ABSOLUTE owed↔paidOut gap over rounds that have started paying
-    // out but don't reconcile (gap beyond the same per-round tolerance the
+    // Σ of the ABSOLUTE owed↔paidOut↔adjustment residual over rounds that have
+    // started reconciling (a linked payment or an operator adjustment) but
+    // don't tie out (residual beyond the same per-round tolerance the
     // /transfers "OK" column uses). Absolute so an overpaid round can't cancel
     // an underpaid one; per-round filter so a hundred within-tolerance rounds
     // don't accumulate into a false warning.
+    // This is the SQL twin of `assessBalance` in donationTransfersRepository —
+    // keep the residual/tolerance/"assessed" rule identical in both.
     const [gap] = (
       await this.database.execute(sql`
       WITH per_transfer AS (
         SELECT dt.id,
+          coalesce(dt.reconciliation_adjustment_cents, 0) AS adj,
+          dt.reconciliation_adjustment_cents IS NOT NULL AS has_adj,
           (SELECT coalesce(sum(od.amount), 0) FROM organization_donations od
              JOIN donations d ON d.id = od.donation_id
              WHERE d.donation_transfer_id = dt.id AND d.finalized = true) AS owed,
@@ -675,9 +680,9 @@ export class BankTransactionsRepository {
              WHERE bt.donation_transfer_id = dt.id) AS payment_count
         FROM donation_transfers dt
       )
-      SELECT cast(coalesce(sum(abs(owed - paid_out)) filter (
-        where payment_count > 0
-          and abs(owed - paid_out) > greatest(1000, round(abs(owed) * 0.005))
+      SELECT cast(coalesce(sum(abs(owed - paid_out - adj)) filter (
+        where (payment_count > 0 or has_adj)
+          and abs(owed - paid_out - adj) > greatest(1000, round(abs(owed) * 0.005))
       ), 0) as int) as gap
       FROM per_transfer
     `)

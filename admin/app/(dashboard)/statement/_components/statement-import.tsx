@@ -7,6 +7,7 @@ import { Badge } from "../../../../components/ui/badge";
 import { Input } from "../../../../components/ui/input";
 import { EntityLink } from "../../../../components/entity-link";
 import { donationHref, donorHref } from "../../../../lib/entity-links";
+import { euroInputToCents } from "../../../../lib/money";
 import {
   Table,
   TableBody,
@@ -82,30 +83,6 @@ type Preview = {
 
 const eur = (cents: number | null) =>
   cents == null ? "—" : `€${(cents / 100).toFixed(2)}`;
-
-/** "7.37" | "12,50" | "1 234,56" | "1,234.56" → cents, or null. */
-function euroInputToCents(raw: string): number | null {
-  const s = raw.trim().replace(/[\s ]/g, "");
-  if (!s) return null;
-  const lastComma = s.lastIndexOf(",");
-  const lastDot = s.lastIndexOf(".");
-  let normalized = s;
-  if (lastComma > -1 && lastDot > -1) {
-    // both present → the later one is the decimal separator
-    const dec = lastComma > lastDot ? "," : ".";
-    const thou = dec === "," ? "." : ",";
-    normalized = s.split(thou).join("").replace(dec, ".");
-  } else if (lastComma > -1) {
-    normalized = s.replace(",", "."); // Estonian: comma is always decimal
-  } else if (lastDot > -1 && /^\d{1,3}(\.\d{3})+$/.test(s)) {
-    // a lone dot in an all-3-digit-grouped number ("1.234", "12.345.678")
-    // reads as an Estonian thousands separator — a fee is never entered to 3
-    // decimal places, so this can't be a fraction of a cent
-    normalized = s.split(".").join("");
-  }
-  const n = Number.parseFloat(normalized);
-  return Number.isFinite(n) ? Math.round(n * 100) : null;
-}
 
 function Section({
   title,

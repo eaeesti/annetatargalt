@@ -57,6 +57,13 @@
       "when": 1788699615621,
       "tag": "0007_transfer_bank_link",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788987715338,
+      "tag": "0008_transfer_reconciliation_adjustment",
+      "breakpoints": true
     }
   ]
 }

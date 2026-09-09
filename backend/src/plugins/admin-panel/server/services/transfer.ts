@@ -22,6 +22,8 @@ export interface CreateTransferInput {
 export interface UpdateTransferInput {
   datetime?: string;
   notes?: string | null;
+  reconciliationAdjustmentCents?: number | null;
+  reconciliationNote?: string | null;
   addDonationIds?: number[];
   removeDonationIds?: number[];
   linkCodes?: string[];
@@ -69,10 +71,22 @@ export function createTransferService(_strapi: Core.Strapi) {
         if (!existing)
           return { ok: false as const, reason: "not-found" as const };
 
-        if (input.datetime !== undefined || input.notes !== undefined) {
+        if (
+          input.datetime !== undefined ||
+          input.notes !== undefined ||
+          input.reconciliationAdjustmentCents !== undefined ||
+          input.reconciliationNote !== undefined
+        ) {
           await transfersRepo.update(id, {
             ...(input.datetime !== undefined && { datetime: input.datetime }),
             ...(input.notes !== undefined && { notes: input.notes }),
+            ...(input.reconciliationAdjustmentCents !== undefined && {
+              reconciliationAdjustmentCents:
+                input.reconciliationAdjustmentCents,
+            }),
+            ...(input.reconciliationNote !== undefined && {
+              reconciliationNote: input.reconciliationNote,
+            }),
           });
         }
         if (input.removeDonationIds?.length) {

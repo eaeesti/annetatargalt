@@ -6,6 +6,7 @@ import { Button } from "../../../../components/ui/button";
 import { Input } from "../../../../components/ui/input";
 import { EntityLink } from "../../../../components/entity-link";
 import { bankTransactionHref } from "../../../../lib/entity-links";
+import { euroInputToCents } from "../../../../lib/money";
 
 type LinkedPayment = {
   archivingCode: string;
@@ -39,7 +40,9 @@ export function TransferReconciliation({
   transferDate,
   owedCents,
   paidOutCents,
-  differenceCents,
+  adjustmentCents,
+  reconciliationNote,
+  residualCents,
   balanced,
   linked,
 }: {
@@ -47,8 +50,10 @@ export function TransferReconciliation({
   transferDate: string;
   owedCents: number;
   paidOutCents: number;
-  differenceCents: number;
-  balanced: boolean;
+  adjustmentCents: number | null;
+  reconciliationNote: string | null;
+  residualCents: number;
+  balanced: boolean | null;
   linked: LinkedPayment[];
 }) {
   const router = useRouter();
@@ -90,10 +95,33 @@ export function TransferReconciliation({
   }
 
   // per-payment note edits (which org the payment went to) — keyed by code
-  const [notes, setNotes] = useState<Record<string, string>>(() =>
-    Object.fromEntries(linked.map((p) => [p.archivingCode, p.note ?? ""])),
+  const serverNotes = Object.fromEntries(
+    linked.map((p) => [p.archivingCode, p.note ?? ""]),
   );
+  const [notes, setNotes] = useState<Record<string, string>>(serverNotes);
   const [savingNote, setSavingNote] = useState<string | null>(null);
+  const seenServerNotes = useRef<Record<string, string>>(serverNotes);
+
+  // After a refresh (link / unlink / save), adopt the server's notes for rows
+  // the operator hasn't touched, but keep any unsaved local edit that diverges
+  // from what the server last showed us. Keyed on a value signature so it fires
+  // only when the data actually changed, not on every render.
+  const linkedSig = linked
+    .map((p) => `${p.archivingCode}:${p.note ?? ""}`)
+    .join("|");
+  useEffect(() => {
+    setNotes((local) => {
+      const merged: Record<string, string> = {};
+      for (const [code, srv] of Object.entries(serverNotes)) {
+        const seen = seenServerNotes.current[code] ?? "";
+        const loc = local[code];
+        merged[code] = loc !== undefined && loc !== seen ? loc : srv;
+      }
+      return merged;
+    });
+    seenServerNotes.current = serverNotes;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [linkedSig]);
 
   async function saveNote(code: string, original: string) {
     const value = (notes[code] ?? "").trim();
@@ -151,6 +179,60 @@ export function TransferReconciliation({
         .reduce((s, c) => s + Math.abs(c.amountCents ?? 0), 0)
     : 0;
 
+  // ── manual reconciliation adjustment ──────────────────────────────────────
+  const [editAdj, setEditAdj] = useState(false);
+  const [adjEuros, setAdjEuros] = useState("");
+  const [adjNote, setAdjNote] = useState("");
+  const [savingAdj, setSavingAdj] = useState(false);
+  const assessed = hasPayments || adjustmentCents !== null;
+
+  const signed = (cents: number) => `${cents < 0 ? "−" : ""}${eur(cents)}`;
+
+  // seed the form from the current server values each time it opens, so a
+  // refresh (Clear, linking a payment) can't leave stale values in it
+  function toggleEditAdj() {
+    if (!editAdj) {
+      setAdjEuros(
+        adjustmentCents == null ? "" : (adjustmentCents / 100).toFixed(2),
+      );
+      setAdjNote(reconciliationNote ?? "");
+    }
+    setEditAdj((v) => !v);
+  }
+
+  async function saveAdjustment(clear = false) {
+    let cents: number | null = null;
+    if (!clear) {
+      cents = euroInputToCents(adjEuros);
+      if (cents === null) {
+        alert("Enter an amount — e.g. -1234.56, or 0 for none");
+        return;
+      }
+    }
+    setSavingAdj(true);
+    try {
+      const res = await fetch(`/api/transfers/${transferId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reconciliationAdjustmentCents: cents,
+          reconciliationNote: clear ? null : adjNote.trim(),
+        }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        alert(j.error?.message ?? "Could not save the adjustment");
+        return;
+      }
+      setEditAdj(false);
+      router.refresh();
+    } catch {
+      alert("Could not save — check your connection and try again");
+    } finally {
+      setSavingAdj(false);
+    }
+  }
+
   return (
     <div className="rounded-lg border bg-card p-5 space-y-4">
       <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
@@ -169,27 +251,100 @@ export function TransferReconciliation({
           </span>
         </span>
         <span
+          className={adjustmentCents === null ? "text-muted-foreground" : ""}
+        >
+          Adjustment{" "}
+          <span className="font-semibold tabular-nums">
+            {adjustmentCents === null ? "—" : signed(adjustmentCents)}
+          </span>{" "}
+          <button
+            className="text-xs text-primary hover:underline"
+            onClick={toggleEditAdj}
+          >
+            {editAdj ? "close" : adjustmentCents === null ? "set" : "edit"}
+          </button>
+        </span>
+        <span
           className={
-            !hasPayments
+            !assessed
               ? "text-muted-foreground"
               : balanced
                 ? "text-emerald-600"
                 : "text-amber-600"
           }
         >
-          Difference{" "}
+          Residual{" "}
           <span className="font-semibold tabular-nums">
-            {differenceCents >= 0 ? "" : "−"}
-            {eur(differenceCents)}
+            {signed(residualCents)}
           </span>
-          {hasPayments && (balanced ? " ✓" : " — needs a look")}
+          {assessed && (balanced ? " ✓" : " — needs a look")}
         </span>
       </div>
-      {hasPayments && !balanced && (
+
+      {reconciliationNote && !editAdj && (
         <p className="text-xs text-muted-foreground">
-          A small negative difference is normal — card fees are absorbed and the
-          outgoing SEPA carries its own fee. A large gap means a payment is
-          missing or attached to the wrong round.
+          <span className="font-medium">Adjustment note:</span>{" "}
+          {reconciliationNote}
+        </p>
+      )}
+
+      {editAdj && (
+        <div className="rounded-md border p-3 space-y-2">
+          <p className="text-xs text-muted-foreground">
+            Record the part of <em>owed</em> that legitimately didn&apos;t leave
+            via a linked payment — a payout the imported statements don&apos;t
+            cover, or absorbed fees. Use a negative number when a linked payment
+            over-covers this round, or 0 if you&apos;ve checked it and
+            there&apos;s nothing to adjust.
+          </p>
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="text-xs">
+              <span className="mb-1 block text-muted-foreground">
+                Adjustment (€)
+              </span>
+              <Input
+                value={adjEuros}
+                onChange={(e) => setAdjEuros(e.target.value)}
+                placeholder="e.g. -1234.56"
+                className="h-7 w-40 text-xs"
+              />
+            </label>
+            <label className="flex-1 text-xs">
+              <span className="mb-1 block text-muted-foreground">
+                Why (required)
+              </span>
+              <Input
+                value={adjNote}
+                onChange={(e) => setAdjNote(e.target.value)}
+                className="h-7 text-xs"
+              />
+            </label>
+            <Button
+              size="sm"
+              disabled={savingAdj || !adjEuros.trim() || !adjNote.trim()}
+              onClick={() => saveAdjustment(false)}
+            >
+              {savingAdj ? "Saving…" : "Save"}
+            </Button>
+            {adjustmentCents !== null && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={savingAdj}
+                onClick={() => saveAdjustment(true)}
+              >
+                Clear
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {assessed && !balanced && !editAdj && (
+        <p className="text-xs text-muted-foreground">
+          A small residual is normal — card fees are absorbed and the outgoing
+          SEPA carries its own fee. A larger gap means a payment is missing, on
+          the wrong round, or something that belongs in the adjustment.
         </p>
       )}
 

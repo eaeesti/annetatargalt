@@ -5,6 +5,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { bankTransactionsRepository } from "../bank-transactions.repository";
 import { donationsRepository } from "../donations.repository";
+import { donationTransfersRepository } from "../donation-transfers.repository";
 import {
   cleanDatabase,
   createTestDonor,
@@ -273,7 +274,10 @@ describe("BankTransactionsRepository", () => {
         amount: -5000,
       });
       expect(
-        await bankTransactionsRepository.updateNote("PAYOUT1", "paid recipient org"),
+        await bankTransactionsRepository.updateNote(
+          "PAYOUT1",
+          "paid recipient org",
+        ),
       ).toBe(true);
       const [row] = await bankTransactionsRepository
         .findPaginated({
@@ -282,7 +286,10 @@ describe("BankTransactionsRepository", () => {
           search: "PAYOUT1",
         })
         .then((r) => r.data);
-      expect(row).toMatchObject({ category: "outgoing", note: "paid recipient org" });
+      expect(row).toMatchObject({
+        category: "outgoing",
+        note: "paid recipient org",
+      });
 
       expect(await bankTransactionsRepository.updateNote("PAYOUT1", null)).toBe(
         true,
@@ -777,6 +784,41 @@ describe("BankTransactionsRepository", () => {
 
       const mf = await bankTransactionsRepository.moneyFlow({});
       expect(mf.transferGap).toBe(0);
+    });
+
+    it("transferGap subtracts a round's reconciliation adjustment", async () => {
+      const transfer = await createTestDonationTransfer({
+        datetime: "2026-02-10",
+      });
+      const d = await createTestDonation({
+        finalized: true,
+        amount: 10000,
+        donationTransferId: transfer.id,
+      });
+      await createTestOrganizationDonation({
+        donationId: d.id,
+        organizationInternalId: "AMF",
+        amount: 10000,
+      });
+      await createTestBankTransaction({
+        archivingCode: "OUT_MF_ADJ",
+        category: "outgoing",
+        amount: -8000, // €20 short of €100 owed
+        donationTransferId: transfer.id,
+      });
+
+      expect((await bankTransactionsRepository.moneyFlow({})).transferGap).toBe(
+        2000,
+      );
+
+      await donationTransfersRepository.update(transfer.id, {
+        reconciliationAdjustmentCents: 2000,
+        reconciliationNote: "off-ledger, documented",
+      });
+
+      expect((await bankTransactionsRepository.moneyFlow({})).transferGap).toBe(
+        0,
+      );
     });
   });
 
