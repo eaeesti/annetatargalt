@@ -386,6 +386,7 @@ export function createStatementService(strapi: Core.Strapi) {
         }
         return {
           archivingCode: code,
+          entryReference: str(r.entryReference),
           amountCents: r.amountCents as number,
           date: str(r.date).slice(0, 10),
           description: str(r.description),

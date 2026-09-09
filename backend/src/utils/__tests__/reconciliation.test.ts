@@ -10,14 +10,15 @@ import {
 
 // ─── Fixtures (synthetic — no real donor data) ───────────────────────────────
 
-const ESTONIAN_CSV = `﻿"Kliendi konto","Kuupäev","Saaja/maksja konto","Saaja/maksja nimi","Deebet/Kreedit (D/C)","Summa","Arhiveerimistunnus","Selgitus","Valuuta","Isikukood või registrikood"
-"EE24","2024-03-01","EE99","AAA BBB","C",15.00,"2024030100000001","Anneta Targalt annetus 101","EUR","39000000000"
-"EE24","2024-03-01","EE88","CCC DDD","C",30.00,"2024030100000002","Anneta Targalt annetus","EUR","38000000000"
-"EE24","2024-03-02","EE24","Card payment","D",4.20,"2024030200000003","RIMI","EUR",""
+const ESTONIAN_CSV = `﻿"Kliendi konto","Kuupäev","Saaja/maksja konto","Saaja/maksja nimi","Deebet/Kreedit (D/C)","Summa","Arhiveerimistunnus","Selgitus","Valuuta","Isikukood või registrikood","Kande viide"
+"EE24","2024-03-01","EE99","AAA BBB","C",15.00,"2024030100000001","Anneta Targalt annetus 101","EUR","39000000000","900000001"
+"EE24","2024-03-01","EE88","CCC DDD","C",30.00,"2024030100000002","Anneta Targalt annetus","EUR","38000000000","900000002"
+"EE24","2024-03-02","EE24","Card payment","D",4.20,"2024030200000003","RIMI","EUR","","900000003"
+"EE24","2024-03-05","","CARD MERCHANT","D",54.00,"","(..0000) 2024-03-04 CARD MERCHANT","EUR","","900000004"
 `;
 
-const ENGLISH_CSV = `﻿"Customer account no","Date","Sender/receiver account","Sender/receiver name","Debit/Credit (D/C)","Amount","Archiving code","Description","Currency","Personal code or register code"
-"EE24","2024-03-01","EE99","AAA BBB","C",15.00,"2024030100000001","Anneta Targalt annetus 101","EUR","39000000000"
+const ENGLISH_CSV = `﻿"Customer account no","Date","Sender/receiver account","Sender/receiver name","Debit/Credit (D/C)","Amount","Archiving code","Description","Currency","Personal code or register code","Transaction reference"
+"EE24","2024-03-01","EE99","AAA BBB","C",15.00,"2024030100000001","Anneta Targalt annetus 101","EUR","39000000000","900000001"
 `;
 
 function txn(overrides: Partial<BankTransaction>): BankTransaction {
@@ -25,6 +26,7 @@ function txn(overrides: Partial<BankTransaction>): BankTransaction {
     date: "2024-03-01",
     amountCents: 3000,
     archivingCode: "2024030100000000",
+    entryReference: "",
     description: "",
     idOrRegCode: "",
     counterpartyAccount: "EE99",
@@ -83,7 +85,7 @@ describe("parseSelgitusDonationId", () => {
 describe("parseLhvCsv", () => {
   it("parses the Estonian export incl. BOM, keeps debits", () => {
     const rows = parseLhvCsv(ESTONIAN_CSV);
-    expect(rows).toHaveLength(3);
+    expect(rows).toHaveLength(4);
     expect(rows[0]).toMatchObject({
       date: "2024-03-01",
       amountCents: 1500,
@@ -93,6 +95,28 @@ describe("parseLhvCsv", () => {
       direction: "C",
     });
     expect(rows[2].direction).toBe("D");
+  });
+
+  it("keys a codeless debit (card payment) on its entry reference", () => {
+    const rows = parseLhvCsv(ESTONIAN_CSV);
+    expect(rows[3]).toMatchObject({
+      counterpartyName: "CARD MERCHANT",
+      direction: "D",
+      amountCents: 5400,
+      entryReference: "900000004",
+      archivingCode: "kv-900000004",
+    });
+  });
+
+  it("leaves a codeless credit (bank interest) without a code", () => {
+    const csv = `﻿"Kliendi konto","Kuupäev","Saaja/maksja konto","Saaja/maksja nimi","Deebet/Kreedit (D/C)","Summa","Arhiveerimistunnus","Selgitus","Valuuta","Isikukood või registrikood","Kande viide"
+"EE24","2024-03-31","","","C",0.22,"","Saadud intress","EUR","","900000009"
+`;
+    expect(parseLhvCsv(csv)[0]).toMatchObject({
+      direction: "C",
+      archivingCode: "",
+      entryReference: "900000009",
+    });
   });
 
   it("parses the English export identically", () => {
@@ -109,12 +133,12 @@ describe("parseLhvCsv", () => {
 
   it("handles CRLF, and mixed line endings without a trailing newline", () => {
     const crlf = ESTONIAN_CSV.replace(/\n/g, "\r\n");
-    expect(parseLhvCsv(crlf)).toHaveLength(3);
+    expect(parseLhvCsv(crlf)).toHaveLength(4);
 
     // header + first row CRLF, rest LF, no trailing newline (a hand-edited file)
     const lines = ESTONIAN_CSV.trimEnd().split("\n");
     const mixed = `${lines[0]}\r\n${lines.slice(1).join("\n")}`;
-    expect(parseLhvCsv(mixed)).toHaveLength(3);
+    expect(parseLhvCsv(mixed)).toHaveLength(4);
   });
 });
 
