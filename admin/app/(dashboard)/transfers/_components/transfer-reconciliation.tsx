@@ -13,6 +13,7 @@ type LinkedPayment = {
   amountCents: number | null;
   counterpartyName: string | null;
   description: string | null;
+  note: string | null;
 };
 
 const eur = (c: number | null) =>
@@ -85,6 +86,35 @@ export function TransferReconciliation({
       alert("Request failed — check your connection and try again");
     } finally {
       setBusy(false);
+    }
+  }
+
+  // per-payment note edits (which org the payment went to) — keyed by code
+  const [notes, setNotes] = useState<Record<string, string>>(() =>
+    Object.fromEntries(linked.map((p) => [p.archivingCode, p.note ?? ""])),
+  );
+  const [savingNote, setSavingNote] = useState<string | null>(null);
+
+  async function saveNote(code: string, original: string) {
+    const value = (notes[code] ?? "").trim();
+    if (value === (original ?? "").trim()) return;
+    setSavingNote(code);
+    try {
+      const res = await fetch(`/api/transactions/${encodeURIComponent(code)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note: value || null }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        alert(j.error?.message ?? "Could not save the note");
+      } else {
+        router.refresh();
+      }
+    } catch {
+      alert("Could not save the note — check your connection and try again");
+    } finally {
+      setSavingNote(null);
     }
   }
 
@@ -170,6 +200,7 @@ export function TransferReconciliation({
               <th className="py-1 pr-3">Date</th>
               <th className="py-1 pr-3">Counterparty</th>
               <th className="py-1 pr-3 text-right">Amount</th>
+              <th className="py-1 pr-3">Note</th>
               <th className="py-1" />
             </tr>
           </thead>
@@ -187,6 +218,20 @@ export function TransferReconciliation({
                 <td className="py-1 pr-3">{p.counterpartyName ?? "—"}</td>
                 <td className="py-1 pr-3 text-right tabular-nums">
                   {eur(p.amountCents)}
+                </td>
+                <td className="py-1 pr-3">
+                  <Input
+                    value={notes[p.archivingCode] ?? ""}
+                    onChange={(e) =>
+                      setNotes((n) => ({
+                        ...n,
+                        [p.archivingCode]: e.target.value,
+                      }))
+                    }
+                    onBlur={() => saveNote(p.archivingCode, p.note ?? "")}
+                    disabled={savingNote === p.archivingCode}
+                    className="h-6 rounded-md px-1.5 py-0 text-xs"
+                  />
                 </td>
                 <td className="py-1 text-right">
                   <button

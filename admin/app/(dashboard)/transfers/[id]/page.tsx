@@ -31,6 +31,7 @@ type LinkedPayment = {
   amountCents: number | null;
   counterpartyName: string | null;
   description: string | null;
+  note: string | null;
 };
 
 type TransferDetail = {

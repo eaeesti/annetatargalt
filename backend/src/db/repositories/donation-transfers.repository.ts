@@ -226,6 +226,7 @@ export class DonationTransfersRepository {
         amountCents: bankTransactions.amount,
         counterpartyName: bankTransactions.counterpartyName,
         description: bankTransactions.description,
+        note: bankTransactions.note,
       })
       .from(bankTransactions)
       .where(eq(bankTransactions.donationTransferId, id))

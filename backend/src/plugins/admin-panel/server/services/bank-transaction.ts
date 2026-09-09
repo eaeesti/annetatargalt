@@ -115,5 +115,13 @@ export function createBankTransactionService(strapi: Core.Strapi) {
         by,
       );
     },
+
+    /** Note-only edit — no category change, no donation-link guard. */
+    async setNote(code: string, note: string | null) {
+      const ok = await bankTransactionsRepository.updateNote(code, note);
+      return ok
+        ? { ok: true as const }
+        : { ok: false as const, reason: "not-found" as const };
+    },
   };
 }
