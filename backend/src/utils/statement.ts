@@ -95,6 +95,10 @@ export interface StatementReport {
   needsDecision: { transaction: BankTransaction; reason: string }[];
   /** step 6 — offer to ignore */
   notADonation: BankTransaction[];
+  /** credit lines whose code is already `category = 'ignored'` — shown for review, not acted on */
+  alreadyIgnored: BankTransaction[];
+  /** every CSV line the importer can't place (codeless credits/interest, no D/C marker) — shown, never imported */
+  notImported: { transaction: BankTransaction; reason: string }[];
   /** every credit line with an archiving code, deduped — persisted as bank_transactions rows on apply */
   allCredits: BankTransaction[];
   /** every debit line with an archiving code, deduped — persisted as `outgoing` rows on apply */
@@ -107,6 +111,8 @@ export interface StatementReport {
     unrecorded: number;
     /** debit lines with a code (all recorded as `outgoing`) */
     outgoing: number;
+    /** CSV lines that can't be placed (codeless credits, no D/C marker) */
+    notImported: number;
   };
 }
 
@@ -292,6 +298,33 @@ export function categorizeStatement(input: StatementInput): StatementReport {
         .map((t) => [t.archivingCode, t]),
     ).values(),
   ];
+
+  // Every remaining line — so nothing in the CSV disappears without a trace.
+  // In practice: codeless credit lines (bank interest, adjustments) and the
+  // odd line with no debit/credit marker. Shown for review, never imported.
+  const notImported = [
+    ...new Map(
+      input.transactions
+        .filter(
+          (t) =>
+            !(t.direction === "C" && t.archivingCode !== "") &&
+            !(t.direction === "D" && t.archivingCode !== ""),
+        )
+        .map((t) => {
+          const reason =
+            t.direction === "C"
+              ? "credit with no archiving code — bank interest or adjustment"
+              : t.direction === "D"
+                ? "debit with no archiving code or entry reference"
+                : "line has no debit/credit marker";
+          const key =
+            t.entryReference ||
+            `${t.date}|${t.amountCents}|${t.description}|${t.direction}`;
+          return [key, { transaction: t, reason }] as const;
+        }),
+    ).values(),
+  ];
+
   const recordedCodes = input.recordedCodes ?? new Set<string>();
   const unimportedCodes = input.unimportedCodes ?? new Set<string>();
 
@@ -301,6 +334,8 @@ export function categorizeStatement(input: StatementInput): StatementReport {
     cardPayouts: [],
     needsDecision: [],
     notADonation: [],
+    alreadyIgnored: [],
+    notImported,
     allCredits,
     allDebits,
     counts: {
@@ -314,6 +349,7 @@ export function categorizeStatement(input: StatementInput): StatementReport {
           unimportedCodes.has(t.archivingCode),
       ).length,
       outgoing: allDebits.length,
+      notImported: notImported.length,
     },
   };
 
@@ -356,6 +392,7 @@ export function categorizeStatement(input: StatementInput): StatementReport {
 
     if (input.ignoredCodes.has(code)) {
       report.counts.ignored++;
+      report.alreadyIgnored.push(txn);
       continue;
     }
     if (input.reconciledCodes.has(code)) {
