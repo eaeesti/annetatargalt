@@ -109,6 +109,21 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
         body.note == null ? null : String(body.note).slice(0, 512) || null;
 
       const user = ctx.state.user as { email?: string } | undefined;
+
+      // note-only edit (no category in the body) — e.g. documenting a payout
+      // from the transfer view. Skips the reclassify / donation-link checks.
+      if (category === "") {
+        if (body.note === undefined) {
+          return ctx.badRequest("Nothing to update");
+        }
+        const noteResult = await service.setNote(code, note);
+        if (!noteResult.ok) {
+          return ctx.notFound("Bank transaction not found");
+        }
+        await auditLog(ctx, "bankTransactions.note", code);
+        return ctx.send({ ok: true });
+      }
+
       const result = await service.reclassify(
         code,
         category,

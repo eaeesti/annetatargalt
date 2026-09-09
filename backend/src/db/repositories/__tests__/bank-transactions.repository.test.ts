@@ -265,6 +265,37 @@ describe("BankTransactionsRepository", () => {
     });
   });
 
+  describe("updateNote", () => {
+    it("sets the note without touching the category, even for a donation-linked code", async () => {
+      await createTestBankTransaction({
+        archivingCode: "PAYOUT1",
+        category: "outgoing",
+        amount: -5000,
+      });
+      expect(
+        await bankTransactionsRepository.updateNote("PAYOUT1", "paid recipient org"),
+      ).toBe(true);
+      const [row] = await bankTransactionsRepository
+        .findPaginated({
+          page: 1,
+          pageSize: 25,
+          search: "PAYOUT1",
+        })
+        .then((r) => r.data);
+      expect(row).toMatchObject({ category: "outgoing", note: "paid recipient org" });
+
+      expect(await bankTransactionsRepository.updateNote("PAYOUT1", null)).toBe(
+        true,
+      );
+    });
+
+    it("returns false for an unknown code", async () => {
+      expect(await bankTransactionsRepository.updateNote("MISSING", "x")).toBe(
+        false,
+      );
+    });
+  });
+
   describe("findPaginated", () => {
     it("computes linked donation count / allocated / balanced", async () => {
       const donor = await createTestDonor();

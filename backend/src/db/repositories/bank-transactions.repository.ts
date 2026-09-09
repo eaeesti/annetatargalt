@@ -355,6 +355,19 @@ export class BankTransactionsRepository {
       : { ok: false, reason: "not-found" };
   }
 
+  /**
+   * Update only the free-text note on a row, leaving its category untouched.
+   * Used to document a linked payout ("sent to <org>") from the transfer view.
+   */
+  async updateNote(code: string, note: string | null): Promise<boolean> {
+    const updated = await this.database
+      .update(bankTransactions)
+      .set({ note: trunc(note, 512), updatedAt: new Date() })
+      .where(eq(bankTransactions.archivingCode, code))
+      .returning({ code: bankTransactions.archivingCode });
+    return updated.length > 0;
+  }
+
   /** `card-payout` rows with no stored processor fee yet (backfill candidates). */
   async cardPayoutsMissingFee(): Promise<BankTransaction[]> {
     return this.database
