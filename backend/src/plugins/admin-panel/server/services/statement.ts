@@ -351,6 +351,8 @@ export function createStatementService(strapi: Core.Strapi) {
         cardPayouts,
         needsDecision: report.needsDecision,
         notADonation: report.notADonation,
+        alreadyIgnored: report.alreadyIgnored,
+        notImported: report.notImported,
         allCredits: report.allCredits,
         allDebits: report.allDebits,
         donorNames,

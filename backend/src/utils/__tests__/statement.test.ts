@@ -353,6 +353,9 @@ describe("categorizeStatement", () => {
     expect(report.counts).toMatchObject({ alreadyReconciled: 1, ignored: 1 });
     expect(report.recurringImports).toHaveLength(0);
     expect(report.notADonation).toHaveLength(0);
+    expect(report.alreadyIgnored.map((t) => t.archivingCode)).toEqual([
+      "IGNORED",
+    ]);
   });
 
   it("never re-reconciles a code that is already on a donation or ignored, even if matchDonations finds a same-amount donation in the window", () => {
@@ -521,6 +524,36 @@ describe("categorizeStatement", () => {
       }),
     );
     expect(report.counts.creditTransactions).toBe(0);
+  });
+
+  it("surfaces unplaceable lines (codeless credits, no D/C marker) in notImported", () => {
+    const report = categorizeStatement(
+      baseInput({
+        transactions: [
+          txn({ archivingCode: "OK" }),
+          txn({
+            archivingCode: "",
+            entryReference: "900000009",
+            counterpartyName: "",
+            description: "Saadud intress",
+            amountCents: 22,
+          }),
+          txn({
+            direction: "",
+            archivingCode: "",
+            entryReference: "900000010",
+          }),
+        ],
+      }),
+    );
+    expect(report.counts.notImported).toBe(2);
+    expect(report.notImported.map((n) => n.transaction.description)).toContain(
+      "Saadud intress",
+    );
+    expect(report.notImported.map((n) => n.reason)).toEqual([
+      "credit with no archiving code — bank interest or adjustment",
+      "line has no debit/credit marker",
+    ]);
   });
 
   it("splits credit lines into allCredits and debit lines into allDebits (both deduped)", () => {

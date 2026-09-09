@@ -63,12 +63,15 @@ type Preview = {
     ignored: number;
     unrecorded: number;
     outgoing: number;
+    notImported: number;
   };
   reconcile: ReconcileRow[];
   recurringImports: RecurringImport[];
   cardPayouts: CardPayout[];
   needsDecision: { transaction: BankTxn; reason: string }[];
   notADonation: BankTxn[];
+  alreadyIgnored: BankTxn[];
+  notImported: { transaction: BankTxn; reason: string }[];
   allCredits: BankTxn[];
   allDebits: BankTxn[];
   donorNames: Record<string, string>;
@@ -378,6 +381,9 @@ export function StatementImport() {
             {preview.counts.outgoing > 0 && (
               <span>{preview.counts.outgoing} outgoing (debit) lines</span>
             )}
+            {preview.counts.notImported > 0 && (
+              <span>{preview.counts.notImported} not imported</span>
+            )}
           </div>
 
           <Section
@@ -684,6 +690,105 @@ export function StatementImport() {
               </TableBody>
             </Table>
           </Section>
+
+          {preview.alreadyIgnored.length > 0 && (
+            <details className="rounded-md border">
+              <summary className="cursor-pointer px-3 py-2 text-sm font-semibold">
+                Previously ignored — skipped{" "}
+                <span className="text-muted-foreground">
+                  ({preview.alreadyIgnored.length})
+                </span>
+              </summary>
+              <div className="border-t px-3 pb-2 pt-1">
+                <p className="py-2 text-xs text-muted-foreground">
+                  Already marked <code>ignored</code> in an earlier import. Left
+                  untouched — un-ignore one from the Transactions page if
+                  needed.
+                </p>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Sender</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Description</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {preview.alreadyIgnored.map((t) => (
+                        <TableRow key={t.archivingCode}>
+                          <TableCell className="whitespace-nowrap">
+                            {t.date}
+                          </TableCell>
+                          <TableCell>{t.counterpartyName || "—"}</TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {eur(t.amountCents)}
+                          </TableCell>
+                          <TableCell className="max-w-xs truncate text-xs">
+                            {t.description}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </details>
+          )}
+
+          {preview.notImported.length > 0 && (
+            <details className="rounded-md border">
+              <summary className="cursor-pointer px-3 py-2 text-sm font-semibold">
+                Not imported{" "}
+                <span className="text-muted-foreground">
+                  ({preview.notImported.length})
+                </span>
+              </summary>
+              <div className="border-t px-3 pb-2 pt-1">
+                <p className="py-2 text-xs text-muted-foreground">
+                  Lines the importer can&apos;t place — bank interest and other
+                  codeless entries. Never written to the database.
+                </p>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Sender</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Why</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {preview.notImported.map((n) => (
+                        <TableRow
+                          key={`${n.transaction.date}-${n.transaction.description}-${n.transaction.amountCents}`}
+                        >
+                          <TableCell className="whitespace-nowrap">
+                            {n.transaction.date}
+                          </TableCell>
+                          <TableCell>
+                            {n.transaction.counterpartyName || "—"}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {eur(n.transaction.amountCents)}
+                          </TableCell>
+                          <TableCell className="max-w-xs truncate text-xs">
+                            {n.transaction.description}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {n.reason}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </details>
+          )}
 
           <div className="sticky bottom-0 flex items-center gap-3 border-t bg-background/95 py-3">
             <Button onClick={apply} disabled={loading || totalChanges === 0}>
