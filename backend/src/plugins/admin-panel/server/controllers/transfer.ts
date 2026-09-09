@@ -147,6 +147,46 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
           return ctx.badRequest("Invalid date (expected YYYY-MM-DD)");
       }
 
+      // reconciliation adjustment: an integer number of cents (must be a real
+      // number, may be negative, |value| ≤ 20M € to stay well inside int4);
+      // explicit null clears it. The note moves with it — a number needs a
+      // note, and clearing wipes both — so a stray note can't be left behind.
+      const ADJ_LIMIT_CENTS = 2_000_000_000;
+      let reconciliationAdjustmentCents: number | null | undefined;
+      let reconciliationNote: string | null | undefined;
+      if (
+        body.reconciliationAdjustmentCents !== undefined ||
+        body.reconciliationNote !== undefined
+      ) {
+        const rawAdj = body.reconciliationAdjustmentCents;
+        const rawNote = body.reconciliationNote;
+        if (rawAdj === null) {
+          reconciliationAdjustmentCents = null;
+          reconciliationNote = null;
+        } else if (rawAdj === undefined) {
+          return ctx.badRequest(
+            "Set the reconciliation adjustment and note together (or send null to clear)",
+          );
+        } else {
+          if (
+            typeof rawAdj !== "number" ||
+            !Number.isInteger(rawAdj) ||
+            Math.abs(rawAdj) > ADJ_LIMIT_CENTS
+          ) {
+            return ctx.badRequest(
+              "reconciliationAdjustmentCents must be an integer within ±20,000,000 €",
+            );
+          }
+          const note =
+            typeof rawNote === "string" ? rawNote.trim().slice(0, 2000) : "";
+          if (!note) {
+            return ctx.badRequest("A reconciliation adjustment needs a note");
+          }
+          reconciliationAdjustmentCents = rawAdj;
+          reconciliationNote = note;
+        }
+      }
+
       const input = {
         datetime,
         notes:
@@ -155,6 +195,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
             : body.notes == null
               ? null
               : String(body.notes).slice(0, 2000) || null,
+        reconciliationAdjustmentCents,
+        reconciliationNote,
         addDonationIds: intArray(body.addDonationIds),
         removeDonationIds: intArray(body.removeDonationIds),
         linkCodes: codeArray(body.linkCodes),
@@ -173,7 +215,15 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
         ctx,
         "transfers.update",
         `#${id} +${input.addDonationIds.length}/-${input.removeDonationIds.length} donations, ` +
-          `+${input.linkCodes.length}/-${input.unlinkCodes.length} payments`,
+          `+${input.linkCodes.length}/-${input.unlinkCodes.length} payments` +
+          (input.reconciliationAdjustmentCents !== undefined ||
+          input.reconciliationNote !== undefined
+            ? `, adjustment=${
+                input.reconciliationAdjustmentCents === null
+                  ? "cleared"
+                  : input.reconciliationAdjustmentCents
+              }`
+            : ""),
       );
       return ctx.send({ ok: true });
     },

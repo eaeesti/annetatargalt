@@ -44,8 +44,10 @@ type TransferDetail = {
   orgTotals: OrgTotal[];
   owedCents: number;
   paidOutCents: number;
-  differenceCents: number;
-  balanced: boolean;
+  adjustmentCents: number | null;
+  reconciliationNote: string | null;
+  residualCents: number;
+  balanced: boolean | null;
   linkedBankTransactions: LinkedPayment[];
 };
 
@@ -185,7 +187,9 @@ export default async function TransferDetailPage({
         transferDate={transfer.datetime}
         owedCents={transfer.owedCents}
         paidOutCents={transfer.paidOutCents}
-        differenceCents={transfer.differenceCents}
+        adjustmentCents={transfer.adjustmentCents}
+        reconciliationNote={transfer.reconciliationNote}
+        residualCents={transfer.residualCents}
         balanced={transfer.balanced}
         linked={transfer.linkedBankTransactions}
       />

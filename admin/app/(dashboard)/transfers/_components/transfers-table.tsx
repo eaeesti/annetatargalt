@@ -36,6 +36,7 @@ export type TransferRow = {
   owedCents: number | null;
   paidOutCents: number | null;
   paymentCount: number | null;
+  adjustmentCents: number | null;
   balanced: boolean | null;
 };
 
