@@ -34,6 +34,27 @@ export function transferBalanceToleranceCents(owedCents: number): number {
   return Math.max(1000, Math.round(Math.abs(owedCents) * 0.005));
 }
 
+/**
+ * A round is reconciled when `owed − paidOut − adjustment` is within tolerance.
+ * `null` when there is nothing to assess yet (no linked payment and no
+ * operator adjustment).
+ *
+ * This same rule is duplicated as raw SQL in `bankTransactionsRepository`'s
+ * money-flow `transferGap` aggregate (Node can't reach into a SQL sum). Keep
+ * the two in sync — the "list ↔ detail parity" + "transferGap subtracts the
+ * adjustment" tests guard it.
+ */
+function assessBalance(
+  owedCents: number,
+  paidOutCents: number,
+  paymentCount: number,
+  adjustmentCents: number | null,
+): boolean | null {
+  if (paymentCount === 0 && adjustmentCents === null) return null;
+  const residual = owedCents - paidOutCents - (adjustmentCents ?? 0);
+  return Math.abs(residual) <= transferBalanceToleranceCents(owedCents);
+}
+
 export class DonationTransfersRepository {
   constructor(private database: Database = db) {}
 
@@ -131,6 +152,7 @@ export class DonationTransfersRepository {
           owedCents: owedSq.owed,
           paidOutCents: paidSq.paidOut,
           paymentCount: paidSq.paymentCount,
+          adjustmentCents: donationTransfers.reconciliationAdjustmentCents,
         })
         .from(donationTransfers)
         .leftJoin(statsSq, eq(donationTransfers.id, statsSq.transferId))
@@ -150,16 +172,15 @@ export class DonationTransfersRepository {
       const owed = Number(r.owedCents ?? 0);
       const paidOut = Number(r.paidOutCents ?? 0);
       const payments = Number(r.paymentCount ?? 0);
+      const adjustment =
+        r.adjustmentCents == null ? null : Number(r.adjustmentCents);
       return {
         ...r,
         owedCents: owed,
         paidOutCents: paidOut,
         paymentCount: payments,
-        // null = nothing linked yet (not assessable)
-        balanced:
-          payments === 0
-            ? null
-            : Math.abs(owed - paidOut) <= transferBalanceToleranceCents(owed),
+        adjustmentCents: adjustment,
+        balanced: assessBalance(owed, paidOut, payments, adjustment),
       };
     });
 
@@ -238,6 +259,13 @@ export class DonationTransfersRepository {
       0,
     );
     const differenceCents = owedCents - paidOutCents;
+    const adjustmentCents =
+      base.reconciliationAdjustmentCents == null
+        ? null
+        : Number(base.reconciliationAdjustmentCents);
+    // owed still not accounted for after linked payments AND the operator's
+    // adjustment — this is what the "OK" state keys on.
+    const residualCents = differenceCents - (adjustmentCents ?? 0);
 
     return {
       ...base,
@@ -245,9 +273,15 @@ export class DonationTransfersRepository {
       owedCents,
       paidOutCents,
       differenceCents,
-      balanced:
-        linkedBankTransactions.length > 0 &&
-        Math.abs(differenceCents) <= transferBalanceToleranceCents(owedCents),
+      adjustmentCents,
+      reconciliationNote: base.reconciliationNote ?? null,
+      residualCents,
+      balanced: assessBalance(
+        owedCents,
+        paidOutCents,
+        linkedBankTransactions.length,
+        adjustmentCents,
+      ),
     };
   }
 
@@ -395,6 +429,11 @@ export class DonationTransfersRepository {
     // Only include fields that are provided
     if (data.recipient !== undefined) updateData.recipient = data.recipient;
     if (data.notes !== undefined) updateData.notes = data.notes;
+    if (data.reconciliationAdjustmentCents !== undefined)
+      updateData.reconciliationAdjustmentCents =
+        data.reconciliationAdjustmentCents;
+    if (data.reconciliationNote !== undefined)
+      updateData.reconciliationNote = data.reconciliationNote;
 
     if (data.datetime) {
       updateData.datetime =

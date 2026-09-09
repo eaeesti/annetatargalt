@@ -46,6 +46,12 @@ export const donationTransfers = pgTable("donation_transfers", {
   datetime: date("datetime").notNull(),
   recipient: varchar("recipient", { length: 256 }),
   notes: text("notes"),
+  // Reconciliation escape hatch for messy historical rounds: the amount of
+  // `owed` that legitimately did NOT leave via a linked outgoing debit —
+  // a payout the imported statements don't cover, or absorbed fees. Signed:
+  // negative when a linked debit over-covers this round. NULL = not assessed.
+  reconciliationAdjustmentCents: integer("reconciliation_adjustment_cents"),
+  reconciliationNote: text("reconciliation_note"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

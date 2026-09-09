@@ -375,7 +375,119 @@ describe("DonationTransfersRepository", () => {
         transfer.id,
       );
       expect(r!.paidOutCents).toBe(0);
-      expect(r!.balanced).toBe(false); // no payments → not balanced (and callout shows the gap)
+      expect(r!.balanced).toBe(null); // no payments, no adjustment → not assessed
+    });
+
+    it("a manual adjustment closes the gap and drives balanced / residual", async () => {
+      const transfer = await createTestDonationTransfer({
+        datetime: "2026-04-15",
+      });
+      const d = await createTestDonation({
+        finalized: true,
+        amount: 10000,
+        donationTransferId: transfer.id,
+      });
+      // owed 10000, of which 2000 is not covered by a linked payment
+      await createTestOrganizationDonation({
+        donationId: d.id,
+        organizationInternalId: "EXT",
+        amount: 8000,
+      });
+      await createTestOrganizationDonation({
+        donationId: d.id,
+        organizationInternalId: "AT",
+        amount: 2000,
+      });
+      await createTestBankTransaction({
+        archivingCode: "OUT9",
+        category: "outgoing",
+        amount: -8000,
+        date: "2026-04-30",
+        donationTransferId: transfer.id,
+      });
+
+      let r = await donationTransfersRepository.findByIdWithReconciliation(
+        transfer.id,
+      );
+      expect(r!.differenceCents).toBe(2000);
+      expect(r!.residualCents).toBe(2000);
+      expect(r!.balanced).toBe(false); // 2000 gap > tolerance
+
+      await donationTransfersRepository.update(transfer.id, {
+        reconciliationAdjustmentCents: 2000,
+        reconciliationNote: "off-ledger, documented",
+      });
+
+      r = await donationTransfersRepository.findByIdWithReconciliation(
+        transfer.id,
+      );
+      expect(r!.adjustmentCents).toBe(2000);
+      expect(r!.reconciliationNote).toBe(
+        "off-ledger, documented",
+      );
+      expect(r!.residualCents).toBe(0);
+      expect(r!.balanced).toBe(true);
+    });
+
+    it("an adjustment alone (no linked payment) makes the round assessable", async () => {
+      const transfer = await createTestDonationTransfer({
+        datetime: "2026-03-10",
+      });
+      const d = await createTestDonation({
+        finalized: true,
+        amount: 5000,
+        donationTransferId: transfer.id,
+      });
+      await createTestOrganizationDonation({
+        donationId: d.id,
+        organizationInternalId: "AT",
+        amount: 5000,
+      });
+
+      await donationTransfersRepository.update(transfer.id, {
+        reconciliationAdjustmentCents: 5000,
+        reconciliationNote: "whole round handled without a separate payment",
+      });
+
+      const r = await donationTransfersRepository.findByIdWithReconciliation(
+        transfer.id,
+      );
+      expect(r!.balanced).toBe(true);
+      expect(r!.residualCents).toBe(0);
+    });
+
+    it("a zero adjustment still counts as assessed (deliberate 'checked, nothing to adjust')", async () => {
+      const transfer = await createTestDonationTransfer({
+        datetime: "2026-03-20",
+      });
+      const d = await createTestDonation({
+        finalized: true,
+        amount: 5000,
+        donationTransferId: transfer.id,
+      });
+      await createTestOrganizationDonation({
+        donationId: d.id,
+        organizationInternalId: "AMF",
+        amount: 5000,
+      });
+      await createTestBankTransaction({
+        archivingCode: "OUT_ZERO",
+        category: "outgoing",
+        amount: -5000,
+        donationTransferId: transfer.id,
+      });
+
+      await donationTransfersRepository.update(transfer.id, {
+        reconciliationAdjustmentCents: 0,
+        reconciliationNote: "checked against the remittance advice, ties out",
+      });
+
+      const r = await donationTransfersRepository.findByIdWithReconciliation(
+        transfer.id,
+      );
+      expect(r!.adjustmentCents).toBe(0);
+      expect(r!.residualCents).toBe(0);
+      expect(r!.balanced).toBe(true);
     });
   });
 
@@ -452,6 +564,50 @@ describe("DonationTransfersRepository", () => {
       expect(row.paidOutCents).toBe(8000);
       expect(row.paymentCount).toBe(1);
       expect(row.balanced).toBe(true);
+    });
+
+    it("the adjustment feeds the list 'balanced' the same way as the detail", async () => {
+      const transfer = await createTestDonationTransfer({
+        datetime: "2026-02-10",
+      });
+      const d = await createTestDonation({
+        finalized: true,
+        amount: 6500,
+        donationTransferId: transfer.id,
+      });
+      await createTestOrganizationDonation({
+        donationId: d.id,
+        organizationInternalId: "AMF",
+        amount: 6500,
+      });
+      await createTestBankTransaction({
+        archivingCode: "OUT_ADJ",
+        category: "outgoing",
+        amount: -5000,
+        donationTransferId: transfer.id,
+      });
+
+      const rowBefore = (
+        await donationTransfersRepository.findPaginated({
+          page: 1,
+          pageSize: 25,
+        })
+      ).data.find((r) => r.id === transfer.id)!;
+      expect(rowBefore.balanced).toBe(false); // 1500 short
+
+      await donationTransfersRepository.update(transfer.id, {
+        reconciliationAdjustmentCents: 1500,
+        reconciliationNote: "off-ledger, documented",
+      });
+
+      const rowAfter = (
+        await donationTransfersRepository.findPaginated({
+          page: 1,
+          pageSize: 25,
+        })
+      ).data.find((r) => r.id === transfer.id)!;
+      expect(rowAfter.adjustmentCents).toBe(1500);
+      expect(rowAfter.balanced).toBe(true);
     });
 
     it("'owed' (and balanced) match findByIdWithReconciliation when org splits != donation amount", async () => {
