@@ -90,7 +90,7 @@ export function createTransferService(_strapi: Core.Strapi) {
           });
         }
         if (input.removeDonationIds?.length) {
-          await donationsRepo.removeFromTransfer(input.removeDonationIds);
+          await donationsRepo.removeFromTransfer(input.removeDonationIds, id);
         }
         if (input.addDonationIds?.length) {
           const r = await donationsRepo.assignToTransfer(

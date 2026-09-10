@@ -12,7 +12,12 @@ import {
   inArray,
 } from "drizzle-orm";
 import { db, type Database } from "../client";
-import { donations, type Donation, type NewDonation } from "../schema";
+import {
+  donations,
+  donationTransfers,
+  type Donation,
+  type NewDonation,
+} from "../schema";
 import type {
   ReconcilableDonation,
   MatchSource,
@@ -466,9 +471,72 @@ export class DonationsRepository {
   }
 
   /**
-   * Clear the transfer link on the given donations (undo `addToTransfer`).
+   * Move a single donation onto a transfer round, or off one (`transferId`
+   * null). Unlike {@link assignToTransfer} this *reassigns* — a donation that
+   * is already on another round is moved. Attaching still requires the donation
+   * to be finalized and the target round to exist; detaching is always allowed.
    */
-  async removeFromTransfer(donationIds: number[]): Promise<Donation[]> {
+  async setTransfer(
+    donationId: number,
+    transferId: number | null,
+  ): Promise<
+    | { ok: true; previousTransferId: number | null }
+    | {
+        ok: false;
+        reason: "not-found" | "transfer-not-found" | "not-finalized";
+      }
+  > {
+    // One transaction so the "target round exists" check can't be undone by a
+    // concurrent delete before the UPDATE — `for("key share")` holds the round
+    // row against deletion until we commit (same lock the FK insert would take).
+    // Mirrors the atomicity of `assignToTransfer`.
+    return this.database.transaction(async (tx) => {
+      const donation = await tx.query.donations.findFirst({
+        where: eq(donations.id, donationId),
+        columns: { id: true, finalized: true, donationTransferId: true },
+      });
+      if (!donation)
+        return { ok: false as const, reason: "not-found" as const };
+
+      if (transferId !== null) {
+        if (!donation.finalized) {
+          return { ok: false as const, reason: "not-finalized" as const };
+        }
+        const [target] = await tx
+          .select({ id: donationTransfers.id })
+          .from(donationTransfers)
+          .where(eq(donationTransfers.id, transferId))
+          .for("key share");
+        if (!target) {
+          return { ok: false as const, reason: "transfer-not-found" as const };
+        }
+      }
+
+      if (donation.donationTransferId !== transferId) {
+        await tx
+          .update(donations)
+          .set({ donationTransferId: transferId, updatedAt: new Date() })
+          .where(eq(donations.id, donationId));
+      }
+      return {
+        ok: true as const,
+        previousTransferId: donation.donationTransferId ?? null,
+      };
+    });
+  }
+
+  /**
+   * Clear the transfer link on the given donations (undo `addToTransfer`).
+   *
+   * Pass `fromTransferId` to scope the detach to one round: a donation that has
+   * since been moved elsewhere is then left alone. The transfer-detail "Remove"
+   * button passes it so a stale page can't pull a donation off a round it was
+   * reassigned to.
+   */
+  async removeFromTransfer(
+    donationIds: number[],
+    fromTransferId?: number,
+  ): Promise<Donation[]> {
     if (donationIds.length === 0) return [];
 
     return this.database
@@ -477,7 +545,14 @@ export class DonationsRepository {
         donationTransferId: null,
         updatedAt: new Date(),
       })
-      .where(inArray(donations.id, donationIds))
+      .where(
+        fromTransferId === undefined
+          ? inArray(donations.id, donationIds)
+          : and(
+              inArray(donations.id, donationIds),
+              eq(donations.donationTransferId, fromTransferId),
+            ),
+      )
       .returning();
   }
 

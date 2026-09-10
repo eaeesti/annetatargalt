@@ -99,6 +99,7 @@ async function bootstrapDonationPermissions(
     "api::organization.organization.find",
     "plugin::admin-panel.donation.list", // new admin-panel plugin endpoints (Phase 2+)
     "plugin::admin-panel.donation.findOne",
+    "plugin::admin-panel.donation.update", // write path — move a donation between transfer rounds
     "plugin::admin-panel.donor.list",
     "plugin::admin-panel.donor.findOne",
     "plugin::admin-panel.recurringDonation.list",

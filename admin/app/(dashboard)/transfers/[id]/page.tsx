@@ -2,10 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { strapiAdmin } from "../../../../lib/api";
 import { resolveOrgNames } from "../../../../lib/orgs";
-import { Badge } from "../../../../components/ui/badge";
 import { TransferReconciliation } from "../_components/transfer-reconciliation";
 import { TransferMetaEditor } from "../_components/transfer-meta-editor";
-import { ReconciledMark } from "../_components/reconciled-mark";
+import { TransferDonationsEditor } from "../_components/transfer-donations-editor";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -253,58 +252,35 @@ export default async function TransferDetailPage({
         </Section>
       )}
 
-      {/* Donations list */}
-      {transfer.donations.length > 0 && (
-        <Section
-          title={`Included donations (${transfer.donations.length}${
-            reconciledCount < transfer.donations.length
-              ? `, ${reconciledCount} reconciled`
-              : ""
-          })`}
-        >
-          <div className="space-y-2">
-            {transfer.donations.map((d) => (
-              <Link
-                key={d.id}
-                href={`/donations/${d.id}`}
-                className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-muted/50 -mx-2"
-              >
-                <div className="flex items-center gap-3">
-                  <ReconciledMark transactionId={d.transactionId} />
-                  <span className="font-mono text-xs text-muted-foreground w-14">
-                    #{d.id}
-                  </span>
-                  <span className="text-muted-foreground whitespace-nowrap">
-                    {formatDate(d.datetime, true)}
-                  </span>
-                  {/* every donation in a transfer is finalized — only flag the odd exception */}
-                  {!d.finalized && (
-                    <Badge variant="destructive" className="text-xs">
-                      Not finalized
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex items-center gap-3">
-                  {d.organizationDonations.length > 0 && (
-                    <span className="text-muted-foreground text-xs hidden sm:block truncate max-w-48">
-                      {d.organizationDonations
-                        .map(
-                          (od) =>
-                            orgNames.get(od.organizationInternalId) ??
-                            od.organizationInternalId,
-                        )
-                        .join(", ")}
-                    </span>
-                  )}
-                  <span className="font-medium tabular-nums">
-                    {formatAmount(d.amount)}
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </Section>
-      )}
+      {/* Donations list — editable */}
+      <Section
+        title={`Included donations (${transfer.donations.length}${
+          transfer.donations.length > 0 &&
+          reconciledCount < transfer.donations.length
+            ? `, ${reconciledCount} reconciled`
+            : ""
+        })`}
+      >
+        <TransferDonationsEditor
+          key={transfer.id}
+          transferId={transfer.id}
+          transferDate={transfer.datetime}
+          donations={transfer.donations.map((d) => ({
+            id: d.id,
+            datetime: d.datetime,
+            amount: d.amount,
+            finalized: d.finalized,
+            transactionId: d.transactionId,
+            orgLabel: d.organizationDonations
+              .map(
+                (od) =>
+                  orgNames.get(od.organizationInternalId) ??
+                  od.organizationInternalId,
+              )
+              .join(", "),
+          }))}
+        />
+      </Section>
     </div>
   );
 }

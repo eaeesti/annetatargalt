@@ -107,4 +107,49 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
 
     return ctx.send({ data: donation });
   },
+
+  // Move a donation between transfer rounds (or clear its round). The only
+  // mutable field on this endpoint today.
+  async update(ctx: Context) {
+    const id = Number(ctx.params.id);
+    if (!id || isNaN(id)) return ctx.badRequest("Invalid donation ID");
+
+    const body = (ctx.request.body ?? {}) as Record<string, unknown>;
+    if (!("donationTransferId" in body)) {
+      return ctx.badRequest("Nothing to update");
+    }
+
+    const raw = body.donationTransferId;
+    let transferId: number | null;
+    if (raw === null) {
+      transferId = null;
+    } else if (typeof raw === "number" && Number.isInteger(raw) && raw > 0) {
+      transferId = raw;
+    } else {
+      return ctx.badRequest(
+        "donationTransferId must be a positive integer or null",
+      );
+    }
+
+    const result = await donationsRepository.setTransfer(id, transferId);
+    if (!result.ok) {
+      if (result.reason === "not-found") {
+        return ctx.notFound("Donation not found");
+      }
+      if (result.reason === "transfer-not-found") {
+        return ctx.badRequest(`Transfer #${transferId} does not exist`);
+      }
+      return ctx.badRequest(
+        "Only finalized donations can be added to a transfer round",
+      );
+    }
+
+    await auditLog(
+      ctx,
+      "donations.update",
+      // lead with the bare id so an id-scoped audit lookup still finds it
+      `${id} transfer ${result.previousTransferId ?? "—"} → ${transferId ?? "—"}`,
+    );
+    return ctx.send({ ok: true });
+  },
 });

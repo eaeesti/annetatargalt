@@ -4,12 +4,12 @@ import { strapiAdmin } from "../../../../lib/api";
 import { resolveOrgNames } from "../../../../lib/orgs";
 import { Badge } from "../../../../components/ui/badge";
 import { EntityLink } from "../../../../components/entity-link";
+import { DonationTransferEditor } from "../_components/donation-transfer-editor";
 import {
   bankTransactionHref,
   donorHref,
   organizationHref,
   recurringDonationHref,
-  transferHref,
 } from "../../../../lib/entity-links";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -196,13 +196,13 @@ export default async function DonationDetailPage({
             <Badge variant="outline">External</Badge>
           </Field>
         )}
-        {donation.donationTransfer && (
-          <Field label="Transfer">
-            <EntityLink href={transferHref(donation.donationTransfer.id)}>
-              #{donation.donationTransfer.id}
-            </EntityLink>
-          </Field>
-        )}
+        <Field label="Transfer">
+          <DonationTransferEditor
+            donationId={donation.id}
+            transferId={donation.donationTransferId}
+            finalized={donation.finalized}
+          />
+        </Field>
         {donation.recurringDonation && (
           <Field label="Recurring donation">
             <EntityLink
