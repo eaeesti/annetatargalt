@@ -1,3 +1,8 @@
+/** Integer cents → a display string like `€1234.56` (no thousands grouping). */
+export function formatEuros(cents: number): string {
+  return `€${(cents / 100).toFixed(2)}`;
+}
+
 /**
  * Parse an operator-typed euro amount into integer cents, or null if it isn't
  * a number. Accepts a leading "-", spaces as thousands separators, and either
