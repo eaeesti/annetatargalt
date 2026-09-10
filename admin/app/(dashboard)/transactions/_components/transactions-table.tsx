@@ -221,7 +221,7 @@ export function TransactionsTable({
     ]),
   );
 
-  const colSpan = 8;
+  const colSpan = 9;
 
   return (
     <div className="space-y-4">
@@ -302,6 +302,7 @@ export function TransactionsTable({
               </TableHead>
               <TableHead className="text-right">Donations</TableHead>
               <TableHead className="text-right">Allocated</TableHead>
+              <TableHead>Transfer</TableHead>
               <TableHead className="text-center">OK</TableHead>
             </TableRow>
           </TableHeader>
@@ -364,6 +365,18 @@ export function TransactionsTable({
                         {row.linkedDonationCount
                           ? eur(row.allocatedCents)
                           : "—"}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap tabular-nums">
+                        {row.donationTransferId ? (
+                          <EntityLink
+                            href={transferHref(row.donationTransferId)}
+                            stopRowClick
+                          >
+                            #{row.donationTransferId}
+                          </EntityLink>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-center">
                         {row.balanced == null ? (
