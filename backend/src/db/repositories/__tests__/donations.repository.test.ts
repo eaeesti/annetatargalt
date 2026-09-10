@@ -262,6 +262,94 @@ describe("DonationsRepository", () => {
     });
   });
 
+  describe("setTransfer (reassign)", () => {
+    it("moves a donation from one round to another", async () => {
+      const t1 = await createTestDonationTransfer();
+      const t2 = await createTestDonationTransfer();
+      const d = await createTestDonation({
+        finalized: true,
+        donationTransferId: t1.id,
+      });
+
+      const r = await donationsRepository.setTransfer(d.id, t2.id);
+      expect(r).toEqual({ ok: true, previousTransferId: t1.id });
+      expect(
+        (await donationsRepository.findById(d.id))?.donationTransferId,
+      ).toBe(t2.id);
+    });
+
+    it("clears the round when passed null, even for a non-finalized donation", async () => {
+      const t = await createTestDonationTransfer();
+      const d = await createTestDonation({
+        finalized: false,
+        donationTransferId: t.id,
+      });
+
+      const r = await donationsRepository.setTransfer(d.id, null);
+      expect(r).toEqual({ ok: true, previousTransferId: t.id });
+      expect(
+        (await donationsRepository.findById(d.id))?.donationTransferId,
+      ).toBeNull();
+    });
+
+    it("refuses to attach a non-finalized donation to a round", async () => {
+      const t = await createTestDonationTransfer();
+      const d = await createTestDonation({ finalized: false });
+
+      const r = await donationsRepository.setTransfer(d.id, t.id);
+      expect(r).toEqual({ ok: false, reason: "not-finalized" });
+      expect(
+        (await donationsRepository.findById(d.id))?.donationTransferId,
+      ).toBeNull();
+    });
+
+    it("refuses a round that doesn't exist", async () => {
+      const d = await createTestDonation({ finalized: true });
+      const r = await donationsRepository.setTransfer(d.id, 999999);
+      expect(r).toEqual({ ok: false, reason: "transfer-not-found" });
+    });
+
+    it("reports a missing donation", async () => {
+      const r = await donationsRepository.setTransfer(999999, null);
+      expect(r).toEqual({ ok: false, reason: "not-found" });
+    });
+  });
+
+  describe("removeFromTransfer", () => {
+    it("scoped to a round, leaves a donation that moved elsewhere alone", async () => {
+      const t1 = await createTestDonationTransfer();
+      const t2 = await createTestDonationTransfer();
+      const d = await createTestDonation({
+        finalized: true,
+        donationTransferId: t2.id,
+      });
+
+      // caller thinks d is still on t1 (stale page) — scoped detach is a no-op
+      await donationsRepository.removeFromTransfer([d.id], t1.id);
+      expect(
+        (await donationsRepository.findById(d.id))?.donationTransferId,
+      ).toBe(t2.id);
+
+      // scoped to the round it's actually on, it detaches
+      await donationsRepository.removeFromTransfer([d.id], t2.id);
+      expect(
+        (await donationsRepository.findById(d.id))?.donationTransferId,
+      ).toBeNull();
+    });
+
+    it("unscoped, detaches regardless of round", async () => {
+      const t = await createTestDonationTransfer();
+      const d = await createTestDonation({
+        finalized: true,
+        donationTransferId: t.id,
+      });
+      await donationsRepository.removeFromTransfer([d.id]);
+      expect(
+        (await donationsRepository.findById(d.id))?.donationTransferId,
+      ).toBeNull();
+    });
+  });
+
   describe("sumFinalizedDonations", () => {
     it("should sum all finalized donations", async () => {
       const donor = await createTestDonor();

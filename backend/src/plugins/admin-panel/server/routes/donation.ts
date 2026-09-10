@@ -12,5 +12,11 @@ export default {
       handler: "donation.findOne",
       config: {},
     },
+    {
+      method: "PATCH",
+      path: "/donations/:id",
+      handler: "donation.update",
+      config: {},
+    },
   ],
 };
