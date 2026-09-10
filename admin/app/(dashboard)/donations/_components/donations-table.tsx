@@ -14,7 +14,11 @@ import { ChevronDown, ChevronUp, ChevronsUpDown, Columns3 } from "lucide-react";
 import { Badge } from "../../../../components/ui/badge";
 import { Button } from "../../../../components/ui/button";
 import { EntityLink } from "../../../../components/entity-link";
-import { donorHref, organizationHref } from "../../../../lib/entity-links";
+import {
+  donorHref,
+  organizationHref,
+  transferHref,
+} from "../../../../lib/entity-links";
 import {
   FilterBuilder,
   type FilterDef,
@@ -49,6 +53,7 @@ export type DonationRow = {
   companyCode: string | null;
   transactionId: string | null;
   transactionMatchSource: string | null;
+  donationTransferId: number | null;
   donor: {
     id: number;
     firstName: string | null;
@@ -139,6 +144,7 @@ export function DonationsTable({
     companyName: false,
     companyCode: false,
     transactionId: false,
+    donationTransfer: false,
   });
 
   function pushUrl(updates: Record<string, string | undefined>) {
@@ -328,6 +334,23 @@ export function DonationsTable({
             <span className="text-muted-foreground">—</span>
           ),
       },
+      {
+        id: "donationTransfer",
+        enableSorting: false,
+        header: "Transfer",
+        cell: ({ row }) =>
+          row.original.donationTransferId ? (
+            <EntityLink
+              href={transferHref(row.original.donationTransferId)}
+              stopRowClick
+              className="text-sm hover:underline"
+            >
+              #{row.original.donationTransferId}
+            </EntityLink>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          ),
+      },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [orgNames, sortBy, sortDir],
@@ -355,6 +378,7 @@ export function DonationsTable({
     companyName: "Company",
     companyCode: "Company code",
     transactionId: "Transaction ID",
+    donationTransfer: "Transfer",
   };
 
   const FILTER_DEFS: FilterDef[] = [
