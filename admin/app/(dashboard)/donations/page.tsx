@@ -38,8 +38,8 @@ export default async function DonationsPage({
   const page = Math.max(1, Number(str(params.page) ?? 1));
   const pageSizeRaw = Number(str(params.pageSize) ?? 50);
   const pageSize = VALID_PAGE_SIZES.includes(pageSizeRaw) ? pageSizeRaw : 50;
-  const sortByRaw = str(params.sortBy) ?? "id";
-  const sortBy = VALID_SORT_COLS.has(sortByRaw) ? sortByRaw : "id";
+  const sortByRaw = str(params.sortBy) ?? "datetime";
+  const sortBy = VALID_SORT_COLS.has(sortByRaw) ? sortByRaw : "datetime";
   const sortDir =
     str(params.sortDir) === "asc" ? ("asc" as const) : ("desc" as const);
 
