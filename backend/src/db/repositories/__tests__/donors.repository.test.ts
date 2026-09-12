@@ -6,7 +6,12 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { donorsRepository } from "../donors.repository";
-import { cleanDatabase, createTestDonor } from "../../__tests__/test-db-helper";
+import {
+  cleanDatabase,
+  createTestDonor,
+  createTestDonation,
+  createTestRecurringDonation,
+} from "../../__tests__/test-db-helper";
 
 describe("DonorsRepository", () => {
   beforeEach(async () => {
@@ -92,7 +97,7 @@ describe("DonorsRepository", () => {
 
     it("should return undefined for non-existent email", async () => {
       const found = await donorsRepository.findByEmail(
-        "nonexistent@example.com"
+        "nonexistent@example.com",
       );
 
       expect(found).toBeUndefined();
@@ -198,6 +203,201 @@ describe("DonorsRepository", () => {
 
       expect(donor.firstName).toBe("Jüri");
       expect(donor.lastName).toBe("Õunapuu-Käär");
+    });
+  });
+
+  // ── findPaginated: recurringDonor ────────────────────────────────────────────
+  //
+  // "Recurring donor" is computed from payment activity — a finalized donation
+  // tied to a recurring donation within the last 60 days — not the stale
+  // donors.recurringDonor column or the deprecated recurring_donations.active
+  // flag. Each test below isolates exactly one of those distinctions.
+
+  describe("findPaginated recurringDonor", () => {
+    it("is true for a donor with a recent finalized recurring payment", async () => {
+      const donor = await createTestDonor();
+      const rd = await createTestRecurringDonation({ donorId: donor.id });
+      await createTestDonation({
+        donorId: donor.id,
+        recurringDonationId: rd.id,
+        finalized: true,
+        datetime: new Date(),
+      });
+
+      const { data } = await donorsRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+      });
+      expect(data.find((d) => d.id === donor.id)?.recurringDonor).toBe(true);
+    });
+
+    it("is false once the last recurring payment is over 60 days old", async () => {
+      const donor = await createTestDonor();
+      const rd = await createTestRecurringDonation({ donorId: donor.id });
+      const old = new Date();
+      old.setDate(old.getDate() - 90);
+      await createTestDonation({
+        donorId: donor.id,
+        recurringDonationId: rd.id,
+        finalized: true,
+        datetime: old,
+      });
+
+      const { data } = await donorsRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+      });
+      expect(data.find((d) => d.id === donor.id)?.recurringDonor).toBe(false);
+    });
+
+    it("is false for a donor whose only donation isn't linked to a recurring donation", async () => {
+      const donor = await createTestDonor();
+      await createTestDonation({
+        donorId: donor.id,
+        finalized: true,
+        datetime: new Date(),
+      });
+
+      const { data } = await donorsRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+      });
+      expect(data.find((d) => d.id === donor.id)?.recurringDonor).toBe(false);
+    });
+
+    it("ignores the stale donors.recurringDonor column", async () => {
+      const donor = await donorsRepository.create({
+        email: "stale-flag@example.com",
+        recurringDonor: true, // set directly, no matching payment activity
+      });
+
+      const { data } = await donorsRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+      });
+      expect(data.find((d) => d.id === donor.id)?.recurringDonor).toBe(false);
+    });
+
+    it("ignores the deprecated recurring_donations.active flag", async () => {
+      const donor = await createTestDonor();
+      const rd = await createTestRecurringDonation({
+        donorId: donor.id,
+        active: false, // deprecated flag says inactive
+      });
+      await createTestDonation({
+        donorId: donor.id,
+        recurringDonationId: rd.id,
+        finalized: true,
+        datetime: new Date(), // but a real payment just came in
+      });
+
+      const { data } = await donorsRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+      });
+      expect(data.find((d) => d.id === donor.id)?.recurringDonor).toBe(true);
+    });
+
+    it("filters by recurringDonor", async () => {
+      const recurring = await createTestDonor({
+        email: "recurring@example.com",
+      });
+      const rd = await createTestRecurringDonation({ donorId: recurring.id });
+      await createTestDonation({
+        donorId: recurring.id,
+        recurringDonationId: rd.id,
+        finalized: true,
+        datetime: new Date(),
+      });
+      const oneOff = await createTestDonor({ email: "one-off@example.com" });
+      await createTestDonation({
+        donorId: oneOff.id,
+        finalized: true,
+        datetime: new Date(),
+      });
+
+      const onlyRecurring = await donorsRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+        recurringDonor: true,
+      });
+      expect(onlyRecurring.data.map((d) => d.id)).toEqual([recurring.id]);
+
+      const onlyOneOff = await donorsRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+        recurringDonor: false,
+      });
+      expect(onlyOneOff.data.map((d) => d.id)).toEqual([oneOff.id]);
+    });
+  });
+
+  // ── findByIdWithDonations: recurringDonor ────────────────────────────────────
+  //
+  // Same payment-based definition as findPaginated, just computed in JS from
+  // the already-fetched donations instead of a second query.
+
+  describe("findByIdWithDonations recurringDonor", () => {
+    it("returns undefined for a missing donor", async () => {
+      const result = await donorsRepository.findByIdWithDonations(999999);
+      expect(result).toBeUndefined();
+    });
+
+    it("is true for a donor with a recent finalized recurring payment", async () => {
+      const donor = await createTestDonor();
+      const rd = await createTestRecurringDonation({ donorId: donor.id });
+      await createTestDonation({
+        donorId: donor.id,
+        recurringDonationId: rd.id,
+        finalized: true,
+        datetime: new Date(),
+      });
+
+      const result = await donorsRepository.findByIdWithDonations(donor.id);
+      expect(result?.recurringDonor).toBe(true);
+    });
+
+    it("is false once the last recurring payment is over 60 days old", async () => {
+      const donor = await createTestDonor();
+      const rd = await createTestRecurringDonation({ donorId: donor.id });
+      const old = new Date();
+      old.setDate(old.getDate() - 90);
+      await createTestDonation({
+        donorId: donor.id,
+        recurringDonationId: rd.id,
+        finalized: true,
+        datetime: old,
+      });
+
+      const result = await donorsRepository.findByIdWithDonations(donor.id);
+      expect(result?.recurringDonor).toBe(false);
+    });
+
+    it("ignores the stale donors.recurringDonor column", async () => {
+      const donor = await donorsRepository.create({
+        email: "stale-flag-detail@example.com",
+        recurringDonor: true,
+      });
+
+      const result = await donorsRepository.findByIdWithDonations(donor.id);
+      expect(result?.recurringDonor).toBe(false);
+    });
+
+    it("ignores the deprecated recurring_donations.active flag", async () => {
+      const donor = await createTestDonor();
+      const rd = await createTestRecurringDonation({
+        donorId: donor.id,
+        active: false,
+      });
+      await createTestDonation({
+        donorId: donor.id,
+        recurringDonationId: rd.id,
+        finalized: true,
+        datetime: new Date(),
+      });
+
+      const result = await donorsRepository.findByIdWithDonations(donor.id);
+      expect(result?.recurringDonor).toBe(true);
     });
   });
 });

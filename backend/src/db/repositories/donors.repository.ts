@@ -1,6 +1,25 @@
-import { eq, or, asc, desc, and, sql, ilike } from "drizzle-orm";
+import {
+  eq,
+  or,
+  asc,
+  desc,
+  and,
+  sql,
+  ilike,
+  gte,
+  isNull,
+  isNotNull,
+} from "drizzle-orm";
 import { db, type Database } from "../client";
 import { donors, donations, type Donor, type NewDonor } from "../schema";
+
+// A donor counts as "recurring" if a finalized donation tied to a recurring
+// donation landed within this window — same payment-based definition
+// DashboardRepository.getMonthlyRecurringDonations uses. Not
+// donors.recurringDonor (a stale, manually-set column) and not
+// recurring_donations.active (deprecated) — neither reflects whether a donor
+// is actually still paying.
+const RECURRING_DONOR_WINDOW_DAYS = 60;
 
 export class DonorsRepository {
   constructor(private database: Database = db) {}
@@ -132,9 +151,30 @@ export class DonorsRepository {
       .groupBy(donations.donorId)
       .as("ds");
 
+    const recurringCutoff = new Date();
+    recurringCutoff.setDate(
+      recurringCutoff.getDate() - RECURRING_DONOR_WINDOW_DAYS,
+    );
+    const recurringSq = this.database
+      .select({ donorId: donations.donorId })
+      .from(donations)
+      .where(
+        and(
+          eq(donations.finalized, true),
+          isNotNull(donations.recurringDonationId),
+          gte(donations.datetime, recurringCutoff),
+        ),
+      )
+      .groupBy(donations.donorId)
+      .as("rs");
+
     const conditions = [];
     if (options.recurringDonor !== undefined) {
-      conditions.push(eq(donors.recurringDonor, options.recurringDonor));
+      conditions.push(
+        options.recurringDonor
+          ? isNotNull(recurringSq.donorId)
+          : isNull(recurringSq.donorId),
+      );
     }
     if (options.search) {
       const term = `%${options.search}%`;
@@ -156,7 +196,7 @@ export class DonorsRepository {
         case "email":
           return d(donors.email);
         case "recurringDonor":
-          return d(donors.recurringDonor);
+          return d(sql`(${recurringSq.donorId} is not null)`);
         case "totalDonated":
           return d(sql`coalesce(${statsSq.totalDonated}, 0)`);
         case "donationCount":
@@ -176,7 +216,7 @@ export class DonorsRepository {
       lastName: donors.lastName,
       email: donors.email,
       idCode: donors.idCode,
-      recurringDonor: donors.recurringDonor,
+      recurringDonor: sql<boolean>`(${recurringSq.donorId} is not null)`,
       createdAt: donors.createdAt,
       totalDonated: sql<number>`coalesce(${statsSq.totalDonated}, 0)`,
       donationCount: sql<number>`coalesce(${statsSq.donationCount}, 0)`,
@@ -188,6 +228,7 @@ export class DonorsRepository {
         .select(selectFields)
         .from(donors)
         .leftJoin(statsSq, eq(donors.id, statsSq.donorId))
+        .leftJoin(recurringSq, eq(donors.id, recurringSq.donorId))
         .where(whereClause)
         .orderBy(orderByClause)
         .limit(pageSize)
@@ -195,6 +236,7 @@ export class DonorsRepository {
       this.database
         .select({ total: sql<number>`cast(count(*) as int)` })
         .from(donors)
+        .leftJoin(recurringSq, eq(donors.id, recurringSq.donorId))
         .where(whereClause),
     ]);
 
@@ -202,10 +244,14 @@ export class DonorsRepository {
   }
 
   /**
-   * Find a donor by ID with all their donations (and org splits) and recurring donations.
+   * Find a donor by ID with all their donations (and org splits) and recurring
+   * donations. `recurringDonor` is overridden with the same payment-based
+   * computation `findPaginated` uses (see RECURRING_DONOR_WINDOW_DAYS) — the
+   * raw column read straight off `donors` is stale — computed here in JS
+   * instead of a second DB query since `donations` is already fetched.
    */
   async findByIdWithDonations(id: number) {
-    return this.database.query.donors.findFirst({
+    const donor = await this.database.query.donors.findFirst({
       where: eq(donors.id, id),
       with: {
         donations: {
@@ -215,6 +261,20 @@ export class DonorsRepository {
         recurringDonations: true,
       },
     });
+    if (!donor) return undefined;
+
+    const recurringCutoff = new Date();
+    recurringCutoff.setDate(
+      recurringCutoff.getDate() - RECURRING_DONOR_WINDOW_DAYS,
+    );
+    const recurringDonor = donor.donations.some(
+      (d) =>
+        d.finalized &&
+        d.recurringDonationId !== null &&
+        new Date(d.datetime) >= recurringCutoff,
+    );
+
+    return { ...donor, recurringDonor };
   }
 
   /**
