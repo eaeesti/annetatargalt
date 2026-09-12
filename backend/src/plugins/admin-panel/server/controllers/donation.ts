@@ -36,6 +36,9 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
       dateFromParsed && !isNaN(dateFromParsed.getTime())
         ? dateFromParsed
         : undefined;
+    // `findWithFilters` treats `dateTo` as inclusive of the whole UTC day it
+    // falls on (see its doc comment) — so a bare "2026-06-30" correctly keeps
+    // donations made later that same day.
     const dateTo =
       dateToParsed && !isNaN(dateToParsed.getTime()) ? dateToParsed : undefined;
     const donorId = q.donorId ? Number(q.donorId) : undefined;

@@ -533,6 +533,30 @@ describe("DonationsRepository", () => {
     });
   });
 
+  describe("findWithFilters date range", () => {
+    it("dateTo includes donations later the same UTC day", async () => {
+      const onTheDay = await createTestDonation({
+        datetime: new Date("2026-06-30T22:00:00Z"),
+        amount: 1000,
+      });
+      await createTestDonation({
+        datetime: new Date("2026-07-01T00:00:00Z"),
+        amount: 2000,
+      });
+
+      // A bare "to" day, as the admin date-range filter sends it — midnight
+      // UTC, same shape `new Date("2026-06-30")` produces.
+      const { data, total } = await donationsRepository.findWithFilters({
+        page: 1,
+        pageSize: 25,
+        dateTo: new Date("2026-06-30T00:00:00Z"),
+      });
+
+      expect(total).toBe(1);
+      expect(data[0].id).toBe(onTheDay.id);
+    });
+  });
+
   describe("Edge cases", () => {
     it("should handle very large amounts", async () => {
       const donation = await createTestDonation({ amount: 999999999 });
