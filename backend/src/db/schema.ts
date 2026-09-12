@@ -18,7 +18,6 @@ export const donors = pgTable("donors", {
   firstName: varchar("first_name", { length: 128 }),
   lastName: varchar("last_name", { length: 128 }),
   email: varchar("email", { length: 256 }),
-  recurringDonor: boolean("recurring_donor").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

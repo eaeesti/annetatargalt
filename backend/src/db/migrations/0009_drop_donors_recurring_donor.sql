@@ -1,0 +1,1 @@
+ALTER TABLE "donors" DROP COLUMN IF EXISTS "recurring_donor";
