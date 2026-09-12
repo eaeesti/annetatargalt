@@ -118,6 +118,48 @@ function parseIsoDate(s: string | undefined): Date | undefined {
   return isNaN(d.getTime()) ? undefined : d;
 }
 
+// ── Date-range quick presets ─────────────────────────────────────────────────
+
+// react-day-picker's own DateRange has `from`/`to` as `Date | undefined` (not
+// just optional keys) — Required<DateRange> wouldn't strip that. A preset is
+// always a fully-resolved range, so it gets its own concrete type.
+type ConcreteDateRange = { from: Date; to: Date };
+
+/** Local calendar month `monthsAgo` months before now — day 0 of the next
+ * month is the last day of this one, so month/year rollover is automatic. */
+function monthRange(monthsAgo: number): ConcreteDateRange {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth() - monthsAgo;
+  return { from: new Date(y, m, 1), to: new Date(y, m + 1, 0) };
+}
+
+/** Local calendar quarter `quartersAgo` quarters before now. */
+function quarterRange(quartersAgo: number): ConcreteDateRange {
+  const now = new Date();
+  const y = now.getFullYear();
+  const q = Math.floor(now.getMonth() / 3) - quartersAgo;
+  return { from: new Date(y, q * 3, 1), to: new Date(y, q * 3 + 3, 0) };
+}
+
+/** Local calendar year `yearsAgo` years before now. */
+function yearRange(yearsAgo: number): ConcreteDateRange {
+  const y = new Date().getFullYear() - yearsAgo;
+  return { from: new Date(y, 0, 1), to: new Date(y, 11, 31) };
+}
+
+const DATE_RANGE_PRESETS: {
+  label: string;
+  range: () => ConcreteDateRange;
+}[] = [
+  { label: "Current month", range: () => monthRange(0) },
+  { label: "Current quarter", range: () => quarterRange(0) },
+  { label: "Current year", range: () => yearRange(0) },
+  { label: "Last month", range: () => monthRange(1) },
+  { label: "Last quarter", range: () => quarterRange(1) },
+  { label: "Last year", range: () => yearRange(1) },
+];
+
 // ── DateRangeForm ─────────────────────────────────────────────────────────────
 
 function DateRangeForm({
@@ -177,6 +219,31 @@ function DateRangeForm({
           }
         />
         <PopoverContent align="start" className="w-auto p-0">
+          {/* max-w caps this row's own intrinsic (single-line) width — a
+          flex-wrap container otherwise reports that as its preferred width,
+          so the w-auto popover stretches to fit every preset on one line
+          instead of actually wrapping. */}
+          <div className="flex max-w-sm flex-wrap gap-1 border-b p-2">
+            {DATE_RANGE_PRESETS.map((preset) => (
+              <Button
+                key={preset.label}
+                variant="outline"
+                size="sm"
+                className="h-6 px-2 text-xs"
+                onClick={() => {
+                  const r = preset.range();
+                  setRange(r);
+                  setOpen(false);
+                  onApply({
+                    [filter.fromKey]: toIsoDate(r.from),
+                    [filter.toKey]: toIsoDate(r.to),
+                  });
+                }}
+              >
+                {preset.label}
+              </Button>
+            ))}
+          </div>
           <Calendar
             mode="range"
             selected={range}
