@@ -5,7 +5,12 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { DashboardRepository } from "../dashboard.repository";
+import {
+  DashboardRepository,
+  monthRange,
+  quarterRange,
+  yearRange,
+} from "../dashboard.repository";
 import {
   cleanDatabase,
   createTestDonor,
@@ -199,5 +204,72 @@ describe("DashboardRepository", () => {
       expect(result.count).toBe(2);
       expect(result.total).toBe(3000);
     });
+  });
+});
+
+// ── period range helpers (pure — no DB) ─────────────────────────────────────────
+
+function iso(range: [Date, Date]): [string, string] {
+  return [range[0].toISOString(), range[1].toISOString()];
+}
+
+describe("monthRange", () => {
+  it("returns [start, end) of the current month", () => {
+    expect(iso(monthRange(new Date("2026-03-17T09:00:00Z"), 0))).toEqual([
+      "2026-03-01T00:00:00.000Z",
+      "2026-04-01T00:00:00.000Z",
+    ]);
+  });
+
+  it("goes back N months, crossing a year boundary", () => {
+    const now = new Date("2026-01-15T09:00:00Z");
+    expect(iso(monthRange(now, 1))).toEqual([
+      "2025-12-01T00:00:00.000Z",
+      "2026-01-01T00:00:00.000Z",
+    ]);
+    expect(iso(monthRange(now, 2))).toEqual([
+      "2025-11-01T00:00:00.000Z",
+      "2025-12-01T00:00:00.000Z",
+    ]);
+  });
+});
+
+describe("quarterRange", () => {
+  it("returns [start, end) of the current quarter", () => {
+    // May → Q2
+    expect(iso(quarterRange(new Date("2026-05-10T09:00:00Z"), 0))).toEqual([
+      "2026-04-01T00:00:00.000Z",
+      "2026-07-01T00:00:00.000Z",
+    ]);
+  });
+
+  it("goes back N quarters, crossing a year boundary", () => {
+    const now = new Date("2026-05-10T09:00:00Z"); // Q2 2026
+    expect(iso(quarterRange(now, 1))).toEqual([
+      "2026-01-01T00:00:00.000Z",
+      "2026-04-01T00:00:00.000Z",
+    ]);
+    expect(iso(quarterRange(now, 2))).toEqual([
+      "2025-10-01T00:00:00.000Z",
+      "2026-01-01T00:00:00.000Z",
+    ]);
+  });
+});
+
+describe("yearRange", () => {
+  it("returns [start, end) of the current and prior years", () => {
+    const now = new Date("2026-06-01T09:00:00Z");
+    expect(iso(yearRange(now, 0))).toEqual([
+      "2026-01-01T00:00:00.000Z",
+      "2027-01-01T00:00:00.000Z",
+    ]);
+    expect(iso(yearRange(now, 1))).toEqual([
+      "2025-01-01T00:00:00.000Z",
+      "2026-01-01T00:00:00.000Z",
+    ]);
+    expect(iso(yearRange(now, 2))).toEqual([
+      "2024-01-01T00:00:00.000Z",
+      "2025-01-01T00:00:00.000Z",
+    ]);
   });
 });

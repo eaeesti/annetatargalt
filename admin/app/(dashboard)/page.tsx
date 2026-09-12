@@ -5,6 +5,7 @@ import {
 } from "./_components/monthly-totals-chart";
 import { ActiveDonorsChart } from "./_components/active-donors-chart";
 import { RecurringChurnChart } from "./_components/recurring-churn-chart";
+import { TrendBadge } from "./_components/trend-badge";
 import type { DashboardStats, DashboardCharts } from "./types";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -22,17 +23,41 @@ function pctChange(current: number, prior: number): number | null {
   return Math.round(((current - prior) / prior) * 100);
 }
 
-function TrendBadge({ pct }: { pct: number | null }) {
-  if (pct === null) return null;
-  const positive = pct >= 0;
-  return (
-    <span
-      className={`text-xs font-medium px-1.5 py-0.5 rounded ${positive ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"}`}
-    >
-      {positive ? "+" : ""}
-      {pct}%
-    </span>
-  );
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+/** "September" — or "December 2025" once it's not the current calendar year. */
+function monthLabel(fromIso: string, currentYear: number): string {
+  const d = new Date(fromIso);
+  const name = MONTH_NAMES[d.getUTCMonth()];
+  return d.getUTCFullYear() === currentYear
+    ? name
+    : `${name} ${d.getUTCFullYear()}`;
+}
+
+/** "Q3" — or "Q4 2025" once it's not the current calendar year. */
+function quarterLabel(fromIso: string, currentYear: number): string {
+  const d = new Date(fromIso);
+  const q = Math.floor(d.getUTCMonth() / 3) + 1;
+  return d.getUTCFullYear() === currentYear
+    ? `Q${q}`
+    : `Q${q} ${d.getUTCFullYear()}`;
+}
+
+function yearLabel(fromIso: string): string {
+  return String(new Date(fromIso).getUTCFullYear());
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -61,23 +86,43 @@ function PeriodRow({
   label,
   current,
   prior,
+  showDelta = true,
 }: {
   label: string;
   current: { count: number; total: number };
   prior: { count: number; total: number };
+  /** Off for in-progress periods (current month/quarter/year) — a delta
+   * against a not-yet-finished period vs. a complete prior one is misleading. */
+  showDelta?: boolean;
 }) {
   return (
-    <div className="grid grid-cols-[8rem_1fr_1fr_auto] gap-4 items-center text-sm py-2 border-b last:border-0">
-      <span className="text-muted-foreground font-medium">{label}</span>
-      <span className="tabular-nums font-medium">
-        {formatEur(current.total)}
+    <div className="grid grid-cols-[14rem_1fr_1fr] gap-4 items-center text-sm py-2 border-b last:border-0">
+      <span className="text-muted-foreground font-medium whitespace-nowrap">
+        {label}
       </span>
-      <span className="tabular-nums text-muted-foreground">
-        {formatCount(current.count)} donations
-      </span>
-      <div className="flex gap-1.5">
-        <TrendBadge pct={pctChange(current.total, prior.total)} />
-        <TrendBadge pct={pctChange(current.count, prior.count)} />
+      <div className="flex items-center gap-1.5">
+        <span className="tabular-nums font-medium">
+          {formatEur(current.total)}
+        </span>
+        {showDelta && (
+          <TrendBadge
+            pct={pctChange(current.total, prior.total)}
+            currentLabel={formatEur(current.total)}
+            priorLabel={formatEur(prior.total)}
+          />
+        )}
+      </div>
+      <div className="flex items-center gap-1.5">
+        <span className="tabular-nums text-muted-foreground">
+          {formatCount(current.count)} donations
+        </span>
+        {showDelta && (
+          <TrendBadge
+            pct={pctChange(current.count, prior.count)}
+            currentLabel={formatCount(current.count)}
+            priorLabel={formatCount(prior.count)}
+          />
+        )}
       </div>
     </div>
   );
@@ -121,6 +166,9 @@ export default async function DashboardPage() {
 
   const { data }: { data: DashboardStats } = await statsRes.json();
   const { totalDonations, totalDonors, activeDonors, mrr, periods } = data;
+  // Reference year for deciding whether a month/quarter label needs a year
+  // suffix (e.g. "December 2025" once "last month" crosses into last year).
+  const thisYear = new Date(periods.currentYear.from).getUTCFullYear();
 
   const charts: DashboardCharts | null = chartsRes.ok
     ? ((await chartsRes.json()) as { data: DashboardCharts }).data
@@ -156,19 +204,37 @@ export default async function DashboardPage() {
           Period comparison (vs prior period)
         </h2>
         <PeriodRow
-          label="Last 30 days"
-          current={periods.days30.current}
-          prior={periods.days30.prior}
+          label={`Current month (${monthLabel(periods.currentMonth.from, thisYear)})`}
+          current={periods.currentMonth.current}
+          prior={periods.currentMonth.prior}
+          showDelta={false}
         />
         <PeriodRow
-          label="Last 90 days"
-          current={periods.days90.current}
-          prior={periods.days90.prior}
+          label={`Last month (${monthLabel(periods.lastMonth.from, thisYear)})`}
+          current={periods.lastMonth.current}
+          prior={periods.lastMonth.prior}
         />
         <PeriodRow
-          label="Last 365 days"
-          current={periods.days365.current}
-          prior={periods.days365.prior}
+          label={`Current quarter (${quarterLabel(periods.currentQuarter.from, thisYear)})`}
+          current={periods.currentQuarter.current}
+          prior={periods.currentQuarter.prior}
+          showDelta={false}
+        />
+        <PeriodRow
+          label={`Last quarter (${quarterLabel(periods.lastQuarter.from, thisYear)})`}
+          current={periods.lastQuarter.current}
+          prior={periods.lastQuarter.prior}
+        />
+        <PeriodRow
+          label={`Current year (${yearLabel(periods.currentYear.from)})`}
+          current={periods.currentYear.current}
+          prior={periods.currentYear.prior}
+          showDelta={false}
+        />
+        <PeriodRow
+          label={`Last year (${yearLabel(periods.lastYear.from)})`}
+          current={periods.lastYear.current}
+          prior={periods.lastYear.prior}
         />
       </div>
 

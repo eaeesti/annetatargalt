@@ -41,13 +41,44 @@ export type DashboardStats = {
   activeDonors: number;
   /** Sum of active recurring donation amounts (cents/month) */
   mrr: number;
-  /** Rolling period comparisons: current period vs prior period of same length */
+  /**
+   * Calendar-aligned period comparisons. Each period's `prior` is the
+   * immediately preceding period of the same length (e.g. lastMonth.prior is
+   * the month before last — not the same range as currentMonth.prior, which
+   * is last month). `from` (UTC, start of the period) lets the caller label
+   * the row with the actual month/quarter/year it covers.
+   */
   periods: {
-    days30: { current: PeriodStats; prior: PeriodStats };
-    days90: { current: PeriodStats; prior: PeriodStats };
-    days365: { current: PeriodStats; prior: PeriodStats };
+    currentMonth: { current: PeriodStats; prior: PeriodStats; from: string };
+    lastMonth: { current: PeriodStats; prior: PeriodStats; from: string };
+    currentQuarter: { current: PeriodStats; prior: PeriodStats; from: string };
+    lastQuarter: { current: PeriodStats; prior: PeriodStats; from: string };
+    currentYear: { current: PeriodStats; prior: PeriodStats; from: string };
+    lastYear: { current: PeriodStats; prior: PeriodStats; from: string };
   };
 };
+
+type DateRange = [from: Date, to: Date];
+
+/** [start, end) of the calendar month `monthsAgo` months before `now`, UTC. */
+export function monthRange(now: Date, monthsAgo: number): DateRange {
+  const y = now.getUTCFullYear();
+  const m = now.getUTCMonth() - monthsAgo;
+  return [new Date(Date.UTC(y, m, 1)), new Date(Date.UTC(y, m + 1, 1))];
+}
+
+/** [start, end) of the calendar quarter `quartersAgo` quarters before `now`, UTC. */
+export function quarterRange(now: Date, quartersAgo: number): DateRange {
+  const y = now.getUTCFullYear();
+  const q = Math.floor(now.getUTCMonth() / 3) - quartersAgo;
+  return [new Date(Date.UTC(y, q * 3, 1)), new Date(Date.UTC(y, q * 3 + 3, 1))];
+}
+
+/** [start, end) of the calendar year `yearsAgo` years before `now`, UTC. */
+export function yearRange(now: Date, yearsAgo: number): DateRange {
+  const y = now.getUTCFullYear() - yearsAgo;
+  return [new Date(Date.UTC(y, 0, 1)), new Date(Date.UTC(y + 1, 0, 1))];
+}
 
 export class DashboardRepository {
   constructor(private database: Database = db) {}
@@ -256,34 +287,44 @@ export class DashboardRepository {
   async getStats(): Promise<DashboardStats> {
     const now = new Date();
 
-    const d = (days: number) => {
-      const d = new Date(now);
-      d.setDate(d.getDate() - days);
-      return d;
-    };
+    const month0Range = monthRange(now, 0);
+    const month1Range = monthRange(now, 1);
+    const month2Range = monthRange(now, 2);
+    const quarter0Range = quarterRange(now, 0);
+    const quarter1Range = quarterRange(now, 1);
+    const quarter2Range = quarterRange(now, 2);
+    const year0Range = yearRange(now, 0);
+    const year1Range = yearRange(now, 1);
+    const year2Range = yearRange(now, 2);
 
     const [
       totalDonations,
       totalDonors,
       activeDonors,
       mrr,
-      p30c,
-      p30p,
-      p90c,
-      p90p,
-      p365c,
-      p365p,
+      month0,
+      month1,
+      month2,
+      quarter0,
+      quarter1,
+      quarter2,
+      year0,
+      year1,
+      year2,
     ] = await Promise.all([
       this.getTotalDonations(),
       this.getTotalDonors(),
       this.getActiveDonors(),
       this.getMrr(),
-      this.getPeriodStats(d(30), now),
-      this.getPeriodStats(d(60), d(30)),
-      this.getPeriodStats(d(90), now),
-      this.getPeriodStats(d(180), d(90)),
-      this.getPeriodStats(d(365), now),
-      this.getPeriodStats(d(730), d(365)),
+      this.getPeriodStats(...month0Range),
+      this.getPeriodStats(...month1Range),
+      this.getPeriodStats(...month2Range),
+      this.getPeriodStats(...quarter0Range),
+      this.getPeriodStats(...quarter1Range),
+      this.getPeriodStats(...quarter2Range),
+      this.getPeriodStats(...year0Range),
+      this.getPeriodStats(...year1Range),
+      this.getPeriodStats(...year2Range),
     ]);
 
     return {
@@ -292,9 +333,36 @@ export class DashboardRepository {
       activeDonors,
       mrr,
       periods: {
-        days30: { current: p30c, prior: p30p },
-        days90: { current: p90c, prior: p90p },
-        days365: { current: p365c, prior: p365p },
+        currentMonth: {
+          current: month0,
+          prior: month1,
+          from: month0Range[0].toISOString(),
+        },
+        lastMonth: {
+          current: month1,
+          prior: month2,
+          from: month1Range[0].toISOString(),
+        },
+        currentQuarter: {
+          current: quarter0,
+          prior: quarter1,
+          from: quarter0Range[0].toISOString(),
+        },
+        lastQuarter: {
+          current: quarter1,
+          prior: quarter2,
+          from: quarter1Range[0].toISOString(),
+        },
+        currentYear: {
+          current: year0,
+          prior: year1,
+          from: year0Range[0].toISOString(),
+        },
+        lastYear: {
+          current: year1,
+          prior: year2,
+          from: year1Range[0].toISOString(),
+        },
       },
     };
   }

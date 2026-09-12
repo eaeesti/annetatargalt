@@ -9,9 +9,12 @@ export type DashboardStats = {
   activeDonors: number;
   mrr: number;
   periods: {
-    days30: { current: PeriodStats; prior: PeriodStats };
-    days90: { current: PeriodStats; prior: PeriodStats };
-    days365: { current: PeriodStats; prior: PeriodStats };
+    currentMonth: { current: PeriodStats; prior: PeriodStats; from: string };
+    lastMonth: { current: PeriodStats; prior: PeriodStats; from: string };
+    currentQuarter: { current: PeriodStats; prior: PeriodStats; from: string };
+    lastQuarter: { current: PeriodStats; prior: PeriodStats; from: string };
+    currentYear: { current: PeriodStats; prior: PeriodStats; from: string };
+    lastYear: { current: PeriodStats; prior: PeriodStats; from: string };
   };
 };
 
