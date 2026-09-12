@@ -22,9 +22,11 @@ type OrgSplit = {
   amount: number;
 };
 
+type RecurringDonationStatus = "active" | "stopped" | "neverStarted";
+
 type RecurringDonationDetail = {
   id: number;
-  active: boolean;
+  status: RecurringDonationStatus;
   amount: number;
   datetime: string;
   companyName: string | null;
@@ -76,6 +78,12 @@ function donorName(donor: RecurringDonationDetail["donor"]): string {
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
+
+function StatusBadge({ status }: { status: RecurringDonationStatus }) {
+  if (status === "active") return <Badge variant="default">Active</Badge>;
+  if (status === "stopped") return <Badge variant="destructive">Stopped</Badge>;
+  return <Badge variant="secondary">Never started</Badge>;
+}
 
 function Section({
   title,
@@ -153,11 +161,7 @@ export default async function RecurringDonationDetailPage({
           <h1 className="text-2xl font-bold">
             Recurring #{rd.id} — {donorName(rd.donor)}
           </h1>
-          {rd.active ? (
-            <Badge variant="default">Active</Badge>
-          ) : (
-            <Badge variant="secondary">Inactive</Badge>
-          )}
+          <StatusBadge status={rd.status} />
         </div>
       </div>
 

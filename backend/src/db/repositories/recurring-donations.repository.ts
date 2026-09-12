@@ -1,4 +1,4 @@
-import { eq, and, desc, asc, sql, count } from "drizzle-orm";
+import { eq, and, desc, asc, sql, count, gte } from "drizzle-orm";
 import { db, type Database } from "../client";
 import {
   recurringDonations,
@@ -7,6 +7,17 @@ import {
   type RecurringDonation,
   type NewRecurringDonation,
 } from "../schema";
+import { RECURRING_ACTIVITY_WINDOW_DAYS } from "./recurring-activity";
+
+/**
+ * Never started: no finalized donation has ever been linked to this
+ * recurring donation (the mandate exists, but the first payment never went
+ * through). Stopped: had one at some point, but nothing within the current
+ * window. Active: a finalized linked donation landed within the window.
+ * Payment-based, like RECURRING_ACTIVITY_WINDOW_DAYS everywhere else — not
+ * recurring_donations.active (deprecated, never updated after creation).
+ */
+export type RecurringDonationStatus = "active" | "stopped" | "neverStarted";
 
 export class RecurringDonationsRepository {
   constructor(private database: Database = db) {}
@@ -79,6 +90,33 @@ export class RecurringDonationsRepository {
       .groupBy(donations.recurringDonationId)
       .as("ds");
 
+    // Subquery: recurring donations with a finalized linked donation within
+    // the current activity window — the "active" half of the status column.
+    const recentCutoff = new Date();
+    recentCutoff.setDate(
+      recentCutoff.getDate() - RECURRING_ACTIVITY_WINDOW_DAYS,
+    );
+    const recentSq = this.database
+      .select({ recurringDonationId: donations.recurringDonationId })
+      .from(donations)
+      .where(
+        and(
+          eq(donations.finalized, true),
+          sql`${donations.recurringDonationId} is not null`,
+          gte(donations.datetime, recentCutoff),
+        ),
+      )
+      .groupBy(donations.recurringDonationId)
+      .as("rs");
+
+    const statusRankSql = sql`
+      CASE
+        WHEN ${recentSq.recurringDonationId} IS NOT NULL THEN 2
+        WHEN ${statsSq.recurringDonationId} IS NOT NULL THEN 1
+        ELSE 0
+      END
+    `;
+
     const colMap: Record<string, Parameters<typeof dir>[0]> = {
       id: recurringDonations.id,
       active: recurringDonations.active,
@@ -87,6 +125,7 @@ export class RecurringDonationsRepository {
       donorLastName: donors.lastName,
       donationCount: statsSq.donationCount,
       lastDonationDate: statsSq.lastDonationDate,
+      status: statusRankSql,
     };
 
     const orderCol = colMap[sortBy] ?? recurringDonations.id;
@@ -108,12 +147,23 @@ export class RecurringDonationsRepository {
           donorEmail: donors.email,
           donationCount: statsSq.donationCount,
           lastDonationDate: statsSq.lastDonationDate,
+          status: sql<RecurringDonationStatus>`
+            CASE
+              WHEN ${recentSq.recurringDonationId} IS NOT NULL THEN 'active'
+              WHEN ${statsSq.recurringDonationId} IS NOT NULL THEN 'stopped'
+              ELSE 'neverStarted'
+            END
+          `,
         })
         .from(recurringDonations)
         .innerJoin(donors, eq(recurringDonations.donorId, donors.id))
         .leftJoin(
           statsSq,
           eq(recurringDonations.id, statsSq.recurringDonationId),
+        )
+        .leftJoin(
+          recentSq,
+          eq(recurringDonations.id, recentSq.recurringDonationId),
         )
         .where(whereClause)
         .orderBy(dir(orderCol))
@@ -129,10 +179,14 @@ export class RecurringDonationsRepository {
   }
 
   /**
-   * Find a recurring donation by ID with full detail (donor, org splits, linked donations with org splits).
+   * Find a recurring donation by ID with full detail (donor, org splits,
+   * linked donations with org splits). `status` is computed the same
+   * payment-based way `findPaginated` does (see RECURRING_ACTIVITY_WINDOW_DAYS)
+   * — the raw `active` column is stale — in JS from the `donations` already
+   * fetched here, instead of a second DB query.
    */
   async findByIdWithFullDonations(id: number) {
-    return this.database.query.recurringDonations.findFirst({
+    const rd = await this.database.query.recurringDonations.findFirst({
       where: eq(recurringDonations.id, id),
       with: {
         donor: true,
@@ -143,6 +197,20 @@ export class RecurringDonationsRepository {
         },
       },
     });
+    if (!rd) return undefined;
+
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - RECURRING_ACTIVITY_WINDOW_DAYS);
+    const finalized = rd.donations.filter((d) => d.finalized);
+    const status: RecurringDonationStatus = finalized.some(
+      (d) => new Date(d.datetime) >= cutoff,
+    )
+      ? "active"
+      : finalized.length > 0
+        ? "stopped"
+        : "neverStarted";
+
+    return { ...rd, status };
   }
 
   /**
