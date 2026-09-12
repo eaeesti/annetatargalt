@@ -39,8 +39,12 @@ export type DashboardStats = {
   totalDonors: number;
   /** Unique donors with a finalized donation in the last 12 months */
   activeDonors: number;
-  /** Sum of active recurring donation amounts (cents/month) */
-  mrr: number;
+  /**
+   * Sum of active recurring donation amounts (cents/month). Not "MRR" — this
+   * money isn't Anneta Targalt's revenue, it's passed on to the recipient
+   * organizations.
+   */
+  monthlyRecurringDonations: number;
   /**
    * Calendar-aligned period comparisons. Each period's `prior` is the
    * immediately preceding period of the same length (e.g. lastMonth.prior is
@@ -129,7 +133,7 @@ export class DashboardRepository {
    * Sum of amounts for recurring donations that had a finalized payment in the
    * last 60 days — payment-based activity, not the deprecated `active` flag.
    */
-  async getMrr(): Promise<number> {
+  async getMonthlyRecurringDonations(): Promise<number> {
     const result = await this.database.execute(sql`
       SELECT cast(coalesce(sum(rd.amount), 0) as int) AS total
       FROM recurring_donations rd
@@ -301,7 +305,7 @@ export class DashboardRepository {
       totalDonations,
       totalDonors,
       activeDonors,
-      mrr,
+      monthlyRecurringDonations,
       month0,
       month1,
       month2,
@@ -315,7 +319,7 @@ export class DashboardRepository {
       this.getTotalDonations(),
       this.getTotalDonors(),
       this.getActiveDonors(),
-      this.getMrr(),
+      this.getMonthlyRecurringDonations(),
       this.getPeriodStats(...month0Range),
       this.getPeriodStats(...month1Range),
       this.getPeriodStats(...month2Range),
@@ -331,7 +335,7 @@ export class DashboardRepository {
       totalDonations,
       totalDonors,
       activeDonors,
-      mrr,
+      monthlyRecurringDonations,
       periods: {
         currentMonth: {
           current: month0,

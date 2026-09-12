@@ -125,11 +125,11 @@ describe("DashboardRepository", () => {
     });
   });
 
-  // ── getMrr ───────────────────────────────────────────────────────────────────
+  // ── getMonthlyRecurringDonations ─────────────────────────────────────────────
 
-  describe("getMrr", () => {
+  describe("getMonthlyRecurringDonations", () => {
     it("returns zero when no active recurring donations exist", async () => {
-      const result = await repo.getMrr();
+      const result = await repo.getMonthlyRecurringDonations();
       expect(result).toBe(0);
     });
 
@@ -151,7 +151,7 @@ describe("DashboardRepository", () => {
         active: false, // excluded
       });
 
-      const result = await repo.getMrr();
+      const result = await repo.getMonthlyRecurringDonations();
       expect(result).toBe(2000);
     });
   });
