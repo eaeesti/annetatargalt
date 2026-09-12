@@ -13,6 +13,7 @@ import {
 import { ChevronDown, ChevronUp, ChevronsUpDown, Columns3 } from "lucide-react";
 import { Badge } from "../../../../components/ui/badge";
 import { Button } from "../../../../components/ui/button";
+import { donationStatus } from "../../../../lib/donation-status";
 import { EntityLink } from "../../../../components/entity-link";
 import {
   donorHref,
@@ -273,12 +274,24 @@ export function DonationsTable({
         accessorKey: "finalized",
         enableSorting: true,
         header: () => <SortableHeader col="finalized">Status</SortableHeader>,
-        cell: ({ row }) =>
-          row.original.finalized ? (
-            <Badge variant="default">Finalized</Badge>
-          ) : (
-            <Badge variant="secondary">Pending</Badge>
-          ),
+        cell: ({ row }) => {
+          const status = donationStatus(
+            row.original.finalized,
+            row.original.datetime,
+          );
+          if (status === "finalized")
+            return <Badge variant="default">Finalized</Badge>;
+          if (status === "cancelled")
+            return (
+              <Badge
+                variant="destructive"
+                title="Still pending after 24+ hours — likely an abandoned payment attempt"
+              >
+                Cancelled
+              </Badge>
+            );
+          return <Badge variant="secondary">Pending</Badge>;
+        },
       },
       {
         id: "paymentMethod",
