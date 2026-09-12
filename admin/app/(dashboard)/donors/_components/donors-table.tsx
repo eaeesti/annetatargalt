@@ -247,9 +247,20 @@ export function DonorsTable({
       label: "Search",
       placeholder: "Name or email…",
     },
+    {
+      type: "select",
+      key: "recurringStatus",
+      label: "Recurring status",
+      options: [
+        { value: "new", label: "New (last month)" },
+        { value: "retained", label: "Retained (last month)" },
+        { value: "churned", label: "Churned (last month)" },
+        { value: "churnedAllTime", label: "Churned (all time)" },
+      ],
+    },
   ];
 
-  const FILTER_KEYS = ["search"];
+  const FILTER_KEYS = ["search", "recurringStatus"];
   const filterParams = Object.fromEntries(
     FILTER_KEYS.filter((k) => searchParams.has(k)).map((k) => [
       k,

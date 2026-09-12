@@ -48,11 +48,19 @@ export type NumberRangeFilterDef = {
   unit?: string;
 };
 
+export type SelectFilterDef = {
+  type: "select";
+  key: string;
+  label: string;
+  options: { value: string; label: string }[];
+};
+
 export type FilterDef =
   | BooleanFilterDef
   | DateRangeFilterDef
   | TextFilterDef
-  | NumberRangeFilterDef;
+  | NumberRangeFilterDef
+  | SelectFilterDef;
 
 export interface FilterBuilderProps {
   filters: FilterDef[];
@@ -95,6 +103,10 @@ function activeLabel(f: FilterDef, params: Record<string, string>): string {
     if (from && to) return `${f.label}: ${u}${from} – ${u}${to}`;
     if (from) return `${f.label}: ≥ ${u}${from}`;
     return `${f.label}: ≤ ${u}${to}`;
+  }
+  if (f.type === "select") {
+    const opt = f.options.find((o) => o.value === params[f.key]);
+    return `${f.label}: ${opt?.label ?? params[f.key]}`;
   }
   return `${f.label}: ${params[f.key]}`;
 }
@@ -387,6 +399,34 @@ function AddFilterForm({
         >
           {filter.falseLabel}
         </Button>
+        <button
+          onClick={onCancel}
+          className="ml-0.5 text-muted-foreground hover:text-foreground transition-colors"
+          aria-label="Cancel"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    );
+  }
+
+  if (filter.type === "select") {
+    return (
+      <div className={rowCls}>
+        <span className="text-sm text-muted-foreground mr-0.5">
+          {filter.label}:
+        </span>
+        {filter.options.map((opt) => (
+          <Button
+            key={opt.value}
+            size="sm"
+            variant="outline"
+            className="h-6 px-2.5 text-xs"
+            onClick={() => onApply({ [filter.key]: opt.value })}
+          >
+            {opt.label}
+          </Button>
+        ))}
         <button
           onClick={onCancel}
           className="ml-0.5 text-muted-foreground hover:text-foreground transition-colors"

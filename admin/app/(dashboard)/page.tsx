@@ -1,4 +1,5 @@
 import { strapiAdmin } from "../../lib/api";
+import { EntityLink } from "../../components/entity-link";
 import {
   MonthlyTotalsChart,
   CumulativeChart,
@@ -135,16 +136,22 @@ function PeriodRow({
 
 function ChartCard({
   title,
+  action,
   children,
 }: {
   title: string;
+  /** Optional link/button rendered on the right of the title row. */
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div className="rounded-lg border bg-card p-5 space-y-3">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-        {title}
-      </h2>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          {title}
+        </h2>
+        {action}
+      </div>
       {children}
     </div>
   );
@@ -262,7 +269,17 @@ export default async function DashboardPage() {
             <ChartCard title="Active donors per month (rolling 12 months)">
               <ActiveDonorsChart data={charts.activeDonorsPerMonth} />
             </ChartCard>
-            <ChartCard title="Recurring donors — new vs churned">
+            <ChartCard
+              title="Recurring donors — new vs churned"
+              action={
+                <EntityLink
+                  href="/donors?recurringStatus=churned"
+                  className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+                >
+                  View churned donors →
+                </EntityLink>
+              }
+            >
               <RecurringChurnChart data={charts.recurringChurn} />
             </ChartCard>
           </div>

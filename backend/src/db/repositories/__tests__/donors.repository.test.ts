@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { donorsRepository } from "../donors.repository";
+import { donorsRepository, lastCompleteMonthRange } from "../donors.repository";
 import {
   cleanDatabase,
   createTestDonor,
@@ -332,6 +332,204 @@ describe("DonorsRepository", () => {
     });
   });
 
+  // ── findPaginated: recurringStatus ────────────────────────────────────────────
+  //
+  // "new"/"retained"/"churned" as of the last complete calendar month — a
+  // fixed cohort comparison, distinct from the 60-day recurringDonor window
+  // above (the two can legitimately disagree near the boundary).
+
+  describe("findPaginated recurringStatus", () => {
+    it("is 'new' for a donor active last month but not the month before", async () => {
+      const { refStart } = lastCompleteMonthRange();
+      const donor = await createTestDonor();
+      const rd = await createTestRecurringDonation({ donorId: donor.id });
+      await createTestDonation({
+        donorId: donor.id,
+        recurringDonationId: rd.id,
+        finalized: true,
+        datetime: new Date(refStart.getTime() + 24 * 60 * 60 * 1000),
+      });
+
+      const { data } = await donorsRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+        recurringStatus: "new",
+      });
+      expect(data.map((d) => d.id)).toEqual([donor.id]);
+    });
+
+    it("is 'retained' for a donor active both last month and the month before", async () => {
+      const { priorStart, refStart } = lastCompleteMonthRange();
+      const donor = await createTestDonor();
+      const rd = await createTestRecurringDonation({ donorId: donor.id });
+      await createTestDonation({
+        donorId: donor.id,
+        recurringDonationId: rd.id,
+        finalized: true,
+        datetime: new Date(priorStart.getTime() + 24 * 60 * 60 * 1000),
+      });
+      await createTestDonation({
+        donorId: donor.id,
+        recurringDonationId: rd.id,
+        finalized: true,
+        datetime: new Date(refStart.getTime() + 24 * 60 * 60 * 1000),
+      });
+
+      const { data } = await donorsRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+        recurringStatus: "retained",
+      });
+      expect(data.map((d) => d.id)).toEqual([donor.id]);
+    });
+
+    it("is 'churned' for a donor active the month before last but not last month", async () => {
+      const { priorStart } = lastCompleteMonthRange();
+      const donor = await createTestDonor();
+      const rd = await createTestRecurringDonation({ donorId: donor.id });
+      await createTestDonation({
+        donorId: donor.id,
+        recurringDonationId: rd.id,
+        finalized: true,
+        datetime: new Date(priorStart.getTime() + 24 * 60 * 60 * 1000),
+      });
+
+      const { data } = await donorsRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+        recurringStatus: "churned",
+      });
+      expect(data.map((d) => d.id)).toEqual([donor.id]);
+    });
+
+    it("excludes a donor active in neither reference month from every status filter", async () => {
+      const donor = await createTestDonor();
+      const rd = await createTestRecurringDonation({ donorId: donor.id });
+      const longAgo = new Date();
+      longAgo.setFullYear(longAgo.getFullYear() - 1);
+      await createTestDonation({
+        donorId: donor.id,
+        recurringDonationId: rd.id,
+        finalized: true,
+        datetime: longAgo,
+      });
+
+      for (const status of ["new", "retained", "churned"] as const) {
+        const { data } = await donorsRepository.findPaginated({
+          page: 1,
+          pageSize: 25,
+          recurringStatus: status,
+        });
+        expect(data.map((d) => d.id)).not.toContain(donor.id);
+      }
+    });
+
+    it("ignores donations not tied to a recurring donation", async () => {
+      const { refStart } = lastCompleteMonthRange();
+      const donor = await createTestDonor();
+      await createTestDonation({
+        donorId: donor.id,
+        finalized: true,
+        datetime: new Date(refStart.getTime() + 24 * 60 * 60 * 1000), // no recurringDonationId
+      });
+
+      const { data } = await donorsRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+        recurringStatus: "new",
+      });
+      expect(data.map((d) => d.id)).not.toContain(donor.id);
+    });
+  });
+
+  // ── findPaginated: recurringStatus churnedAllTime ───────────────────────────
+  //
+  // Ever had a recurring-linked payment, but nothing within the current
+  // 60-day window — unlike "churned" (last month specifically), this catches
+  // a donor who stopped at any point in the past.
+
+  describe("findPaginated recurringStatus churnedAllTime", () => {
+    it("is true for a donor whose last recurring payment is long past the 60-day window", async () => {
+      const donor = await createTestDonor();
+      const rd = await createTestRecurringDonation({ donorId: donor.id });
+      const longAgo = new Date();
+      longAgo.setFullYear(longAgo.getFullYear() - 1);
+      await createTestDonation({
+        donorId: donor.id,
+        recurringDonationId: rd.id,
+        finalized: true,
+        datetime: longAgo,
+      });
+
+      const { data } = await donorsRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+        recurringStatus: "churnedAllTime",
+      });
+      expect(data.map((d) => d.id)).toContain(donor.id);
+    });
+
+    it("differs from 'churned' (last month) for a donor who stopped over a year ago", async () => {
+      const donor = await createTestDonor();
+      const rd = await createTestRecurringDonation({ donorId: donor.id });
+      const longAgo = new Date();
+      longAgo.setFullYear(longAgo.getFullYear() - 1);
+      await createTestDonation({
+        donorId: donor.id,
+        recurringDonationId: rd.id,
+        finalized: true,
+        datetime: longAgo,
+      });
+
+      const lastMonthChurned = await donorsRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+        recurringStatus: "churned",
+      });
+      const allTimeChurned = await donorsRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+        recurringStatus: "churnedAllTime",
+      });
+      expect(lastMonthChurned.data.map((d) => d.id)).not.toContain(donor.id);
+      expect(allTimeChurned.data.map((d) => d.id)).toContain(donor.id);
+    });
+
+    it("excludes a donor currently within the 60-day window", async () => {
+      const donor = await createTestDonor();
+      const rd = await createTestRecurringDonation({ donorId: donor.id });
+      await createTestDonation({
+        donorId: donor.id,
+        recurringDonationId: rd.id,
+        finalized: true,
+        datetime: new Date(),
+      });
+
+      const { data } = await donorsRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+        recurringStatus: "churnedAllTime",
+      });
+      expect(data.map((d) => d.id)).not.toContain(donor.id);
+    });
+
+    it("excludes a donor who never had a recurring-linked donation", async () => {
+      const donor = await createTestDonor();
+      await createTestDonation({
+        donorId: donor.id,
+        finalized: true,
+        datetime: new Date(),
+      });
+
+      const { data } = await donorsRepository.findPaginated({
+        page: 1,
+        pageSize: 25,
+        recurringStatus: "churnedAllTime",
+      });
+      expect(data.map((d) => d.id)).not.toContain(donor.id);
+    });
+  });
+
   // ── findByIdWithDonations: recurringDonor ────────────────────────────────────
   //
   // Same payment-based definition as findPaginated, just computed in JS from
@@ -399,5 +597,31 @@ describe("DonorsRepository", () => {
       const result = await donorsRepository.findByIdWithDonations(donor.id);
       expect(result?.recurringDonor).toBe(true);
     });
+  });
+});
+
+// ── lastCompleteMonthRange (pure — no DB) ───────────────────────────────────────
+
+function iso(d: Date): string {
+  return d.toISOString();
+}
+
+describe("lastCompleteMonthRange", () => {
+  it("returns the prior and reference (last complete) month boundaries", () => {
+    const { priorStart, refStart, refEnd } = lastCompleteMonthRange(
+      new Date("2026-03-17T09:00:00Z"),
+    );
+    expect(iso(priorStart)).toBe("2026-01-01T00:00:00.000Z");
+    expect(iso(refStart)).toBe("2026-02-01T00:00:00.000Z");
+    expect(iso(refEnd)).toBe("2026-03-01T00:00:00.000Z");
+  });
+
+  it("crosses a year boundary", () => {
+    const { priorStart, refStart, refEnd } = lastCompleteMonthRange(
+      new Date("2026-01-15T09:00:00Z"),
+    );
+    expect(iso(priorStart)).toBe("2025-11-01T00:00:00.000Z");
+    expect(iso(refStart)).toBe("2025-12-01T00:00:00.000Z");
+    expect(iso(refEnd)).toBe("2026-01-01T00:00:00.000Z");
   });
 });

@@ -15,6 +15,12 @@ const VALID_SORT_COLS = new Set([
   "donationCount",
   "lastDonationDate",
 ]);
+const VALID_RECURRING_STATUSES = new Set([
+  "new",
+  "retained",
+  "churned",
+  "churnedAllTime",
+]);
 
 interface ListResponse {
   data: DonorRow[];
@@ -43,6 +49,10 @@ export default async function DonorsPage({
     str(params.sortDir) === "desc" ? ("desc" as const) : ("asc" as const);
 
   const search = str(params.search);
+  const recurringStatusRaw = str(params.recurringStatus);
+  const recurringStatus = VALID_RECURRING_STATUSES.has(recurringStatusRaw ?? "")
+    ? recurringStatusRaw
+    : undefined;
 
   const qs = new URLSearchParams({
     page: String(page),
@@ -50,6 +60,7 @@ export default async function DonorsPage({
     sortBy,
     sortDir,
     ...(search && { search }),
+    ...(recurringStatus && { recurringStatus }),
   });
 
   const res = await strapiAdmin(`/api/admin-panel/donors/list?${qs}`, {
