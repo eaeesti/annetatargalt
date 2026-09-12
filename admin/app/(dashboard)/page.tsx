@@ -242,9 +242,7 @@ export default async function DashboardPage() {
       {charts && (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <ChartCard title="Monthly donations (last 24 months)">
-              <MonthlyTotalsChart data={charts.monthlyTotals} />
-            </ChartCard>
+            <MonthlyTotalsChart data={charts.monthlyTotals} />
             <ChartCard title="Cumulative donations (all time)">
               <CumulativeChart data={charts.monthlyTotals} />
             </ChartCard>
