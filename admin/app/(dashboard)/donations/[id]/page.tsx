@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { strapiAdmin } from "../../../../lib/api";
 import { resolveOrgNames } from "../../../../lib/orgs";
 import { formatEuros } from "../../../../lib/money";
+import { donationStatus } from "../../../../lib/donation-status";
 import { Badge } from "../../../../components/ui/badge";
 import { EntityLink } from "../../../../components/entity-link";
 import { DonationTransferEditor } from "../_components/donation-transfer-editor";
@@ -149,11 +150,24 @@ export default async function DonationDetailPage({
         <Field label="Amount">{formatEuros(donation.amount)}</Field>
         <Field label="Date">{formatDate(donation.datetime)}</Field>
         <Field label="Status">
-          {donation.finalized ? (
-            <Badge variant="default">Finalized</Badge>
-          ) : (
-            <Badge variant="secondary">Pending</Badge>
-          )}
+          {(() => {
+            const status = donationStatus(
+              donation.finalized,
+              donation.datetime,
+            );
+            if (status === "finalized")
+              return <Badge variant="default">Finalized</Badge>;
+            if (status === "cancelled")
+              return (
+                <Badge
+                  variant="destructive"
+                  title="Still pending after 24+ hours — likely an abandoned payment attempt"
+                >
+                  Cancelled
+                </Badge>
+              );
+            return <Badge variant="secondary">Pending</Badge>;
+          })()}
         </Field>
         {donation.paymentMethod && (
           <Field label="Payment method">{donation.paymentMethod}</Field>
