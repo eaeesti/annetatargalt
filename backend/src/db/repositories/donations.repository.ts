@@ -119,6 +119,12 @@ export class DonationsRepository {
 
   /**
    * Paginated, sortable, filterable donations list for the admin panel.
+   *
+   * `dateTo` is inclusive of the whole UTC day it falls on, regardless of its
+   * own time-of-day component — the admin date-range filter sends a bare day
+   * (e.g. midnight UTC for "2026-06-30"), and `donations.datetime` is a full
+   * timestamp, so a plain `<=` would silently drop anything on the 30th after
+   * midnight. Same convention as donationTransfersRepository.previewDateRange.
    */
   async findWithFilters(options: {
     page: number;
@@ -146,8 +152,11 @@ export class DonationsRepository {
       conditions.push(eq(donations.finalized, options.finalized));
     if (options.dateFrom)
       conditions.push(gte(donations.datetime, options.dateFrom));
-    if (options.dateTo)
-      conditions.push(lte(donations.datetime, options.dateTo));
+    if (options.dateTo) {
+      const dateToEndOfDay = new Date(options.dateTo);
+      dateToEndOfDay.setUTCHours(23, 59, 59, 999);
+      conditions.push(lte(donations.datetime, dateToEndOfDay));
+    }
     if (options.donorId !== undefined)
       conditions.push(eq(donations.donorId, options.donorId));
     if (options.transferId !== undefined)
