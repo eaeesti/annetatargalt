@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { strapiAdmin } from "../../../../lib/api";
 import { resolveOrgNames } from "../../../../lib/orgs";
+import { formatEuros } from "../../../../lib/money";
 import { Badge } from "../../../../components/ui/badge";
 import { EntityLink } from "../../../../components/entity-link";
 import { DonationTransferEditor } from "../_components/donation-transfer-editor";
@@ -54,10 +55,6 @@ type DonationDetail = {
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-function formatAmount(cents: number): string {
-  return `€${(cents / 100).toFixed(2)}`;
-}
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("et-EE", {
@@ -149,7 +146,7 @@ export default async function DonationDetailPage({
 
       {/* Key details */}
       <Section title="Details">
-        <Field label="Amount">{formatAmount(donation.amount)}</Field>
+        <Field label="Amount">{formatEuros(donation.amount)}</Field>
         <Field label="Date">{formatDate(donation.datetime)}</Field>
         <Field label="Status">
           {donation.finalized ? (
@@ -184,9 +181,9 @@ export default async function DonationDetailPage({
         </Field>
         {donation.processorFeeCents != null && (
           <Field label="Card fee">
-            {formatAmount(donation.processorFeeCents)}
+            {formatEuros(donation.processorFeeCents)}
             <span className="ml-2 text-muted-foreground">
-              (net {formatAmount(donation.amount - donation.processorFeeCents)})
+              (net {formatEuros(donation.amount - donation.processorFeeCents)})
             </span>
           </Field>
         )}
@@ -282,7 +279,7 @@ export default async function DonationDetailPage({
                     od.organizationInternalId}
                 </EntityLink>
                 <span className="font-medium tabular-nums">
-                  {formatAmount(od.amount)}
+                  {formatEuros(od.amount)}
                 </span>
               </div>
             ))}

@@ -486,15 +486,29 @@ export class DonationsRepository {
         reason: "not-found" | "transfer-not-found" | "not-finalized";
       }
   > {
-    // One transaction so the "target round exists" check can't be undone by a
-    // concurrent delete before the UPDATE — `for("key share")` holds the round
-    // row against deletion until we commit (same lock the FK insert would take).
-    // Mirrors the atomicity of `assignToTransfer`.
+    // One transaction, with the donation row itself locked (`for("update")`)
+    // for the whole thing — otherwise the read of its *current* round is a
+    // stale snapshot: a concurrent removeFromTransfer/setTransfer on the same
+    // donation could commit between our SELECT and our UPDATE, and we'd
+    // unconditionally overwrite it with a decision made from data that's no
+    // longer true (reviving a donation someone just detached, reporting a
+    // stale previousTransferId). Locking the row makes any concurrent writer
+    // on it block until we commit, then see *our* result as their "current"
+    // — same effect as assignToTransfer's atomic single UPDATE...WHERE, just
+    // expressed as a lock because this op's WHERE isn't a fixed value.
+    //
+    // `for("key share")` on the target round only needs to block a concurrent
+    // delete, not a concurrent read, so it stays the lighter lock.
     return this.database.transaction(async (tx) => {
-      const donation = await tx.query.donations.findFirst({
-        where: eq(donations.id, donationId),
-        columns: { id: true, finalized: true, donationTransferId: true },
-      });
+      const [donation] = await tx
+        .select({
+          id: donations.id,
+          finalized: donations.finalized,
+          donationTransferId: donations.donationTransferId,
+        })
+        .from(donations)
+        .where(eq(donations.id, donationId))
+        .for("update");
       if (!donation)
         return { ok: false as const, reason: "not-found" as const };
 

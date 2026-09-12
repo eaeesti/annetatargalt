@@ -15,11 +15,16 @@ export type Candidate = {
   orgSplit: { internalId: string; amountCents: number }[];
 };
 
+// The server-side date-range filter (`previewDateRange`) treats dateFrom/dateTo
+// as UTC-day boundaries. Displaying in the viewer's local zone could show a
+// donation a day off from the boundary the operator actually typed — pin the
+// display to UTC so the picker's date column always agrees with its own filter.
 function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString("et-EE", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
+    timeZone: "UTC",
   });
 }
 
