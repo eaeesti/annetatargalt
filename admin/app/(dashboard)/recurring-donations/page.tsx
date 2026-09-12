@@ -15,6 +15,7 @@ const VALID_SORT_COLS = new Set([
   "donorLastName",
   "donationCount",
   "lastDonationDate",
+  "status",
 ]);
 
 interface ListResponse {

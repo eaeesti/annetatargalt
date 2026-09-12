@@ -10,6 +10,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
+import { Badge } from "../../../../components/ui/badge";
 import { Button } from "../../../../components/ui/button";
 import { EntityLink } from "../../../../components/entity-link";
 import { donorHref } from "../../../../lib/entity-links";
@@ -24,9 +25,12 @@ import {
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+export type RecurringDonationStatus = "active" | "stopped" | "neverStarted";
+
 export type RecurringDonationRow = {
   id: number;
   active: boolean;
+  status: RecurringDonationStatus;
   amount: number;
   datetime: string;
   companyName: string | null;
@@ -57,6 +61,12 @@ function formatDate(iso: string): string {
     month: "2-digit",
     day: "2-digit",
   });
+}
+
+function StatusBadge({ status }: { status: RecurringDonationStatus }) {
+  if (status === "active") return <Badge variant="default">Active</Badge>;
+  if (status === "stopped") return <Badge variant="destructive">Stopped</Badge>;
+  return <Badge variant="secondary">Never started</Badge>;
 }
 
 function donorName(row: RecurringDonationRow): string {
@@ -190,6 +200,12 @@ export function RecurringDonationsTable({
             {formatDate(row.original.datetime)}
           </span>
         ),
+      },
+      {
+        id: "status",
+        accessorKey: "status",
+        header: () => <SortableHeader col="status">Status</SortableHeader>,
+        cell: ({ row }) => <StatusBadge status={row.original.status} />,
       },
       {
         id: "donationCount",

@@ -13,14 +13,7 @@ import {
 } from "drizzle-orm";
 import { db, type Database } from "../client";
 import { donors, donations, type Donor, type NewDonor } from "../schema";
-
-// A donor counts as "recurring" if a finalized donation tied to a recurring
-// donation landed within this window — same payment-based definition
-// DashboardRepository.getMonthlyRecurringDonations uses. Not
-// donors.recurringDonor (a stale, manually-set column) and not
-// recurring_donations.active (deprecated) — neither reflects whether a donor
-// is actually still paying.
-const RECURRING_DONOR_WINDOW_DAYS = 60;
+import { RECURRING_ACTIVITY_WINDOW_DAYS } from "./recurring-activity";
 
 export type RecurringStatus = "new" | "retained" | "churned" | "churnedAllTime";
 
@@ -179,7 +172,7 @@ export class DonorsRepository {
 
     const recurringCutoff = new Date();
     recurringCutoff.setDate(
-      recurringCutoff.getDate() - RECURRING_DONOR_WINDOW_DAYS,
+      recurringCutoff.getDate() - RECURRING_ACTIVITY_WINDOW_DAYS,
     );
     const recurringSq = this.database
       .select({ donorId: donations.donorId })
@@ -346,7 +339,7 @@ export class DonorsRepository {
   /**
    * Find a donor by ID with all their donations (and org splits) and recurring
    * donations. `recurringDonor` is overridden with the same payment-based
-   * computation `findPaginated` uses (see RECURRING_DONOR_WINDOW_DAYS) — the
+   * computation `findPaginated` uses (see RECURRING_ACTIVITY_WINDOW_DAYS) — the
    * raw column read straight off `donors` is stale — computed here in JS
    * instead of a second DB query since `donations` is already fetched.
    */
@@ -365,7 +358,7 @@ export class DonorsRepository {
 
     const recurringCutoff = new Date();
     recurringCutoff.setDate(
-      recurringCutoff.getDate() - RECURRING_DONOR_WINDOW_DAYS,
+      recurringCutoff.getDate() - RECURRING_ACTIVITY_WINDOW_DAYS,
     );
     const recurringDonor = donor.donations.some(
       (d) =>

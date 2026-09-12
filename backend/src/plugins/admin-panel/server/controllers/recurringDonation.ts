@@ -12,6 +12,7 @@ const VALID_SORT_COLS = new Set([
   "donorLastName",
   "donationCount",
   "lastDonationDate",
+  "status",
 ]);
 
 export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
