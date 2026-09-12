@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { strapiAdmin } from "../../../../lib/api";
-import { resolveOrgNames } from "../../../../lib/orgs";
+import { fetchOrgNameMap } from "../../../../lib/orgs";
 import { formatEuros } from "../../../../lib/money";
 import { TransferReconciliation } from "../_components/transfer-reconciliation";
 import { TransferMetaEditor } from "../_components/transfer-meta-editor";
@@ -107,24 +107,14 @@ export default async function TransferDetailPage({
 }) {
   const { id } = await params;
 
-  const res = await strapiAdmin(`/api/admin-panel/transfers/${id}`, {
-    cache: "no-store",
-  });
+  const [res, orgNames] = await Promise.all([
+    strapiAdmin(`/api/admin-panel/transfers/${id}`, { cache: "no-store" }),
+    fetchOrgNameMap(),
+  ]);
 
   if (!res.ok) notFound();
 
   const { data: transfer } = (await res.json()) as { data: TransferDetail };
-
-  // Resolve org names for per-org totals and donation splits
-  const allOrgIds = [
-    ...new Set([
-      ...transfer.orgTotals.map((o) => o.organizationInternalId),
-      ...transfer.donations.flatMap((d) =>
-        d.organizationDonations.map((od) => od.organizationInternalId),
-      ),
-    ]),
-  ];
-  const orgNames = await resolveOrgNames(allOrgIds);
 
   const grandTotal = transfer.orgTotals.reduce((s, o) => s + o.total, 0);
   const finalizedDonations = transfer.donations.filter((d) => d.finalized);

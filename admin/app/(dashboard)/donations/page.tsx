@@ -1,5 +1,5 @@
 import { strapiAdmin } from "../../../lib/api";
-import { resolveOrgNames } from "../../../lib/orgs";
+import { fetchOrgNameMap } from "../../../lib/orgs";
 import {
   DonationsTable,
   type DonationRow,
@@ -69,9 +69,12 @@ export default async function DonationsPage({
     ...(amountMax && { amountMax }),
   });
 
-  const res = await strapiAdmin(`/api/admin-panel/donations/list?${qs}`, {
-    cache: "no-store",
-  });
+  // Org names don't depend on the donation rows, so they're fetched alongside
+  // them rather than after — one round trip instead of two chained ones.
+  const [res, orgNamesMap] = await Promise.all([
+    strapiAdmin(`/api/admin-panel/donations/list?${qs}`, { cache: "no-store" }),
+    fetchOrgNameMap(),
+  ]);
 
   if (!res.ok) {
     return (
@@ -86,14 +89,6 @@ export default async function DonationsPage({
 
   const { data, pagination } = (await res.json()) as ListResponse;
 
-  const allOrgIds = [
-    ...new Set(
-      data.flatMap((d) =>
-        d.organizationDonations.map((od) => od.organizationInternalId),
-      ),
-    ),
-  ];
-  const orgNamesMap = await resolveOrgNames(allOrgIds);
   const orgNames = Object.fromEntries(orgNamesMap);
 
   return (
