@@ -121,6 +121,9 @@ build
 # Local deployment script with server credentials
 deploy-local.sh
 
+# Local-only DB restore script (references machine-specific backup paths/DB names)
+restore-local-db.sh
+
 ############################
 # TypeScript Compiled Output
 ############################
