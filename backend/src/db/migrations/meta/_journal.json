@@ -71,6 +71,13 @@
       "when": 1789232667591,
       "tag": "0009_drop_donors_recurring_donor",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789235278924,
+      "tag": "0010_fk_and_datetime_indexes",
+      "breakpoints": true
     }
   ]
 }

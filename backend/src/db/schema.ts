@@ -23,21 +23,25 @@ export const donors = pgTable("donors", {
 });
 
 // Recurring donations table (subscription templates)
-export const recurringDonations = pgTable("recurring_donations", {
-  id: serial("id").primaryKey(),
-  donorId: integer("donor_id")
-    .references(() => donors.id)
-    .notNull(),
-  active: boolean("active").default(false).notNull(),
-  companyName: varchar("company_name", { length: 128 }),
-  companyCode: varchar("company_code", { length: 128 }),
-  comment: text("comment"),
-  bank: varchar("bank", { length: 64 }),
-  amount: integer("amount").notNull(), // in cents
-  datetime: timestamp("datetime").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+export const recurringDonations = pgTable(
+  "recurring_donations",
+  {
+    id: serial("id").primaryKey(),
+    donorId: integer("donor_id")
+      .references(() => donors.id)
+      .notNull(),
+    active: boolean("active").default(false).notNull(),
+    companyName: varchar("company_name", { length: 128 }),
+    companyCode: varchar("company_code", { length: 128 }),
+    comment: text("comment"),
+    bank: varchar("bank", { length: 64 }),
+    amount: integer("amount").notNull(), // in cents
+    datetime: timestamp("datetime").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (t) => [index("recurring_donations_donor_idx").on(t.donorId)],
+);
 
 // Donation transfers table (batch transfer tracking)
 export const donationTransfers = pgTable("donation_transfers", {
@@ -98,22 +102,38 @@ export const donations = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
-  (table) => [index("donations_transaction_id_idx").on(table.transactionId)],
+  (table) => [
+    index("donations_transaction_id_idx").on(table.transactionId),
+    // Postgres doesn't index FK columns automatically. Without these, every
+    // relational fetch (a donor's donations, a transfer's donations) and every
+    // recurring-activity subquery seq-scans the whole table.
+    index("donations_donor_idx").on(table.donorId),
+    index("donations_recurring_donation_idx").on(table.recurringDonationId),
+    index("donations_donation_transfer_idx").on(table.donationTransferId),
+    // Default sort + every date-range filter on the donations list.
+    index("donations_datetime_idx").on(table.datetime),
+  ],
 );
 
 // Organization donations junction table (splits donations across organizations)
-export const organizationDonations = pgTable("organization_donations", {
-  id: serial("id").primaryKey(),
-  donationId: integer("donation_id")
-    .references(() => donations.id)
-    .notNull(),
-  organizationInternalId: varchar("organization_internal_id", {
-    length: 64,
-  }).notNull(), // Links to Strapi organization.internalId
-  amount: integer("amount").notNull(), // in cents
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+export const organizationDonations = pgTable(
+  "organization_donations",
+  {
+    id: serial("id").primaryKey(),
+    donationId: integer("donation_id")
+      .references(() => donations.id)
+      .notNull(),
+    organizationInternalId: varchar("organization_internal_id", {
+      length: 64,
+    }).notNull(), // Links to Strapi organization.internalId
+    amount: integer("amount").notNull(), // in cents
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  // Every donations-list row pulls its org split through this FK — unindexed,
+  // that lateral join seq-scans this whole table once per donation.
+  (t) => [index("organization_donations_donation_idx").on(t.donationId)],
+);
 
 // Organization recurring donations junction table
 export const organizationRecurringDonations = pgTable(
@@ -130,6 +150,9 @@ export const organizationRecurringDonations = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
+  (t) => [
+    index("org_recurring_donations_recurring_idx").on(t.recurringDonationId),
+  ],
 );
 
 // Relations for better query experience
@@ -292,15 +315,19 @@ export const bankTransactionsRelations = relations(
 // "This bank sender code belongs to this donor" — learned during a statement
 // import when the code in the bank line doesn't match any donor/template
 // (e.g. a foreign company code). Lets future imports resolve it automatically.
-export const senderDonorAliases = pgTable("sender_donor_aliases", {
-  senderCode: varchar("sender_code", { length: 64 }).primaryKey(),
-  donorId: integer("donor_id")
-    .references(() => donors.id)
-    .notNull(),
-  note: varchar("note", { length: 256 }),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  createdBy: varchar("created_by", { length: 256 }),
-});
+export const senderDonorAliases = pgTable(
+  "sender_donor_aliases",
+  {
+    senderCode: varchar("sender_code", { length: 64 }).primaryKey(),
+    donorId: integer("donor_id")
+      .references(() => donors.id)
+      .notNull(),
+    note: varchar("note", { length: 256 }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    createdBy: varchar("created_by", { length: 256 }),
+  },
+  (t) => [index("sender_donor_aliases_donor_idx").on(t.donorId)],
+);
 
 export type SenderDonorAlias = typeof senderDonorAliases.$inferSelect;
 export type NewSenderDonorAlias = typeof senderDonorAliases.$inferInsert;
