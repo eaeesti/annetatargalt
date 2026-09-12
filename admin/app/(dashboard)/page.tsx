@@ -200,12 +200,11 @@ export default async function DashboardPage() {
         <StatCard
           label="Active donors"
           value={formatCount(activeDonors)}
-          sub="last 12 months"
+          info="Count of distinct donors with at least one finalized donation in the trailing 12 months from today. Donations without a linked donor record aren't counted."
         />
         <StatCard
           label="Monthly recurring donations"
           value={formatEur(monthlyRecurringDonations)}
-          sub="from active donors"
           info="Sum of recurring donation amounts where at least one payment was finalized in the last 60 days. This money is passed on to the recipient organizations — not revenue for Anneta Targalt."
         />
       </div>
