@@ -29,7 +29,6 @@ import {
 export type TransferRow = {
   id: number;
   datetime: string;
-  recipient: string | null;
   notes: string | null;
   donationCount: number | null;
   totalAmount: number | null;
@@ -168,12 +167,15 @@ export function TransfersTable({
         ),
       },
       {
-        id: "recipient",
-        accessorKey: "recipient",
-        header: "Recipient",
+        id: "notes",
+        accessorKey: "notes",
+        header: "Notes",
         cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground">
-            {row.original.recipient ?? "—"}
+          <span
+            className="block max-w-[16rem] truncate text-sm text-muted-foreground"
+            title={row.original.notes ?? undefined}
+          >
+            {row.original.notes ?? "—"}
           </span>
         ),
       },
