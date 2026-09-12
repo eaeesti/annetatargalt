@@ -209,9 +209,10 @@ describe("DonorsRepository", () => {
   // ── findPaginated: recurringDonor ────────────────────────────────────────────
   //
   // "Recurring donor" is computed from payment activity — a finalized donation
-  // tied to a recurring donation within the last 60 days — not the stale
-  // donors.recurringDonor column or the deprecated recurring_donations.active
-  // flag. Each test below isolates exactly one of those distinctions.
+  // tied to a recurring donation within the last 60 days — not the deprecated
+  // recurring_donations.active flag (donors.recurringDonor, the other
+  // deprecated signal this used to also ignore, has since been dropped from
+  // the schema entirely). Each test below isolates one of those distinctions.
 
   describe("findPaginated recurringDonor", () => {
     it("is true for a donor with a recent finalized recurring payment", async () => {
@@ -256,19 +257,6 @@ describe("DonorsRepository", () => {
         donorId: donor.id,
         finalized: true,
         datetime: new Date(),
-      });
-
-      const { data } = await donorsRepository.findPaginated({
-        page: 1,
-        pageSize: 25,
-      });
-      expect(data.find((d) => d.id === donor.id)?.recurringDonor).toBe(false);
-    });
-
-    it("ignores the stale donors.recurringDonor column", async () => {
-      const donor = await donorsRepository.create({
-        email: "stale-flag@example.com",
-        recurringDonor: true, // set directly, no matching payment activity
       });
 
       const { data } = await donorsRepository.findPaginated({
@@ -565,16 +553,6 @@ describe("DonorsRepository", () => {
         recurringDonationId: rd.id,
         finalized: true,
         datetime: old,
-      });
-
-      const result = await donorsRepository.findByIdWithDonations(donor.id);
-      expect(result?.recurringDonor).toBe(false);
-    });
-
-    it("ignores the stale donors.recurringDonor column", async () => {
-      const donor = await donorsRepository.create({
-        email: "stale-flag-detail@example.com",
-        recurringDonor: true,
       });
 
       const result = await donorsRepository.findByIdWithDonations(donor.id);

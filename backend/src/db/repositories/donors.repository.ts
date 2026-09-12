@@ -104,7 +104,6 @@ export class DonorsRepository {
         firstName: data.firstName || null,
         lastName: data.lastName || null,
         email: data.email,
-        recurringDonor: data.recurringDonor || false,
       })
       .returning();
     if (!donor) throw new Error("Failed to insert donor");
@@ -127,13 +126,6 @@ export class DonorsRepository {
       .where(eq(donors.id, id))
       .returning();
     return donor;
-  }
-
-  /**
-   * Mark donor as recurring donor
-   */
-  async markAsRecurring(id: number): Promise<Donor | undefined> {
-    return this.update(id, { recurringDonor: true });
   }
 
   /**
@@ -338,10 +330,9 @@ export class DonorsRepository {
 
   /**
    * Find a donor by ID with all their donations (and org splits) and recurring
-   * donations. `recurringDonor` is overridden with the same payment-based
-   * computation `findPaginated` uses (see RECURRING_ACTIVITY_WINDOW_DAYS) — the
-   * raw column read straight off `donors` is stale — computed here in JS
-   * instead of a second DB query since `donations` is already fetched.
+   * donations. `recurringDonor` is computed the same payment-based way
+   * `findPaginated` does (see RECURRING_ACTIVITY_WINDOW_DAYS) — in JS here,
+   * from the `donations` already fetched, instead of a second DB query.
    */
   async findByIdWithDonations(id: number) {
     const donor = await this.database.query.donors.findFirst({
