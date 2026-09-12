@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { strapiAdmin } from "../../../../lib/api";
 import { resolveOrgNames } from "../../../../lib/orgs";
+import { formatEuros } from "../../../../lib/money";
 import { TransferReconciliation } from "../_components/transfer-reconciliation";
 import { TransferMetaEditor } from "../_components/transfer-meta-editor";
 import { TransferDonationsEditor } from "../_components/transfer-donations-editor";
@@ -51,10 +52,6 @@ type TransferDetail = {
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-function formatAmount(cents: number): string {
-  return `€${(cents / 100).toFixed(2)}`;
-}
 
 function formatDate(iso: string, includeTime = false): string {
   return new Date(iso).toLocaleDateString("et-EE", {
@@ -169,7 +166,7 @@ export default async function TransferDetailPage({
           </span>
         </Field>
         <Field label="Total transferred">
-          <span className="font-medium">{formatAmount(grandTotal)}</span>
+          <span className="font-medium">{formatEuros(grandTotal)}</span>
         </Field>
         <div className="pt-1">
           <TransferMetaEditor
@@ -224,7 +221,7 @@ export default async function TransferDetailPage({
                         {o.donationCount !== 1 ? "s" : ""}
                       </span>
                       <span className="tabular-nums font-semibold">
-                        {formatAmount(o.total)}
+                        {formatEuros(o.total)}
                       </span>
                       <span className="text-muted-foreground text-xs w-10 text-right">
                         {pct}%
@@ -245,7 +242,7 @@ export default async function TransferDetailPage({
             <div className="flex items-center justify-between text-sm border-t pt-2 mt-2">
               <span className="font-semibold">Total</span>
               <span className="tabular-nums font-semibold">
-                {formatAmount(grandTotal)}
+                {formatEuros(grandTotal)}
               </span>
             </div>
           </div>
