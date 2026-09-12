@@ -1,6 +1,9 @@
 import type { Core } from "@strapi/strapi";
 import type { Context } from "koa";
-import { donorsRepository } from "../../../../db/repositories/donors.repository";
+import {
+  donorsRepository,
+  type RecurringStatus,
+} from "../../../../db/repositories/donors.repository";
 import { auditLog } from "../utils/audit-log";
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
@@ -13,6 +16,19 @@ const VALID_SORT_COLS = new Set([
   "donationCount",
   "lastDonationDate",
 ]);
+const VALID_RECURRING_STATUSES = new Set([
+  "new",
+  "retained",
+  "churned",
+  "churnedAllTime",
+]);
+
+/** One of "new"/"retained"/"churned"/"churnedAllTime", or undefined otherwise. */
+function parseRecurringStatus(v: unknown): RecurringStatus | undefined {
+  return typeof v === "string" && VALID_RECURRING_STATUSES.has(v)
+    ? (v as RecurringStatus)
+    : undefined;
+}
 
 export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
   async list(ctx: Context) {
@@ -28,6 +44,7 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
       q.recurringDonor !== undefined
         ? String(q.recurringDonor) === "true"
         : undefined;
+    const recurringStatus = parseRecurringStatus(q.recurringStatus);
     const searchRaw = q.search ? String(q.search).trim() : undefined;
     const search = searchRaw ? searchRaw.slice(0, 100) : undefined;
 
@@ -38,6 +55,7 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
       sortDir,
       search,
       recurringDonor,
+      recurringStatus,
     });
 
     await auditLog(ctx, "donors.list");

@@ -7,6 +7,7 @@ import {
   sql,
   ilike,
   gte,
+  lt,
   isNull,
   isNotNull,
 } from "drizzle-orm";
@@ -20,6 +21,30 @@ import { donors, donations, type Donor, type NewDonor } from "../schema";
 // recurring_donations.active (deprecated) — neither reflects whether a donor
 // is actually still paying.
 const RECURRING_DONOR_WINDOW_DAYS = 60;
+
+export type RecurringStatus = "new" | "retained" | "churned" | "churnedAllTime";
+
+/**
+ * [priorStart, refStart, refEnd) — the last complete calendar month (`ref`)
+ * and the month immediately before it (`prior`), UTC. Fixed reference window
+ * for the `recurringStatus` filter below: "new"/"retained"/"churned" as of
+ * last month, the same per-donor definition
+ * DashboardRepository.getRecurringChurn uses per-cohort (finalized donation
+ * tied to a recurring donation, one calendar month vs. the one before it).
+ */
+export function lastCompleteMonthRange(now: Date = new Date()): {
+  priorStart: Date;
+  refStart: Date;
+  refEnd: Date;
+} {
+  const y = now.getUTCFullYear();
+  const m = now.getUTCMonth();
+  return {
+    priorStart: new Date(Date.UTC(y, m - 2, 1)),
+    refStart: new Date(Date.UTC(y, m - 1, 1)),
+    refEnd: new Date(Date.UTC(y, m, 1)),
+  };
+}
 
 export class DonorsRepository {
   constructor(private database: Database = db) {}
@@ -129,6 +154,7 @@ export class DonorsRepository {
     sortBy?: string;
     sortDir?: "asc" | "desc";
     recurringDonor?: boolean;
+    recurringStatus?: RecurringStatus;
     search?: string;
   }) {
     const { page, pageSize, sortBy = "id", sortDir = "asc" } = options;
@@ -168,6 +194,56 @@ export class DonorsRepository {
       .groupBy(donations.donorId)
       .as("rs");
 
+    // Donors with a finalized, recurring-linked donation at any point, ever —
+    // no date bound. Paired with recurringSq (currently active, above) for
+    // the "churnedAllTime" status below: ever recurring, but not within the
+    // 60-day window, regardless of when they stopped.
+    const everRecurringSq = this.database
+      .select({ donorId: donations.donorId })
+      .from(donations)
+      .where(
+        and(
+          eq(donations.finalized, true),
+          isNotNull(donations.recurringDonationId),
+        ),
+      )
+      .groupBy(donations.donorId)
+      .as("er");
+
+    // Subqueries: donors active (finalized, recurring-linked donation) in the
+    // last complete calendar month and in the month before that — the pair
+    // behind the `recurringStatus` filter (new/retained/churned as of last
+    // month). Separate from recurringSq above: that's a 60-day rolling
+    // window, this is a fixed calendar-month cohort comparison, and the two
+    // can legitimately disagree near the boundary.
+    const { priorStart, refStart, refEnd } = lastCompleteMonthRange();
+    const statusThisSq = this.database
+      .select({ donorId: donations.donorId })
+      .from(donations)
+      .where(
+        and(
+          eq(donations.finalized, true),
+          isNotNull(donations.recurringDonationId),
+          gte(donations.datetime, refStart),
+          lt(donations.datetime, refEnd),
+        ),
+      )
+      .groupBy(donations.donorId)
+      .as("st");
+    const statusPriorSq = this.database
+      .select({ donorId: donations.donorId })
+      .from(donations)
+      .where(
+        and(
+          eq(donations.finalized, true),
+          isNotNull(donations.recurringDonationId),
+          gte(donations.datetime, priorStart),
+          lt(donations.datetime, refStart),
+        ),
+      )
+      .groupBy(donations.donorId)
+      .as("sp");
+
     const conditions = [];
     if (options.recurringDonor !== undefined) {
       conditions.push(
@@ -175,6 +251,24 @@ export class DonorsRepository {
           ? isNotNull(recurringSq.donorId)
           : isNull(recurringSq.donorId),
       );
+    }
+    if (options.recurringStatus) {
+      const thisActive = isNotNull(statusThisSq.donorId);
+      const priorActive = isNotNull(statusPriorSq.donorId);
+      if (options.recurringStatus === "new") {
+        conditions.push(and(thisActive, isNull(statusPriorSq.donorId)));
+      } else if (options.recurringStatus === "retained") {
+        conditions.push(and(thisActive, priorActive));
+      } else if (options.recurringStatus === "churned") {
+        conditions.push(and(isNull(statusThisSq.donorId), priorActive));
+      } else {
+        // churnedAllTime: had a recurring-linked payment at some point, but
+        // not within the current 60-day window — regardless of when they
+        // stopped (not tied to last month specifically, unlike "churned").
+        conditions.push(
+          and(isNotNull(everRecurringSq.donorId), isNull(recurringSq.donorId)),
+        );
+      }
     }
     if (options.search) {
       const term = `%${options.search}%`;
@@ -229,6 +323,9 @@ export class DonorsRepository {
         .from(donors)
         .leftJoin(statsSq, eq(donors.id, statsSq.donorId))
         .leftJoin(recurringSq, eq(donors.id, recurringSq.donorId))
+        .leftJoin(everRecurringSq, eq(donors.id, everRecurringSq.donorId))
+        .leftJoin(statusThisSq, eq(donors.id, statusThisSq.donorId))
+        .leftJoin(statusPriorSq, eq(donors.id, statusPriorSq.donorId))
         .where(whereClause)
         .orderBy(orderByClause)
         .limit(pageSize)
@@ -237,6 +334,9 @@ export class DonorsRepository {
         .select({ total: sql<number>`cast(count(*) as int)` })
         .from(donors)
         .leftJoin(recurringSq, eq(donors.id, recurringSq.donorId))
+        .leftJoin(everRecurringSq, eq(donors.id, everRecurringSq.donorId))
+        .leftJoin(statusThisSq, eq(donors.id, statusThisSq.donorId))
+        .leftJoin(statusPriorSq, eq(donors.id, statusPriorSq.donorId))
         .where(whereClause),
     ]);
 
