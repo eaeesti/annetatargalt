@@ -7,7 +7,7 @@ export type DashboardStats = {
   totalDonations: { count: number; sum: number };
   totalDonors: number;
   activeDonors: number;
-  mrr: number;
+  monthlyRecurringDonations: number;
   periods: {
     currentMonth: { current: PeriodStats; prior: PeriodStats; from: string };
     lastMonth: { current: PeriodStats; prior: PeriodStats; from: string };

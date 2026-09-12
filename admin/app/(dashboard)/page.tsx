@@ -6,6 +6,7 @@ import {
 import { ActiveDonorsChart } from "./_components/active-donors-chart";
 import { RecurringChurnChart } from "./_components/recurring-churn-chart";
 import { TrendBadge } from "./_components/trend-badge";
+import { InfoTooltip } from "./_components/info-tooltip";
 import type { DashboardStats, DashboardCharts } from "./types";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -66,15 +67,19 @@ function StatCard({
   label,
   value,
   sub,
+  info,
 }: {
   label: string;
   value: string;
   sub?: string;
+  /** Hover text explaining how the figure is calculated, shown via an (i) icon. */
+  info?: string;
 }) {
   return (
     <div className="rounded-lg border bg-card p-5 space-y-1">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {label}
+        {info && <InfoTooltip text={info} />}
       </p>
       <p className="text-2xl font-bold tabular-nums">{value}</p>
       {sub && <p className="text-sm text-muted-foreground">{sub}</p>}
@@ -165,7 +170,13 @@ export default async function DashboardPage() {
   }
 
   const { data }: { data: DashboardStats } = await statsRes.json();
-  const { totalDonations, totalDonors, activeDonors, mrr, periods } = data;
+  const {
+    totalDonations,
+    totalDonors,
+    activeDonors,
+    monthlyRecurringDonations,
+    periods,
+  } = data;
   // Reference year for deciding whether a month/quarter label needs a year
   // suffix (e.g. "December 2025" once "last month" crosses into last year).
   const thisYear = new Date(periods.currentYear.from).getUTCFullYear();
@@ -192,9 +203,10 @@ export default async function DashboardPage() {
           sub="last 12 months"
         />
         <StatCard
-          label="MRR"
-          value={formatEur(mrr)}
-          sub="active recurring/month"
+          label="Monthly recurring donations"
+          value={formatEur(monthlyRecurringDonations)}
+          sub="from active donors"
+          info="Sum of recurring donation amounts where at least one payment was finalized in the last 60 days. This money is passed on to the recipient organizations — not revenue for Anneta Targalt."
         />
       </div>
 
