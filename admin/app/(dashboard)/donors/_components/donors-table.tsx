@@ -10,6 +10,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
+import { Badge } from "../../../../components/ui/badge";
 import { Button } from "../../../../components/ui/button";
 import {
   FilterBuilder,
@@ -172,6 +173,19 @@ export function DonorsTable({
             {row.original.email ?? "—"}
           </span>
         ),
+      },
+      {
+        id: "recurringDonor",
+        accessorKey: "recurringDonor",
+        header: () => (
+          <SortableHeader col="recurringDonor">Recurring</SortableHeader>
+        ),
+        cell: ({ row }) =>
+          row.original.recurringDonor ? (
+            <Badge variant="default">Yes</Badge>
+          ) : (
+            <span className="text-sm text-muted-foreground">No</span>
+          ),
       },
       {
         id: "totalDonated",
