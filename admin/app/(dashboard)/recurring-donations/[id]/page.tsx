@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { strapiAdmin } from "../../../../lib/api";
-import { resolveOrgNames } from "../../../../lib/orgs";
+import { fetchOrgNameMap } from "../../../../lib/orgs";
 import { Badge } from "../../../../components/ui/badge";
 import { EntityLink } from "../../../../components/entity-link";
 import { organizationHref } from "../../../../lib/entity-links";
@@ -128,24 +128,16 @@ export default async function RecurringDonationDetailPage({
 }) {
   const { id } = await params;
 
-  const res = await strapiAdmin(`/api/admin-panel/recurring-donations/${id}`, {
-    cache: "no-store",
-  });
+  const [res, orgNames] = await Promise.all([
+    strapiAdmin(`/api/admin-panel/recurring-donations/${id}`, {
+      cache: "no-store",
+    }),
+    fetchOrgNameMap(),
+  ]);
 
   if (!res.ok) notFound();
 
   const { data: rd } = (await res.json()) as { data: RecurringDonationDetail };
-
-  // Resolve org names for org splits and linked donations
-  const allOrgIds = [
-    ...new Set([
-      ...rd.organizationRecurringDonations.map((o) => o.organizationInternalId),
-      ...rd.donations.flatMap((d) =>
-        d.organizationDonations.map((od) => od.organizationInternalId),
-      ),
-    ]),
-  ];
-  const orgNames = await resolveOrgNames(allOrgIds);
 
   return (
     <div className="space-y-6 max-w-3xl">

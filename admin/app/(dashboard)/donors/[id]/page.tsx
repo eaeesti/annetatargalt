@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { strapiAdmin } from "../../../../lib/api";
-import { resolveOrgNames } from "../../../../lib/orgs";
+import { fetchOrgNameMap } from "../../../../lib/orgs";
 import { Badge } from "../../../../components/ui/badge";
 import { EntityLink } from "../../../../components/entity-link";
 import { recurringDonationHref } from "../../../../lib/entity-links";
@@ -99,23 +99,14 @@ type Params = Promise<{ id: string }>;
 export default async function DonorDetailPage({ params }: { params: Params }) {
   const { id } = await params;
 
-  const res = await strapiAdmin(`/api/admin-panel/donors/${id}`, {
-    cache: "no-store",
-  });
+  const [res, orgNames] = await Promise.all([
+    strapiAdmin(`/api/admin-panel/donors/${id}`, { cache: "no-store" }),
+    fetchOrgNameMap(),
+  ]);
 
   if (!res.ok) notFound();
 
   const { data: donor } = (await res.json()) as { data: DonorDetail };
-
-  // Resolve org names for all donations
-  const allOrgIds = [
-    ...new Set(
-      donor.donations.flatMap((d) =>
-        d.organizationDonations.map((od) => od.organizationInternalId),
-      ),
-    ),
-  ];
-  const orgNames = await resolveOrgNames(allOrgIds);
 
   return (
     <div className="space-y-6 max-w-3xl">

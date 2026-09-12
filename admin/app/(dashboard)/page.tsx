@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import { strapiAdmin } from "../../lib/api";
+import { ChartSkeleton, StatCardsSkeleton } from "./_components/skeletons";
 import { EntityLink } from "../../components/entity-link";
 import {
   MonthlyTotalsChart,
@@ -157,22 +159,22 @@ function ChartCard({
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// ── Sections ──────────────────────────────────────────────────────────────────
 
-export default async function DashboardPage() {
-  const [statsRes, chartsRes] = await Promise.all([
-    strapiAdmin("/api/admin-panel/dashboard/stats", { cache: "no-store" }),
-    strapiAdmin("/api/admin-panel/dashboard/charts", { cache: "no-store" }),
-  ]);
+// Stats and charts are two independent fetches, so they get their own Suspense
+// boundaries: the KPI cards and period comparison paint as soon as stats land,
+// instead of both waiting on whichever request is slower.
+
+async function StatsSection() {
+  const statsRes = await strapiAdmin("/api/admin-panel/dashboard/stats", {
+    cache: "no-store",
+  });
 
   if (!statsRes.ok) {
     return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          Could not load stats ({statsRes.status}).
-        </p>
-      </div>
+      <p className="text-sm text-muted-foreground">
+        Could not load stats ({statsRes.status}).
+      </p>
     );
   }
 
@@ -188,14 +190,8 @@ export default async function DashboardPage() {
   // suffix (e.g. "December 2025" once "last month" crosses into last year).
   const thisYear = new Date(periods.currentYear.from).getUTCFullYear();
 
-  const charts: DashboardCharts | null = chartsRes.ok
-    ? ((await chartsRes.json()) as { data: DashboardCharts }).data
-    : null;
-
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
-
+    <>
       {/* KPI cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
@@ -255,36 +251,81 @@ export default async function DashboardPage() {
           prior={periods.lastYear.prior}
         />
       </div>
+    </>
+  );
+}
 
-      {/* Charts */}
-      {charts && (
-        <>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <MonthlyTotalsChart data={charts.monthlyTotals} />
-            <ChartCard title="Cumulative donations (all time)">
-              <CumulativeChart data={charts.monthlyTotals} />
-            </ChartCard>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <ChartCard title="Active donors per month (rolling 12 months)">
-              <ActiveDonorsChart data={charts.activeDonorsPerMonth} />
-            </ChartCard>
-            <ChartCard
-              title="Recurring donors — new vs churned"
-              action={
-                <EntityLink
-                  href="/donors?recurringStatus=churned"
-                  className="text-xs text-muted-foreground hover:text-foreground hover:underline"
-                >
-                  View churned donors →
-                </EntityLink>
-              }
+async function ChartsSection() {
+  const chartsRes = await strapiAdmin("/api/admin-panel/dashboard/charts", {
+    cache: "no-store",
+  });
+  if (!chartsRes.ok) return null;
+  const charts = ((await chartsRes.json()) as { data: DashboardCharts }).data;
+
+  return (
+    <>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <MonthlyTotalsChart data={charts.monthlyTotals} />
+        <ChartCard title="Cumulative donations (all time)">
+          <CumulativeChart data={charts.monthlyTotals} />
+        </ChartCard>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <ChartCard title="Active donors per month (rolling 12 months)">
+          <ActiveDonorsChart data={charts.activeDonorsPerMonth} />
+        </ChartCard>
+        <ChartCard
+          title="Recurring donors — new vs churned"
+          action={
+            <EntityLink
+              href="/donors?recurringStatus=churned"
+              className="text-xs text-muted-foreground hover:text-foreground hover:underline"
             >
-              <RecurringChurnChart data={charts.recurringChurn} />
-            </ChartCard>
-          </div>
-        </>
-      )}
+              View churned donors →
+            </EntityLink>
+          }
+        >
+          <RecurringChurnChart data={charts.recurringChurn} />
+        </ChartCard>
+      </div>
+    </>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
+export default function DashboardPage() {
+  return (
+    <div className="space-y-8">
+      <h1 className="text-2xl font-bold">Dashboard</h1>
+      <Suspense
+        fallback={
+          <>
+            <StatCardsSkeleton />
+            <div className="rounded-lg border bg-card p-5">
+              <div className="h-[18rem]" />
+            </div>
+          </>
+        }
+      >
+        <StatsSection />
+      </Suspense>
+      <Suspense
+        fallback={
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <ChartSkeleton />
+              <ChartSkeleton />
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <ChartSkeleton />
+              <ChartSkeleton />
+            </div>
+          </>
+        }
+      >
+        <ChartsSection />
+      </Suspense>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { strapiAdmin } from "../../../../lib/api";
-import { resolveOrgNames } from "../../../../lib/orgs";
+import { fetchOrgNameMap } from "../../../../lib/orgs";
 import { formatEuros } from "../../../../lib/money";
 import { donationStatus } from "../../../../lib/donation-status";
 import { Badge } from "../../../../components/ui/badge";
@@ -119,18 +119,14 @@ export default async function DonationDetailPage({
 }) {
   const { id } = await params;
 
-  const res = await strapiAdmin(`/api/admin-panel/donations/${id}`, {
-    cache: "no-store",
-  });
+  const [res, orgNames] = await Promise.all([
+    strapiAdmin(`/api/admin-panel/donations/${id}`, { cache: "no-store" }),
+    fetchOrgNameMap(),
+  ]);
 
   if (!res.ok) notFound();
 
   const { data: donation } = (await res.json()) as { data: DonationDetail };
-
-  const orgIds = donation.organizationDonations.map(
-    (od) => od.organizationInternalId,
-  );
-  const orgNames = await resolveOrgNames(orgIds);
 
   return (
     <div className="space-y-6 max-w-2xl">
