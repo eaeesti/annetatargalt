@@ -24,7 +24,8 @@ export default () => ({
       return existingDonor;
     }
 
-    const recurringDonation = await recurringDonationsRepo.findByCompanyCode(idCode);
+    const recurringDonation =
+      await recurringDonationsRepo.findByCompanyCode(idCode);
 
     if (recurringDonation) {
       return donorsRepo.findById(recurringDonation.donorId);
@@ -37,6 +38,16 @@ export default () => ({
     return donorsRepo.findByEmail(email);
   },
 
+  // These two are the only entry points the public donate flow uses to turn
+  // a submitted name/email/idCode into a donor row, and deliberately never
+  // update an *existing* match's contact fields — only set them at creation.
+  // idCode and email are semi-public and this form is unauthenticated, so
+  // updating a matched donor's name/email from the submission (even only to
+  // fill in a currently-blank field) would let anyone who knows a donor's ID
+  // code or email redirect their contact info, or their tax-reporting
+  // identity, to themselves. There is currently no path anywhere in the
+  // system — public or admin — to correct a donor's stale email; that gap
+  // needs its own deliberate, verified fix, not a reopening of this one.
   async findOrCreateDonor(donor: DonorInput) {
     const donorEntry = await this.findDonor(donor.idCode ?? "");
 
@@ -64,36 +75,15 @@ export default () => ({
     });
   },
 
-  async updateOrCreateDonor(donor: DonorInput) {
-    const donorEntry = donor.idCode
-      ? await this.findOrCreateDonor(donor)
-      : await this.findOrCreateDonorByEmail(donor);
-
-    return donorsRepo.update(donorEntry.id, {
-      firstName: donor.firstName,
-      lastName: donor.lastName,
-      email: donor.email,
-      idCode: donorEntry.idCode || donor.idCode,
-    });
-  },
-
-  async updateOrCreateDonorByEmail(donor: DonorInput) {
-    const donorEntry = await this.findOrCreateDonorByEmail(donor);
-
-    return donorsRepo.update(donorEntry.id, {
-      firstName: donor.firstName,
-      lastName: donor.lastName,
-    });
-  },
-
   async donorsWithFinalizedDonationCount() {
-    const connection = (strapi.db as unknown as { connection: KnexConnection }).connection;
+    const connection = (strapi.db as unknown as { connection: KnexConnection })
+      .connection;
     const result = await connection.raw(
       `SELECT COUNT(DISTINCT donations_donor_links.donor_id)
        FROM donations
        JOIN donations_donor_links ON donations.id = donations_donor_links.donation_id
        JOIN donors ON donations_donor_links.donor_id = donors.id
-       WHERE donations.finalized = true`
+       WHERE donations.finalized = true`,
     );
     return Number(result.rows[0]?.count);
   },
