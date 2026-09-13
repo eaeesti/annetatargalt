@@ -3,13 +3,12 @@ import {
   validateIdCode,
   validateEmail,
   validateAmount,
-  resizeOrganizationDonations,
 } from "../../../../utils/donation";
 import { createRecurringPaymentLink, type Bank } from "../../../../utils/banks";
 import montonio from "../../../../utils/montonio";
 import { formatEstonianAmount } from "../../../../utils/estonia";
 import { format, textIntoParagraphs, sanitize } from "../../../../utils/string";
-import type { Donor, NewDonation } from "../../../../db/schema";
+import type { Donor } from "../../../../db/schema";
 import {
   donorsRepository,
   donationsRepository,
@@ -18,15 +17,6 @@ import {
   organizationRecurringDonationsRepository,
   donationTransfersRepository,
 } from "../../../../db/repositories";
-import { db } from "../../../../db/client";
-import {
-  organizationDonations as organizationDonationsTable,
-  donations as donationsTable,
-  organizationRecurringDonations as organizationRecurringDonationsTable,
-  recurringDonations as recurringDonationsTable,
-  donationTransfers as donationTransfersTable,
-  donors as donorsTable,
-} from "../../../../db/schema";
 
 // ─── Domain Types ────────────────────────────────────────────────────────────
 
@@ -61,70 +51,6 @@ interface ForeignDonationInput {
 }
 
 type ValidationResult = { valid: true } | { valid: false; reason: string };
-
-interface ImportData {
-  causes: Array<{ id: number; [key: string]: unknown }>;
-  organizations: Array<{
-    id: number;
-    cause?: number | null;
-    [key: string]: unknown;
-  }>;
-  donors: Array<{ id: number; [key: string]: unknown }>;
-  recurringDonations: Array<{
-    id: number;
-    donor: number;
-    active?: boolean;
-    amount: number;
-    bank: string;
-    datetime: string;
-    companyName?: string | null;
-    companyCode?: string | null;
-    comment?: string | null;
-  }>;
-  organizationRecurringDonations: Array<{
-    recurringDonation: number;
-    organization: number;
-    amount: number;
-  }>;
-  donations: Array<{
-    id: number;
-    donor: number;
-    recurringDonation?: number;
-    amount: number;
-    datetime: string;
-    finalized?: boolean;
-    paymentMethod?: string;
-    iban?: string;
-    comment?: string;
-    companyName?: string;
-    companyCode?: string;
-    dedicationName?: string;
-    dedicationEmail?: string;
-    dedicationMessage?: string;
-    externalDonation?: boolean;
-    sentToOrganization?: boolean;
-  }>;
-  organizationDonations: Array<{
-    donation: number;
-    organization: number;
-    amount: number;
-  }>;
-  donationTransfers: Array<{
-    donations: number[];
-    datetime: string;
-    recipient?: string;
-    notes?: string;
-  }>;
-}
-
-type InsertDonationInput = NewDonation & {
-  datetime?: string | Date;
-  organizationDonations: Array<{
-    organizationInternalId?: string;
-    organization?: string;
-    amount: number;
-  }>;
-};
 
 // ─── Strapi Plugin Helpers ────────────────────────────────────────────────────
 
@@ -389,10 +315,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       throw new Error(validation.reason);
     }
 
-    const donor = await strapi
-      .plugin("donations")
-      .service("donor")
-      .updateOrCreateDonor(donation);
+    const donorService = strapi.plugin("donations").service("donor");
+    const donor = donation.idCode
+      ? await donorService.findOrCreateDonor(donation)
+      : await donorService.findOrCreateDonorByEmail(donation);
 
     if (donation.type === "recurring") {
       try {
@@ -433,7 +359,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     const donor = await strapi
       .plugin("donations")
       .service("donor")
-      .updateOrCreateDonorByEmail(donation);
+      .findOrCreateDonorByEmail(donation);
 
     const donationEntry = await donationsRepository.create({
       donorId: donor.id,
@@ -854,123 +780,6 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     );
   },
 
-  async import({
-    causes,
-    organizations,
-    donors,
-    recurringDonations,
-    organizationRecurringDonations,
-    donations,
-    organizationDonations,
-    donationTransfers,
-  }: ImportData) {
-    const causeMap: Record<number, number> = {};
-    for (const cause of causes) {
-      const causeEntry = await strapi
-        .service("api::cause.cause")
-        .findOrCreateCause(cause);
-      causeMap[cause.id] = causeEntry.id;
-    }
-
-    const organizationMap: Record<number, number> = {};
-    const organizationInternalIdMap: Record<number, string> = {};
-    for (const organization of organizations) {
-      const organizationEntry = await strapi
-        .service("api::organization.organization")
-        .findOrCreateOrganization({
-          ...organization,
-          cause: organization.cause ? causeMap[organization.cause] : null,
-        });
-      organizationMap[organization.id] = organizationEntry.id;
-      organizationInternalIdMap[organization.id] =
-        organizationEntry.internalId ?? "";
-    }
-
-    const donorMap: Record<number, number> = {};
-    for (const donor of donors) {
-      const donorEntry = await strapi
-        .plugin("donations")
-        .service("donor")
-        .findOrCreateDonor(donor);
-      donorMap[donor.id] = donorEntry.id;
-    }
-
-    const recurringDonationMap: Record<number, number> = {};
-    for (const recurringDonation of recurringDonations) {
-      const recurringDonationEntry = await recurringDonationsRepository.create({
-        donorId: donorMap[recurringDonation.donor],
-        active: recurringDonation.active ?? false,
-        amount: recurringDonation.amount,
-        bank: recurringDonation.bank,
-        datetime: new Date(recurringDonation.datetime),
-        companyName: recurringDonation.companyName,
-        companyCode: recurringDonation.companyCode,
-        comment: recurringDonation.comment,
-      });
-      recurringDonationMap[recurringDonation.id] = recurringDonationEntry.id;
-    }
-
-    for (const organizationRecurringDonation of organizationRecurringDonations) {
-      await organizationRecurringDonationsRepository.create({
-        recurringDonationId:
-          recurringDonationMap[organizationRecurringDonation.recurringDonation],
-        organizationInternalId:
-          organizationInternalIdMap[organizationRecurringDonation.organization],
-        amount: organizationRecurringDonation.amount,
-      });
-    }
-
-    const donationMap: Record<number, number> = {};
-    for (const donation of donations) {
-      const donationEntry = await donationsRepository.create({
-        donorId: donorMap[donation.donor],
-        recurringDonationId: donation.recurringDonation
-          ? recurringDonationMap[donation.recurringDonation]
-          : null,
-        amount: donation.amount,
-        datetime: new Date(donation.datetime),
-        finalized: donation.finalized ?? false,
-        paymentMethod: donation.paymentMethod,
-        iban: donation.iban,
-        comment: donation.comment,
-        companyName: donation.companyName,
-        companyCode: donation.companyCode,
-        dedicationName: donation.dedicationName,
-        dedicationEmail: donation.dedicationEmail,
-        dedicationMessage: donation.dedicationMessage,
-        externalDonation: donation.externalDonation ?? false,
-        sentToOrganization: donation.sentToOrganization ?? false,
-      });
-
-      donationMap[donation.id] = donationEntry.id;
-    }
-
-    for (const organizationDonation of organizationDonations) {
-      await organizationDonationsRepository.create({
-        donationId: donationMap[organizationDonation.donation],
-        organizationInternalId:
-          organizationInternalIdMap[organizationDonation.organization],
-        amount: organizationDonation.amount,
-      });
-    }
-
-    for (const donationTransfer of donationTransfers) {
-      const transfer = await donationTransfersRepository.create({
-        datetime: donationTransfer.datetime,
-        recipient: donationTransfer.recipient,
-        notes: donationTransfer.notes,
-      });
-
-      const donationIds = donationTransfer.donations.map(
-        (donationId: number) => donationMap[donationId],
-      );
-
-      if (donationIds.length > 0) {
-        await donationsRepository.addToTransfer(donationIds, transfer.id);
-      }
-    }
-  },
-
   async export() {
     const causes = await strapi.documents("api::cause.cause").findMany({
       sort: "id",
@@ -1044,15 +853,6 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       organizationDonations,
       donationTransfers,
     };
-  },
-
-  async deleteAll() {
-    await db.delete(organizationDonationsTable);
-    await db.delete(donationsTable);
-    await db.delete(organizationRecurringDonationsTable);
-    await db.delete(recurringDonationsTable);
-    await db.delete(donationTransfersTable);
-    await db.delete(donorsTable);
   },
 
   async sumOfFinalizedDonations() {
@@ -1146,129 +946,6 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     }
 
     return donations[0];
-  },
-
-  async insertFromTransaction({
-    idCode,
-    date,
-    amount,
-    iban,
-  }: {
-    idCode: string;
-    date: string;
-    amount: number;
-    iban: string;
-  }) {
-    let donor = await strapi
-      .plugin("donations")
-      .service("donor")
-      .findDonor(idCode);
-
-    if (!donor) {
-      throw new Error(`Donor not found for ID code ${idCode}`);
-    }
-
-    let latestRecurringDonations =
-      await recurringDonationsRepository.findByDonorId(donor.id);
-
-    if (idCode.length !== 11) {
-      latestRecurringDonations = latestRecurringDonations.filter(
-        (rd) => rd.companyCode === idCode,
-      );
-    }
-
-    if (latestRecurringDonations.length === 0) {
-      throw new Error("No recurring donations found");
-    }
-
-    const transactionDateLimit = new Date(date).getTime() + 24 * 60 * 60 * 1000;
-    const recurringDonation = latestRecurringDonations.find(
-      (rd) => new Date(rd.datetime).getTime() <= transactionDateLimit,
-    );
-
-    if (!recurringDonation) {
-      throw new Error("No recurring donation found for this date");
-    }
-
-    const organizationRecurringDonations =
-      await organizationRecurringDonationsRepository.findByRecurringDonationId(
-        recurringDonation.id,
-      );
-
-    const datetime = new Date(date);
-    datetime.setHours(12, 0, 0, 0);
-
-    const donation = await donationsRepository.create({
-      donorId: donor.id,
-      recurringDonationId: recurringDonation.id,
-      amount: Math.round(amount * 100),
-      datetime,
-      finalized: true,
-      companyName: recurringDonation.companyName,
-      companyCode: recurringDonation.companyCode,
-      iban,
-      paymentMethod: recurringDonation.bank,
-    });
-
-    const donationAmount = Math.round(amount * 100);
-    const donationMultiplier = donationAmount / recurringDonation.amount;
-
-    const resizedOrganizationDonations = resizeOrganizationDonations(
-      organizationRecurringDonations,
-      donationMultiplier,
-      donationAmount,
-    );
-
-    const orgDonationsData = resizedOrganizationDonations.map(
-      (orgRecurring) => ({
-        donationId: donation.id,
-        organizationInternalId: orgRecurring.organizationInternalId ?? "",
-        amount: orgRecurring.amount,
-      }),
-    );
-
-    await organizationDonationsRepository.createMany(orgDonationsData);
-
-    return donation;
-  },
-
-  async insertDonation({
-    organizationDonations,
-    ...donationFields
-  }: InsertDonationInput) {
-    const donation = await donationsRepository.create(donationFields);
-
-    const orgDonationsData: Array<{
-      donationId: number;
-      organizationInternalId: string;
-      amount: number;
-    }> = [];
-    for (const orgDonation of organizationDonations) {
-      let organizationInternalId = orgDonation.organizationInternalId;
-
-      if (!organizationInternalId && orgDonation.organization) {
-        const org = await strapi
-          .documents("api::organization.organization")
-          .findOne({
-            documentId: orgDonation.organization,
-            fields: ["internalId"],
-          });
-        organizationInternalId = (org as { internalId: string } | null)
-          ?.internalId;
-      }
-
-      if (organizationInternalId) {
-        orgDonationsData.push({
-          donationId: donation.id,
-          organizationInternalId,
-          amount: orgDonation.amount,
-        });
-      }
-    }
-
-    await organizationDonationsRepository.createMany(orgDonationsData);
-
-    return donation;
   },
 
   async getDonationWithDetails(donationId: number) {
