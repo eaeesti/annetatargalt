@@ -14,7 +14,7 @@ import DonationSummary from "../elements/DonationSummary";
 import type { StrapiGlobal, StrapiThankYouSection } from "@/types/generated/strapi";
 
 interface DecodedDonation {
-  donor: Record<string, string>;
+  donor: { firstName: string };
   amount: number;
   organizationDonations: Array<{
     organization: { title: string | null; slug: string | null; cause?: { slug: string | null } | null };
