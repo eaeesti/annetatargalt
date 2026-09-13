@@ -1,6 +1,7 @@
 import type { Core } from "@strapi/strapi";
 import type { Context } from "koa";
 import crypto from "node:crypto";
+import { BRIDGEABLE_ADMIN_ROLE_CODES } from "../../../utils/admin-roles";
 
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_MAX_ATTEMPTS = 5;
@@ -94,6 +95,29 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     }
 
     const normalizedEmail = email.toLowerCase();
+
+    // Step 1b: only bridge admins whose Strapi role is meant to carry this
+    // level of access, not every role that can merely log into Strapi.
+    // /admin/login's response user object does NOT include populated roles —
+    // Strapi's own checkCredentials() fetches the admin user with no
+    // `populate` at all, so `roles` is undefined on it and gets dropped
+    // entirely by JSON serialization. Query the admin user directly instead
+    // of trusting that response shape (same populate:["roles"] pattern
+    // blockOrphanedDonationAdmins already uses, and already proven live
+    // against this exact database).
+    type AdminUserRow = { roles?: Array<{ code: string }> };
+    const adminUser = (await strapi.db.query("admin::user").findOne({
+      where: { email: normalizedEmail },
+      populate: ["roles"],
+    })) as AdminUserRow | null;
+    const isBridgeable = (adminUser?.roles ?? []).some((r) =>
+      BRIDGEABLE_ADMIN_ROLE_CODES.has(r.code),
+    );
+    if (!isBridgeable) {
+      return ctx.forbidden(
+        "Your Strapi admin role does not have donation admin panel access",
+      );
+    }
 
     // Step 2: Find or create users-permissions user with the same email
     let user = (await strapi.db
