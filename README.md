@@ -77,7 +77,7 @@ yarn develop
 On first startup, the bootstrap automatically:
 
 - Creates the **Public API Token** for the frontend and writes it to `frontend/.env`
-- Grants the **Authenticated** role access to all donation admin endpoints
+- Creates a dedicated **DonationAdmin** role (not the built-in Authenticated role) with access to the donation admin endpoints
 
 6\. Close Strapi and seed the data if you have it:
 
