@@ -1,5 +1,6 @@
 import type { Core } from "@strapi/strapi";
 import { pool } from "./db/client";
+import { BRIDGEABLE_ADMIN_ROLE_CODES } from "./utils/admin-roles";
 import fs from "fs";
 import path from "path";
 
@@ -8,21 +9,42 @@ import path from "path";
 // ---------------------------------------------------------------------------
 
 /**
+ * Runs one bootstrap step without letting it take the whole app down. These
+ * steps call Strapi's own admin/permission services (e.g. the api-token
+ * service's update(), which throws on a token whose type was changed away
+ * from "custom" in the Strapi UI) — none of that is awaited inside a
+ * try/catch by Strapi itself, so an exception here would otherwise reject
+ * bootstrap() and prevent Strapi from starting at all. A security hardening
+ * step failing should degrade to "logged and skipped", never "the donation
+ * platform won't boot".
+ */
+async function safely(
+  strapi: Core.Strapi,
+  name: string,
+  fn: () => Promise<void>,
+): Promise<void> {
+  try {
+    await fn();
+  } catch (error: unknown) {
+    strapi.log.error(
+      `❌ Bootstrap step '${name}' failed — continuing startup anyway: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+}
+
+/**
  * Creates the "Public API Token" used by the Next.js frontend if it doesn't
  * already exist, and writes its value to frontend/.env.local so developers
- * don't have to do it manually.
+ * don't have to do it manually. Also keeps its permissions in sync with the
+ * list below on every boot — this token is meant to be read-only public
+ * content access, and something manually granted through the Strapi UI
+ * (e.g. contact-submission read access, added by hand at some point) would
+ * otherwise never get pruned.
  */
 async function bootstrapApiToken(strapi: Core.Strapi): Promise<void> {
   const TOKEN_NAME = "Public API Token";
-
-  const existing = await strapi.db.query("admin::api-token").findOne({
-    where: { name: TOKEN_NAME },
-  });
-
-  if (existing) {
-    strapi.log.info("✅ Public API Token already exists — skipping creation");
-    return;
-  }
 
   // Actions for read-only public frontend access
   const permissions = [
@@ -41,10 +63,25 @@ async function bootstrapApiToken(strapi: Core.Strapi): Promise<void> {
     "api::special-page.special-page.findOne",
   ];
 
+  type ApiTokenRow = { id: number };
   type ApiTokenService = {
     create(data: Record<string, unknown>): Promise<{ accessKey: string }>;
+    update(id: number, data: Record<string, unknown>): Promise<unknown>;
   };
   const tokenService = strapi.service("admin::api-token") as ApiTokenService;
+
+  const existing = (await strapi.db.query("admin::api-token").findOne({
+    where: { name: TOKEN_NAME },
+  })) as ApiTokenRow | null;
+
+  if (existing) {
+    // update() diffs against the token's current permissions — adds
+    // anything missing from the list, removes anything not in it.
+    await tokenService.update(existing.id, { permissions });
+    strapi.log.info("✅ Public API Token permissions synced");
+    return;
+  }
+
   const result = await tokenService.create({
     name: TOKEN_NAME,
     type: "custom",
@@ -93,7 +130,6 @@ async function bootstrapDonationPermissions(
   // Read-only actions granted to DonationAdmin
   const allowedActions = [
     "plugin::users-permissions.user.me",
-    "api::donation.donation.list", // legacy — kept during transition, revoked at Cleanup
     "api::donation.donation.export",
     "api::donation.donation.findTransaction",
     "api::organization.organization.find",
@@ -123,8 +159,14 @@ async function bootstrapDonationPermissions(
     "plugin::admin-panel.bankTransaction.update", // write path — reclassify a bank line
   ];
 
-  // Write actions that must be actively revoked from DonationAdmin if previously granted
+  // Defensive backstop for DonationAdmin. For an action whose *controller
+  // method* was deleted entirely, users-permissions' own syncPermissions()
+  // (runs during that plugin's bootstrap, before this one) already prunes
+  // the stale row — this loop is a no-op for those in practice. It still
+  // earns its keep for a route that gets disabled/re-scoped while the
+  // controller method itself stays around, which syncPermissions can't see.
   const revokedActions = [
+    "api::donation.donation.list", // superseded by plugin::admin-panel.donation.list
     "api::donation.donation.import",
     "api::donation.donation.deleteAll",
     "api::donation.donation.insertTransaction",
@@ -226,6 +268,139 @@ async function bootstrapDonationPermissions(
         `✅ Revoked ${stalePerms.length} stale permission(s) from 'authenticated' role`,
       );
     }
+  }
+}
+
+/**
+ * Closes the second login path into the admin panel. The admin panel
+ * authenticates through the Strapi admin bridge (see
+ * src/api/admin-auth/controllers/admin-auth.ts), which validates Strapi admin
+ * credentials and then issues its own users-permissions JWT. The Public role
+ * must not also expose users-permissions' own login/register/password-reset
+ * endpoints — otherwise anyone who can read a DonationAdmin's mailbox could
+ * self-serve donor access via forgot-password, without ever knowing a Strapi
+ * admin password.
+ */
+async function hardenPublicAuth(strapi: Core.Strapi): Promise<void> {
+  type Role = { id: number };
+  type Permission = { id: number; action: string };
+
+  const blockedAuthActions = [
+    "plugin::users-permissions.auth.callback", // POST /api/auth/local
+    "plugin::users-permissions.auth.register",
+    "plugin::users-permissions.auth.forgotPassword",
+    "plugin::users-permissions.auth.resetPassword",
+    "plugin::users-permissions.auth.connect", // OAuth providers — unused, disabled anyway
+    "plugin::users-permissions.auth.emailConfirmation",
+    "plugin::users-permissions.auth.sendEmailConfirmation",
+    "plugin::users-permissions.auth.refresh",
+    "plugin::users-permissions.auth.logout",
+  ];
+
+  const publicRole = (await strapi.db
+    .query("plugin::users-permissions.role")
+    .findOne({ where: { type: "public" } })) as Role | null;
+
+  if (publicRole) {
+    const stalePerms = (await strapi.db
+      .query("plugin::users-permissions.permission")
+      .findMany({
+        where: { role: publicRole.id, action: { $in: blockedAuthActions } },
+      })) as Permission[];
+
+    if (stalePerms.length > 0) {
+      await Promise.all(
+        stalePerms.map((p) =>
+          strapi.db
+            .query("plugin::users-permissions.permission")
+            .delete({ where: { id: p.id } }),
+        ),
+      );
+      strapi.log.info(
+        `✅ Revoked ${stalePerms.length} users-permissions auth action(s) from 'public' role`,
+      );
+    }
+  }
+
+  // Public self-registration would let anyone squat a users-permissions
+  // account on a future admin's email before that admin's first bridge
+  // login claims it.
+  const pluginStore = strapi.store({
+    type: "plugin",
+    name: "users-permissions",
+  });
+  const advancedRaw = await pluginStore.get({ key: "advanced" });
+  const advanced =
+    advancedRaw && typeof advancedRaw === "object"
+      ? (advancedRaw as Record<string, unknown>)
+      : null;
+
+  if (advanced && advanced.allow_register !== false) {
+    await pluginStore.set({
+      key: "advanced",
+      value: { ...advanced, allow_register: false },
+    });
+    strapi.log.info("✅ Disabled users-permissions public self-registration");
+  }
+}
+
+/**
+ * Every users-permissions account (now that public self-registration is off)
+ * only exists to be bridged from a real Strapi admin login. If that admin is
+ * deactivated, removed, or moved to a Strapi role that shouldn't have this
+ * access any more (see BRIDGEABLE_ADMIN_ROLE_CODES), the bridged account must stop
+ * working too — otherwise offboarding, or narrowing, a Strapi admin leaves a
+ * working side door into donor data.
+ *
+ * Sweeps every users-permissions user, not just ones currently in
+ * DonationAdmin — an operator moving someone to a different, more
+ * restricted users-permissions role (which the bridge's own comment
+ * suggests as an option) must not make them invisible to this check.
+ *
+ * Only ever blocks, never unblocks — if this incorrectly blocks someone,
+ * restore access explicitly in the Strapi UI rather than relying on this to
+ * self-heal.
+ */
+async function blockOrphanedDonationAdmins(strapi: Core.Strapi): Promise<void> {
+  type UpUser = { id: number; email: string; blocked: boolean };
+  type AdminUser = { email: string; roles?: Array<{ code: string }> };
+
+  const [bridgedUsers, admins] = await Promise.all([
+    strapi.db.query("plugin::users-permissions.user").findMany({}) as Promise<
+      UpUser[]
+    >,
+    strapi.db.query("admin::user").findMany({
+      where: { isActive: true },
+      populate: ["roles"],
+    }) as Promise<AdminUser[]>,
+  ]);
+
+  // Mirrors the allowlist admin-auth.ts uses to decide who gets bridged in —
+  // an admin who's still active but lost the qualifying role is treated the
+  // same as one who was deactivated outright.
+  const eligibleEmails = new Set(
+    admins
+      .filter((a) =>
+        (a.roles ?? []).some((r) => BRIDGEABLE_ADMIN_ROLE_CODES.has(r.code)),
+      )
+      .map((a) => a.email.toLowerCase()),
+  );
+
+  const toBlock = bridgedUsers.filter(
+    (u) => !u.blocked && !eligibleEmails.has(u.email.toLowerCase()),
+  );
+
+  if (toBlock.length > 0) {
+    await Promise.all(
+      toBlock.map((u) =>
+        strapi.db
+          .query("plugin::users-permissions.user")
+          .update({ where: { id: u.id }, data: { blocked: true } }),
+      ),
+    );
+    strapi.log.info(
+      `✅ Blocked ${toBlock.length} account(s) with no matching active, eligible Strapi admin`,
+    );
   }
 }
 
@@ -369,8 +544,14 @@ export default {
       // Don't exit - let Strapi handle DB connection errors
     }
 
-    await bootstrapApiToken(strapi);
-    await bootstrapDonationPermissions(strapi);
+    await safely(strapi, "bootstrapApiToken", () => bootstrapApiToken(strapi));
+    await safely(strapi, "bootstrapDonationPermissions", () =>
+      bootstrapDonationPermissions(strapi),
+    );
+    await safely(strapi, "hardenPublicAuth", () => hardenPublicAuth(strapi));
+    await safely(strapi, "blockOrphanedDonationAdmins", () =>
+      blockOrphanedDonationAdmins(strapi),
+    );
 
     // Signal PM2 that Strapi is ready to accept connections
     // This enables zero-downtime reloads with pm2 reload
