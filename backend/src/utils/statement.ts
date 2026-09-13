@@ -137,7 +137,7 @@ export function parsePayoutUuidPrefix(description: string): string | null {
   return m ? m[1].toLowerCase() : null;
 }
 
-// ─── Recurring import planning (mirror of donation.insertFromTransaction) ─────
+// ─── Recurring import planning ─────────────────────────────────────────────
 
 /** First template created on/before the transaction date (+24h grace). */
 export function selectTemplate(

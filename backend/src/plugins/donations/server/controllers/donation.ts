@@ -183,15 +183,21 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       return ctx.badRequest("Donation not found");
     }
 
-    return ctx.send({ donation });
-  },
-
-  async import(ctx: Context) {
-    const fullData = ctx.request.body;
-
-    await strapi.plugin("donations").service("donation").import(fullData);
-
-    return ctx.send();
+    // getDonationWithDetails also backs the confirmation/dedication emails,
+    // which need the donor's full row (email as the send-to address, etc.) —
+    // but this is a public, auth:false endpoint, and the thank-you page's
+    // CMS templates only ever use the donor's first name. The order-token
+    // that gates this isn't forgeable, but it can still leak via browser
+    // history, referrers, or a shared link, so don't hand back more of the
+    // donor's data than the page renders.
+    return ctx.send({
+      donation: {
+        ...donation,
+        donor: donation.donor
+          ? { firstName: donation.donor.firstName }
+          : undefined,
+      },
+    });
   },
 
   async export(ctx: Context) {
@@ -201,22 +207,6 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       .export();
 
     return ctx.send(fullData);
-  },
-
-  async deleteAll(ctx: Context) {
-    const confirmation = ctx.request.body.confirmation;
-
-    const currentDateTime = new Date().toISOString().slice(0, 16);
-
-    if (confirmation !== currentDateTime) {
-      return ctx.badRequest(
-        `Confirmation must be the current date and time in the format 'YYYY-MM-DDTHH:MM' (${currentDateTime}). Instead got: '${confirmation}'`,
-      );
-    }
-
-    await strapi.plugin("donations").service("donation").deleteAll();
-
-    return ctx.send();
   },
 
   async stats(ctx: Context) {
@@ -253,66 +243,5 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     }
 
     return ctx.send({ donation });
-  },
-
-  async insertTransaction(ctx: Context) {
-    const { idCode, amount, date, iban } = ctx.request.body;
-
-    await strapi.plugin("donations").service("donation").insertFromTransaction({
-      idCode,
-      amount,
-      date,
-      iban,
-    });
-
-    return ctx.send();
-  },
-
-  async insertDonation(ctx: Context) {
-    const donation = { ...ctx.request.body };
-    await strapi
-      .plugin("donations")
-      .service("donation")
-      .insertDonation(donation);
-
-    return ctx.send();
-  },
-
-  async migrateTips(ctx: Context) {
-    const migratedCount = await strapi
-      .plugin("donations")
-      .service("donation")
-      .migrateTips();
-
-    const migratedRecurringCount = await strapi
-      .plugin("donations")
-      .service("donation")
-      .migrateRecurringTips();
-
-    return ctx.send({ migratedCount, migratedRecurringCount });
-  },
-
-  async list(ctx: Context) {
-    const page = Math.max(1, Number(ctx.request.query.page ?? 1));
-    const pageSize = Math.min(
-      100,
-      Math.max(1, Number(ctx.request.query.pageSize ?? 25)),
-    );
-    const offset = (page - 1) * pageSize;
-
-    const [data, total] = await Promise.all([
-      donationsRepo.findAll({ limit: pageSize, offset }),
-      donationsRepo.count(),
-    ]);
-
-    return ctx.send({
-      data,
-      pagination: {
-        page,
-        pageSize,
-        total,
-        pageCount: Math.ceil(total / pageSize),
-      },
-    });
   },
 });
