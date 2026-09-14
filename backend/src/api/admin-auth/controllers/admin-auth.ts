@@ -2,34 +2,23 @@ import type { Core } from "@strapi/strapi";
 import type { Context } from "koa";
 import crypto from "node:crypto";
 import { BRIDGEABLE_ADMIN_ROLE_CODES } from "../../../utils/admin-roles";
+import {
+  FixedWindowLimiter,
+  isProxyAddress,
+} from "../../../utils/rate-limiter";
 
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
-const LOGIN_MAX_ATTEMPTS = 5;
-const loginAttempts = new Map<string, { count: number; resetAt: number }>();
 
-// Prune expired entries once per window to prevent unbounded memory growth
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, record] of loginAttempts) {
-    if (now > record.resetAt) loginAttempts.delete(ip);
-  }
-}, LOGIN_WINDOW_MS);
+// One account, as seen from one address: the actual brute-force guard, and
+// tight because guessing a specific person's password is the thing worth
+// stopping.
+const perEmailAttempts = new FixedWindowLimiter(5, LOGIN_WINDOW_MS);
 
-function checkRateLimit(ip: string): boolean {
-  const record = loginAttempts.get(ip);
-  if (!record || Date.now() > record.resetAt) return false;
-  return record.count >= LOGIN_MAX_ATTEMPTS;
-}
-
-function recordFailedAttempt(ip: string): void {
-  const now = Date.now();
-  const record = loginAttempts.get(ip);
-  if (!record || now > record.resetAt) {
-    loginAttempts.set(ip, { count: 1, resetAt: now + LOGIN_WINDOW_MS });
-  } else {
-    record.count++;
-  }
-}
+// One address, across every account it tries: catches someone spraying a list
+// of addresses from a single source. Deliberately loose — several colleagues
+// behind one office NAT mistyping their passwords must not lock each other
+// out, which is exactly what the single shared bucket this replaced did.
+const perIpAttempts = new FixedWindowLimiter(20, LOGIN_WINDOW_MS);
 
 interface UserPermissionsUser {
   id: number;
@@ -64,11 +53,25 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       return ctx.badRequest("Email and password are required");
     }
 
-    if (checkRateLimit(ctx.request.ip)) {
-      ctx.status = 429;
-      return ctx.send({
-        error: "Too many login attempts. Try again in 15 minutes.",
-      });
+    const normalizedEmail = email.toLowerCase();
+    const emailKey = `${ctx.request.ip}|${normalizedEmail}`;
+    const ipKey = ctx.request.ip;
+    const ipKeyIsReal = !isProxyAddress(ipKey);
+
+    if (
+      perEmailAttempts.isLimited(emailKey) ||
+      (ipKeyIsReal && perIpAttempts.isLimited(ipKey))
+    ) {
+      // The status must be passed to send(): Strapi defines it as
+      // `send(data, status = 200)` and assigns that status unconditionally, so
+      // setting ctx.status beforehand is silently overwritten. This endpoint
+      // spent its whole life answering lockouts with 200 and no JWT, which the
+      // admin panel read as a successful login and stored as an "undefined"
+      // cookie.
+      return ctx.send(
+        { error: "Too many login attempts. Try again in 15 minutes." },
+        429,
+      );
     }
 
     // Step 1: Validate against Strapi admin auth (reuse its exact logic)
@@ -90,11 +93,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     }
 
     if (!adminRes.ok) {
-      recordFailedAttempt(ctx.request.ip);
+      perEmailAttempts.record(emailKey);
+      if (ipKeyIsReal) perIpAttempts.record(ipKey);
       return ctx.unauthorized("Invalid credentials");
     }
-
-    const normalizedEmail = email.toLowerCase();
 
     // Step 1b: only bridge admins whose Strapi role is meant to carry this
     // level of access, not every role that can merely log into Strapi.
