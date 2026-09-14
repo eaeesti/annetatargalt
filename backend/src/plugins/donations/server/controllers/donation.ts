@@ -4,12 +4,72 @@ import montonio, {
   type MontonioDecodedToken,
 } from "../../../../utils/montonio";
 import { DonationsRepository } from "../../../../db/repositories/donations.repository";
+import {
+  FixedWindowLimiter,
+  isProxyAddress,
+} from "../../../../utils/rate-limiter";
 
 const donationsRepo = new DonationsRepository();
+
+const RECURRING_WINDOW_MS = 60 * 60 * 1000;
+
+// Setting up a recurring donation mails standing-order instructions to
+// whatever address the request names, with no payment, no account and no
+// challenge in front of it — so an unauthenticated caller can use this to make
+// the org's mail account send to anybody, as often as it likes. That burns
+// sender reputation and can get the mail account suspended, which would take
+// every donation receipt down with it.
+//
+// Setting one up is a rare, deliberate act: a donor does it once. Five an hour
+// from one address is far more than a real person needs and far less than a
+// script wants. Keyed per address and, separately, per recipient, because the
+// second is what stops one victim being mail-bombed from many addresses.
+const recurringSetupsPerIp = new FixedWindowLimiter(5, RECURRING_WINDOW_MS);
+const recurringSetupsPerRecipient = new FixedWindowLimiter(
+  3,
+  RECURRING_WINDOW_MS,
+);
+
+/**
+ * Consume recurring-setup allowance for this request, or report that the
+ * caller is over it. Both limiters are checked before either is charged, so a
+ * request turned away by one doesn't quietly eat the other's budget.
+ */
+function allowRecurringSetup(ctx: Context, email: unknown): boolean {
+  const ip = ctx.request.ip;
+  // While SERVER_PROXY is off every donor shares the proxy's address, so a
+  // per-IP bucket would throttle all of them together rather than any one of
+  // them — the sixth genuine donor of the hour would be turned away. The
+  // per-recipient bucket doesn't depend on the address, so it keeps working
+  // either way and still covers the mail-bombing case.
+  const useIp = !isProxyAddress(ip);
+  const recipient = typeof email === "string" ? email.trim().toLowerCase() : "";
+
+  if (useIp && recurringSetupsPerIp.isLimited(ip)) return false;
+  if (recipient && recurringSetupsPerRecipient.isLimited(recipient)) {
+    return false;
+  }
+
+  if (useIp) recurringSetupsPerIp.record(ip);
+  if (recipient) recurringSetupsPerRecipient.record(recipient);
+  return true;
+}
 
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
   async donate(ctx: Context) {
     const donation = ctx.request.body;
+
+    if (
+      donation?.type === "recurring" &&
+      !allowRecurringSetup(ctx, donation?.email)
+    ) {
+      // Status must be passed to send() — Strapi's send(data, status = 200)
+      // overwrites any ctx.status set beforehand.
+      return ctx.send(
+        { error: "Too many recurring donation setups. Try again later." },
+        429,
+      );
+    }
 
     try {
       const { redirectURL } = await strapi
@@ -28,6 +88,18 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     const returnUrl = ctx.request.body.returnUrl;
     if (!returnUrl) {
       return ctx.badRequest("No return URL provided");
+    }
+
+    if (
+      ctx.request.body?.type === "recurring" &&
+      !allowRecurringSetup(ctx, ctx.request.body?.email)
+    ) {
+      // Status must be passed to send() — Strapi's send(data, status = 200)
+      // overwrites any ctx.status set beforehand.
+      return ctx.send(
+        { error: "Too many recurring donation setups. Try again later." },
+        429,
+      );
     }
 
     const globalConfig = await strapi
