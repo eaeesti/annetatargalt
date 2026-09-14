@@ -404,6 +404,25 @@ async function blockOrphanedDonationAdmins(strapi: Core.Strapi): Promise<void> {
   }
 }
 
+/**
+ * Every per-IP defence in this app (the bridge login lockout, the global
+ * limiter, the address recorded on each audit row) is only as good as
+ * ctx.request.ip, and behind a reverse proxy that is the proxy's own address
+ * unless SERVER_PROXY is on. That failure is completely silent at runtime —
+ * the limiters still "work", they just all share one bucket — so say so at
+ * startup rather than letting a missing env var look like a working defence.
+ */
+function warnIfProxyUntrusted(strapi: Core.Strapi): void {
+  if (strapi.config.get("server.proxy.koa")) return;
+  if (process.env.NODE_ENV !== "production") return;
+  strapi.log.warn(
+    "⚠️  SERVER_PROXY is off: every request will report the reverse proxy's " +
+      "address, so login lockout and rate limits share one bucket and audit " +
+      "rows cannot be attributed. Turn it on only once the proxy overwrites " +
+      "X-Forwarded-For with the real client address.",
+  );
+}
+
 export default {
   register(/*{ strapi }: { strapi: Core.Strapi }*/) {},
 
@@ -552,6 +571,7 @@ export default {
     await safely(strapi, "blockOrphanedDonationAdmins", () =>
       blockOrphanedDonationAdmins(strapi),
     );
+    warnIfProxyUntrusted(strapi);
 
     // Signal PM2 that Strapi is ready to accept connections
     // This enables zero-downtime reloads with pm2 reload
