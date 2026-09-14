@@ -11,7 +11,11 @@ import type {
 
 type SpecialPageEntity = StrapiCause | StrapiOrganization | StrapiBlogPost;
 function headersWithAuthToken(): { headers: { Authorization: string } } {
-  const token = process.env.NEXT_PUBLIC_STRAPI_API_TOKEN;
+  // Server-only by design — see the note in the backend bootstrap that writes
+  // this value. Never give it a NEXT_PUBLIC_ prefix: this token can read every
+  // contact submission, and that prefix would inline it into any client bundle
+  // that reaches this helper.
+  const token = process.env.STRAPI_API_TOKEN;
 
   return { headers: { Authorization: `Bearer ${token}` } };
 }
@@ -50,7 +54,7 @@ export async function fetchAPI(
       if (response.status === 401 || response.status === 403) {
         throw new Error(
           `Strapi rejected the API token (HTTP ${response.status}) for GET /api${path}. ` +
-            "This usually means NEXT_PUBLIC_STRAPI_API_TOKEN in frontend/.env no longer matches a token " +
+            "This usually means STRAPI_API_TOKEN in frontend/.env no longer matches a token " +
             "in the running Strapi database — which happens after restoring a production DB dump. " +
             "Fix: open http://localhost:1337/admin → Settings → API Tokens → regenerate the token, " +
             "put the new value in frontend/.env, and restart the frontend.",
