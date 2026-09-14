@@ -90,10 +90,18 @@ async function bootstrapApiToken(strapi: Core.Strapi): Promise<void> {
     permissions,
   });
 
-  // Write/update NEXT_PUBLIC_STRAPI_API_TOKEN in frontend/.env
+  // Write/update STRAPI_API_TOKEN in frontend/.env
   // process.cwd() is the backend directory when Strapi runs
+  //
+  // Deliberately not NEXT_PUBLIC_: that prefix inlines a value into the
+  // browser bundle wherever it is referenced, and this token can read every
+  // contact submission. It happens to be tree-shaken out today because only
+  // server components touch the helper that reads it, but a single client
+  // component importing fetchAPI would have shipped it to every visitor with
+  // nothing to warn anyone. Without the prefix that mistake fails loudly in
+  // dev instead, as an undefined token.
   const envPath = path.resolve(process.cwd(), "..", "frontend", ".env");
-  const key = "NEXT_PUBLIC_STRAPI_API_TOKEN";
+  const key = "STRAPI_API_TOKEN";
   const newLine = `${key}=${result.accessKey}`;
 
   if (fs.existsSync(envPath)) {
