@@ -8,6 +8,7 @@ import {
   FixedWindowLimiter,
   isProxyAddress,
 } from "../../../../utils/rate-limiter";
+import { isAllowedReturnUrl } from "../../../../utils/return-url";
 
 const donationsRepo = new DonationsRepository();
 
@@ -88,6 +89,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     const returnUrl = ctx.request.body.returnUrl;
     if (!returnUrl) {
       return ctx.badRequest("No return URL provided");
+    }
+    if (!isAllowedReturnUrl(returnUrl)) {
+      return ctx.badRequest("Return URL is not an allowed destination");
     }
 
     if (
