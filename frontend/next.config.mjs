@@ -35,9 +35,19 @@ const strapiOrigin = (() => {
   }
 })();
 
+// Dev needs two things production must never have. React's development build
+// calls eval() to rebuild callstacks across environments, and the bundler emits
+// eval-wrapped modules for source maps, so script-src needs 'unsafe-eval'; HMR
+// talks over a websocket, which not every browser treats as covered by 'self'.
+// Both are added only here, so the policy served to donors stays unchanged and
+// `next build && next start` locally still exercises the real one.
+const isDev = process.env.NODE_ENV !== "production";
+
+const scriptSrc = ["'self'", "'unsafe-inline'", isDev && "'unsafe-eval'"];
+
 const contentSecurityPolicy = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  `script-src ${scriptSrc.filter(Boolean).join(" ")}`,
   "style-src 'self' 'unsafe-inline'",
   // Cloudinary serves CMS images; placehold.co is configured in images below.
   "img-src 'self' data: blob: https://res.cloudinary.com https://placehold.co",
@@ -46,7 +56,7 @@ const contentSecurityPolicy = [
   // Client components call Strapi directly (donate, donateForeign, contact,
   // stats, decode). Plausible needs no entry: the rewrites below proxy
   // /js/script.js and /api/event, so it is same-origin from the browser.
-  `connect-src 'self' ${strapiOrigin}`,
+  `connect-src 'self' ${strapiOrigin}${isDev ? " ws:" : ""}`,
   // The cause pages embed charts, and iframe is the one tag added to the
   // sanitiser's allowlist. The sanitiser cannot police where an iframe points,
   // so this is what confines it to the chart host.
