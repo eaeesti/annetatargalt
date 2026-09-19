@@ -632,7 +632,7 @@ export interface SpecialSectionsSpecialHeaderSection
 }
 
 declare module '@strapi/strapi' {
-  export module Public {
+  export namespace Public {
     export interface ComponentSchemas {
       'elements.bank-icon': ElementsBankIcon;
       'elements.breadcrumb': ElementsBreadcrumb;
