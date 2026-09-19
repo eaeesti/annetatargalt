@@ -9,7 +9,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
+import { SortIcon } from "../../../../components/sort-icon";
 import { Button } from "../../../../components/ui/button";
 import {
   FilterBuilder,
@@ -59,26 +59,6 @@ function formatDate(iso: string): string {
     month: "2-digit",
     day: "2-digit",
   });
-}
-
-// ── Sort icon ─────────────────────────────────────────────────────────────────
-
-function SortIcon({
-  col,
-  sortBy,
-  sortDir,
-}: {
-  col: string;
-  sortBy: string;
-  sortDir: string;
-}) {
-  if (sortBy !== col)
-    return <ChevronsUpDown className="ml-1 h-3 w-3 opacity-40" />;
-  return sortDir === "asc" ? (
-    <ChevronUp className="ml-1 h-3 w-3" />
-  ) : (
-    <ChevronDown className="ml-1 h-3 w-3" />
-  );
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
