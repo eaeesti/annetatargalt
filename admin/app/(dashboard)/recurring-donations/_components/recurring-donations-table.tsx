@@ -9,7 +9,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
+import { SortIcon } from "../../../../components/sort-icon";
 import { Badge } from "../../../../components/ui/badge";
 import { Button } from "../../../../components/ui/button";
 import { EntityLink } from "../../../../components/entity-link";
@@ -75,26 +75,6 @@ function donorName(row: RecurringDonationRow): string {
   if (row.donorFirstName) return row.donorFirstName;
   if (row.donorLastName) return row.donorLastName;
   return row.donorEmail ?? `Donor #${row.donorId}`;
-}
-
-// ── Sort icon ─────────────────────────────────────────────────────────────────
-
-function SortIcon({
-  col,
-  sortBy,
-  sortDir,
-}: {
-  col: string;
-  sortBy: string;
-  sortDir: string;
-}) {
-  if (sortBy !== col)
-    return <ChevronsUpDown className="ml-1 h-3 w-3 opacity-40" />;
-  return sortDir === "asc" ? (
-    <ChevronUp className="ml-1 h-3 w-3" />
-  ) : (
-    <ChevronDown className="ml-1 h-3 w-3" />
-  );
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
