@@ -183,22 +183,37 @@ export default async function RecurringGridPage({
         </div>
       </div>
 
-      {/* Grid */}
-      <div className="rounded-lg border overflow-auto">
+      {/*
+        Grid. The container was already a scrollport for the frozen donor
+        column; capping its height makes it scroll vertically too, which is
+        what lets the month headers stick.
+
+        Three overlapping sticky layers, so the z-order is load-bearing:
+        the donor column (z-10) slides under the month headers (z-20), and
+        the Donor cell is both at once, so it has to sit above both (z-30)
+        or it is overdrawn at the corner where they cross.
+
+        Each header cell carries its own opaque background and its own
+        underline. A background on the <tr> would not travel with a sticky
+        cell, and in a collapsed table the borders belong to the table
+        rather than the cell, so a border-b would be left behind as the
+        rows scroll under it.
+      */}
+      <div className="rounded-lg border overflow-auto max-h-[calc(100svh-13rem)]">
         <table className="text-xs border-collapse w-max min-w-full">
           <thead>
-            <tr className="border-b bg-muted/50">
-              {/* Sticky donor column */}
-              <th className="sticky left-0 z-10 bg-muted/90 backdrop-blur-sm text-left px-3 py-2 font-semibold whitespace-nowrap min-w-[180px] border-r">
+            <tr>
+              {/* Frozen corner: sticky on both axes, above both. */}
+              <th className="sticky left-0 top-0 z-30 bg-muted text-left px-3 py-2 font-semibold whitespace-nowrap min-w-[180px] border-r shadow-[inset_0_-1px_0_var(--border)]">
                 Donor
               </th>
-              <th className="px-2 py-2 font-semibold text-center whitespace-nowrap border-r w-12">
+              <th className="sticky top-0 z-20 bg-muted px-2 py-2 font-semibold text-center whitespace-nowrap border-r w-12 shadow-[inset_0_-1px_0_var(--border)]">
                 Gaps
               </th>
               {months.map((m) => (
                 <th
                   key={m}
-                  className={`px-1.5 py-2 font-medium text-center whitespace-nowrap w-16 ${
+                  className={`sticky top-0 z-20 bg-muted px-1.5 py-2 font-medium text-center whitespace-nowrap w-16 shadow-[inset_0_-1px_0_var(--border)] ${
                     m === currentMonth
                       ? "text-primary font-bold"
                       : "text-muted-foreground"
