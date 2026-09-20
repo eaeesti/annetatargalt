@@ -263,8 +263,8 @@ export function DonorsTable({
       </div>
 
       {/* Table */}
-      <div className="rounded-md border">
-        <Table>
+      <div className="rounded-md border bg-background overflow-hidden">
+        <Table stickyHeader>
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (
               <TableRow key={hg.id}>

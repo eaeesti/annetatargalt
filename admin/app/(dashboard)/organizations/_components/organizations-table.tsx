@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import {
   type ColumnDef,
   type SortingState,
@@ -12,6 +11,8 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { Badge } from "../../../../components/ui/badge";
+import { EntityLink } from "../../../../components/entity-link";
+import { organizationHref } from "../../../../lib/entity-links";
 import { SortIcon } from "../../../../components/sort-icon";
 import {
   Table,
@@ -78,10 +79,6 @@ function avatarColor(seed: string): string {
   for (let i = 0; i < seed.length; i++)
     hash = (hash * 31 + seed.charCodeAt(i)) | 0;
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
-}
-
-function orgHref(internalId: string): string {
-  return `/organizations/${encodeURIComponent(internalId)}`;
 }
 
 // ── Sortable header ───────────────────────────────────────────────────────────
@@ -185,15 +182,15 @@ export function OrganizationsTable({ data }: { data: OrganizationRow[] }) {
           </SortableHeader>
         ),
         cell: ({ row }) => (
-          // Kept as a real link, unlike the other tables, so the org page can
-          // still be opened in a new tab. The row handler below ignores clicks
-          // that land on an anchor so the two never both navigate.
-          <Link
-            href={orgHref(row.original.internalId)}
+          // A real link, so the org page can still be opened in a new tab.
+          // stopRowClick keeps it from also firing the row handler below.
+          <EntityLink
+            href={organizationHref(row.original.internalId)}
+            stopRowClick
             className="font-medium hover:underline"
           >
             {row.original.title ?? "—"}
-          </Link>
+          </EntityLink>
         ),
       },
       {
@@ -307,8 +304,8 @@ export function OrganizationsTable({ data }: { data: OrganizationRow[] }) {
       </div>
 
       {/* Table */}
-      <div className="rounded-md border">
-        <Table>
+      <div className="rounded-md border bg-background overflow-hidden">
+        <Table stickyHeader>
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (
               <TableRow key={hg.id}>
@@ -346,12 +343,9 @@ export function OrganizationsTable({ data }: { data: OrganizationRow[] }) {
                 <TableRow
                   key={row.id}
                   className="cursor-pointer"
-                  onClick={(e) => {
-                    // Let the name link handle its own click, including
-                    // cmd/middle-click, instead of navigating twice.
-                    if ((e.target as HTMLElement).closest("a")) return;
-                    router.push(orgHref(row.original.internalId));
-                  }}
+                  onClick={() =>
+                    router.push(organizationHref(row.original.internalId))
+                  }
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell

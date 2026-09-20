@@ -275,8 +275,8 @@ export function TransactionsTable({
         </p>
       </div>
 
-      <div className="rounded-md border overflow-x-auto">
-        <Table>
+      <div className="rounded-md border bg-background overflow-hidden">
+        <Table stickyHeader>
           <TableHeader>
             <TableRow>
               <TableHead className="w-6" />
