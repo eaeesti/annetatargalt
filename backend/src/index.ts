@@ -581,13 +581,24 @@ export default {
     );
     warnIfProxyUntrusted(strapi);
 
-    // Signal PM2 that Strapi is ready to accept connections
-    // This enables zero-downtime reloads with pm2 reload
+    // Signal PM2 that this worker is ready, which is what `wait_ready` in the
+    // ecosystem config blocks on and what the deploy script polls before it
+    // touches the second worker.
+    //
+    // It has to be the httpServer's own `listening` event, not the end of
+    // bootstrap: Strapi calls listen() *after* bootstrap returns, so signalling
+    // from here directly would tell PM2 the worker is up while its socket is
+    // still closed — and PM2 would then let the deploy proceed to restart the
+    // other worker, which is the one moment both can be down at once. The
+    // already-listening branch is there in case that ordering ever changes.
     if (process.send) {
-      process.send("ready");
-      strapi.log.info(
-        "✅ PM2 ready signal sent - application fully initialized",
-      );
+      const { httpServer } = strapi.server;
+      const signalReady = () => {
+        process.send?.("ready");
+        strapi.log.info("✅ PM2 ready signal sent - accepting connections");
+      };
+      if (httpServer.listening) signalReady();
+      else httpServer.once("listening", signalReady);
     }
   },
 };
