@@ -7,7 +7,14 @@ import type { Topology, Objects } from "topojson-specification";
 import type { StrapiPartnerOrganization } from "@/types/generated/strapi";
 import Anchor from "./Anchor";
 
-const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
+// Served from public/, not from a CDN. connect-src in next.config.mjs allows
+// 'self' and the Strapi origin and nothing else, so fetching this from
+// cdn.jsdelivr.net is blocked by CSP and the map renders blank — react-simple-maps
+// swallows the fetch error, so the only symptom is an empty box. Widening
+// connect-src to admit a CDN would give back the exfiltration path that policy
+// exists to close, for a file that never changes. The copy in public/ is
+// world-atlas@2's countries-50m.json, byte for byte.
+const GEO_URL = "/world-countries-50m.json";
 
 // ISO 3166-1 numeric codes for European countries
 const EUROPE_IDS = new Set([
@@ -42,6 +49,9 @@ export default function Map({ partnerOrganizations = [], defaultCountry }: MapPr
     if (p.mapCountry) partners[p.mapCountry] = { name: p.name ?? "", displayCountry: p.displayCountry ?? "", website: p.website ?? null };
   });
 
+  // One fetch, shared. Passing the parsed topology to <Geographies> rather than
+  // the URL stops it fetching the same 756 KB a second time — it only fetches
+  // when handed a string.
   useEffect(() => {
     fetch(GEO_URL)
       .then((r) => r.json())
@@ -77,7 +87,7 @@ export default function Map({ partnerOrganizations = [], defaultCountry }: MapPr
           className="w-full"
           height={800}
         >
-          <Geographies geography={GEO_URL}>
+          <Geographies geography={topoData ?? undefined}>
             {({ geographies, path }) => (
               <>
                 {geographies
