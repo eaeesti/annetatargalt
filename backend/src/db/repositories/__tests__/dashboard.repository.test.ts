@@ -133,23 +133,58 @@ describe("DashboardRepository", () => {
       expect(result).toBe(0);
     });
 
-    it("sums only active recurring donations", async () => {
+    it("sums recurring donations with a finalized payment in the last 60 days", async () => {
       const donor = await createTestDonor();
-      await createTestRecurringDonation({
+      const daysAgo = (days: number) => {
+        const date = new Date();
+        date.setDate(date.getDate() - days);
+        return date;
+      };
+      const payment = (recurringDonationId: number, datetime: Date) =>
+        createTestDonation({
+          donorId: donor.id,
+          recurringDonationId,
+          finalized: true,
+          datetime,
+        });
+
+      // Paid twice in the window: counted once, at its own amount
+      const monthly = await createTestRecurringDonation({
         donorId: donor.id,
         amount: 500,
-        active: true,
       });
-      await createTestRecurringDonation({
+      await payment(monthly.id, daysAgo(40));
+      await payment(monthly.id, daysAgo(10));
+
+      // The deprecated `active` flag plays no part: still being paid, so it counts
+      const flaggedInactive = await createTestRecurringDonation({
         donorId: donor.id,
         amount: 1500,
-        active: true,
+        active: false,
       });
-      await createTestRecurringDonation({
+      await payment(flaggedInactive.id, daysAgo(59));
+
+      // Excluded: last payment too long ago
+      const lapsed = await createTestRecurringDonation({
         donorId: donor.id,
         amount: 9999,
-        active: false, // excluded
       });
+      await payment(lapsed.id, daysAgo(61));
+
+      // Excluded: the only recent payment never finalized
+      const unfinalized = await createTestRecurringDonation({
+        donorId: donor.id,
+        amount: 7777,
+      });
+      await createTestDonation({
+        donorId: donor.id,
+        recurringDonationId: unfinalized.id,
+        finalized: false,
+        datetime: daysAgo(5),
+      });
+
+      // Excluded: never paid at all, despite the default `active: true`
+      await createTestRecurringDonation({ donorId: donor.id, amount: 3333 });
 
       const result = await repo.getMonthlyRecurringDonations();
       expect(result).toBe(2000);
