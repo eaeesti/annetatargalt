@@ -177,11 +177,14 @@ export function MonthlyTotalsChart({ data }: { data: MonthlyTotalsRow[] }) {
 }
 
 export function CumulativeChart({ data }: { data: MonthlyTotalsRow[] }) {
+  // A loop, not a running total captured by .map's callback: the React
+  // Compiler lint rule cannot tell that a callback only runs during render.
+  const cumulative = [];
   let running = 0;
-  const cumulative = data.map((row) => {
+  for (const row of data) {
     running += row.total;
-    return { month: row.month, cumulative: running };
-  });
+    cumulative.push({ month: row.month, cumulative: running });
+  }
 
   return (
     <ChartContainer config={areaConfig} className="h-[220px] w-full">
