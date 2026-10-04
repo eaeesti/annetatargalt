@@ -5,6 +5,22 @@ import fs from "fs";
 import path from "path";
 
 // ---------------------------------------------------------------------------
+// Graceful shutdown
+// ---------------------------------------------------------------------------
+
+/**
+ * How long destroy() lets requests already in progress finish: twice the
+ * slowest request in the production logs (2.1 s across ~50 000). It has to
+ * stay below kill_timeout in ecosystem.config.js (5 s), after which PM2 kills
+ * the worker. Raising that one needs more than an edit: reload.sh reloads by
+ * name, which keeps the kill_timeout PM2 stored when the worker was started.
+ */
+const SHUTDOWN_DRAIN_MS = 4000;
+
+/** Requests received and not yet answered; counted from bootstrap(). */
+let inFlightRequests = 0;
+
+// ---------------------------------------------------------------------------
 // Bootstrap helpers
 // ---------------------------------------------------------------------------
 
@@ -599,6 +615,40 @@ export default {
       };
       if (httpServer.listening) signalReady();
       else httpServer.once("listening", signalReady);
+    }
+
+    strapi.server.httpServer.on("request", (_req, res) => {
+      inFlightRequests += 1;
+      res.once("close", () => {
+        inFlightRequests -= 1;
+      });
+    });
+  },
+
+  /**
+   * Let requests in progress finish before Strapi shuts down. Strapi's own
+   * shutdown destroys every open connection, mid-request ones included, and
+   * only then closes the server. A request cut off that way reaches nginx as
+   * a closed connection, which it retries on the other worker — including a
+   * donation POST that had already written its rows, so the retry would
+   * write them again. Strapi runs this hook before that point.
+   *
+   * Closing the server first means new connections are refused, which nginx
+   * can safely retry elsewhere because the request never got in; the ones
+   * already inside get up to SHUTDOWN_DRAIN_MS to be answered.
+   */
+  async destroy({ strapi }: { strapi: Core.Strapi }) {
+    const { httpServer } = strapi.server;
+    if (httpServer.listening) httpServer.close();
+
+    const deadline = Date.now() + SHUTDOWN_DRAIN_MS;
+    while (inFlightRequests > 0 && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    if (inFlightRequests > 0) {
+      strapi.log.warn(
+        `⚠️ Shutting down with ${inFlightRequests} request(s) still unanswered after ${SHUTDOWN_DRAIN_MS / 1000}s`,
+      );
     }
   },
 };
