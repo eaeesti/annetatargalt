@@ -209,10 +209,8 @@ describe("DonorsRepository", () => {
   // ── findPaginated: recurringDonor ────────────────────────────────────────────
   //
   // "Recurring donor" is computed from payment activity — a finalized donation
-  // tied to a recurring donation within the last 60 days — not the deprecated
-  // recurring_donations.active flag (donors.recurringDonor, the other
-  // deprecated signal this used to also ignore, has since been dropped from
-  // the schema entirely). Each test below isolates one of those distinctions.
+  // tied to a recurring donation within the last 60 days. Each test below
+  // isolates one part of that definition.
 
   describe("findPaginated recurringDonor", () => {
     it("is true for a donor with a recent finalized recurring payment", async () => {
@@ -264,26 +262,6 @@ describe("DonorsRepository", () => {
         pageSize: 25,
       });
       expect(data.find((d) => d.id === donor.id)?.recurringDonor).toBe(false);
-    });
-
-    it("ignores the deprecated recurring_donations.active flag", async () => {
-      const donor = await createTestDonor();
-      const rd = await createTestRecurringDonation({
-        donorId: donor.id,
-        active: false, // deprecated flag says inactive
-      });
-      await createTestDonation({
-        donorId: donor.id,
-        recurringDonationId: rd.id,
-        finalized: true,
-        datetime: new Date(), // but a real payment just came in
-      });
-
-      const { data } = await donorsRepository.findPaginated({
-        page: 1,
-        pageSize: 25,
-      });
-      expect(data.find((d) => d.id === donor.id)?.recurringDonor).toBe(true);
     });
 
     it("filters by recurringDonor", async () => {
@@ -558,23 +536,6 @@ describe("DonorsRepository", () => {
       const result = await donorsRepository.findByIdWithDonations(donor.id);
       expect(result?.recurringDonor).toBe(false);
     });
-
-    it("ignores the deprecated recurring_donations.active flag", async () => {
-      const donor = await createTestDonor();
-      const rd = await createTestRecurringDonation({
-        donorId: donor.id,
-        active: false,
-      });
-      await createTestDonation({
-        donorId: donor.id,
-        recurringDonationId: rd.id,
-        finalized: true,
-        datetime: new Date(),
-      });
-
-      const result = await donorsRepository.findByIdWithDonations(donor.id);
-      expect(result?.recurringDonor).toBe(true);
-    });
   });
 
   describe("findByIdWithDonations recurring donation status", () => {
@@ -586,11 +547,7 @@ describe("DonorsRepository", () => {
         return date;
       };
 
-      // Paid recently. Flagged inactive, which must not matter.
-      const active = await createTestRecurringDonation({
-        donorId: donor.id,
-        active: false,
-      });
+      const active = await createTestRecurringDonation({ donorId: donor.id });
       await createTestDonation({
         donorId: donor.id,
         recurringDonationId: active.id,

@@ -4,9 +4,7 @@
  * "status" (findPaginated + findByIdWithFullDonations) is payment-based: a
  * finalized donation linked to the recurring donation within the current
  * RECURRING_ACTIVITY_WINDOW_DAYS window means "active"; one ever, but not
- * recently, means "stopped"; none ever means "neverStarted". Not the
- * deprecated recurring_donations.active column — it's never updated after
- * creation in current application code, so it drifts from reality.
+ * recently, means "stopped"; none ever means "neverStarted".
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
@@ -88,20 +86,6 @@ describe("RecurringDonationsRepository", () => {
         pageSize: 25,
       });
       expect(data.find((r) => r.id === rd.id)?.status).toBe("stopped");
-    });
-
-    it("ignores the deprecated active column", async () => {
-      const donor = await createTestDonor();
-      const rd = await createTestRecurringDonation({
-        donorId: donor.id,
-        active: true, // deprecated flag says active — but no payment at all
-      });
-
-      const { data } = await recurringDonationsRepository.findPaginated({
-        page: 1,
-        pageSize: 25,
-      });
-      expect(data.find((r) => r.id === rd.id)?.status).toBe("neverStarted");
     });
 
     it("sorts by status (neverStarted < stopped < active)", async () => {
@@ -203,24 +187,6 @@ describe("RecurringDonationsRepository", () => {
       const result =
         await recurringDonationsRepository.findByIdWithFullDonations(rd.id);
       expect(result?.status).toBe("neverStarted");
-    });
-
-    it("ignores the deprecated active column", async () => {
-      const donor = await createTestDonor();
-      const rd = await createTestRecurringDonation({
-        donorId: donor.id,
-        active: false, // deprecated flag says inactive
-      });
-      await createTestDonation({
-        donorId: donor.id,
-        recurringDonationId: rd.id,
-        finalized: true,
-        datetime: new Date(), // but a real payment just came in
-      });
-
-      const result =
-        await recurringDonationsRepository.findByIdWithFullDonations(rd.id);
-      expect(result?.status).toBe("active");
     });
   });
 });

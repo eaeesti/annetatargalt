@@ -156,13 +156,12 @@ describe("DashboardRepository", () => {
       await payment(monthly.id, daysAgo(40));
       await payment(monthly.id, daysAgo(10));
 
-      // The deprecated `active` flag plays no part: still being paid, so it counts
-      const flaggedInactive = await createTestRecurringDonation({
+      // Last paid 59 days ago: still inside the window
+      const nearlyLapsed = await createTestRecurringDonation({
         donorId: donor.id,
         amount: 1500,
-        active: false,
       });
-      await payment(flaggedInactive.id, daysAgo(59));
+      await payment(nearlyLapsed.id, daysAgo(59));
 
       // Excluded: last payment too long ago
       const lapsed = await createTestRecurringDonation({
@@ -183,7 +182,7 @@ describe("DashboardRepository", () => {
         datetime: daysAgo(5),
       });
 
-      // Excluded: never paid at all, despite the default `active: true`
+      // Excluded: never paid at all
       await createTestRecurringDonation({ donorId: donor.id, amount: 3333 });
 
       const result = await repo.getMonthlyRecurringDonations();

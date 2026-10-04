@@ -59,9 +59,8 @@ export class RecurringDonationsRepository {
     pageSize: number;
     sortBy?: string;
     sortDir?: "asc" | "desc";
-    active?: boolean;
   }) {
-    const { page, pageSize, sortBy = "id", sortDir = "asc", active } = options;
+    const { page, pageSize, sortBy = "id", sortDir = "asc" } = options;
     const offset = (page - 1) * pageSize;
     const dir = sortDir === "desc" ? desc : asc;
 
@@ -113,7 +112,6 @@ export class RecurringDonationsRepository {
 
     const colMap: Record<string, Parameters<typeof dir>[0]> = {
       id: recurringDonations.id,
-      active: recurringDonations.active,
       amount: recurringDonations.amount,
       datetime: recurringDonations.datetime,
       donorLastName: donors.lastName,
@@ -124,14 +122,10 @@ export class RecurringDonationsRepository {
 
     const orderCol = colMap[sortBy] ?? recurringDonations.id;
 
-    const whereClause =
-      active !== undefined ? eq(recurringDonations.active, active) : undefined;
-
     const [rows, countRows] = await Promise.all([
       this.database
         .select({
           id: recurringDonations.id,
-          active: recurringDonations.active,
           amount: recurringDonations.amount,
           datetime: recurringDonations.datetime,
           companyName: recurringDonations.companyName,
@@ -159,14 +153,10 @@ export class RecurringDonationsRepository {
           recentSq,
           eq(recurringDonations.id, recentSq.recurringDonationId),
         )
-        .where(whereClause)
         .orderBy(dir(orderCol))
         .limit(pageSize)
         .offset(offset),
-      this.database
-        .select({ total: count() })
-        .from(recurringDonations)
-        .where(whereClause),
+      this.database.select({ total: count() }).from(recurringDonations),
     ]);
 
     return { data: rows, total: countRows[0]?.total ?? 0 };
@@ -175,9 +165,8 @@ export class RecurringDonationsRepository {
   /**
    * Find a recurring donation by ID with full detail (donor, org splits,
    * linked donations with org splits). `status` is computed the same
-   * payment-based way `findPaginated` does (see recurringDonationStatus) —
-   * the raw `active` column is stale — from the `donations` already fetched
-   * here, instead of a second DB query.
+   * payment-based way `findPaginated` does (see recurringDonationStatus),
+   * from the `donations` already fetched here, instead of a second DB query.
    */
   async findByIdWithFullDonations(id: number) {
     const rd = await this.database.query.recurringDonations.findFirst({
@@ -207,33 +196,6 @@ export class RecurringDonationsRepository {
   }
 
   /**
-   * Find active recurring donations
-   */
-  async findActive() {
-    return this.database.query.recurringDonations.findMany({
-      where: eq(recurringDonations.active, true),
-      orderBy: [desc(recurringDonations.datetime)],
-      with: {
-        donor: true,
-        organizationRecurringDonations: true,
-      },
-    });
-  }
-
-  /**
-   * Find active recurring donations by donor ID
-   */
-  async findActiveByDonorId(donorId: number): Promise<RecurringDonation[]> {
-    return this.database.query.recurringDonations.findMany({
-      where: and(
-        eq(recurringDonations.donorId, donorId),
-        eq(recurringDonations.active, true),
-      ),
-      orderBy: [desc(recurringDonations.datetime)],
-    });
-  }
-
-  /**
    * Find recurring donation by company code
    */
   async findByCompanyCode(
@@ -256,7 +218,6 @@ export class RecurringDonationsRepository {
       .values({
         donorId: data.donorId,
         amount: data.amount,
-        active: data.active !== undefined ? data.active : true,
         companyName: data.companyName || null,
         companyCode: data.companyCode || null,
         comment: data.comment || null,
@@ -288,20 +249,6 @@ export class RecurringDonationsRepository {
       .where(eq(recurringDonations.id, id))
       .returning();
     return recurringDonation;
-  }
-
-  /**
-   * Deactivate a recurring donation
-   */
-  async deactivate(id: number): Promise<RecurringDonation | undefined> {
-    return this.update(id, { active: false });
-  }
-
-  /**
-   * Activate a recurring donation
-   */
-  async activate(id: number): Promise<RecurringDonation | undefined> {
-    return this.update(id, { active: true });
   }
 
   /**

@@ -6,7 +6,6 @@ import { auditLog } from "../utils/audit-log";
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
 const VALID_SORT_COLS = new Set([
   "id",
-  "active",
   "amount",
   "datetime",
   "donorLastName",
@@ -25,15 +24,12 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
     const sortByRaw = String(q.sortBy ?? "id");
     const sortBy = VALID_SORT_COLS.has(sortByRaw) ? sortByRaw : "id";
     const sortDir = q.sortDir === "desc" ? ("desc" as const) : ("asc" as const);
-    const active =
-      q.active !== undefined ? String(q.active) === "true" : undefined;
 
     const { data, total } = await recurringDonationsRepository.findPaginated({
       page,
       pageSize,
       sortBy,
       sortDir,
-      active,
     });
 
     await auditLog(ctx, "recurringDonations.list");
