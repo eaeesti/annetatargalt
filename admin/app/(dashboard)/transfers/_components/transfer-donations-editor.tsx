@@ -128,7 +128,10 @@ export function TransferDonationsEditor({
               </Link>
               <div className="flex items-center gap-3">
                 {d.orgLabel && (
-                  <span className="hidden max-w-48 truncate text-xs text-muted-foreground sm:block">
+                  <span
+                    title={d.orgLabel}
+                    className="hidden max-w-48 truncate text-xs text-muted-foreground sm:block"
+                  >
                     {d.orgLabel}
                   </span>
                 )}
