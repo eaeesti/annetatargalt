@@ -4,6 +4,10 @@ import { strapiAdmin } from "../../../../lib/api";
 import { fetchOrgNameMap } from "../../../../lib/orgs";
 import { Badge } from "../../../../components/ui/badge";
 import { EntityLink } from "../../../../components/entity-link";
+import {
+  RecurringStatusBadge,
+  type RecurringDonationStatus,
+} from "../../../../components/recurring-status-badge";
 import { organizationHref } from "../../../../lib/entity-links";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -21,8 +25,6 @@ type OrgSplit = {
   organizationInternalId: string;
   amount: number;
 };
-
-type RecurringDonationStatus = "active" | "stopped" | "neverStarted";
 
 type RecurringDonationDetail = {
   id: number;
@@ -78,12 +80,6 @@ function donorName(donor: RecurringDonationDetail["donor"]): string {
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
-
-function StatusBadge({ status }: { status: RecurringDonationStatus }) {
-  if (status === "active") return <Badge variant="default">Active</Badge>;
-  if (status === "stopped") return <Badge variant="destructive">Stopped</Badge>;
-  return <Badge variant="secondary">Never started</Badge>;
-}
 
 function Section({
   title,
@@ -153,7 +149,7 @@ export default async function RecurringDonationDetailPage({
           <h1 className="text-2xl font-bold">
             Recurring #{rd.id} — {donorName(rd.donor)}
           </h1>
-          <StatusBadge status={rd.status} />
+          <RecurringStatusBadge status={rd.status} />
         </div>
       </div>
 

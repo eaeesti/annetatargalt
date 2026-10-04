@@ -4,6 +4,10 @@ import { strapiAdmin } from "../../../../lib/api";
 import { fetchOrgNameMap } from "../../../../lib/orgs";
 import { Badge } from "../../../../components/ui/badge";
 import { EntityLink } from "../../../../components/entity-link";
+import {
+  RecurringStatusBadge,
+  type RecurringDonationStatus,
+} from "../../../../components/recurring-status-badge";
 import { recurringDonationHref } from "../../../../lib/entity-links";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -26,7 +30,12 @@ type DonorDetail = {
   recurringDonor: boolean | null;
   createdAt: string;
   donations: DonationSummary[];
-  recurringDonations: { id: number; active: boolean; amount: number }[];
+  recurringDonations: {
+    id: number;
+    amount: number;
+    // Absent from a backend older than this page: the two deploy separately.
+    status?: RecurringDonationStatus;
+  }[];
   stats: {
     totalDonated: number;
     donationCount: number;
@@ -174,11 +183,7 @@ export default async function DonorDetailPage({ params }: { params: Params }) {
                 <span className="tabular-nums">
                   {formatAmount(rd.amount)}/mo
                 </span>
-                {rd.active ? (
-                  <Badge variant="default">Active</Badge>
-                ) : (
-                  <Badge variant="secondary">Inactive</Badge>
-                )}
+                {rd.status && <RecurringStatusBadge status={rd.status} />}
               </div>
             ))}
           </div>
