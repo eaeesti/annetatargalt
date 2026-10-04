@@ -189,4 +189,77 @@ describe("RecurringDonationsRepository", () => {
       expect(result?.status).toBe("neverStarted");
     });
   });
+
+  // ── getGrid: recurringActive ─────────────────────────────────────────────────
+
+  describe("getGrid recurringActive", () => {
+    it("is true only for a donor with a recent finalized recurring payment", async () => {
+      const daysAgo = (days: number) => {
+        const date = new Date();
+        date.setDate(date.getDate() - days);
+        return date;
+      };
+
+      const active = await createTestDonor({ email: "active@test.com" });
+      const activeRd = await createTestRecurringDonation({
+        donorId: active.id,
+      });
+      await createTestDonation({
+        donorId: active.id,
+        recurringDonationId: activeRd.id,
+        finalized: true,
+        datetime: daysAgo(10),
+      });
+
+      const lapsed = await createTestDonor({ email: "lapsed@test.com" });
+      const lapsedRd = await createTestRecurringDonation({
+        donorId: lapsed.id,
+      });
+      await createTestDonation({
+        donorId: lapsed.id,
+        recurringDonationId: lapsedRd.id,
+        finalized: true,
+        datetime: daysAgo(90),
+      });
+
+      // A recent donation, but a one-off
+      const oneOff = await createTestDonor({ email: "oneoff@test.com" });
+      await createTestDonation({
+        donorId: oneOff.id,
+        finalized: true,
+        datetime: daysAgo(3),
+      });
+
+      // A recent recurring payment that never completed; the one-off puts
+      // the donor in the grid at all
+      const unfinished = await createTestDonor({
+        email: "unfinished@test.com",
+      });
+      const unfinishedRd = await createTestRecurringDonation({
+        donorId: unfinished.id,
+      });
+      await createTestDonation({
+        donorId: unfinished.id,
+        recurringDonationId: unfinishedRd.id,
+        finalized: false,
+        datetime: daysAgo(3),
+      });
+      await createTestDonation({
+        donorId: unfinished.id,
+        finalized: true,
+        datetime: daysAgo(200),
+      });
+
+      const rows = await recurringDonationsRepository.getGrid();
+      const flags = Object.fromEntries(
+        rows.map((r) => [r.donorId, r.recurringActive]),
+      );
+      expect(flags).toEqual({
+        [active.id]: true,
+        [lapsed.id]: false,
+        [oneOff.id]: false,
+        [unfinished.id]: false,
+      });
+    });
+  });
 });
