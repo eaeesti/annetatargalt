@@ -131,7 +131,7 @@ export class DashboardRepository {
 
   /**
    * Sum of amounts for recurring donations that had a finalized payment in the
-   * last 60 days — payment-based activity, not the deprecated `active` flag.
+   * last 60 days — see RECURRING_ACTIVITY_WINDOW_DAYS.
    */
   async getMonthlyRecurringDonations(): Promise<number> {
     const result = await this.database.execute(sql`

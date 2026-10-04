@@ -30,7 +30,6 @@ export const recurringDonations = pgTable(
     donorId: integer("donor_id")
       .references(() => donors.id)
       .notNull(),
-    active: boolean("active").default(false).notNull(),
     companyName: varchar("company_name", { length: 128 }),
     companyCode: varchar("company_code", { length: 128 }),
     comment: text("comment"),

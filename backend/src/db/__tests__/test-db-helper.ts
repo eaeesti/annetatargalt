@@ -151,7 +151,6 @@ export async function createTestRecurringDonation(
     .values({
       donorId: data.donorId,
       amount: data.amount ?? 1000,
-      active: data.active !== undefined ? data.active : true,
       companyName: data.companyName ?? null,
       companyCode: data.companyCode ?? null,
       comment: data.comment ?? null,

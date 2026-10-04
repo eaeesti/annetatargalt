@@ -30,7 +30,6 @@ import {
 
 export type RecurringDonationRow = {
   id: number;
-  active: boolean;
   status: RecurringDonationStatus;
   amount: number;
   datetime: string;

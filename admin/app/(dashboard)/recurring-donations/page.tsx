@@ -9,7 +9,6 @@ import {
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
 const VALID_SORT_COLS = new Set([
   "id",
-  "active",
   "amount",
   "datetime",
   "donorLastName",

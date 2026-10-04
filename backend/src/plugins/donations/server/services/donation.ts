@@ -447,7 +447,6 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   }) {
     const recurringDonationEntry = await recurringDonationsRepository.create({
       donorId: donor.id,
-      active: false,
       amount: donation.amount,
       bank: donation.bank,
       datetime: new Date(),

@@ -4,9 +4,9 @@
  * The one payment-based definition shared by DashboardRepository's
  * getMonthlyRecurringDonations, DonorsRepository's recurringDonor /
  * recurringStatus filters, and RecurringDonationsRepository's status
- * column — not donors.recurringDonor or recurring_donations.active, both
- * deprecated, manually-set columns that drift from actual payment activity
- * (neither is ever updated after creation in current application code).
+ * column. Nothing stores it: the manually-set flags that used to
+ * (donors.recurring_donor, recurring_donations.active) were never updated
+ * after creation, drifted from actual payments, and are gone from the schema.
  */
 export const RECURRING_ACTIVITY_WINDOW_DAYS = 60;
 
