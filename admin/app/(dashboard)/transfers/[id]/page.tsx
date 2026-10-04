@@ -277,6 +277,7 @@ export default async function TransferDetailPage({
             amount: d.amount,
             finalized: d.finalized,
             transactionId: d.transactionId,
+            processorFeeCents: d.processorFeeCents,
             orgLabel: d.organizationDonations
               .map(
                 (od) =>

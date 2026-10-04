@@ -15,6 +15,7 @@ type Row = {
   amount: number;
   finalized: boolean;
   transactionId: string | null;
+  processorFeeCents: number | null;
   orgLabel: string;
 };
 
@@ -131,8 +132,13 @@ export function TransferDonationsEditor({
                     {d.orgLabel}
                   </span>
                 )}
-                <span className="font-medium tabular-nums">
+                <span className="text-right font-medium tabular-nums">
                   {formatEuros(d.amount)}
+                  {typeof d.processorFeeCents === "number" && (
+                    <span className="block text-xs font-normal text-muted-foreground">
+                      fee {formatEuros(d.processorFeeCents)}
+                    </span>
+                  )}
                 </span>
                 <button
                   className="text-xs text-muted-foreground hover:text-destructive disabled:opacity-50"
