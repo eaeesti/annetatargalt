@@ -22,6 +22,7 @@ type LinkedDonation = {
   finalized: boolean;
   donorId: number | null;
   transactionId: string | null;
+  processorFeeCents: number | null;
   organizationDonations: { organizationInternalId: string; amount: number }[];
 };
 
@@ -121,6 +122,12 @@ export default async function TransferDetailPage({
   const reconciledCount = transfer.donations.filter(
     (d) => d.transactionId,
   ).length;
+  // A fee is only on record once a statement import has matched the donation
+  // to a card payout, so "none recorded" is not the same as €0.00.
+  const fees = finalizedDonations
+    .map((d) => d.processorFeeCents)
+    .filter((fee) => typeof fee === "number");
+  const feeTotal = fees.reduce((s, fee) => s + fee, 0);
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -157,6 +164,18 @@ export default async function TransferDetailPage({
         </Field>
         <Field label="Total transferred">
           <span className="font-medium">{formatEuros(grandTotal)}</span>
+        </Field>
+        <Field label="Card fees">
+          {fees.length > 0 ? (
+            <span>
+              {formatEuros(feeTotal)}
+              <span className="ml-2 text-muted-foreground">
+                (from {fees.length} donation{fees.length !== 1 ? "s" : ""})
+              </span>
+            </span>
+          ) : (
+            <span className="text-muted-foreground">None recorded</span>
+          )}
         </Field>
         <div className="pt-1">
           <TransferMetaEditor
