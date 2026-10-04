@@ -261,8 +261,11 @@ export class RecurringDonationsRepository {
   }
 
   /**
-   * Compact grid dataset: all active recurring donations with the set of months
-   * that have a linked finalized donation, ordered by donor last/first name.
+   * Compact grid dataset: every donor with a finalized donation, the total
+   * they gave in each month since their first, and whether they are a
+   * currently active recurring donor — a finalized recurring payment within
+   * RECURRING_ACTIVITY_WINDOW_DAYS — so the grid can show this month as
+   * expected rather than missed. Ordered by donor last/first name.
    */
   async getGrid(): Promise<
     Array<{
@@ -270,8 +273,13 @@ export class RecurringDonationsRepository {
       donorName: string;
       startMonth: string; // "YYYY-MM" of the donor's first finalized donation
       monthAmounts: Record<string, number>; // "YYYY-MM" -> total cents donated that month
+      recurringActive: boolean;
     }>
   > {
+    const recentCutoff = new Date();
+    recentCutoff.setDate(
+      recentCutoff.getDate() - RECURRING_ACTIVITY_WINDOW_DAYS,
+    );
     const result = await this.database.execute(sql`
       WITH monthly AS (
         SELECT
@@ -287,7 +295,14 @@ export class RecurringDonationsRepository {
         d.id                                                  AS "donorId",
         concat(d.first_name, ' ', d.last_name)               AS "donorName",
         min(m.month)                                          AS "startMonth",
-        json_object_agg(m.month, m.total)                     AS "monthAmounts"
+        json_object_agg(m.month, m.total)                     AS "monthAmounts",
+        EXISTS (
+          SELECT 1 FROM donations r
+          WHERE r.donor_id = d.id
+            AND r.finalized = true
+            AND r.recurring_donation_id IS NOT NULL
+            AND r.datetime >= ${recentCutoff.toISOString()}
+        )                                                     AS "recurringActive"
       FROM donors d
       JOIN monthly m ON m.donor_id = d.id
       GROUP BY d.id
@@ -298,6 +313,7 @@ export class RecurringDonationsRepository {
       donorName: String(r.donorName),
       startMonth: String(r.startMonth),
       monthAmounts: (r.monthAmounts as Record<string, number>) ?? {},
+      recurringActive: r.recurringActive === true,
     }));
   }
 }

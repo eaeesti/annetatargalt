@@ -8,6 +8,9 @@ type GridRow = {
   donorName: string;
   startMonth: string; // "YYYY-MM"
   monthAmounts: Record<string, number>; // "YYYY-MM" -> cents donated
+  // A finalized recurring payment within the last 60 days. Absent from a
+  // backend older than this page: the two deploy separately.
+  recurringActive?: boolean;
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -37,17 +40,18 @@ function formatEur(cents: number) {
 
 // ── Cell ──────────────────────────────────────────────────────────────────────
 
-type CellState = "paid" | "gap" | "before-start" | "future";
+type CellState = "paid" | "gap" | "before-start" | "expected";
 
 function cellState(
   month: string,
-  startMonth: string,
-  monthAmounts: Record<string, number>,
+  row: GridRow,
   currentMonth: string,
 ): CellState {
-  if (month < startMonth) return "before-start";
-  if (month > currentMonth) return "future";
-  if (month in monthAmounts) return "paid";
+  if (month < row.startMonth) return "before-start";
+  if (month in row.monthAmounts) return "paid";
+  // The current month is not over yet: an active recurring donor who has
+  // not given this month is still expected to, rather than missing it.
+  if (month === currentMonth && row.recurringActive) return "expected";
   return "gap";
 }
 
@@ -55,7 +59,7 @@ const cellStyles: Record<CellState, string> = {
   paid: "bg-green-500/20 text-green-700 dark:text-green-400",
   gap: "bg-red-500/15 text-red-600 dark:text-red-400",
   "before-start": "",
-  future: "opacity-30",
+  expected: "opacity-30",
 };
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -122,8 +126,7 @@ export default async function RecurringGridPage({
   // Gap summary per row
   const rowsWithMeta = rows.map((row) => {
     const gapCount = months.filter(
-      (m) =>
-        cellState(m, row.startMonth, row.monthAmounts, currentMonth) === "gap",
+      (m) => cellState(m, row, currentMonth) === "gap",
     ).length;
     return { ...row, gapCount };
   });
@@ -251,12 +254,7 @@ export default async function RecurringGridPage({
                   {row.gapCount > 0 ? row.gapCount : "—"}
                 </td>
                 {months.map((m) => {
-                  const state = cellState(
-                    m,
-                    row.startMonth,
-                    row.monthAmounts,
-                    currentMonth,
-                  );
+                  const state = cellState(m, row, currentMonth);
                   const amount = row.monthAmounts[m];
                   return (
                     <td
@@ -267,14 +265,16 @@ export default async function RecurringGridPage({
                           ? `${row.donorName} — missing ${m}`
                           : state === "paid"
                             ? `${row.donorName} — ${m}: ${formatEur(amount)}`
-                            : undefined
+                            : state === "expected"
+                              ? `${row.donorName} — expected in ${m}`
+                              : undefined
                       }
                     >
                       {state === "paid"
                         ? formatEur(amount)
                         : state === "gap"
                           ? "✗"
-                          : state === "future"
+                          : state === "expected"
                             ? "·"
                             : ""}
                     </td>
@@ -304,7 +304,7 @@ export default async function RecurringGridPage({
           <span className="w-4 h-4 rounded border inline-flex items-center justify-center opacity-30 font-bold">
             ·
           </span>
-          Future
+          Expected this month
         </span>
       </div>
     </div>
