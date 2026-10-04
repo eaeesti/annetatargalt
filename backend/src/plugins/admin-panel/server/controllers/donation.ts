@@ -63,24 +63,25 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
       ? Math.round(Number(q.amountMax) * 100)
       : undefined;
 
-    const { data, total } = await donationsRepository.findWithFilters({
-      page,
-      pageSize,
-      sortBy,
-      sortDir,
-      finalized,
-      dateFrom,
-      dateTo,
-      donorId,
-      transferId,
-      hasTransfer,
-      hasCompany,
-      orgId,
-      amountMin,
-      amountMax,
-      transactionId,
-      hasTransactionId,
-    });
+    const { data, total, totalAmount, pendingAmount } =
+      await donationsRepository.findWithFilters({
+        page,
+        pageSize,
+        sortBy,
+        sortDir,
+        finalized,
+        dateFrom,
+        dateTo,
+        donorId,
+        transferId,
+        hasTransfer,
+        hasCompany,
+        orgId,
+        amountMin,
+        amountMax,
+        transactionId,
+        hasTransactionId,
+      });
 
     await auditLog(ctx, "donations.list");
 
@@ -92,6 +93,7 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
         total,
         pageCount: Math.ceil(total / pageSize),
       },
+      totals: { amount: totalAmount, pendingAmount },
     });
   },
 

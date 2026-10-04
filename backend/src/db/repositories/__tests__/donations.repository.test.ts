@@ -557,6 +557,58 @@ describe("DonationsRepository", () => {
     });
   });
 
+  describe("findWithFilters totals", () => {
+    it("sums every matching donation, not just the page, and splits out pending", async () => {
+      await createTestDonation({ amount: 1000 });
+      await createTestDonation({ amount: 2500 });
+      await createTestDonation({ amount: 400, finalized: false });
+
+      const result = await donationsRepository.findWithFilters({
+        page: 1,
+        pageSize: 1,
+      });
+
+      expect(result.data).toHaveLength(1);
+      expect(result.total).toBe(3);
+      expect(result.totalAmount).toBe(3900);
+      expect(result.pendingAmount).toBe(400);
+    });
+
+    it("applies the same filters as the rows", async () => {
+      await createTestDonation({ amount: 1000 });
+      await createTestDonation({ amount: 2500 });
+      await createTestDonation({ amount: 400, finalized: false });
+
+      const finalizedOnly = await donationsRepository.findWithFilters({
+        page: 1,
+        pageSize: 25,
+        finalized: true,
+      });
+      expect(finalizedOnly.totalAmount).toBe(3500);
+      expect(finalizedOnly.pendingAmount).toBe(0);
+
+      // amountMin is in cents here; the controller converts from euros
+      const large = await donationsRepository.findWithFilters({
+        page: 1,
+        pageSize: 25,
+        amountMin: 2000,
+      });
+      expect(large.total).toBe(1);
+      expect(large.totalAmount).toBe(2500);
+    });
+
+    it("is zero when nothing matches", async () => {
+      const result = await donationsRepository.findWithFilters({
+        page: 1,
+        pageSize: 25,
+      });
+
+      expect(result.total).toBe(0);
+      expect(result.totalAmount).toBe(0);
+      expect(result.pendingAmount).toBe(0);
+    });
+  });
+
   describe("Edge cases", () => {
     it("should handle very large amounts", async () => {
       const donation = await createTestDonation({ amount: 999999999 });
