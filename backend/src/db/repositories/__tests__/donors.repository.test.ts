@@ -576,6 +576,58 @@ describe("DonorsRepository", () => {
       expect(result?.recurringDonor).toBe(true);
     });
   });
+
+  describe("findByIdWithDonations recurring donation status", () => {
+    it("gives each recurring donation its payment-based status", async () => {
+      const donor = await createTestDonor();
+      const daysAgo = (days: number) => {
+        const date = new Date();
+        date.setDate(date.getDate() - days);
+        return date;
+      };
+
+      // Paid recently. Flagged inactive, which must not matter.
+      const active = await createTestRecurringDonation({
+        donorId: donor.id,
+        active: false,
+      });
+      await createTestDonation({
+        donorId: donor.id,
+        recurringDonationId: active.id,
+        finalized: true,
+        datetime: daysAgo(3),
+      });
+
+      const stopped = await createTestRecurringDonation({ donorId: donor.id });
+      await createTestDonation({
+        donorId: donor.id,
+        recurringDonationId: stopped.id,
+        finalized: true,
+        datetime: daysAgo(90),
+      });
+
+      // Its only payment never completed
+      const neverStarted = await createTestRecurringDonation({
+        donorId: donor.id,
+      });
+      await createTestDonation({
+        donorId: donor.id,
+        recurringDonationId: neverStarted.id,
+        finalized: false,
+        datetime: daysAgo(3),
+      });
+
+      const result = await donorsRepository.findByIdWithDonations(donor.id);
+      const statuses = Object.fromEntries(
+        (result?.recurringDonations ?? []).map((rd) => [rd.id, rd.status]),
+      );
+      expect(statuses).toEqual({
+        [active.id]: "active",
+        [stopped.id]: "stopped",
+        [neverStarted.id]: "neverStarted",
+      });
+    });
+  });
 });
 
 // ── lastCompleteMonthRange (pure — no DB) ───────────────────────────────────────

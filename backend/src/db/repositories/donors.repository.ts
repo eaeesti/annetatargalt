@@ -13,7 +13,10 @@ import {
 } from "drizzle-orm";
 import { db, type Database } from "../client";
 import { donors, donations, type Donor, type NewDonor } from "../schema";
-import { RECURRING_ACTIVITY_WINDOW_DAYS } from "./recurring-activity";
+import {
+  RECURRING_ACTIVITY_WINDOW_DAYS,
+  recurringDonationStatus,
+} from "./recurring-activity";
 
 export type RecurringStatus = "new" | "retained" | "churned" | "churnedAllTime";
 
@@ -330,9 +333,10 @@ export class DonorsRepository {
 
   /**
    * Find a donor by ID with all their donations (and org splits) and recurring
-   * donations. `recurringDonor` is computed the same payment-based way
-   * `findPaginated` does (see RECURRING_ACTIVITY_WINDOW_DAYS) — in JS here,
-   * from the `donations` already fetched, instead of a second DB query.
+   * donations. `recurringDonor`, and each recurring donation's `status`, are
+   * computed the same payment-based way `findPaginated` and the recurring
+   * donations pages do (see RECURRING_ACTIVITY_WINDOW_DAYS) — in JS here, from
+   * the `donations` already fetched, instead of a second DB query.
    */
   async findByIdWithDonations(id: number) {
     const donor = await this.database.query.donors.findFirst({
@@ -358,7 +362,16 @@ export class DonorsRepository {
         new Date(d.datetime) >= recurringCutoff,
     );
 
-    return { ...donor, recurringDonor };
+    // A recurring donation's payments are made by its own donor, so this
+    // donor's donations hold every donation linked to it.
+    const recurringDonations = donor.recurringDonations.map((rd) => ({
+      ...rd,
+      status: recurringDonationStatus(
+        donor.donations.filter((d) => d.recurringDonationId === rd.id),
+      ),
+    }));
+
+    return { ...donor, recurringDonations, recurringDonor };
   }
 
   /**

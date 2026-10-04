@@ -7,17 +7,11 @@ import {
   type RecurringDonation,
   type NewRecurringDonation,
 } from "../schema";
-import { RECURRING_ACTIVITY_WINDOW_DAYS } from "./recurring-activity";
-
-/**
- * Never started: no finalized donation has ever been linked to this
- * recurring donation (the mandate exists, but the first payment never went
- * through). Stopped: had one at some point, but nothing within the current
- * window. Active: a finalized linked donation landed within the window.
- * Payment-based, like RECURRING_ACTIVITY_WINDOW_DAYS everywhere else — not
- * recurring_donations.active (deprecated, never updated after creation).
- */
-export type RecurringDonationStatus = "active" | "stopped" | "neverStarted";
+import {
+  RECURRING_ACTIVITY_WINDOW_DAYS,
+  recurringDonationStatus,
+  type RecurringDonationStatus,
+} from "./recurring-activity";
 
 export class RecurringDonationsRepository {
   constructor(private database: Database = db) {}
@@ -181,9 +175,9 @@ export class RecurringDonationsRepository {
   /**
    * Find a recurring donation by ID with full detail (donor, org splits,
    * linked donations with org splits). `status` is computed the same
-   * payment-based way `findPaginated` does (see RECURRING_ACTIVITY_WINDOW_DAYS)
-   * — the raw `active` column is stale — in JS from the `donations` already
-   * fetched here, instead of a second DB query.
+   * payment-based way `findPaginated` does (see recurringDonationStatus) —
+   * the raw `active` column is stale — from the `donations` already fetched
+   * here, instead of a second DB query.
    */
   async findByIdWithFullDonations(id: number) {
     const rd = await this.database.query.recurringDonations.findFirst({
@@ -199,18 +193,7 @@ export class RecurringDonationsRepository {
     });
     if (!rd) return undefined;
 
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - RECURRING_ACTIVITY_WINDOW_DAYS);
-    const finalized = rd.donations.filter((d) => d.finalized);
-    const status: RecurringDonationStatus = finalized.some(
-      (d) => new Date(d.datetime) >= cutoff,
-    )
-      ? "active"
-      : finalized.length > 0
-        ? "stopped"
-        : "neverStarted";
-
-    return { ...rd, status };
+    return { ...rd, status: recurringDonationStatus(rd.donations) };
   }
 
   /**
