@@ -1,5 +1,7 @@
 module.exports = ({ env }) => [
-  "strapi::logger",
+  // Instead of strapi::logger, which logs query strings verbatim — payment
+  // order tokens included. See src/middlewares/request-logger.ts.
+  "global::request-logger",
   "strapi::errors",
   {
     name: "strapi::security",
