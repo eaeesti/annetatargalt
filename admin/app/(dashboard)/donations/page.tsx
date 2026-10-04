@@ -4,6 +4,7 @@ import {
   DonationsTable,
   type DonationRow,
   type Pagination,
+  type Totals,
 } from "./_components/donations-table";
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
@@ -20,6 +21,8 @@ const VALID_SORT_COLS = new Set([
 interface ListResponse {
   data: DonationRow[];
   pagination: Pagination;
+  // Absent from a backend older than this page: the two deploy separately.
+  totals?: Totals;
 }
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -87,7 +90,7 @@ export default async function DonationsPage({
     );
   }
 
-  const { data, pagination } = (await res.json()) as ListResponse;
+  const { data, pagination, totals } = (await res.json()) as ListResponse;
 
   const orgNames = Object.fromEntries(orgNamesMap);
 
@@ -97,6 +100,7 @@ export default async function DonationsPage({
       <DonationsTable
         data={data}
         pagination={pagination}
+        totals={totals}
         orgNames={orgNames}
         sortBy={sortBy}
         sortDir={sortDir}

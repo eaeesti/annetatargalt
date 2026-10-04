@@ -219,13 +219,26 @@ export class DonationsRepository {
         offset: (page - 1) * pageSize,
         with: { donor: true, organizationDonations: true },
       }),
+      // Totals across every matching row, not just this page. The pending
+      // (unfinalized) share is split out because, unless the status filter
+      // excludes them, abandoned payment attempts would inflate the sum.
       this.database
-        .select({ total: sql<number>`cast(count(*) as int)` })
+        .select({
+          total: sql<number>`cast(count(*) as int)`,
+          totalAmount: sql<number>`cast(coalesce(sum(${donations.amount}), 0) as int)`,
+          pendingAmount: sql<number>`cast(coalesce(sum(${donations.amount}) filter (where not ${donations.finalized}), 0) as int)`,
+        })
         .from(donations)
         .where(where),
     ]);
 
-    return { data, total: countResult[0]?.total ?? 0 };
+    const [totals] = countResult;
+    return {
+      data,
+      total: totals?.total ?? 0,
+      totalAmount: totals?.totalAmount ?? 0,
+      pendingAmount: totals?.pendingAmount ?? 0,
+    };
   }
 
   /**

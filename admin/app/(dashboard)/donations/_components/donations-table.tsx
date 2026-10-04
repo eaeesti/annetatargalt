@@ -75,6 +75,12 @@ export type Pagination = {
   pageCount: number;
 };
 
+/** Sums across every donation matching the filters, in cents. */
+export type Totals = {
+  amount: number;
+  pendingAmount: number;
+};
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatAmount(cents: number): string {
@@ -103,6 +109,7 @@ function donorLabel(row: DonationRow): string | null {
 interface DonationsTableProps {
   data: DonationRow[];
   pagination: Pagination;
+  totals: Totals | undefined;
   orgNames: Record<string, string>;
   sortBy: string;
   sortDir: "asc" | "desc";
@@ -113,6 +120,7 @@ const PAGE_SIZES = [25, 50, 100, 250] as const;
 export function DonationsTable({
   data,
   pagination,
+  totals,
   orgNames,
   sortBy,
   sortDir,
@@ -450,6 +458,16 @@ export function DonationsTable({
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-sm text-muted-foreground">
             {pagination.total.toLocaleString()} donations
+            {totals && (
+              <>
+                {" · "}
+                <span className="font-medium text-foreground tabular-nums">
+                  {formatAmount(totals.amount)}
+                </span>
+                {totals.pendingAmount > 0 &&
+                  ` (incl. ${formatAmount(totals.pendingAmount)} pending)`}
+              </>
+            )}
           </p>
           <FilterBuilder
             filters={FILTER_DEFS}
