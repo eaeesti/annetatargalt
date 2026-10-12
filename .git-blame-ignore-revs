@@ -1,0 +1,6 @@
+# Formatting-only commits. git blame skips them with
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+# and GitHub's blame view reads this file on its own.
+
+# Reformat with oxfmt
+ce6a9127d8abed28673f401e8706bd023867fa65
