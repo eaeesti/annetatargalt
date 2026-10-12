@@ -5,6 +5,7 @@ Strapi v5 + TypeScript. Source in `src/`, compiled to `dist/`. Always edit `src/
 ```bash
 pnpm develop          # compile + start dev server
 pnpm type-check       # must pass (strict mode)
+pnpm lint             # oxlint
 pnpm test:unit        # Vitest unit tests
 pnpm test:integration # requires .env.test with DB credentials
 ```

@@ -8,7 +8,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { donationTransfersRepository } from "../donation-transfers.repository";
 import { donationsRepository } from "../donations.repository";
-import { bankTransactionsRepository } from "../bank-transactions.repository";
 import {
   cleanDatabase,
   createTestDonor,
