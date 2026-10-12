@@ -5,6 +5,13 @@
 packages:
   - "."
 
+# Don't record pnpm itself in pnpm-lock.yaml. With the packageManager field,
+# pnpm 12 otherwise writes it as a separate first YAML document, and GitHub's
+# dependency graph reads only that one: it saw zero dependencies, so
+# Dependabot went blind. corepack (server, Vercel) runs the pinned version
+# regardless; this only stops pnpm 12 from switching versions on its own.
+pmOnFail: ignore
+
 # Install no version younger than a day. Most malicious releases are found and
 # pulled within hours. Setting it explicitly also makes it strict: a lockfile
 # entry younger than this fails the install instead of being let through.
