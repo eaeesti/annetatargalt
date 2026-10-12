@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": [],
+  "plugins": ["typescript"],
   "categories": {
     "correctness": "off"
   },
@@ -14,6 +14,12 @@
     "build/**",
     "next-env.d.ts"
   ],
+  // The repo's TypeScript conventions (AGENTS.md): no `any` and no `!`
+  // non-null assertions. Narrow the type instead.
+  "rules": {
+    "typescript/no-explicit-any": "error",
+    "typescript/no-non-null-assertion": "error"
+  },
   "overrides": [
     {
       "files": [
