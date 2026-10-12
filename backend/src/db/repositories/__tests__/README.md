@@ -5,7 +5,7 @@ These tests interact with a real PostgreSQL database to verify Drizzle repositor
 ## Prerequisites
 
 1. **Database Setup**: Requires a Drizzle database configured with environment variables
-2. **Database Schema**: Schema must be applied (`npx drizzle-kit push`)
+2. **Database Schema**: Schema must be applied (`pnpm exec drizzle-kit push`)
 3. **Database Credentials**: Valid credentials in `.env` file
 
 ## Environment Variables
@@ -27,30 +27,30 @@ Test configuration is stored in `.env.test` (not committed to git):
    INTEGRATION_TESTS=true
    ```
 
-**Note:** The `.env.test` file is automatically loaded when running `yarn test:integration`.
+**Note:** The `.env.test` file is automatically loaded when running `pnpm test:integration`.
 
 ## Running Repository Tests
 
 **Run unit tests only (default):**
 ```bash
-yarn test
+pnpm test
 # or
-yarn test:unit
+pnpm test:unit
 ```
 
 **Run repository integration tests:**
 ```bash
-yarn test:integration
+pnpm test:integration
 ```
 
 **Run all tests (unit + integration):**
 ```bash
-yarn test:all
+pnpm test:all
 ```
 
 **Advanced: Manual environment variables (if needed):**
 ```bash
-DATABASE_USERNAME=your_username DRIZZLE_DATABASE_NAME=annetatargalt_donations_test INTEGRATION_TESTS=true yarn test repositories
+DATABASE_USERNAME=your_username DRIZZLE_DATABASE_NAME=annetatargalt_donations_test INTEGRATION_TESTS=true pnpm test repositories
 ```
 
 ## What These Tests Cover
@@ -76,10 +76,10 @@ createdb annetatargalt_donations_test
 
 2. Apply schema:
 ```bash
-dotenv -e .env.test -- npx drizzle-kit push
+dotenv -e .env.test -- pnpm exec drizzle-kit push
 ```
 
 3. Run tests:
 ```bash
-yarn test:integration
+pnpm test:integration
 ```
