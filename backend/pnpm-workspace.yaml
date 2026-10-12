@@ -1,0 +1,48 @@
+# This project is not a workspace: pnpm reads its settings from this file.
+# `packages` lists only the project itself, so that a pnpm older than 10.12
+# (which refuses a workspace file without it) can still read this one and
+# hand over to the version pinned in package.json's `packageManager`.
+packages:
+  - "."
+
+# Install no version younger than a day. Most malicious releases are found and
+# pulled within hours. Setting it explicitly also makes it strict: a lockfile
+# entry younger than this fails the install instead of being let through.
+minimumReleaseAge: 1440
+
+# Fail if a release has weaker publishing provenance than an earlier one, the
+# signature of a hijacked maintainer account. Only releases from the last 30
+# days are checked: older ones predate the trust data and raise false alarms.
+trustPolicy: no-downgrade
+trustPolicyIgnoreAfter: 43200
+
+# Don't install packages that are only peer dependencies. yarn never did,
+# and Strapi doesn't need them: with this on, the deep-populate plugin's peer
+# @strapi/sdk-plugin would bring a plugin-development toolchain (~110
+# packages) into a server that never builds a plugin.
+autoInstallPeers: false
+
+# Strapi pins these exactly, at versions with security advisories that no
+# Strapi release has picked up yet. Each fix is a minor or patch bump within
+# the same major, so force it. Drop an entry once Strapi ships that version
+# or newer.
+# - nodemailer: @strapi/provider-email-nodemailer pins 9.0.1.
+# - axios, dompurify, markdown-it: bundled into Strapi's admin panel.
+# - sharp: @strapi/upload makes image thumbnails with it (librsvg CVE).
+overrides:
+  axios: ^1.20.0
+  dompurify: ^3.4.16
+  markdown-it: ^14.3.1
+  nodemailer: ^10.0.13
+  sharp: ^0.35.5
+
+# Dependencies' install scripts run only when listed here as true; an unlisted
+# one fails the install until someone decides. All three are denied, and the
+# admin panel builds and the server runs without them:
+# - @swc/core and esbuild check for their native binaries, which pnpm already
+#   installs as optional dependencies.
+# - core-js-pure prints a funding message.
+allowBuilds:
+  "@swc/core": false
+  core-js-pure: false
+  esbuild: false

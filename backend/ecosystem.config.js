@@ -15,10 +15,11 @@ function worker(name, port) {
   return {
     name,
 
-    // Run the Strapi binary directly instead of `yarn start`. The yarn wrapper
-    // cost ~35 MB of resident memory per worker for nothing, and — the part
-    // that actually mattered — PM2 signals the process it spawned, so SIGINT
-    // went to yarn, which forwards signals unreliably. kill_timeout would
+    // Run the Strapi binary directly instead of through the package manager
+    // (`pnpm start`, or `yarn start` before it). The wrapper cost ~35 MB of
+    // resident memory per worker for nothing, and — the part that actually
+    // mattered — PM2 signals the process it spawned, so SIGINT went to the
+    // wrapper, which forwards signals unreliably. kill_timeout would
     // expire and the worker was killed mid-request instead of draining.
     script: "node_modules/@strapi/strapi/bin/strapi.js",
     args: "start",

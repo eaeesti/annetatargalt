@@ -3,10 +3,10 @@
 Strapi v5 + TypeScript. Source in `src/`, compiled to `dist/`. Always edit `src/`.
 
 ```bash
-yarn develop          # compile + start dev server
-yarn type-check       # must pass (strict mode)
-yarn test:unit        # Vitest unit tests
-yarn test:integration # requires .env.test with DB credentials
+pnpm develop          # compile + start dev server
+pnpm type-check       # must pass (strict mode)
+pnpm test:unit        # Vitest unit tests
+pnpm test:integration # requires .env.test with DB credentials
 ```
 
 ## Source Layout

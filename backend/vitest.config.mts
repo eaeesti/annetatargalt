@@ -6,7 +6,7 @@ export default defineConfig({
     environment: "node",
     include: ["**/__tests__/**/*.test.{js,ts}"],
     // Skip repository integration tests by default (require database setup)
-    // Run with: INTEGRATION_TESTS=true yarn test to include them
+    // Run with: INTEGRATION_TESTS=true pnpm test to include them
     exclude: [
       "**/node_modules/**",
       "**/dist/**",

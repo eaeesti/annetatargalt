@@ -2,7 +2,7 @@
  * Diagnose the Montonio payouts API used by the statement-import card-payout
  * resolution. Read-only. Run with the production environment loaded:
  *
- *   yarn montonio-payouts-check
+ *   pnpm montonio-payouts-check
  *
  * Prints the raw HTTP status + body for the payouts list and one payout's
  * order export, so a wrong base path / store UUID / auth is obvious.
