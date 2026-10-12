@@ -1,6 +1,10 @@
 import { format } from "@/utils/string";
 import CtaSection from "./CtaSection";
-import type { StrapiGlobal, StrapiOrganization, StrapiOrganizationCtaSection } from "@/types/generated/strapi";
+import type {
+  StrapiGlobal,
+  StrapiOrganization,
+  StrapiOrganizationCtaSection,
+} from "@/types/generated/strapi";
 
 interface OrganizationCtaSectionProps extends StrapiOrganizationCtaSection {
   entity: StrapiOrganization;

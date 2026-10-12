@@ -8,7 +8,11 @@ interface CtaSectionProps {
   buttons: StrapiButton[];
 }
 
-export default function CtaSection({ title, description, buttons }: CtaSectionProps) {
+export default function CtaSection({
+  title,
+  description,
+  buttons,
+}: CtaSectionProps) {
   return (
     <div className="bg-primary-800 text-white">
       <div className="px-4 py-24 sm:px-6 sm:py-32 lg:px-8">

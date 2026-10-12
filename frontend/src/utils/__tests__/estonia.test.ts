@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { validateIdCode, formatEstonianAmount, formatEstonianAmountWithCents } from "../estonia";
+import {
+  validateIdCode,
+  formatEstonianAmount,
+  formatEstonianAmountWithCents,
+} from "../estonia";
 
 describe("validateIdCode", () => {
   it("accepts valid Estonian ID codes", () => {

@@ -53,7 +53,9 @@ describe("OrganizationDonationsRepository", () => {
       expect(orgDonations[1].organizationInternalId).toBe("GD");
       expect(orgDonations[2].organizationInternalId).toBe("EV");
       expect(
-        orgDonations[0].amount + orgDonations[1].amount + orgDonations[2].amount
+        orgDonations[0].amount +
+          orgDonations[1].amount +
+          orgDonations[2].amount,
       ).toBe(6000);
     });
 
@@ -83,10 +85,10 @@ describe("OrganizationDonationsRepository", () => {
 
       expect(orgDonations).toHaveLength(2);
       expect(
-        orgDonations.find((od) => od.organizationInternalId === "AMF")
+        orgDonations.find((od) => od.organizationInternalId === "AMF"),
       ).toBeDefined();
       expect(
-        orgDonations.find((od) => od.organizationInternalId === "GD")
+        orgDonations.find((od) => od.organizationInternalId === "GD"),
       ).toBeDefined();
     });
 
@@ -123,7 +125,7 @@ describe("OrganizationDonationsRepository", () => {
 
       const orgDonations =
         await organizationDonationsRepository.findByOrganizationInternalId(
-          "AMF"
+          "AMF",
         );
 
       expect(orgDonations).toHaveLength(2);
@@ -149,24 +151,24 @@ describe("OrganizationDonationsRepository", () => {
         [
           { organizationInternalId: "GD", amount: 3000 },
           { organizationInternalId: "EV", amount: 2000 },
-        ]
+        ],
       );
 
       expect(updated).toHaveLength(2);
 
       // Verify old split is gone
       const allSplits = await organizationDonationsRepository.findByDonationId(
-        donation.id
+        donation.id,
       );
       expect(allSplits).toHaveLength(2);
       expect(
-        allSplits.find((od) => od.organizationInternalId === "AMF")
+        allSplits.find((od) => od.organizationInternalId === "AMF"),
       ).toBeUndefined();
       expect(
-        allSplits.find((od) => od.organizationInternalId === "GD")
+        allSplits.find((od) => od.organizationInternalId === "GD"),
       ).toBeDefined();
       expect(
-        allSplits.find((od) => od.organizationInternalId === "EV")
+        allSplits.find((od) => od.organizationInternalId === "EV"),
       ).toBeDefined();
     });
 
@@ -181,7 +183,7 @@ describe("OrganizationDonationsRepository", () => {
       await organizationDonationsRepository.updateForDonation(donation.id, []);
 
       const splits = await organizationDonationsRepository.findByDonationId(
-        donation.id
+        donation.id,
       );
       expect(splits).toEqual([]);
     });
@@ -204,7 +206,7 @@ describe("OrganizationDonationsRepository", () => {
       await organizationDonationsRepository.deleteByDonationId(donation.id);
 
       const remaining = await organizationDonationsRepository.findByDonationId(
-        donation.id
+        donation.id,
       );
       expect(remaining).toEqual([]);
     });
@@ -228,7 +230,7 @@ describe("OrganizationDonationsRepository", () => {
     it("should return false if organization has no donations", async () => {
       const hasDonations =
         await organizationDonationsRepository.organizationHasDonations(
-          "NONEXISTENT"
+          "NONEXISTENT",
         );
 
       expect(hasDonations).toBe(false);
@@ -250,7 +252,7 @@ describe("OrganizationDonationsRepository", () => {
       ]);
 
       const splits = await organizationDonationsRepository.findByDonationId(
-        donation.id
+        donation.id,
       );
       const totalSplit = splits.reduce((sum, split) => sum + split.amount, 0);
 
@@ -268,7 +270,7 @@ describe("OrganizationDonationsRepository", () => {
       ]);
 
       const splits = await organizationDonationsRepository.findByDonationId(
-        donation.id
+        donation.id,
       );
       const totalSplit = splits.reduce((sum, split) => sum + split.amount, 0);
 

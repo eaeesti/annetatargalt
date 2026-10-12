@@ -1,12 +1,17 @@
 import { getOrganizations } from "@/utils/strapi";
 import Organization from "../elements/Organization";
-import type { StrapiGlobal, StrapiOrganizationsSection } from "@/types/generated/strapi";
+import type {
+  StrapiGlobal,
+  StrapiOrganizationsSection,
+} from "@/types/generated/strapi";
 
 interface OrganizationsSectionProps extends StrapiOrganizationsSection {
   global: StrapiGlobal;
 }
 
-export default async function OrganizationsSection({ global }: OrganizationsSectionProps) {
+export default async function OrganizationsSection({
+  global,
+}: OrganizationsSectionProps) {
   const organizations = await getOrganizations();
 
   return (

@@ -27,9 +27,9 @@ These apply to both frontend and backend.
 - **Let TypeScript infer types** — avoid explicit type annotations where the type is already inferrable. Arrow function parameters especially should not have explicit types when inferable from context:
   ```ts
   // Good — type inferred from the array
-  people.every((p) => p.name === name)
+  people.every((p) => p.name === name);
   // Bad — unnecessary annotation
-  people.every((p: Person) => p.name === name)
+  people.every((p: Person) => p.name === name);
   ```
 - If you find yourself needing to annotate a callback parameter, that's a signal the source data structure lacks proper typing — fix the source type instead.
 - Avoid `as SomeType` assertions broadly, not just `as any` — they silence the compiler the same way. Prefer type guards or narrowing.

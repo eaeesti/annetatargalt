@@ -25,7 +25,11 @@ import CompanyInput from "../elements/forms/CompanyInput";
 import { usePlausible } from "next-plausible";
 import DedicationInput from "../elements/forms/DedicationInput";
 import PaymentMethodChooser from "../elements/forms/PaymentMethodChooser";
-import type { StrapiDonationSection, StrapiGlobal, StrapiPage } from "@/types/generated/strapi";
+import type {
+  StrapiDonationSection,
+  StrapiGlobal,
+  StrapiPage,
+} from "@/types/generated/strapi";
 
 interface DonationSectionProps extends StrapiDonationSection {
   global: StrapiGlobal;
@@ -67,10 +71,12 @@ export default function DonationSection(props: DonationSectionProps) {
   }
 
   const amounts = [props.amount1, props.amount2, props.amount3];
-  const amountOptions = amounts.filter((a): a is number => a !== null).map((amount) => ({
-    value: amount,
-    label: `${amount}${props.global.currency}`,
-  }));
+  const amountOptions = amounts
+    .filter((a): a is number => a !== null)
+    .map((amount) => ({
+      value: amount,
+      label: `${amount}${props.global.currency}`,
+    }));
   const typeParam = searchParams.get("type");
   const orgParam = searchParams.get("org");
 
@@ -430,10 +436,12 @@ export default function DonationSection(props: DonationSectionProps) {
         </div>
       )}
       {donated && (
-        <div className="flex max-w-lg flex-col gap-4 bg-white px-4 py-24 xs:rounded-2xl xs:px-12 xs:py-12 ">
+        <div className="flex max-w-lg flex-col gap-4 bg-white px-4 py-24 xs:rounded-2xl xs:px-12 xs:py-12">
           <Markdown className="prose prose-primary w-full">
             {format(props.recurringDonationGuide ?? "", {
-              amount: formatEstonianAmount(totalAmount) + (props.global.currency ?? ""),
+              amount:
+                formatEstonianAmount(totalAmount) +
+                (props.global.currency ?? ""),
             })}
           </Markdown>
         </div>

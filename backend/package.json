@@ -68,8 +68,8 @@
   "engines": {
     "node": ">=20.0.0 <=26.x.x"
   },
+  "packageManager": "pnpm@12.11.2",
   "strapi": {
     "uuid": "4e1433a7-7cec-47f0-9d05-3adba2a434bd"
-  },
-  "packageManager": "pnpm@12.11.2"
+  }
 }

@@ -41,7 +41,8 @@ export function buildMetadata(
 
   return {
     title,
-    description: pageMetadata.description ?? globalMetadata?.description ?? null,
+    description:
+      pageMetadata.description ?? globalMetadata?.description ?? null,
     openGraph,
     icons,
   };

@@ -5,6 +5,7 @@ A custom Strapi plugin that manages all donation-related functionality using Dri
 ## Overview
 
 This plugin handles:
+
 - **Donation processing** - Creating and managing donations via Drizzle ORM
 - **Donor management** - Tracking donor information
 - **Organization donations** - Splitting donations across multiple organizations
@@ -14,11 +15,13 @@ This plugin handles:
 ## Architecture
 
 **Data Layer:**
+
 - All donation data stored in separate Drizzle database (PostgreSQL)
 - Organizations/causes remain in Strapi CMS
 - Cross-system linking via `organization.internalId`
 
 **API Structure (Hybrid Approach):**
+
 - **Plugin**: Controllers and services with proper dependency injection at `src/plugins/donations/`
 - **Proxy Controllers**: Thin wrappers at `src/api/donation/controllers/` that delegate to plugin
 - **Routes**: Defined in `src/api/donation/routes/custom-donation-routes.js` for `/api/*` backward compatibility
@@ -31,6 +34,7 @@ This hybrid approach maintains backward-compatible URLs (`/api/*`) while using p
 All endpoints use the `/api/` prefix (backward compatible with existing frontend):
 
 ### Public Endpoints
+
 - `POST /api/donate` - Create new donation
 - `POST /api/donateExternal` - External donation flow
 - `POST /api/donateForeign` - Foreign donations
@@ -39,6 +43,7 @@ All endpoints use the `/api/` prefix (backward compatible with existing frontend
 - `GET /api/stats` - Public donation statistics
 
 ### Admin Endpoints (TODO: Add auth)
+
 - `POST /api/import` - Import donation data
 - `GET /api/export` - Export all donation data
 - `POST /api/deleteAll` - Delete all donations (requires confirmation)
@@ -54,13 +59,13 @@ All endpoints use the `/api/` prefix (backward compatible with existing frontend
 
 ```js
 // Get donation service
-const donationService = strapi.plugin('donations').service('donation');
+const donationService = strapi.plugin("donations").service("donation");
 
 // Create donation
 const result = await donationService.createDonation(donationData);
 
 // Get donor service
-const donorService = strapi.plugin('donations').service('donor');
+const donorService = strapi.plugin("donations").service("donor");
 
 // Find or create donor
 const donor = await donorService.findOrCreateDonor(donorData);
@@ -86,32 +91,34 @@ This plugin was migrated from the old `src/api/donation/` structure to provide:
 ### Key Changes
 
 **Before** (API structure):
+
 ```js
 // Controller in src/api/donation/controllers/donation.js
 module.exports = {
   async donate(ctx) {
     const strapi = global.strapi; // ❌ Anti-pattern
-    await strapi.service('api::donation.donation').method();
-  }
+    await strapi.service("api::donation.donation").method();
+  },
 };
 ```
 
 **After** (Plugin structure with proxy pattern):
+
 ```js
 // Plugin controller in src/plugins/donations/server/controllers/donation.js
 module.exports = ({ strapi }) => ({
   async donate(ctx) {
     // ✅ Strapi injected properly
-    await strapi.plugin('donations').service('donation').method();
-  }
+    await strapi.plugin("donations").service("donation").method();
+  },
 });
 
 // Proxy controller in src/api/donation/controllers/donation.js
 module.exports = {
   async donate(ctx) {
     // ✅ Delegates to plugin controller
-    return strapi.plugin('donations').controller('donation').donate(ctx);
-  }
+    return strapi.plugin("donations").controller("donation").donate(ctx);
+  },
 };
 
 // Routes in src/api/donation/routes/custom-donation-routes.js
@@ -132,6 +139,7 @@ module.exports = {
 ### 1. Verify Plugin Loads
 
 Start Strapi and check logs for:
+
 ```
 [INFO] Plugin: donations (loaded)
 ```
@@ -139,10 +147,11 @@ Start Strapi and check logs for:
 ### 2. Test Service Access
 
 In Strapi console or create test endpoint:
+
 ```js
-const donationService = strapi.plugin('donations').service('donation');
-console.log('Service loaded:', !!donationService);
-console.log('Methods:', Object.keys(donationService));
+const donationService = strapi.plugin("donations").service("donation");
+console.log("Service loaded:", !!donationService);
+console.log("Methods:", Object.keys(donationService));
 ```
 
 ### 3. Test Endpoints
@@ -160,6 +169,7 @@ curl -X POST http://localhost:1337/api/donate \
 ### 4. Verify Bootstrap Validation
 
 The bootstrap validation in `src/index.js` should still work:
+
 - Fresh installs allowed
 - Migrated installs verify Drizzle connection
 - Unmigrated installs blocked with error
@@ -174,6 +184,7 @@ The bootstrap validation in `src/index.js` should still work:
 ## Environment Variables
 
 Required for donation functionality:
+
 ```env
 DRIZZLE_DATABASE_NAME=your_donations_db
 DATABASE_HOST=localhost
@@ -194,12 +205,14 @@ DATABASE_PASSWORD=your_password
 ## Strapi v5 Compatibility
 
 This plugin structure is designed to be forward-compatible with Strapi v5:
+
 - Uses proper dependency injection
 - No reliance on global state
 - Clean API boundaries
 - Standard plugin structure
 
 When upgrading to Strapi v5:
+
 1. Update plugin structure if needed (ESM, etc.)
 2. Test all endpoints
 3. Verify Drizzle compatibility

@@ -62,9 +62,9 @@ export function AppSidebar({ user }: { user: User | null }) {
           })}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="border-t px-3 py-3 gap-2">
+      <SidebarFooter className="gap-2 border-t px-3 py-3">
         {displayName && (
-          <p className="text-xs text-muted-foreground truncate px-1">
+          <p className="truncate px-1 text-xs text-muted-foreground">
             {displayName}
           </p>
         )}

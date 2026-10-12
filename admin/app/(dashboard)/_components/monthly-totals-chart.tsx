@@ -111,9 +111,9 @@ export function MonthlyTotalsChart({ data }: { data: MonthlyTotalsRow[] }) {
   const tickInterval = Math.max(0, Math.ceil(chartData.length / 8) - 1);
 
   return (
-    <div className="rounded-lg border bg-card p-5 space-y-3">
+    <div className="space-y-3 rounded-lg border bg-card p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+        <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
           {TITLE[granularity]} ({WINDOW_LABEL[granularity]})
         </h2>
         <div className="flex gap-1">

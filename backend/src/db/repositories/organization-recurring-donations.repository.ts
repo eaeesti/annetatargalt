@@ -3,7 +3,7 @@ import { db, type Database } from "../client";
 import {
   organizationRecurringDonations,
   type OrganizationRecurringDonation,
-  type NewOrganizationRecurringDonation
+  type NewOrganizationRecurringDonation,
 } from "../schema";
 
 export class OrganizationRecurringDonationsRepository {
@@ -26,11 +26,13 @@ export class OrganizationRecurringDonationsRepository {
   /**
    * Find organization recurring donations by recurring donation ID
    */
-  async findByRecurringDonationId(recurringDonationId: number): Promise<OrganizationRecurringDonation[]> {
+  async findByRecurringDonationId(
+    recurringDonationId: number,
+  ): Promise<OrganizationRecurringDonation[]> {
     return this.database.query.organizationRecurringDonations.findMany({
       where: eq(
         organizationRecurringDonations.recurringDonationId,
-        recurringDonationId
+        recurringDonationId,
       ),
     });
   }
@@ -38,11 +40,13 @@ export class OrganizationRecurringDonationsRepository {
   /**
    * Find organization recurring donations by organization internal ID
    */
-  async findByOrganizationInternalId(organizationInternalId: string): Promise<OrganizationRecurringDonation[]> {
+  async findByOrganizationInternalId(
+    organizationInternalId: string,
+  ): Promise<OrganizationRecurringDonation[]> {
     return this.database.query.organizationRecurringDonations.findMany({
       where: eq(
         organizationRecurringDonations.organizationInternalId,
-        organizationInternalId
+        organizationInternalId,
       ),
     });
   }
@@ -50,21 +54,29 @@ export class OrganizationRecurringDonationsRepository {
   /**
    * Create organization recurring donations (junction records)
    */
-  async createMany(data: NewOrganizationRecurringDonation[]): Promise<OrganizationRecurringDonation[]> {
+  async createMany(
+    data: NewOrganizationRecurringDonation[],
+  ): Promise<OrganizationRecurringDonation[]> {
     if (data.length === 0) return [];
 
-    return this.database.insert(organizationRecurringDonations).values(data).returning();
+    return this.database
+      .insert(organizationRecurringDonations)
+      .values(data)
+      .returning();
   }
 
   /**
    * Create a single organization recurring donation
    */
-  async create(data: NewOrganizationRecurringDonation): Promise<OrganizationRecurringDonation> {
+  async create(
+    data: NewOrganizationRecurringDonation,
+  ): Promise<OrganizationRecurringDonation> {
     const [orgRecurringDonation] = await this.database
       .insert(organizationRecurringDonations)
       .values(data)
       .returning();
-    if (!orgRecurringDonation) throw new Error("Failed to insert organization recurring donation");
+    if (!orgRecurringDonation)
+      throw new Error("Failed to insert organization recurring donation");
     return orgRecurringDonation;
   }
 
@@ -74,7 +86,7 @@ export class OrganizationRecurringDonationsRepository {
    */
   async updateForRecurringDonation(
     recurringDonationId: number,
-    data: Omit<NewOrganizationRecurringDonation, "recurringDonationId">[]
+    data: Omit<NewOrganizationRecurringDonation, "recurringDonationId">[],
   ): Promise<OrganizationRecurringDonation[]> {
     // Delete existing
     await this.database
@@ -82,8 +94,8 @@ export class OrganizationRecurringDonationsRepository {
       .where(
         eq(
           organizationRecurringDonations.recurringDonationId,
-          recurringDonationId
-        )
+          recurringDonationId,
+        ),
       );
 
     // Create new ones
@@ -93,34 +105,39 @@ export class OrganizationRecurringDonationsRepository {
       data.map((item) => ({
         recurringDonationId,
         ...item,
-      }))
+      })),
     );
   }
 
   /**
    * Delete organization recurring donations by recurring donation ID
    */
-  async deleteByRecurringDonationId(recurringDonationId: number): Promise<void> {
+  async deleteByRecurringDonationId(
+    recurringDonationId: number,
+  ): Promise<void> {
     await this.database
       .delete(organizationRecurringDonations)
       .where(
         eq(
           organizationRecurringDonations.recurringDonationId,
-          recurringDonationId
-        )
+          recurringDonationId,
+        ),
       );
   }
 
   /**
    * Check if an organization has any recurring donations
    */
-  async organizationHasRecurringDonations(organizationInternalId: string): Promise<boolean> {
-    const result = await this.database.query.organizationRecurringDonations.findFirst({
-      where: eq(
-        organizationRecurringDonations.organizationInternalId,
-        organizationInternalId
-      ),
-    });
+  async organizationHasRecurringDonations(
+    organizationInternalId: string,
+  ): Promise<boolean> {
+    const result =
+      await this.database.query.organizationRecurringDonations.findFirst({
+        where: eq(
+          organizationRecurringDonations.organizationInternalId,
+          organizationInternalId,
+        ),
+      });
     return !!result;
   }
 }

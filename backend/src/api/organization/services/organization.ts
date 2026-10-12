@@ -21,7 +21,11 @@ export default factories.createCoreService(
       return null;
     },
 
-    async findOrCreateOrganization(organization: { title: string; internalId: string; [key: string]: unknown }) {
+    async findOrCreateOrganization(organization: {
+      title: string;
+      internalId: string;
+      [key: string]: unknown;
+    }) {
       const organizationEntry = await this.findOrganization(organization.title);
 
       if (organizationEntry) {
@@ -36,5 +40,5 @@ export default factories.createCoreService(
 
       return newOrganizationEntry;
     },
-  })
+  }),
 );

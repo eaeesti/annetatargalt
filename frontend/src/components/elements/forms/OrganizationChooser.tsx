@@ -10,7 +10,10 @@ import CheckboxInput from "./CheckboxInput";
 import type { StrapiCause } from "@/types/generated/strapi";
 import Proportions from "@/utils/proportions";
 
-interface ProportionSliderProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onMouseUp" | "min" | "max"> {
+interface ProportionSliderProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "value" | "onMouseUp" | "min" | "max"
+> {
   lockText: string | null;
   proportion: number;
   setProportion: (value: number) => void;
@@ -79,7 +82,7 @@ export default function OrganizationChooser({
 }: OrganizationChooserProps) {
   return (
     <fieldset>
-      <legend className="my-6 block text-xl font-semibold leading-6 tracking-tight text-primary-700 ">
+      <legend className="my-6 block text-xl font-semibold leading-6 tracking-tight text-primary-700">
         {chooseOrganizationsText}
       </legend>
       <div className="flex flex-col gap-10">
@@ -132,7 +135,7 @@ export default function OrganizationChooser({
                   }
                   aria-labelledby={`cause${cause.id}`}
                 />
-                <Disclosure.Panel className="flex w-full flex-col gap-6  rounded-xl bg-slate-50 px-6 py-8 shadow-lg shadow-slate-200">
+                <Disclosure.Panel className="flex w-full flex-col gap-6 rounded-xl bg-slate-50 px-6 py-8 shadow-lg shadow-slate-200">
                   <CheckboxInput
                     name={`cause${cause.id}fund`}
                     value={proportions.goesToFund(cause.id) ?? false}
@@ -150,8 +153,12 @@ export default function OrganizationChooser({
                       "flex flex-col gap-6",
                     )}
                   >
-                    {cause.organizations.filter((org): org is typeof org & { internalId: string } => org.internalId !== null).map(
-                      (organization) => (
+                    {cause.organizations
+                      .filter(
+                        (org): org is typeof org & { internalId: string } =>
+                          org.internalId !== null,
+                      )
+                      .map((organization) => (
                         <div
                           key={organization.id}
                           className="flex flex-col gap-4"
@@ -215,8 +222,7 @@ export default function OrganizationChooser({
                             disabled={proportions.goesToFund(cause.id) ?? false}
                           />
                         </div>
-                      ),
-                    )}
+                      ))}
                   </div>
                 </Disclosure.Panel>
               </div>

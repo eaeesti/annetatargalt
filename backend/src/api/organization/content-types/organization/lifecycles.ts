@@ -17,7 +17,7 @@ async function guardAgainstDelete(internalId: string): Promise<void> {
 
   if (odResult.count > 0) {
     throw new Error(
-      `Cannot delete organization "${internalId}": it has ${odResult.count} donation(s) linked to it. Deactivate it instead.`
+      `Cannot delete organization "${internalId}": it has ${odResult.count} donation(s) linked to it. Deactivate it instead.`,
     );
   }
 
@@ -25,12 +25,12 @@ async function guardAgainstDelete(internalId: string): Promise<void> {
     .select({ count: sql<number>`count(*)::int` })
     .from(organizationRecurringDonations)
     .where(
-      eq(organizationRecurringDonations.organizationInternalId, internalId)
+      eq(organizationRecurringDonations.organizationInternalId, internalId),
     );
 
   if (ordResult.count > 0) {
     throw new Error(
-      `Cannot delete organization "${internalId}": it has ${ordResult.count} recurring donation(s) linked to it. Deactivate it instead.`
+      `Cannot delete organization "${internalId}": it has ${ordResult.count} recurring donation(s) linked to it. Deactivate it instead.`,
     );
   }
 }
@@ -44,7 +44,8 @@ export default {
     const organization = await strapi
       .documents("api::organization.organization")
       .findOne({
-        documentId: (event.params.where.documentId || event.params.where.id) as string,
+        documentId: (event.params.where.documentId ||
+          event.params.where.id) as string,
         fields: ["internalId"],
       });
 

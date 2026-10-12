@@ -47,7 +47,7 @@ export function validateIdCode(idCode: string): boolean {
  */
 export function validateEmail(string: string): boolean {
   const emailRegex = new RegExp(
-    /^(([^<>()[\]\\.,;:\s@"]+(.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@(([[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}])|(([a-zA-Z-0-9]+.)+[a-zA-Z]{2,}))$/
+    /^(([^<>()[\]\\.,;:\s@"]+(.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@(([[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}])|(([a-zA-Z-0-9]+.)+[a-zA-Z]{2,}))$/,
   );
   return emailRegex.test(string);
 }
@@ -59,18 +59,18 @@ export function validateEmail(string: string): boolean {
 export function resizeOrganizationDonations(
   organizationDonations: OrganizationDonation[],
   multiplier: number,
-  expectedTotal: number
+  expectedTotal: number,
 ): OrganizationDonation[] {
   const resizedOrganizationDonations = organizationDonations.map(
     (organizationDonation) => {
       const amount = Math.round(organizationDonation.amount * multiplier);
       return { ...organizationDonation, amount };
-    }
+    },
   );
 
   const resizedTotal = resizedOrganizationDonations.reduce(
     (prev, cur) => prev + cur.amount,
-    0
+    0,
   );
 
   if (resizedTotal !== expectedTotal) {

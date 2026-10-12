@@ -8,11 +8,9 @@ export default factories.createCoreService(
   "api::cause.cause",
   ({ strapi }) => ({
     async findCause(causeTitle: string) {
-      const causeEntries = await strapi
-        .documents("api::cause.cause")
-        .findMany({
-          filters: { title: causeTitle },
-        });
+      const causeEntries = await strapi.documents("api::cause.cause").findMany({
+        filters: { title: causeTitle },
+      });
 
       if (causeEntries.length > 0) {
         return causeEntries[0];
@@ -34,5 +32,5 @@ export default factories.createCoreService(
 
       return newCauseEntry;
     },
-  })
+  }),
 );

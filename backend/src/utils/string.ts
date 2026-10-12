@@ -2,7 +2,10 @@
  * Construct a URL with query parameters.
  * Spaces are converted to %20.
  */
-export function urlWithParams(url: string, params: Record<string, string | number>): string {
+export function urlWithParams(
+  url: string,
+  params: Record<string, string | number>,
+): string {
   const paramsString = Object.entries(params)
     .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
     .join("&");
@@ -17,7 +20,7 @@ export function urlWithParams(url: string, params: Record<string, string | numbe
 export function format(string: string, values: Record<string, string>): string {
   return Object.entries(values).reduce(
     (previous, [key, value]) => previous.replace("<%= " + key + " %>", value),
-    string
+    string,
   );
 }
 

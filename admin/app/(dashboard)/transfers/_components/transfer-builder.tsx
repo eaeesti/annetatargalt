@@ -60,8 +60,8 @@ export function TransferBuilder({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border bg-card p-5 space-y-3">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+      <div className="space-y-3 rounded-lg border bg-card p-5">
+        <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
           Seed from a date range
         </h2>
         <CandidatePicker
@@ -122,8 +122,8 @@ export function TransferBuilder({
       </div>
 
       {chosen.length > 0 && (
-        <div className="rounded-lg border bg-card p-5 space-y-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+        <div className="space-y-3 rounded-lg border bg-card p-5">
+          <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
             Create the round
           </h2>
           <div className="flex flex-wrap items-end gap-3">

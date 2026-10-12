@@ -19,7 +19,10 @@ export function at<V>(object: Record<string, V>, keys: string[]): V[] {
  * @example
  * pick({ a: 1, b: 2, c: 3 }, ["a", "c"]); // { a: 1, c: 3 }
  */
-export function pick<V>(object: Record<string, V>, keys: string[]): Record<string, V> {
+export function pick<V>(
+  object: Record<string, V>,
+  keys: string[],
+): Record<string, V> {
   return Object.keys(object)
     .filter((key) => keys.includes(key))
     .reduce<Record<string, V>>((obj, key) => {

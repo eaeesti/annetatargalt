@@ -17,7 +17,7 @@ export default function HeroSection({
         priority
       />
       <div className="absolute inset-0 -z-10 h-full bg-primary-950/70"></div>
-      <div className="mx-auto flex h-full max-w-6xl flex-col items-center  justify-center xl:items-start">
+      <div className="mx-auto flex h-full max-w-6xl flex-col items-center justify-center xl:items-start">
         <div className="min-h-full max-w-2xl px-4 xl:w-1/2 xl:px-0">
           <div className="flex min-h-full flex-col items-center justify-center text-center xl:items-start xl:text-left">
             <h1 className="text-4xl font-bold tracking-tight text-white [text-wrap:balance] sm:text-6xl">

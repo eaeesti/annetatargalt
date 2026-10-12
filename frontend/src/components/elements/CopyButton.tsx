@@ -30,9 +30,17 @@ export default function CopyButton({
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(textToCopy);
-      setModalData({ icon: "success", title: copiedText ?? "", description: textToCopy });
+      setModalData({
+        icon: "success",
+        title: copiedText ?? "",
+        description: textToCopy,
+      });
     } catch {
-      setModalData({ icon: "error", title: "Copy failed", description: textToCopy });
+      setModalData({
+        icon: "error",
+        title: "Copy failed",
+        description: textToCopy,
+      });
     }
     setModalOpen(true);
   }

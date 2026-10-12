@@ -14,7 +14,13 @@ interface OrganizationDonationArrayEntry {
 }
 
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
-  async createOrganizationDonations({ donationId, amounts }: { donationId: number; amounts: AmountEntry[] }) {
+  async createOrganizationDonations({
+    donationId,
+    amounts,
+  }: {
+    donationId: number;
+    amounts: AmountEntry[];
+  }) {
     const organizationDonationsData = await Promise.all(
       amounts.map(async ({ organizationId, amount }) => {
         const organization = await strapi
@@ -26,7 +32,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
         if (!organization || !organization.internalId) {
           throw new Error(
-            `Organization ${organizationId} not found or missing internalId`
+            `Organization ${organizationId} not found or missing internalId`,
           );
         }
 
@@ -35,10 +41,12 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
           organizationInternalId: organization.internalId,
           amount,
         };
-      })
+      }),
     );
 
-    return organizationDonationsRepository.createMany(organizationDonationsData);
+    return organizationDonationsRepository.createMany(
+      organizationDonationsData,
+    );
   },
 
   async createFromOrganizationRecurringDonations({
@@ -57,7 +65,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     const resizedOrganizationDonations = resizeOrganizationDonations(
       organizationRecurringDonations,
       donationMultiplier,
-      donationAmount
+      donationAmount,
     );
 
     const organizationDonationsData = resizedOrganizationDonations.map(
@@ -65,13 +73,21 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         donationId,
         organizationInternalId: orgDonation.organizationInternalId,
         amount: orgDonation.amount,
-      })
+      }),
     );
 
-    return organizationDonationsRepository.createMany(organizationDonationsData);
+    return organizationDonationsRepository.createMany(
+      organizationDonationsData,
+    );
   },
 
-  async createFromArray({ donationId, organizationDonations }: { donationId: number; organizationDonations: OrganizationDonationArrayEntry[] }) {
+  async createFromArray({
+    donationId,
+    organizationDonations,
+  }: {
+    donationId: number;
+    organizationDonations: OrganizationDonationArrayEntry[];
+  }) {
     const organizationDonationsData = await Promise.all(
       organizationDonations.map(async (organizationDonation) => {
         const organization = await strapi
@@ -83,7 +99,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
         if (!organization || !organization.internalId) {
           throw new Error(
-            `Organization ${organizationDonation.organization} not found or missing internalId`
+            `Organization ${organizationDonation.organization} not found or missing internalId`,
           );
         }
 
@@ -92,9 +108,11 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
           organizationInternalId: organization.internalId,
           amount: organizationDonation.amount,
         };
-      })
+      }),
     );
 
-    return organizationDonationsRepository.createMany(organizationDonationsData);
+    return organizationDonationsRepository.createMany(
+      organizationDonationsData,
+    );
   },
 });

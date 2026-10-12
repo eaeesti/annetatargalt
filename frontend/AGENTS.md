@@ -41,6 +41,7 @@ src/
 ## Path Alias
 
 `@/` maps to `src/`. Always use it for imports within `src/`:
+
 ```ts
 import { formatEstonianAmount } from "@/utils/estonia";
 ```
@@ -55,10 +56,11 @@ import { formatEstonianAmount } from "@/utils/estonia";
 Next.js App Router defaults to **server components**. Explicitly opt in to client rendering:
 
 ```tsx
-"use client";  // must be the very first line
+"use client"; // must be the very first line
 ```
 
 Rules:
+
 - Server components: `async function`, can `await` data fetches directly, no hooks.
 - Client components: `"use client"`, can use hooks (`useState`, `useEffect`, `useRouter`, SWR), no top-level `await`.
 - Sections that use state or event handlers are client components (`DonationSection`, etc.).
@@ -75,12 +77,14 @@ export default function MyComponent({ title, count }: MyComponentProps) {
 ```
 
 Props:
+
 - Define props as a named `interface` in the same file: `interface MyComponentProps { ... }`
 - Use destructuring in the function signature (not `props.foo` everywhere).
 - Strapi CMS fields are `string | null` — handle nulls at the component boundary with `??` fallbacks.
 - Children typed as `React.ReactNode`.
 
 Avoid:
+
 - `React.FC<Props>` — prefer explicit `function` declarations.
 - Inline prop types — use a named interface.
 - `props.something` style — destructure in the signature.
@@ -88,12 +92,14 @@ Avoid:
 ## Strapi API Layer (`utils/strapi.ts`)
 
 All Strapi fetches go through `fetchAPI(path, urlParamsObject, options)`. The CMS API is Strapi v5:
+
 - Collection types return `{ data: Item[] }` — always guard `response.data?.length`.
 - Single types return `{ data: Item }` — access as `response.data`.
 - Relations are returned as arrays directly (no `{ data: [...] }` wrapper on relations in v5).
 - All CMS fields are potentially `null` or `undefined` — type them accordingly.
 
 Define typed interfaces for Strapi responses rather than using `any`:
+
 ```ts
 interface StrapiPage {
   id: number;

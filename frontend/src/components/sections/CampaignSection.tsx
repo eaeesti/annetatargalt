@@ -50,7 +50,9 @@ interface CountdownProps {
 }
 
 function Countdown({ endDate, countdownText }: CountdownProps) {
-  const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(null);
+  const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(
+    null,
+  );
 
   useEffect(() => {
     const calculateTimeRemaining = () => {
@@ -143,7 +145,10 @@ export default function CampaignSection({
     amount = 0;
   }
 
-  const goal = goalsArray.find((g) => amount < g) ?? goalsArray[goalsArray.length - 1] ?? 0;
+  const goal =
+    goalsArray.find((g) => amount < g) ??
+    goalsArray[goalsArray.length - 1] ??
+    0;
   const percentage = (amount / goal) * 100;
 
   useEffect(() => {

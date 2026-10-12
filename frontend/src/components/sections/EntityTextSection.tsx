@@ -5,7 +5,10 @@ interface EntityTextSectionProps extends StrapiEntityTextSection {
   entity: Record<string, unknown>;
 }
 
-export default function EntityTextSection({ field, entity }: EntityTextSectionProps) {
+export default function EntityTextSection({
+  field,
+  entity,
+}: EntityTextSectionProps) {
   const text = field ? (entity[field] as string) : null;
   return <TextSection text={text} />;
 }

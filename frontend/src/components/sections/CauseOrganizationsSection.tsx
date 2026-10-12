@@ -1,5 +1,9 @@
 import Organization from "../elements/Organization";
-import type { StrapiCause, StrapiCauseOrganizationsSection, StrapiGlobal } from "@/types/generated/strapi";
+import type {
+  StrapiCause,
+  StrapiCauseOrganizationsSection,
+  StrapiGlobal,
+} from "@/types/generated/strapi";
 
 interface CauseOrganizationsSectionProps extends StrapiCauseOrganizationsSection {
   entity: StrapiCause;

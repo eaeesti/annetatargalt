@@ -7,7 +7,10 @@ import Button from "../elements/Button";
 import { getStrapiURL } from "@/utils/strapi";
 import Modal from "../Modal";
 import type { ModalData } from "../Modal";
-import type { StrapiContactSection, StrapiGlobal } from "@/types/generated/strapi";
+import type {
+  StrapiContactSection,
+  StrapiGlobal,
+} from "@/types/generated/strapi";
 
 interface ContactSectionProps extends StrapiContactSection {
   global: StrapiGlobal;

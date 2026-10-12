@@ -42,7 +42,11 @@ export function ActiveDonorsChart({ data }: { data: ActiveDonorsRow[] }) {
           allowDecimals={false}
         />
         <ChartTooltip
-          content={<ChartTooltipContent labelFormatter={(l: unknown) => shortMonth(String(l))} />}
+          content={
+            <ChartTooltipContent
+              labelFormatter={(l: unknown) => shortMonth(String(l))}
+            />
+          }
         />
         <Line
           type="monotone"

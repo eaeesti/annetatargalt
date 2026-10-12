@@ -14,7 +14,12 @@ interface SummaryProps {
   totalAmount: number;
 }
 
-export default function Summary({ summary, currency, totalText, totalAmount }: SummaryProps) {
+export default function Summary({
+  summary,
+  currency,
+  totalText,
+  totalAmount,
+}: SummaryProps) {
   return (
     <dl className="w-full divide-y divide-slate-200 text-sm">
       {summary.map((row, index) => (

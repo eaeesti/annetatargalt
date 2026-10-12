@@ -20,7 +20,7 @@ export function InfoTooltip({ text }: { text: string }) {
             </span>
           }
         />
-        <TooltipContent className="max-w-64 text-wrap normal-case font-normal tracking-normal">
+        <TooltipContent className="max-w-64 font-normal tracking-normal text-wrap normal-case">
           {text}
         </TooltipContent>
       </Tooltip>

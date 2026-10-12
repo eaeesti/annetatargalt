@@ -1,4 +1,10 @@
-const icons: Record<string, { name: string; icon: (props: React.SVGProps<SVGSVGElement>) => React.ReactElement }> = {
+const icons: Record<
+  string,
+  {
+    name: string;
+    icon: (props: React.SVGProps<SVGSVGElement>) => React.ReactElement;
+  }
+> = {
   facebook: {
     name: "Facebook",
     icon: (props) => (

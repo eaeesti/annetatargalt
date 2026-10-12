@@ -8,7 +8,12 @@ interface ImageProps {
   priority?: boolean;
 }
 
-export default function Image({ data, className, fill = false, priority = false }: ImageProps) {
+export default function Image({
+  data,
+  className,
+  fill = false,
+  priority = false,
+}: ImageProps) {
   // In Strapi v5, media is returned flat (not nested under data.attributes)
   const image = data;
 

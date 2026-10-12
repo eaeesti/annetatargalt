@@ -12,13 +12,18 @@ import { makeForeignDonationRequest } from "@/utils/donation";
 import Modal from "../Modal";
 import type { ModalData } from "../Modal";
 import { useRouter } from "next/navigation";
-import type { StrapiGlobal, StrapiForeignDonationSection } from "@/types/generated/strapi";
+import type {
+  StrapiGlobal,
+  StrapiForeignDonationSection,
+} from "@/types/generated/strapi";
 
 interface ForeignDonationSectionProps extends StrapiForeignDonationSection {
   global: StrapiGlobal;
 }
 
-export default function ForeignDonationSection(props: ForeignDonationSectionProps) {
+export default function ForeignDonationSection(
+  props: ForeignDonationSectionProps,
+) {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState<ModalData>({});
@@ -29,10 +34,12 @@ export default function ForeignDonationSection(props: ForeignDonationSectionProp
   }
 
   const amounts = [props.amount1, props.amount2, props.amount3];
-  const amountOptions = amounts.filter((a): a is number => a !== null).map((amount) => ({
-    value: amount,
-    label: `${amount}${props.global.currency}`,
-  }));
+  const amountOptions = amounts
+    .filter((a): a is number => a !== null)
+    .map((amount) => ({
+      value: amount,
+      label: `${amount}${props.global.currency}`,
+    }));
 
   const [donation, setDonation] = useState({
     amount: amountOptions[1]?.value ?? amountOptions[0]?.value ?? 0,

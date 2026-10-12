@@ -7,7 +7,7 @@ export default function OrganizationsLoading() {
       <PageTitle title="Organizations" />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 9 }).map((_, i) => (
-          <div key={i} className="rounded-lg border bg-card p-5 space-y-3">
+          <div key={i} className="space-y-3 rounded-lg border bg-card p-5">
             <div className="flex items-center gap-3">
               <Skeleton className="h-10 w-10 rounded" />
               <Skeleton className="h-4 flex-1" />

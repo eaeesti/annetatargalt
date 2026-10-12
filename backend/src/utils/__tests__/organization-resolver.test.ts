@@ -42,7 +42,7 @@ describe("OrganizationResolver", () => {
 
       expect(result).toEqual(mockOrg);
       expect(mockStrapi.documents).toHaveBeenCalledWith(
-        "api::organization.organization"
+        "api::organization.organization",
       );
       expect(mockStrapi._mockDocuments.findMany).toHaveBeenCalledWith({
         filters: { internalId: "AMF" },
@@ -81,7 +81,7 @@ describe("OrganizationResolver", () => {
 
       expect(result).toBeNull();
       expect(mockStrapi.documents).toHaveBeenCalledWith(
-        "api::organization.organization"
+        "api::organization.organization",
       );
       expect(mockStrapi._mockDocuments.findMany).toHaveBeenCalledWith({
         filters: { internalId: "NONEXISTENT" },
@@ -162,7 +162,7 @@ describe("OrganizationResolver", () => {
       expect(result.get("GD")).toEqual(mockOrgs[1]);
 
       expect(mockStrapi.documents).toHaveBeenCalledWith(
-        "api::organization.organization"
+        "api::organization.organization",
       );
       expect(mockStrapi._mockDocuments.findMany).toHaveBeenCalledWith({
         filters: { internalId: { $in: ["AMF", "GD"] } },
@@ -410,11 +410,11 @@ describe("OrganizationResolver", () => {
 
     it("should handle Strapi errors gracefully", async () => {
       mockStrapi._mockDocuments.findMany.mockRejectedValue(
-        new Error("Database connection failed")
+        new Error("Database connection failed"),
       );
 
       await expect(resolver.findByInternalId("AMF")).rejects.toThrow(
-        "Database connection failed"
+        "Database connection failed",
       );
     });
 
@@ -425,7 +425,7 @@ describe("OrganizationResolver", () => {
 
       expect(result).toBeNull();
       expect(mockStrapi.documents).toHaveBeenCalledWith(
-        "api::organization.organization"
+        "api::organization.organization",
       );
       expect(mockStrapi._mockDocuments.findMany).toHaveBeenCalledWith({
         filters: { internalId: "" },

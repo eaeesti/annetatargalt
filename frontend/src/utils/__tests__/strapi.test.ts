@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { getStrapiURL, snakeCaseToPascalCase, strapiSectionNameToReactComponentName } from "../strapi";
+import {
+  getStrapiURL,
+  snakeCaseToPascalCase,
+  strapiSectionNameToReactComponentName,
+} from "../strapi";
 
 describe("getStrapiURL", () => {
   it("returns base URL with empty path", () => {
@@ -28,12 +32,18 @@ describe("snakeCaseToPascalCase", () => {
 
 describe("strapiSectionNameToReactComponentName", () => {
   it("converts a Strapi component UID to a React component name", () => {
-    expect(strapiSectionNameToReactComponentName("sections.donation-section")).toBe("DonationSection");
+    expect(
+      strapiSectionNameToReactComponentName("sections.donation-section"),
+    ).toBe("DonationSection");
     expect(strapiSectionNameToReactComponentName("sections.hero")).toBe("Hero");
-    expect(strapiSectionNameToReactComponentName("sections.faq-section")).toBe("FaqSection");
+    expect(strapiSectionNameToReactComponentName("sections.faq-section")).toBe(
+      "FaqSection",
+    );
   });
 
   it("uses the part after the dot", () => {
-    expect(strapiSectionNameToReactComponentName("other-ns.my-component")).toBe("MyComponent");
+    expect(strapiSectionNameToReactComponentName("other-ns.my-component")).toBe(
+      "MyComponent",
+    );
   });
 });

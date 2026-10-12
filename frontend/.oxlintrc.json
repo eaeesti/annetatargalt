@@ -22,9 +22,7 @@
   },
   "overrides": [
     {
-      "files": [
-        "**/*.{js,jsx,mjs,ts,tsx,mts,cts}"
-      ],
+      "files": ["**/*.{js,jsx,mjs,ts,tsx,mts,cts}"],
       "rules": {
         "react/display-name": "error",
         "react/jsx-key": "error",
@@ -50,9 +48,7 @@
         "jsx-a11y/alt-text": [
           "warn",
           {
-            "elements": [
-              "img"
-            ]
+            "elements": ["img"]
           }
         ],
         "jsx-a11y/aria-props": "warn",
@@ -96,12 +92,7 @@
         "react/set-state-in-render": "error",
         "react/unsupported-syntax": "warn"
       },
-      "plugins": [
-        "react",
-        "nextjs",
-        "import",
-        "jsx-a11y"
-      ],
+      "plugins": ["react", "nextjs", "import", "jsx-a11y"],
       "env": {
         "browser": true,
         "node": true

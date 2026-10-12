@@ -77,8 +77,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border bg-card p-5 space-y-3">
-      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+    <div className="space-y-3 rounded-lg border bg-card p-5">
+      <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
         {title}
       </h2>
       {children}
@@ -118,7 +118,7 @@ export default async function DonorDetailPage({ params }: { params: Params }) {
   const { data: donor } = (await res.json()) as { data: DonorDetail };
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="max-w-3xl space-y-6">
       {/* Header */}
       <div className="space-y-1">
         <Link
@@ -198,13 +198,13 @@ export default async function DonorDetailPage({ params }: { params: Params }) {
               <Link
                 key={d.id}
                 href={`/donations/${d.id}`}
-                className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-muted/50 -mx-2"
+                className="-mx-2 flex items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-muted/50"
               >
                 <div className="flex items-center gap-3">
-                  <span className="font-mono text-xs text-muted-foreground w-14">
+                  <span className="w-14 font-mono text-xs text-muted-foreground">
                     #{d.id}
                   </span>
-                  <span className="text-muted-foreground whitespace-nowrap">
+                  <span className="whitespace-nowrap text-muted-foreground">
                     {formatDate(d.datetime, true)}
                   </span>
                   {d.finalized ? (
@@ -219,7 +219,7 @@ export default async function DonorDetailPage({ params }: { params: Params }) {
                 </div>
                 <div className="flex items-center gap-3">
                   {d.organizationDonations.length > 0 && (
-                    <span className="text-muted-foreground text-xs hidden sm:block truncate max-w-48">
+                    <span className="hidden max-w-48 truncate text-xs text-muted-foreground sm:block">
                       {d.organizationDonations
                         .map(
                           (od) =>

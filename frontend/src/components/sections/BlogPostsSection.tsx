@@ -1,14 +1,21 @@
 import Anchor from "../elements/Anchor";
 import Image from "../elements/Image";
 import { getBlogPosts } from "@/utils/strapi";
-import type { StrapiBlogPostsSection, StrapiGlobal, StrapiPage } from "@/types/generated/strapi";
+import type {
+  StrapiBlogPostsSection,
+  StrapiGlobal,
+  StrapiPage,
+} from "@/types/generated/strapi";
 
 interface BlogPostsSectionProps extends StrapiBlogPostsSection {
   global: StrapiGlobal;
   page: StrapiPage;
 }
 
-export default async function BlogPostsSection({ global, page }: BlogPostsSectionProps) {
+export default async function BlogPostsSection({
+  global,
+  page,
+}: BlogPostsSectionProps) {
   const blogPosts = await getBlogPosts();
 
   return (
@@ -27,11 +34,14 @@ export default async function BlogPostsSection({ global, page }: BlogPostsSectio
                 </div>
                 {post.date && (
                   <time dateTime={post.date} className="text-xs text-slate-500">
-                    {new Date(post.date).toLocaleDateString(global.dateLocale ?? undefined, {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
+                    {new Date(post.date).toLocaleDateString(
+                      global.dateLocale ?? undefined,
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      },
+                    )}
                   </time>
                 )}
                 <div className="flex flex-col gap-4">
@@ -48,9 +58,7 @@ export default async function BlogPostsSection({ global, page }: BlogPostsSectio
                       <div className="font-semibold text-slate-900">
                         {post.author.name}
                       </div>
-                      <div className="text-slate-600">
-                        {post.author.role}
-                      </div>
+                      <div className="text-slate-600">{post.author.role}</div>
                     </div>
                   </div>
                 )}

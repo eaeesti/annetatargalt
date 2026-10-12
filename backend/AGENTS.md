@@ -29,19 +29,23 @@ src/
 ## CRITICAL: Donations Plugin Path
 
 `config/plugins.js` must use the **dist** path:
+
 ```js
 donations: { enabled: true, resolve: "./dist/src/plugins/donations" }
 ```
+
 If changed to `./src/plugins/donations`, Strapi silently skips the plugin (no error thrown), `strapi.plugin("donations")` returns `undefined`, and all donation routes 500.
 
 ## Drizzle ORM
 
 Use singleton exports, not class constructors:
+
 ```ts
 import { donationsRepository } from "../db/repositories/donations.repository";
 ```
 
 Types come from the schema:
+
 ```ts
 import type { Donor, NewDonation } from "../db/schema";
 ```
@@ -49,11 +53,12 @@ import type { Donor, NewDonation } from "../db/schema";
 ## Plugin Access Pattern
 
 `strapi` is a globally declared constant (via `types/strapi-global.d.ts`) — no cast needed:
+
 ```ts
 // From API proxy controllers:
-strapi.plugin("donations").controller("donation").methodName(ctx)
+strapi.plugin("donations").controller("donation").methodName(ctx);
 // Services:
-strapi.plugin("donations").service("donation").methodName(args)
+strapi.plugin("donations").service("donation").methodName(args);
 ```
 
 ## TypeScript Conventions
