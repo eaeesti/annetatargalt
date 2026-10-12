@@ -1,0 +1,17 @@
+# This project is not a workspace: pnpm reads its settings from this file.
+# `packages` lists only the project itself, so that a pnpm older than 10.12
+# (which refuses a workspace file without it) can still read this one and
+# hand over to the version pinned in package.json's `packageManager`.
+packages:
+  - "."
+
+# Install no version younger than a day. Most malicious releases are found and
+# pulled within hours. Setting it explicitly also makes it strict: a lockfile
+# entry younger than this fails the install instead of being let through.
+minimumReleaseAge: 1440
+
+# Fail if a release has weaker publishing provenance than an earlier one, the
+# signature of a hijacked maintainer account. Only releases from the last 30
+# days are checked: older ones predate the trust data and raise false alarms.
+trustPolicy: no-downgrade
+trustPolicyIgnoreAfter: 43200

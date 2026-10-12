@@ -17,10 +17,10 @@ git clone https://github.com/eaeesti/annetatargalt.git
 cd annetatargalt
 ```
 
-2\. Run the setup command:
+2\. Install the dependencies of all three apps. You need Node.js 24 and pnpm; `corepack enable` provides the pnpm version pinned in each `package.json`.
 
 ```
-yarn setup
+pnpm install:all
 ```
 
 ### Backend
@@ -68,8 +68,8 @@ Fill in your Postgres connection details in `.env`.
 4\. Build and run Strapi:
 
 ```
-yarn build
-yarn develop
+pnpm build
+pnpm develop
 ```
 
 5\. Open `127.0.0.1:1337` and create your admin user.
@@ -82,7 +82,7 @@ On first startup, the bootstrap automatically:
 6\. Close Strapi and seed the data if you have it:
 
 ```
-yarn strapi import -f data.tar.gz
+pnpm strapi import -f data.tar.gz
 ```
 
 Read more about data importing and exporting: https://docs.strapi.io/dev-docs/data-management/import
@@ -93,7 +93,7 @@ The `frontend/.env` file is created automatically by the Strapi bootstrap on fir
 
 ### Admin panel
 
-The admin panel at `/admin` is a separate Next.js app running on port 3001. It is included in `yarn develop` and requires no additional setup.
+The admin panel at `/admin` is a separate Next.js app running on port 3001. It is included in `pnpm develop` and requires no additional setup.
 
 Log in using your Strapi admin credentials. On first login, a users-permissions account is automatically provisioned for you.
 
@@ -102,7 +102,7 @@ Log in using your Strapi admin credentials. On first login, a users-permissions 
 From the repository root:
 
 ```
-yarn develop
+pnpm develop
 ```
 
 This starts the frontend (port 3000), backend (port 1337), and admin panel (port 3001) concurrently.
