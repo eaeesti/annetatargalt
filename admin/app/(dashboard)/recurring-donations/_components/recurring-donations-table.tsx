@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import {
   type ColumnDef,
@@ -89,7 +89,6 @@ export function RecurringDonationsTable({
   sortDir,
 }: RecurringDonationsTableProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   function pushUrl(updates: Record<string, string | undefined>) {
     const sp = new URLSearchParams(window.location.search);
@@ -210,7 +209,7 @@ export function RecurringDonationsTable({
         ),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
     [sortBy, sortDir],
   );
 

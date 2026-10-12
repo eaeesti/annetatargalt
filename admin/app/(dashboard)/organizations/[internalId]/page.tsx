@@ -133,6 +133,7 @@ export default async function OrganizationDetailPage({
         </Link>
         <div className="flex items-center gap-3">
           {org.logo ? (
+            // oxlint-disable-next-line @next/next/no-img-element
             <img
               src={logoUrl(org.logo.url)}
               alt={org.logo.alternativeText ?? displayName}

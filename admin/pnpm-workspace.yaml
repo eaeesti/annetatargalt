@@ -17,11 +17,8 @@ trustPolicy: no-downgrade
 trustPolicyIgnoreAfter: 43200
 
 # Dependencies' install scripts run only when listed here as true; an unlisted
-# one fails the install until someone decides. Both of these are denied:
-# - msw (via the shadcn CLI) copies its service worker into a configured
-#   folder, and none is configured.
-# - unrs-resolver (via ESLint's import resolver) checks for its native binary,
-#   which pnpm already installs as an optional dependency.
+# one fails the install until someone decides. msw (via the shadcn CLI) is
+# denied: its script copies a service worker into a configured folder, and
+# none is configured.
 allowBuilds:
   msw: false
-  unrs-resolver: false

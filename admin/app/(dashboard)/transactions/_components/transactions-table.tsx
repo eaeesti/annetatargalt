@@ -2,11 +2,12 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Fragment, useState } from "react";
-import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "../../../../components/ui/button";
 import { Badge } from "../../../../components/ui/badge";
 import { Input } from "../../../../components/ui/input";
 import { EntityLink } from "../../../../components/entity-link";
+import { SortIcon } from "../../../../components/sort-icon";
 import { donationHref, transferHref } from "../../../../lib/entity-links";
 import {
   FilterBuilder,
@@ -145,16 +146,6 @@ export function TransactionsTable({
     }
   }
 
-  function SortIcon({ col }: { col: string }) {
-    if (sortBy !== col)
-      return <ChevronsUpDown className="ml-1 inline h-3 w-3 opacity-40" />;
-    return sortDir === "asc" ? (
-      <ChevronUp className="ml-1 inline h-3 w-3" />
-    ) : (
-      <ChevronDown className="ml-1 inline h-3 w-3" />
-    );
-  }
-
   async function toggleRow(row: BankTransactionRow) {
     const code = row.archivingCode;
     if (expanded === code) {
@@ -281,23 +272,35 @@ export function TransactionsTable({
             <TableRow>
               <TableHead className="w-6" />
               <TableHead>
-                <button onClick={() => handleSort("date")}>
-                  Date <SortIcon col="date" />
+                <button
+                  className="inline-flex items-center"
+                  onClick={() => handleSort("date")}
+                >
+                  Date <SortIcon col="date" sortBy={sortBy} sortDir={sortDir} />
                 </button>
               </TableHead>
               <TableHead>
-                <button onClick={() => handleSort("counterpartyName")}>
-                  Counterparty <SortIcon col="counterpartyName" />
+                <button
+                  className="inline-flex items-center"
+                  onClick={() => handleSort("counterpartyName")}
+                >
+                  Counterparty <SortIcon col="counterpartyName" sortBy={sortBy} sortDir={sortDir} />
                 </button>
               </TableHead>
               <TableHead className="text-right">
-                <button onClick={() => handleSort("amount")}>
-                  Amount <SortIcon col="amount" />
+                <button
+                  className="inline-flex items-center"
+                  onClick={() => handleSort("amount")}
+                >
+                  Amount <SortIcon col="amount" sortBy={sortBy} sortDir={sortDir} />
                 </button>
               </TableHead>
               <TableHead>
-                <button onClick={() => handleSort("category")}>
-                  Category <SortIcon col="category" />
+                <button
+                  className="inline-flex items-center"
+                  onClick={() => handleSort("category")}
+                >
+                  Category <SortIcon col="category" sortBy={sortBy} sortDir={sortDir} />
                 </button>
               </TableHead>
               <TableHead className="text-right">Donations</TableHead>

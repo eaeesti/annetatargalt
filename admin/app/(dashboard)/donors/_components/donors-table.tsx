@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   type ColumnDef,
   type SortingState,
@@ -206,7 +206,7 @@ export function DonorsTable({
         ),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
     [sortBy, sortDir],
   );
 

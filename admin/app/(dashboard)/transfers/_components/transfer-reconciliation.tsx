@@ -120,7 +120,7 @@ export function TransferReconciliation({
       return merged;
     });
     seenServerNotes.current = serverNotes;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [linkedSig]);
 
   async function saveNote(code: string, original: string) {

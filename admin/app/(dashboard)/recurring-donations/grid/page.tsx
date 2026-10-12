@@ -95,6 +95,9 @@ export default async function RecurringGridPage({
   const { data: rows }: { data: GridRow[] } = await res.json();
 
   // For "all": span from the earliest startMonth across all rows to now
+  // An async server component renders once per request, so reading the clock
+  // here is not the impure render the React Compiler rule warns about.
+  // oxlint-disable-next-line react/purity
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
