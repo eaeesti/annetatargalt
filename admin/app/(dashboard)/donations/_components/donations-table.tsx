@@ -354,7 +354,7 @@ export function DonationsTable({
           ),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
     [orgNames, sortBy, sortDir],
   );
 

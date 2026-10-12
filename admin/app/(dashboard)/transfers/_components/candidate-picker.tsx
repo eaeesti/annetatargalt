@@ -71,7 +71,7 @@ export function CandidatePicker({
   useEffect(() => {
     onChange?.(chosen);
     // only the selection drives this; onChange identity is the parent's concern
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [chosen]);
 
   async function load() {

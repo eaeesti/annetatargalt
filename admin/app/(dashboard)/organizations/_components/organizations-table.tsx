@@ -154,7 +154,7 @@ export function OrganizationsTable({ data }: { data: OrganizationRow[] }) {
         meta: { className: "w-12" },
         cell: ({ row }) =>
           row.original.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
+            // oxlint-disable-next-line @next/next/no-img-element
             <img
               src={row.original.logoUrl}
               alt={row.original.logoAlt ?? row.original.title ?? ""}
@@ -282,7 +282,7 @@ export function OrganizationsTable({ data }: { data: OrganizationRow[] }) {
     ];
     // sortProps is rebuilt every render but derives only from these two, so
     // they are the real dependencies.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [sortBy, sortDir]);
 
   const table = useReactTable({
