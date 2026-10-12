@@ -3,10 +3,10 @@
 Next.js (App Router) + TypeScript. Source in `src/`.
 
 ```bash
-yarn develop    # Next.js dev server on port 3000
-yarn build      # production build
-yarn lint       # ESLint
-yarn type-check # tsc --noEmit (once tsconfig.json exists)
+pnpm develop    # Next.js dev server on port 3000
+pnpm build      # production build
+pnpm lint       # ESLint
+pnpm type-check # tsc --noEmit (once tsconfig.json exists)
 ```
 
 See root [AGENTS.md](../AGENTS.md) for shared TypeScript conventions.
