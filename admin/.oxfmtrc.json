@@ -1,0 +1,7 @@
+{
+  "$schema": "../node_modules/oxfmt/configuration_schema.json",
+  // Shared settings: keep in step with the repo root's .oxfmtrc.json, which
+  // this file replaces for admin/ rather than extends.
+  "printWidth": 80,
+  "sortTailwindcss": { "stylesheet": "./app/globals.css" }
+}

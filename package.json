@@ -13,10 +13,15 @@
     "install:backend": "cd backend && pnpm install",
     "install:admin": "cd admin && pnpm install",
     "install:all": "pnpm install && pnpm install:frontend && pnpm install:backend && pnpm install:admin",
-    "generate-types": "node scripts/generate-strapi-types.mjs"
+    "generate-types": "node scripts/generate-strapi-types.mjs",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check"
   },
   "dependencies": {
     "concurrently": "^7.6.0"
   },
-  "packageManager": "pnpm@12.11.2"
+  "packageManager": "pnpm@12.11.2",
+  "devDependencies": {
+    "oxfmt": "^0.72.0"
+  }
 }
