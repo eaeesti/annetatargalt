@@ -62,7 +62,7 @@ export class OrganizationResolver {
    * Returns a Map of internalId → organization
    */
   async findManyByInternalIds(
-    internalIds: string[]
+    internalIds: string[],
   ): Promise<Map<string, Organization>> {
     const result = new Map<string, Organization>();
     const uncachedIds: string[] = [];
@@ -118,7 +118,7 @@ export class OrganizationResolver {
  *   const org = await resolver.findByInternalId('AMF');
  */
 export function createOrganizationResolver(
-  strapi: Core.Strapi
+  strapi: Core.Strapi,
 ): OrganizationResolver {
   return new OrganizationResolver(strapi);
 }

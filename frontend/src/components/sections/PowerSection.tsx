@@ -3,7 +3,11 @@ import Image from "../elements/Image";
 import Markdown from "../elements/Markdown";
 import type { StrapiPowerSection } from "@/types/generated/strapi";
 
-export default function PowerSection({ title, column1, column2 }: StrapiPowerSection) {
+export default function PowerSection({
+  title,
+  column1,
+  column2,
+}: StrapiPowerSection) {
   return (
     <section className="bg-slate-100 py-16 sm:py-32">
       <div className="container flex w-full max-w-full flex-col items-center gap-16 px-4 sm:w-auto sm:gap-32 md:px-8 xl:max-w-6xl">

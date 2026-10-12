@@ -186,7 +186,7 @@ export function DonorsTable({
           <SortableHeader col="donationCount">Donations</SortableHeader>
         ),
         cell: ({ row }) => (
-          <span className="tabular-nums text-sm">
+          <span className="text-sm tabular-nums">
             {row.original.donationCount}
           </span>
         ),
@@ -198,7 +198,7 @@ export function DonorsTable({
           <SortableHeader col="lastDonationDate">Last donation</SortableHeader>
         ),
         cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground whitespace-nowrap">
+          <span className="text-sm whitespace-nowrap text-muted-foreground">
             {row.original.lastDonationDate
               ? formatDate(row.original.lastDonationDate)
               : "—"}
@@ -262,7 +262,7 @@ export function DonorsTable({
       </div>
 
       {/* Table */}
-      <div className="rounded-md border bg-background overflow-hidden">
+      <div className="overflow-hidden rounded-md border bg-background">
         <Table stickyHeader>
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (
@@ -285,7 +285,7 @@ export function DonorsTable({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="text-center text-muted-foreground py-8"
+                  className="py-8 text-center text-muted-foreground"
                 >
                   No donors found.
                 </TableCell>

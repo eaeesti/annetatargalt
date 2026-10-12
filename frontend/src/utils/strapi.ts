@@ -123,7 +123,10 @@ export async function getGlobal(): Promise<StrapiGlobal> {
   return response.data;
 }
 
-type SpecialPageWithPattern = StrapiSpecialPage & { slugPattern: string; collectionType: string };
+type SpecialPageWithPattern = StrapiSpecialPage & {
+  slugPattern: string;
+  collectionType: string;
+};
 
 export async function getSpecialPages(): Promise<SpecialPageWithPattern[]> {
   const path = "/special-pages";
@@ -160,12 +163,18 @@ export async function findSpecialPage(
   if (!match) return null;
   const endpoint = match[1];
 
-  const entity = await getEntityBySlug(foundSpecialPage.collectionType, endpoint);
+  const entity = await getEntityBySlug(
+    foundSpecialPage.collectionType,
+    endpoint,
+  );
 
   return { page: foundSpecialPage, entity: entity as SpecialPageEntity };
 }
 
-export async function getEntityBySlug(type: string, slug: string): Promise<unknown> {
+export async function getEntityBySlug(
+  type: string,
+  slug: string,
+): Promise<unknown> {
   const path = `/${type}`;
   const options = headersWithAuthToken();
   const urlParamsObject = {
@@ -194,14 +203,23 @@ export async function getAllSlugs(): Promise<string[]> {
   const options = headersWithAuthToken();
   const urlParamsObject = { populate: "*" };
 
-  const pagesResponse = (await fetchAPI(pagesPath, urlParamsObject, options)) as {
+  const pagesResponse = (await fetchAPI(
+    pagesPath,
+    urlParamsObject,
+    options,
+  )) as {
     data: StrapiPage[];
   };
   // In Strapi v5, data is returned flat (not nested under attributes)
-  const pageSlugs = pagesResponse.data?.flatMap((page) => page.slug ? [page.slug] : []) || [];
+  const pageSlugs =
+    pagesResponse.data?.flatMap((page) => (page.slug ? [page.slug] : [])) || [];
 
   const causesPath = "/causes";
-  const causesResponse = (await fetchAPI(causesPath, urlParamsObject, options)) as {
+  const causesResponse = (await fetchAPI(
+    causesPath,
+    urlParamsObject,
+    options,
+  )) as {
     data: Array<{ slug: string; organizations?: Array<{ slug: string }> }>;
   };
   const causes = causesResponse.data || [];
@@ -248,7 +266,9 @@ export async function getBlogPosts(): Promise<StrapiBlogPost[]> {
   return response.data;
 }
 
-export function strapiSectionNameToReactComponentName(component: string): string {
+export function strapiSectionNameToReactComponentName(
+  component: string,
+): string {
   return snakeCaseToPascalCase(component.split(".")[1]);
 }
 

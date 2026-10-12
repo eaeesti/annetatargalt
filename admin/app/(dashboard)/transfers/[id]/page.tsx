@@ -73,8 +73,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border bg-card p-5 space-y-3">
-      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+    <div className="space-y-3 rounded-lg border bg-card p-5">
+      <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
         {title}
       </h2>
       {children}
@@ -130,7 +130,7 @@ export default async function TransferDetailPage({
   const feeTotal = fees.reduce((s, fee) => s + fee, 0);
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="max-w-3xl space-y-6">
       {/* Header */}
       <div className="space-y-1">
         <Link
@@ -155,7 +155,7 @@ export default async function TransferDetailPage({
           <span>
             {transfer.donations.length}
             {transfer.donations.length !== finalizedDonations.length && (
-              <span className="text-destructive ml-1">
+              <span className="ml-1 text-destructive">
                 ({transfer.donations.length - finalizedDonations.length} not
                 finalized)
               </span>
@@ -225,22 +225,22 @@ export default async function TransferDetailPage({
                       {name}
                     </a>
                     <div className="flex items-center gap-3">
-                      <span className="text-muted-foreground text-xs">
+                      <span className="text-xs text-muted-foreground">
                         {o.donationCount} donation
                         {o.donationCount !== 1 ? "s" : ""}
                       </span>
-                      <span className="tabular-nums font-semibold">
+                      <span className="font-semibold tabular-nums">
                         {formatEuros(o.total)}
                       </span>
-                      <span className="text-muted-foreground text-xs w-10 text-right">
+                      <span className="w-10 text-right text-xs text-muted-foreground">
                         {pct}%
                       </span>
                     </div>
                   </div>
                   {/* Progress bar */}
-                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                     <div
-                      className="h-full bg-primary rounded-full"
+                      className="h-full rounded-full bg-primary"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
@@ -248,9 +248,9 @@ export default async function TransferDetailPage({
               );
             })}
             {/* Grand total row */}
-            <div className="flex items-center justify-between text-sm border-t pt-2 mt-2">
+            <div className="mt-2 flex items-center justify-between border-t pt-2 text-sm">
               <span className="font-semibold">Total</span>
-              <span className="tabular-nums font-semibold">
+              <span className="font-semibold tabular-nums">
                 {formatEuros(grandTotal)}
               </span>
             </div>

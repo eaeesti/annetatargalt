@@ -18,7 +18,7 @@ function Option({ id, label, paymentMethod, setPaymentMethod }: OptionProps) {
       />
       <label
         htmlFor={id}
-        className="block cursor-pointer text-sm font-medium leading-6  text-slate-900"
+        className="block cursor-pointer text-sm font-medium leading-6 text-slate-900"
       >
         {label}
       </label>

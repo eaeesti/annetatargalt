@@ -15,7 +15,11 @@ export async function generateMetadata() {
   }
 }
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const plausibleDomain = process.env.PLAUSIBLE_DOMAIN;
 
   return (
@@ -24,10 +28,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <head>
           <PlausibleProvider
             domain={plausibleDomain}
-            scriptProps={{
-              src: "/js/script.js",
-              "data-api": "/api/event",
-            } as React.ComponentPropsWithoutRef<"script">}
+            scriptProps={
+              {
+                src: "/js/script.js",
+                "data-api": "/api/event",
+              } as React.ComponentPropsWithoutRef<"script">
+            }
           />
         </head>
       )}

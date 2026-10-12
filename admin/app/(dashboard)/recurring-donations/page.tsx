@@ -74,7 +74,7 @@ export default async function RecurringDonationsPage({
         <h1 className="text-2xl font-bold">Recurring Donations</h1>
         <Link
           href="/recurring-donations/grid"
-          className="text-sm text-muted-foreground hover:text-foreground border rounded-md px-3 py-1.5"
+          className="rounded-md border px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
           Grid view →
         </Link>

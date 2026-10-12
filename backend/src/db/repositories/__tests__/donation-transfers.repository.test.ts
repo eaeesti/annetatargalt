@@ -421,9 +421,7 @@ describe("DonationTransfersRepository", () => {
         transfer.id,
       );
       expect(r!.adjustmentCents).toBe(2000);
-      expect(r!.reconciliationNote).toBe(
-        "off-ledger, documented",
-      );
+      expect(r!.reconciliationNote).toBe("off-ledger, documented");
       expect(r!.residualCents).toBe(0);
       expect(r!.balanced).toBe(true);
     });

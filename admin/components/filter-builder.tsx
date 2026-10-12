@@ -214,7 +214,7 @@ function DateRangeForm({
 
   return (
     <div className={rowCls}>
-      <span className="text-sm text-muted-foreground mr-0.5">
+      <span className="mr-0.5 text-sm text-muted-foreground">
         {filter.label}:
       </span>
       <Popover open={open} onOpenChange={setOpen}>
@@ -223,7 +223,7 @@ function DateRangeForm({
             <Button
               variant="outline"
               size="sm"
-              className="h-6 px-2.5 text-xs gap-1.5"
+              className="h-6 gap-1.5 px-2.5 text-xs"
             >
               <CalendarIcon className="h-3 w-3" />
               {rangeLabel()}
@@ -275,7 +275,7 @@ function DateRangeForm({
       </Popover>
       <button
         onClick={onCancel}
-        className="ml-0.5 text-muted-foreground hover:text-foreground transition-colors"
+        className="ml-0.5 text-muted-foreground transition-colors hover:text-foreground"
         aria-label="Cancel"
       >
         <X className="h-3.5 w-3.5" />
@@ -317,7 +317,7 @@ function NumberRangeForm({
         });
       }}
     >
-      <span className="text-sm text-muted-foreground mr-0.5">
+      <span className="mr-0.5 text-sm text-muted-foreground">
         {filter.label}:
       </span>
       {filter.unit && (
@@ -333,7 +333,7 @@ function NumberRangeForm({
         className="h-6 w-20 px-1.5 text-xs"
         autoFocus
       />
-      <span className="text-muted-foreground text-xs">–</span>
+      <span className="text-xs text-muted-foreground">–</span>
       <Input
         type="number"
         min="0"
@@ -349,7 +349,7 @@ function NumberRangeForm({
       <button
         type="button"
         onClick={onCancel}
-        className="text-muted-foreground hover:text-foreground transition-colors"
+        className="text-muted-foreground transition-colors hover:text-foreground"
         aria-label="Cancel"
       >
         <X className="h-3.5 w-3.5" />
@@ -381,7 +381,7 @@ function AddFilterForm({
   if (filter.type === "boolean") {
     return (
       <div className={rowCls}>
-        <span className="text-sm text-muted-foreground mr-0.5">
+        <span className="mr-0.5 text-sm text-muted-foreground">
           {filter.label}:
         </span>
         <Button
@@ -401,7 +401,7 @@ function AddFilterForm({
         </Button>
         <button
           onClick={onCancel}
-          className="ml-0.5 text-muted-foreground hover:text-foreground transition-colors"
+          className="ml-0.5 text-muted-foreground transition-colors hover:text-foreground"
           aria-label="Cancel"
         >
           <X className="h-3.5 w-3.5" />
@@ -413,7 +413,7 @@ function AddFilterForm({
   if (filter.type === "select") {
     return (
       <div className={rowCls}>
-        <span className="text-sm text-muted-foreground mr-0.5">
+        <span className="mr-0.5 text-sm text-muted-foreground">
           {filter.label}:
         </span>
         {filter.options.map((opt) => (
@@ -429,7 +429,7 @@ function AddFilterForm({
         ))}
         <button
           onClick={onCancel}
-          className="ml-0.5 text-muted-foreground hover:text-foreground transition-colors"
+          className="ml-0.5 text-muted-foreground transition-colors hover:text-foreground"
           aria-label="Cancel"
         >
           <X className="h-3.5 w-3.5" />
@@ -472,7 +472,7 @@ function AddFilterForm({
         onApply({ [filter.key]: text.trim() });
       }}
     >
-      <span className="text-sm text-muted-foreground mr-0.5">
+      <span className="mr-0.5 text-sm text-muted-foreground">
         {filter.label}:
       </span>
       <Input
@@ -488,7 +488,7 @@ function AddFilterForm({
       <button
         type="button"
         onClick={onCancel}
-        className="text-muted-foreground hover:text-foreground transition-colors"
+        className="text-muted-foreground transition-colors hover:text-foreground"
         aria-label="Cancel"
       >
         <X className="h-3.5 w-3.5" />
@@ -556,20 +556,20 @@ export function FilterBuilder({
           <Badge
             key={id}
             variant="secondary"
-            className="gap-1 pl-2.5 pr-1 py-1 font-normal text-xs"
+            className="gap-1 py-1 pr-1 pl-2.5 text-xs font-normal"
           >
             <button
               onClick={() => {
                 setAdding(null);
                 setEditing(f);
               }}
-              className="hover:text-foreground transition-colors"
+              className="transition-colors hover:text-foreground"
             >
               {activeLabel(f, params)}
             </button>
             <button
               onClick={() => handleRemove(f)}
-              className="ml-0.5 rounded hover:bg-muted transition-colors"
+              className="ml-0.5 rounded transition-colors hover:bg-muted"
               aria-label="Remove filter"
             >
               <X className="h-3 w-3" />

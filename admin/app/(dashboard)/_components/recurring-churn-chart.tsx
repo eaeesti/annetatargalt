@@ -55,7 +55,11 @@ export function RecurringChurnChart({ data }: { data: RecurringChurnRow[] }) {
           allowDecimals={false}
         />
         <ChartTooltip
-          content={<ChartTooltipContent labelFormatter={(l: unknown) => shortMonth(String(l))} />}
+          content={
+            <ChartTooltipContent
+              labelFormatter={(l: unknown) => shortMonth(String(l))}
+            />
+          }
         />
         <Legend wrapperStyle={{ fontSize: 11 }} />
         <Bar

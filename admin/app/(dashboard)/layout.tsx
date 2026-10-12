@@ -40,7 +40,7 @@ export default async function DashboardLayout({
           <SidebarTrigger />
           <span className="text-sm font-semibold">Anneta Targalt Admin</span>
         </header>
-        <div className="bg-muted/40 flex-1 min-w-0">
+        <div className="min-w-0 flex-1 bg-muted/40">
           <div className="px-6 py-8">{children}</div>
         </div>
       </SidebarInset>

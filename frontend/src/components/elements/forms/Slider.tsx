@@ -1,4 +1,7 @@
-interface SliderProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onMouseUp" | "min" | "max"> {
+interface SliderProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "value" | "onMouseUp" | "min" | "max"
+> {
   id?: string;
   min?: number;
   max?: number;

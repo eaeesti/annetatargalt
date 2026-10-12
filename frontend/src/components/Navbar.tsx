@@ -34,7 +34,14 @@ export default function Navbar({ global }: NavbarProps) {
           </div>
           <div className="hidden gap-x-4 lg:flex">
             {navbar.links.map((link) => (
-              <Button key={link.id} type="text" size="lg" text={link.text} href={link.href} newTab={link.newTab} />
+              <Button
+                key={link.id}
+                type="text"
+                size="lg"
+                text={link.text}
+                href={link.href}
+                newTab={link.newTab}
+              />
             ))}
           </div>
           <div className="">

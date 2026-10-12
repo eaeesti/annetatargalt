@@ -107,7 +107,7 @@ export function TransferDonationsEditor({
           {donations.map((d) => (
             <div
               key={d.id}
-              className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-muted/50 -mx-2"
+              className="-mx-2 flex items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-muted/50"
             >
               <Link
                 href={`/donations/${d.id}`}

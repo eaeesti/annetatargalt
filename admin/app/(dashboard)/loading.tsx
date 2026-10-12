@@ -10,7 +10,7 @@ export default function DashboardLoading() {
     <div className="space-y-8">
       <PageTitle title="Dashboard" />
       <StatCardsSkeleton />
-      <div className="rounded-lg border bg-card p-5 space-y-3">
+      <div className="space-y-3 rounded-lg border bg-card p-5">
         <Skeleton className="h-4 w-64" />
         {Array.from({ length: 6 }).map((_, i) => (
           <div
@@ -23,11 +23,11 @@ export default function DashboardLoading() {
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <ChartSkeleton />
         <ChartSkeleton />
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <ChartSkeleton />
         <ChartSkeleton />
       </div>

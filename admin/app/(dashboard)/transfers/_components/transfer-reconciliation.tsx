@@ -234,8 +234,8 @@ export function TransferReconciliation({
   }
 
   return (
-    <div className="rounded-lg border bg-card p-5 space-y-4">
-      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+    <div className="space-y-4 rounded-lg border bg-card p-5">
+      <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
         Reconciliation
       </h2>
 
@@ -289,7 +289,7 @@ export function TransferReconciliation({
       )}
 
       {editAdj && (
-        <div className="rounded-md border p-3 space-y-2">
+        <div className="space-y-2 rounded-md border p-3">
           <p className="text-xs text-muted-foreground">
             Record the part of <em>owed</em> that legitimately didn&apos;t leave
             via a linked payment — a payout the imported statements don&apos;t
@@ -419,7 +419,7 @@ export function TransferReconciliation({
       )}
 
       {picker && (
-        <div className="rounded-md border p-3 space-y-3">
+        <div className="space-y-3 rounded-md border p-3">
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">
               Unlinked outgoing transactions
@@ -507,7 +507,7 @@ export function TransferReconciliation({
                             }
                           />
                         </td>
-                        <td className="py-1 pr-3 whitespace-nowrap align-top">
+                        <td className="py-1 pr-3 align-top whitespace-nowrap">
                           <EntityLink
                             href={bankTransactionHref(c.archivingCode)}
                             newTab
@@ -525,7 +525,7 @@ export function TransferReconciliation({
                             </span>
                           )}
                         </td>
-                        <td className="py-1 pr-3 text-right tabular-nums align-top">
+                        <td className="py-1 pr-3 text-right align-top tabular-nums">
                           {eur(c.amountCents)}
                         </td>
                       </tr>

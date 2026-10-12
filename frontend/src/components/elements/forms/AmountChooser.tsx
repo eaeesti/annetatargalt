@@ -11,7 +11,13 @@ interface AmountInputProps {
   setValidity: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 }
 
-function AmountInput({ amount, setAmount, currency, label, setValidity }: AmountInputProps) {
+function AmountInput({
+  amount,
+  setAmount,
+  currency,
+  label,
+  setValidity,
+}: AmountInputProps) {
   const [localValue, setLocalValue] = useState(`${amount}`);
 
   const isValidAmount = validatePrice(localValue);
@@ -117,7 +123,9 @@ export default function AmountChooser({
     (amountOption) => amountOption.value === amount,
   );
   const defaultAmount: number | "other" = amountIsOption ? amount : "other";
-  const [selectedAmount, setSelectedAmount] = useState<number | "other">(defaultAmount);
+  const [selectedAmount, setSelectedAmount] = useState<number | "other">(
+    defaultAmount,
+  );
   const otherAmountSelected = selectedAmount === "other";
 
   const setAmountRef = useRef(setAmount);

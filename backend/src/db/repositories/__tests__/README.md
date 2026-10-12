@@ -13,6 +13,7 @@ These tests interact with a real PostgreSQL database to verify Drizzle repositor
 Test configuration is stored in `.env.test` (not committed to git):
 
 1. **Copy the example file:**
+
    ```bash
    cp .env.test.example .env.test
    ```
@@ -32,6 +33,7 @@ Test configuration is stored in `.env.test` (not committed to git):
 ## Running Repository Tests
 
 **Run unit tests only (default):**
+
 ```bash
 pnpm test
 # or
@@ -39,16 +41,19 @@ pnpm test:unit
 ```
 
 **Run repository integration tests:**
+
 ```bash
 pnpm test:integration
 ```
 
 **Run all tests (unit + integration):**
+
 ```bash
 pnpm test:all
 ```
 
 **Advanced: Manual environment variables (if needed):**
+
 ```bash
 DATABASE_USERNAME=your_username DRIZZLE_DATABASE_NAME=annetatargalt_donations_test INTEGRATION_TESTS=true pnpm test repositories
 ```
@@ -70,16 +75,19 @@ Use a separate test database (e.g., `annetatargalt_donations_test`).
 ## Test Database Setup
 
 1. Create test database:
+
 ```bash
 createdb annetatargalt_donations_test
 ```
 
 2. Apply schema:
+
 ```bash
 dotenv -e .env.test -- pnpm exec drizzle-kit push
 ```
 
 3. Run tests:
+
 ```bash
 pnpm test:integration
 ```

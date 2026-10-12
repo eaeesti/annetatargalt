@@ -7,7 +7,13 @@ interface AmountEntry {
 }
 
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
-  async createOrganizationDonations({ recurringDonationId, amounts }: { recurringDonationId: number; amounts: AmountEntry[] }) {
+  async createOrganizationDonations({
+    recurringDonationId,
+    amounts,
+  }: {
+    recurringDonationId: number;
+    amounts: AmountEntry[];
+  }) {
     const organizationRecurringDonationsData = await Promise.all(
       amounts.map(async ({ organizationId, amount }) => {
         const organization = await strapi
@@ -19,7 +25,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
         if (!organization || !organization.internalId) {
           throw new Error(
-            `Organization ${organizationId} not found or missing internalId`
+            `Organization ${organizationId} not found or missing internalId`,
           );
         }
 
@@ -28,11 +34,11 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
           organizationInternalId: organization.internalId,
           amount,
         };
-      })
+      }),
     );
 
     return organizationRecurringDonationsRepository.createMany(
-      organizationRecurringDonationsData
+      organizationRecurringDonationsData,
     );
   },
 });

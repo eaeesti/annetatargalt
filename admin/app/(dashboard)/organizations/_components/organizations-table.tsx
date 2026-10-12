@@ -162,7 +162,7 @@ export function OrganizationsTable({ data }: { data: OrganizationRow[] }) {
             />
           ) : (
             <div
-              className={`h-7 w-7 rounded flex items-center justify-center text-xs font-semibold ${avatarColor(
+              className={`flex h-7 w-7 items-center justify-center rounded text-xs font-semibold ${avatarColor(
                 row.original.internalId,
               )}`}
             >
@@ -234,7 +234,7 @@ export function OrganizationsTable({ data }: { data: OrganizationRow[] }) {
           </SortableHeader>
         ),
         cell: ({ row }) => (
-          <span className="tabular-nums font-medium">
+          <span className="font-medium tabular-nums">
             {row.original.totalDonated === undefined
               ? "—"
               : formatAmount(row.original.totalDonated)}
@@ -252,7 +252,7 @@ export function OrganizationsTable({ data }: { data: OrganizationRow[] }) {
           </SortableHeader>
         ),
         cell: ({ row }) => (
-          <span className="tabular-nums text-sm">
+          <span className="text-sm tabular-nums">
             {row.original.donationCount ?? "—"}
           </span>
         ),
@@ -272,7 +272,7 @@ export function OrganizationsTable({ data }: { data: OrganizationRow[] }) {
           </SortableHeader>
         ),
         cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground whitespace-nowrap">
+          <span className="text-sm whitespace-nowrap text-muted-foreground">
             {row.original.lastDonationDate
               ? formatDate(row.original.lastDonationDate)
               : "—"}
@@ -304,7 +304,7 @@ export function OrganizationsTable({ data }: { data: OrganizationRow[] }) {
       </div>
 
       {/* Table */}
-      <div className="rounded-md border bg-background overflow-hidden">
+      <div className="overflow-hidden rounded-md border bg-background">
         <Table stickyHeader>
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (
@@ -333,7 +333,7 @@ export function OrganizationsTable({ data }: { data: OrganizationRow[] }) {
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="text-center text-muted-foreground py-8"
+                  className="py-8 text-center text-muted-foreground"
                 >
                   No organizations found.
                 </TableCell>

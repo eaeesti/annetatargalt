@@ -27,7 +27,9 @@ export default function CompanyInput({
   setCompanyCode,
   setValidity,
 }: CompanyInputProps) {
-  const [companyValidity, setCompanyValidity] = useState<Record<string, boolean>>({});
+  const [companyValidity, setCompanyValidity] = useState<
+    Record<string, boolean>
+  >({});
 
   useEffect(() => {
     if (!companyDonation) {

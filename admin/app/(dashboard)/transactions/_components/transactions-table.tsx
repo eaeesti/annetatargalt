@@ -265,7 +265,7 @@ export function TransactionsTable({
         </p>
       </div>
 
-      <div className="rounded-md border bg-background overflow-hidden">
+      <div className="overflow-hidden rounded-md border bg-background">
         <Table stickyHeader>
           <TableHeader>
             <TableRow>
@@ -283,7 +283,12 @@ export function TransactionsTable({
                   className="inline-flex items-center"
                   onClick={() => handleSort("counterpartyName")}
                 >
-                  Counterparty <SortIcon col="counterpartyName" sortBy={sortBy} sortDir={sortDir} />
+                  Counterparty{" "}
+                  <SortIcon
+                    col="counterpartyName"
+                    sortBy={sortBy}
+                    sortDir={sortDir}
+                  />
                 </button>
               </TableHead>
               <TableHead className="text-right">
@@ -291,7 +296,8 @@ export function TransactionsTable({
                   className="inline-flex items-center"
                   onClick={() => handleSort("amount")}
                 >
-                  Amount <SortIcon col="amount" sortBy={sortBy} sortDir={sortDir} />
+                  Amount{" "}
+                  <SortIcon col="amount" sortBy={sortBy} sortDir={sortDir} />
                 </button>
               </TableHead>
               <TableHead>
@@ -299,7 +305,8 @@ export function TransactionsTable({
                   className="inline-flex items-center"
                   onClick={() => handleSort("category")}
                 >
-                  Category <SortIcon col="category" sortBy={sortBy} sortDir={sortDir} />
+                  Category{" "}
+                  <SortIcon col="category" sortBy={sortBy} sortDir={sortDir} />
                 </button>
               </TableHead>
               <TableHead className="text-right">Donations</TableHead>
@@ -346,7 +353,7 @@ export function TransactionsTable({
                           {row.description}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right tabular-nums whitespace-nowrap">
+                      <TableCell className="text-right whitespace-nowrap tabular-nums">
                         {eur(row.amount)}
                         {row.category === "card-payout" &&
                           row.feeAmount != null && (

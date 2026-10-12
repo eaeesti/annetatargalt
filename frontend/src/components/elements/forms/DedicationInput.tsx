@@ -35,7 +35,9 @@ export default function DedicationInput({
   setDedicationMessage,
   setValidity,
 }: DedicationInputProps) {
-  const [dedicationValidity, setDedicationValidity] = useState<Record<string, boolean>>({});
+  const [dedicationValidity, setDedicationValidity] = useState<
+    Record<string, boolean>
+  >({});
 
   useEffect(() => {
     if (!dedicateDonation) {
@@ -46,7 +48,13 @@ export default function DedicationInput({
         Boolean(dedicationValidity.dedicationEmail);
       setValidity((ready) => ({ ...ready, dedication: dedicationValid }));
     }
-  }, [dedicateDonation, dedicationName, dedicationEmail, dedicationValidity, setValidity]);
+  }, [
+    dedicateDonation,
+    dedicationName,
+    dedicationEmail,
+    dedicationValidity,
+    setValidity,
+  ]);
 
   return (
     <>

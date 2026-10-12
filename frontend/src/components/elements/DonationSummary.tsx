@@ -20,7 +20,11 @@ interface DonationSummaryProps {
   totalText: string | null;
 }
 
-export default function DonationSummary({ donation, currency, totalText }: DonationSummaryProps) {
+export default function DonationSummary({
+  donation,
+  currency,
+  totalText,
+}: DonationSummaryProps) {
   const summary = donation.organizationDonations.map(
     (organizationDonation) => ({
       title: organizationDonation.organization.title ?? "",

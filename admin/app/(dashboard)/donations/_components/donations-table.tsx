@@ -193,7 +193,7 @@ export function DonationsTable({
         enableSorting: true,
         header: () => <SortableHeader col="datetime">Date</SortableHeader>,
         cell: ({ row }) => (
-          <span className="whitespace-nowrap text-sm">
+          <span className="text-sm whitespace-nowrap">
             {formatDate(row.original.datetime)}
           </span>
         ),
@@ -478,7 +478,7 @@ export function DonationsTable({
           <DropdownMenuTrigger
             render={
               <Button variant="outline" size="sm">
-                <Columns3 className="h-4 w-4 mr-1.5" />
+                <Columns3 className="mr-1.5 h-4 w-4" />
                 Columns
               </Button>
             }
@@ -502,7 +502,7 @@ export function DonationsTable({
       </div>
 
       {/* Table */}
-      <div className="rounded-md border bg-background overflow-hidden">
+      <div className="overflow-hidden rounded-md border bg-background">
         <Table stickyHeader>
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (
@@ -525,7 +525,7 @@ export function DonationsTable({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="text-center text-muted-foreground py-8"
+                  className="py-8 text-center text-muted-foreground"
                 >
                   No donations found.
                 </TableCell>

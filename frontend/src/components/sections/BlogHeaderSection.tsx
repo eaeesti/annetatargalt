@@ -1,14 +1,22 @@
 import { ArrowLeftIcon } from "@heroicons/react/20/solid";
 import Anchor from "../elements/Anchor";
 import Image from "../elements/Image";
-import type { StrapiBlogHeaderSection, StrapiBlogPost, StrapiGlobal } from "@/types/generated/strapi";
+import type {
+  StrapiBlogHeaderSection,
+  StrapiBlogPost,
+  StrapiGlobal,
+} from "@/types/generated/strapi";
 
 interface BlogHeaderSectionProps extends StrapiBlogHeaderSection {
   entity: StrapiBlogPost;
   global: StrapiGlobal;
 }
 
-export default function BlogHeaderSection({ entity, backButton, global }: BlogHeaderSectionProps) {
+export default function BlogHeaderSection({
+  entity,
+  backButton,
+  global,
+}: BlogHeaderSectionProps) {
   // In Strapi v5, relations are returned flat (not wrapped in data)
   const author = entity.author;
 
@@ -47,11 +55,14 @@ export default function BlogHeaderSection({ entity, backButton, global }: BlogHe
             )}
             {entity.date && (
               <time dateTime={entity.date}>
-                {new Date(entity.date).toLocaleDateString(global.dateLocale ?? undefined, {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
+                {new Date(entity.date).toLocaleDateString(
+                  global.dateLocale ?? undefined,
+                  {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  },
+                )}
               </time>
             )}
           </div>

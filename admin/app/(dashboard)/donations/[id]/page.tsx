@@ -84,8 +84,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border bg-card p-5 space-y-3">
-      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+    <div className="space-y-3 rounded-lg border bg-card p-5">
+      <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
         {title}
       </h2>
       {children}
@@ -129,7 +129,7 @@ export default async function DonationDetailPage({
   const { data: donation } = (await res.json()) as { data: DonationDetail };
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="max-w-2xl space-y-6">
       {/* Header */}
       <div className="space-y-1">
         <Link

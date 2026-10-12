@@ -11,13 +11,20 @@ import { formatEstonianAmount } from "@/utils/estonia";
 import { useRouter } from "next/navigation";
 import LoadingSection from "./LoadingSection";
 import DonationSummary from "../elements/DonationSummary";
-import type { StrapiGlobal, StrapiThankYouSection } from "@/types/generated/strapi";
+import type {
+  StrapiGlobal,
+  StrapiThankYouSection,
+} from "@/types/generated/strapi";
 
 interface DecodedDonation {
   donor: { firstName: string };
   amount: number;
   organizationDonations: Array<{
-    organization: { title: string | null; slug: string | null; cause?: { slug: string | null } | null };
+    organization: {
+      title: string | null;
+      slug: string | null;
+      cause?: { slug: string | null } | null;
+    };
     amount: number;
   }>;
 }
@@ -39,7 +46,9 @@ export default function ThankYouSection({
   const orderToken = searchParams.get("order-token");
 
   const decodeURL = orderToken
-    ? getStrapiURL("/api/decode?" + new URLSearchParams({ "order-token": orderToken }))
+    ? getStrapiURL(
+        "/api/decode?" + new URLSearchParams({ "order-token": orderToken }),
+      )
     : null;
 
   const { data, isLoading } = useSWR(decodeURL, fetcher);

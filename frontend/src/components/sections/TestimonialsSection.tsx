@@ -2,7 +2,10 @@ import Image from "../elements/Image";
 import Markdown from "../elements/Markdown";
 import type { StrapiTestimonialsSection } from "@/types/generated/strapi";
 
-export default function TestimonialsSection({ title, testimonials }: StrapiTestimonialsSection) {
+export default function TestimonialsSection({
+  title,
+  testimonials,
+}: StrapiTestimonialsSection) {
   return (
     <section className="bg-white px-0 py-12 sm:px-4 sm:py-20 md:px-8">
       <div className="mx-auto flex flex-col gap-12 lg:max-w-5xl">

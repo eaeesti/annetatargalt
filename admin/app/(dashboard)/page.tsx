@@ -79,8 +79,8 @@ function StatCard({
   info?: string;
 }) {
   return (
-    <div className="rounded-lg border bg-card p-5 space-y-1">
-      <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+    <div className="space-y-1 rounded-lg border bg-card p-5">
+      <p className="flex items-center gap-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
         {label}
         {info && <InfoTooltip text={info} />}
       </p>
@@ -104,12 +104,12 @@ function PeriodRow({
   showDelta?: boolean;
 }) {
   return (
-    <div className="grid grid-cols-[14rem_1fr_1fr] gap-4 items-center text-sm py-2 border-b last:border-0">
-      <span className="text-muted-foreground font-medium whitespace-nowrap">
+    <div className="grid grid-cols-[14rem_1fr_1fr] items-center gap-4 border-b py-2 text-sm last:border-0">
+      <span className="font-medium whitespace-nowrap text-muted-foreground">
         {label}
       </span>
       <div className="flex items-center gap-1.5">
-        <span className="tabular-nums font-medium">
+        <span className="font-medium tabular-nums">
           {formatEur(current.total)}
         </span>
         {showDelta && (
@@ -121,7 +121,7 @@ function PeriodRow({
         )}
       </div>
       <div className="flex items-center gap-1.5">
-        <span className="tabular-nums text-muted-foreground">
+        <span className="text-muted-foreground tabular-nums">
           {formatCount(current.count)} donations
         </span>
         {showDelta && (
@@ -147,9 +147,9 @@ function ChartCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border bg-card p-5 space-y-3">
+    <div className="space-y-3 rounded-lg border bg-card p-5">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+        <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
           {title}
         </h2>
         {action}
@@ -193,7 +193,7 @@ async function StatsSection() {
   return (
     <>
       {/* KPI cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
           label="Total donated"
           value={formatEur(totalDonations.sum)}
@@ -213,8 +213,8 @@ async function StatsSection() {
       </div>
 
       {/* Period comparison */}
-      <div className="rounded-lg border bg-card p-5 space-y-1">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground pb-2">
+      <div className="space-y-1 rounded-lg border bg-card p-5">
+        <h2 className="pb-2 text-sm font-semibold tracking-wide text-muted-foreground uppercase">
           Period comparison (vs prior period)
         </h2>
         <PeriodRow
@@ -264,13 +264,13 @@ async function ChartsSection() {
 
   return (
     <>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <MonthlyTotalsChart data={charts.monthlyTotals} />
         <ChartCard title="Cumulative donations (all time)">
           <CumulativeChart data={charts.monthlyTotals} />
         </ChartCard>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <ChartCard title="Active donors per month (rolling 12 months)">
           <ActiveDonorsChart data={charts.activeDonorsPerMonth} />
         </ChartCard>
@@ -313,11 +313,11 @@ export default function DashboardPage() {
       <Suspense
         fallback={
           <>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <ChartSkeleton />
               <ChartSkeleton />
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <ChartSkeleton />
               <ChartSkeleton />
             </div>

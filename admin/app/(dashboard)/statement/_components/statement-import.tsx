@@ -99,7 +99,7 @@ function Section({
       <h2 className="text-sm font-semibold">
         {title} <span className="text-muted-foreground">({count})</span>
       </h2>
-      <div className="rounded-md border overflow-x-auto">{children}</div>
+      <div className="overflow-x-auto rounded-md border">{children}</div>
     </section>
   );
 }
@@ -676,7 +676,7 @@ export function StatementImport() {
                   ({preview.alreadyIgnored.length})
                 </span>
               </summary>
-              <div className="border-t px-3 pb-2 pt-1">
+              <div className="border-t px-3 pt-1 pb-2">
                 <p className="py-2 text-xs text-muted-foreground">
                   Already marked <code>ignored</code> in an earlier import. Left
                   untouched — un-ignore one from the Transactions page if
@@ -722,7 +722,7 @@ export function StatementImport() {
                   ({preview.notImported.length})
                 </span>
               </summary>
-              <div className="border-t px-3 pb-2 pt-1">
+              <div className="border-t px-3 pt-1 pb-2">
                 <p className="py-2 text-xs text-muted-foreground">
                   Lines the importer can&apos;t place — bank interest and other
                   codeless entries. Never written to the database.

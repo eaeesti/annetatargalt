@@ -146,7 +146,7 @@ export default async function RecurringGridPage({
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-0.5">
           <div className="flex items-center gap-3">
             <Link
@@ -167,10 +167,10 @@ export default async function RecurringGridPage({
             <Link
               key={n}
               href={`/recurring-donations/grid?months=${n}`}
-              className={`px-2.5 py-1 rounded border transition-colors ${
+              className={`rounded border px-2.5 py-1 transition-colors ${
                 monthsBack === n
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "text-muted-foreground hover:text-foreground border-border"
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border text-muted-foreground hover:text-foreground"
               }`}
             >
               {n}mo
@@ -178,10 +178,10 @@ export default async function RecurringGridPage({
           ))}
           <Link
             href="/recurring-donations/grid?months=all"
-            className={`px-2.5 py-1 rounded border transition-colors ${
+            className={`rounded border px-2.5 py-1 transition-colors ${
               showAll
-                ? "bg-primary text-primary-foreground border-primary"
-                : "text-muted-foreground hover:text-foreground border-border"
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border text-muted-foreground hover:text-foreground"
             }`}
           >
             All
@@ -205,23 +205,23 @@ export default async function RecurringGridPage({
         rather than the cell, so a border-b would be left behind as the
         rows scroll under it.
       */}
-      <div className="rounded-lg border overflow-auto max-h-[calc(100svh-13rem)]">
-        <table className="text-xs border-collapse w-max min-w-full">
+      <div className="max-h-[calc(100svh-13rem)] overflow-auto rounded-lg border">
+        <table className="w-max min-w-full border-collapse text-xs">
           <thead>
             <tr>
               {/* Frozen corner: sticky on both axes, above both. */}
-              <th className="sticky left-0 top-0 z-30 bg-muted text-left px-3 py-2 font-semibold whitespace-nowrap min-w-[180px] border-r shadow-[inset_0_-1px_0_var(--border)]">
+              <th className="sticky top-0 left-0 z-30 min-w-[180px] border-r bg-muted px-3 py-2 text-left font-semibold whitespace-nowrap shadow-[inset_0_-1px_0_var(--border)]">
                 Donor
               </th>
-              <th className="sticky top-0 z-20 bg-muted px-2 py-2 font-semibold text-center whitespace-nowrap border-r w-12 shadow-[inset_0_-1px_0_var(--border)]">
+              <th className="sticky top-0 z-20 w-12 border-r bg-muted px-2 py-2 text-center font-semibold whitespace-nowrap shadow-[inset_0_-1px_0_var(--border)]">
                 Gaps
               </th>
               {months.map((m) => (
                 <th
                   key={m}
-                  className={`sticky top-0 z-20 bg-muted px-1.5 py-2 font-medium text-center whitespace-nowrap w-16 shadow-[inset_0_-1px_0_var(--border)] ${
+                  className={`sticky top-0 z-20 w-16 bg-muted px-1.5 py-2 text-center font-medium whitespace-nowrap shadow-[inset_0_-1px_0_var(--border)] ${
                     m === currentMonth
-                      ? "text-primary font-bold"
+                      ? "font-bold text-primary"
                       : "text-muted-foreground"
                   }`}
                 >
@@ -234,21 +234,21 @@ export default async function RecurringGridPage({
             {rowsWithMeta.map((row, i) => (
               <tr
                 key={row.donorId}
-                className={`border-b last:border-0 hover:bg-muted/30 transition-colors ${
+                className={`border-b transition-colors last:border-0 hover:bg-muted/30 ${
                   i % 2 === 0 ? "" : "bg-muted/10"
                 }`}
               >
                 {/* Sticky donor name */}
-                <td className="sticky left-0 z-10 bg-card border-r px-3 py-1.5 whitespace-nowrap">
+                <td className="sticky left-0 z-10 border-r bg-card px-3 py-1.5 whitespace-nowrap">
                   <Link
                     href={`/donors/${row.donorId}`}
-                    className="hover:underline font-medium"
+                    className="font-medium hover:underline"
                   >
                     {row.donorName}
                   </Link>
                 </td>
                 <td
-                  className={`px-2 py-1.5 text-center tabular-nums font-medium border-r ${
+                  className={`border-r px-2 py-1.5 text-center font-medium tabular-nums ${
                     row.gapCount > 0
                       ? "text-red-600 dark:text-red-400"
                       : "text-muted-foreground"
@@ -262,7 +262,7 @@ export default async function RecurringGridPage({
                   return (
                     <td
                       key={m}
-                      className={`text-center py-1.5 px-1 tabular-nums ${cellStyles[state]}`}
+                      className={`px-1 py-1.5 text-center tabular-nums ${cellStyles[state]}`}
                       title={
                         state === "gap"
                           ? `${row.donorName} — missing ${m}`
@@ -292,19 +292,19 @@ export default async function RecurringGridPage({
       {/* Legend */}
       <div className="flex items-center gap-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
-          <span className="w-8 h-4 rounded bg-green-500/20 inline-flex items-center justify-center text-green-700 dark:text-green-400 font-medium text-[10px]">
+          <span className="inline-flex h-4 w-8 items-center justify-center rounded bg-green-500/20 text-[10px] font-medium text-green-700 dark:text-green-400">
             €50
           </span>
           Donated
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-4 h-4 rounded bg-red-500/15 inline-flex items-center justify-center text-red-600 dark:text-red-400 font-bold">
+          <span className="inline-flex h-4 w-4 items-center justify-center rounded bg-red-500/15 font-bold text-red-600 dark:text-red-400">
             ✗
           </span>
           Gap
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-4 h-4 rounded border inline-flex items-center justify-center opacity-30 font-bold">
+          <span className="inline-flex h-4 w-4 items-center justify-center rounded border font-bold opacity-30">
             ·
           </span>
           Expected this month

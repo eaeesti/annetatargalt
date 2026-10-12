@@ -1,6 +1,8 @@
 import { getStrapiURL } from "./strapi";
 
-export function makeDonationRequest(donation: Record<string, unknown>): Promise<Response> {
+export function makeDonationRequest(
+  donation: Record<string, unknown>,
+): Promise<Response> {
   return fetch(getStrapiURL("/api/donate"), {
     method: "POST",
     headers: {
@@ -10,7 +12,9 @@ export function makeDonationRequest(donation: Record<string, unknown>): Promise<
   });
 }
 
-export function makeForeignDonationRequest(donation: Record<string, unknown>): Promise<Response> {
+export function makeForeignDonationRequest(
+  donation: Record<string, unknown>,
+): Promise<Response> {
   return fetch(getStrapiURL("/api/donateForeign"), {
     method: "POST",
     headers: {

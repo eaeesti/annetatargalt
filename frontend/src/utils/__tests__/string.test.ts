@@ -7,7 +7,12 @@ describe("format", () => {
   });
 
   it("replaces multiple placeholders", () => {
-    expect(format("<%= greeting %>, <%= name %>!", { greeting: "Hi", name: "Alice" })).toBe("Hi, Alice!");
+    expect(
+      format("<%= greeting %>, <%= name %>!", {
+        greeting: "Hi",
+        name: "Alice",
+      }),
+    ).toBe("Hi, Alice!");
   });
 
   it("leaves unmatched placeholders untouched", () => {

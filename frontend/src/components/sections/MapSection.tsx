@@ -1,7 +1,12 @@
 import { StrapiMapSection } from "@/types/generated/strapi";
 import Map from "../elements/Map";
 
-export default function MapSection({ title, subtitle, defaultCountry, partnerOrganizations }: StrapiMapSection) {
+export default function MapSection({
+  title,
+  subtitle,
+  defaultCountry,
+  partnerOrganizations,
+}: StrapiMapSection) {
   if (!title) return null;
 
   return (
@@ -11,18 +16,21 @@ export default function MapSection({ title, subtitle, defaultCountry, partnerOrg
           <h2 className="inline-block max-w-full break-words text-2xl font-semibold tracking-tight text-primary-700 xs:text-2xl xs:font-bold sm:text-3xl">
             {title}
           </h2>
-          {subtitle && (
-            <p className="text-base text-gray-600">{subtitle}</p>
-          )}
+          {subtitle && <p className="text-base text-gray-600">{subtitle}</p>}
         </div>
         <div className="-ml-4 sm:ml-0">
-          <Map partnerOrganizations={partnerOrganizations} defaultCountry={defaultCountry} />
+          <Map
+            partnerOrganizations={partnerOrganizations}
+            defaultCountry={defaultCountry}
+          />
         </div>
         {partnerOrganizations.length > 0 && (
           <ul className="sr-only">
             {partnerOrganizations.map((org) => (
               <li key={org.id}>
-                <a href={org.website ?? undefined}>{org.name} ({org.displayCountry})</a>
+                <a href={org.website ?? undefined}>
+                  {org.name} ({org.displayCountry})
+                </a>
               </li>
             ))}
           </ul>
@@ -31,5 +39,3 @@ export default function MapSection({ title, subtitle, defaultCountry, partnerOrg
     </section>
   );
 }
-
-

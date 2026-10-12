@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,7 +33,7 @@ export default function LoginPage() {
     if (res.ok) {
       router.push("/");
     } else {
-      const body = await res.json() as { error?: string };
+      const body = (await res.json()) as { error?: string };
       setError(body.error ?? "Login failed");
     }
 

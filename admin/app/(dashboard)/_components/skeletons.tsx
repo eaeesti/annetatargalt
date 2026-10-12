@@ -67,7 +67,7 @@ export function TableSkeleton({
 /** A bordered card with a heading and `lines` label/value rows. */
 export function SectionSkeleton({ lines = 4 }: { lines?: number }) {
   return (
-    <div className="rounded-lg border bg-card p-5 space-y-3">
+    <div className="space-y-3 rounded-lg border bg-card p-5">
       <Skeleton className="h-4 w-32" />
       <div className="space-y-2">
         {Array.from({ length: lines }).map((_, i) => (
@@ -104,9 +104,9 @@ export function DetailSkeleton({
 
 export function StatCardsSkeleton({ count = 4 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="rounded-lg border bg-card p-5 space-y-2">
+        <div key={i} className="space-y-2 rounded-lg border bg-card p-5">
           <Skeleton className="h-3 w-24" />
           <Skeleton className="h-7 w-32" />
         </div>
@@ -117,9 +117,9 @@ export function StatCardsSkeleton({ count = 4 }: { count?: number }) {
 
 export function ChartSkeleton({ title }: { title?: string }) {
   return (
-    <div className="rounded-lg border bg-card p-5 space-y-3">
+    <div className="space-y-3 rounded-lg border bg-card p-5">
       {title ? (
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+        <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
           {title}
         </h2>
       ) : (

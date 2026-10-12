@@ -59,7 +59,12 @@ interface BreadcrumbsProps {
   className?: string;
 }
 
-export default function Breadcrumbs({ breadcrumbs, title, backWord, className = "" }: BreadcrumbsProps) {
+export default function Breadcrumbs({
+  breadcrumbs,
+  title,
+  backWord,
+  className = "",
+}: BreadcrumbsProps) {
   if (!breadcrumbs || !breadcrumbs.length) return;
 
   return (
@@ -72,9 +77,16 @@ export default function Breadcrumbs({ breadcrumbs, title, backWord, className = 
       </nav>
       <nav className="hidden md:flex" aria-label="Breadcrumbs">
         <ol role="list" className="flex flex-wrap items-center gap-4">
-          {breadcrumbs.concat([{ id: -1, title: title, href: null }]).map((breadcrumb, index) => (
-            <BreadcrumbItem key={index} index={index} title={breadcrumb.title ?? ""} href={breadcrumb.href} />
-          ))}
+          {breadcrumbs
+            .concat([{ id: -1, title: title, href: null }])
+            .map((breadcrumb, index) => (
+              <BreadcrumbItem
+                key={index}
+                index={index}
+                title={breadcrumb.title ?? ""}
+                href={breadcrumb.href}
+              />
+            ))}
         </ol>
       </nav>
     </div>

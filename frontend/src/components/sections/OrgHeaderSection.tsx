@@ -1,7 +1,11 @@
 import Breadcrumbs from "../elements/Breadcrumbs";
 import Button from "../elements/Button";
 import Image from "../elements/Image";
-import type { StrapiGlobal, StrapiOrganization, StrapiOrgHeaderSection } from "@/types/generated/strapi";
+import type {
+  StrapiGlobal,
+  StrapiOrganization,
+  StrapiOrgHeaderSection,
+} from "@/types/generated/strapi";
 
 interface OrgHeaderSectionProps extends StrapiOrgHeaderSection {
   entity: StrapiOrganization;
@@ -11,7 +15,13 @@ interface OrgHeaderSectionProps extends StrapiOrgHeaderSection {
 // This is not called OrganizationHeaderSection, because there is a limit of
 // how long a postgres relation can be and Strapi said it was creating a
 // duplicate relation.
-export default function OrgHeaderSection({ breadcrumbs, entity, global, donateText, websiteText }: OrgHeaderSectionProps) {
+export default function OrgHeaderSection({
+  breadcrumbs,
+  entity,
+  global,
+  donateText,
+  websiteText,
+}: OrgHeaderSectionProps) {
   // In Strapi v5, relations are returned flat (not wrapped in data)
   const cause = entity.cause;
 
