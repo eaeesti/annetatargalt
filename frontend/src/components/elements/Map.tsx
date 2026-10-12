@@ -124,7 +124,7 @@ export default function Map({ partnerOrganizations = [], defaultCountry }: MapPr
                 {/* Internal borders only — no outer coast lines */}
                 {topoData && (
                   <path
-                    d={path(mesh(topoData, (topoData.objects as any).countries, (a: any, b: any) => a !== b)) ?? ""}
+                    d={path(mesh(topoData, topoData.objects.countries, (a, b) => a !== b)) ?? ""}
                     fill="none"
                     stroke="#fff"
                     strokeWidth={0.7}

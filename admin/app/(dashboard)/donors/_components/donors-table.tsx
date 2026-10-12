@@ -241,12 +241,11 @@ export function DonorsTable({
   ];
 
   const FILTER_KEYS = ["search", "recurringStatus"];
-  const filterParams = Object.fromEntries(
-    FILTER_KEYS.filter((k) => searchParams.has(k)).map((k) => [
-      k,
-      searchParams.get(k)!,
-    ]),
-  );
+  const filterParams: Record<string, string> = {};
+  for (const k of FILTER_KEYS) {
+    const value = searchParams.get(k);
+    if (value !== null) filterParams[k] = value;
+  }
 
   return (
     <div className="space-y-4">
