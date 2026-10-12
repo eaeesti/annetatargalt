@@ -1,0 +1,13 @@
+{
+  "$schema": "../node_modules/oxfmt/configuration_schema.json",
+  // Shared settings: keep in step with the repo root's .oxfmtrc.json, which
+  // this file replaces for frontend/ rather than extends.
+  "printWidth": 80,
+  "sortTailwindcss": { "config": "./tailwind.config.js" },
+  "ignorePatterns": [
+    // Written by scripts/generate-strapi-types.mjs on every backend build.
+    "src/types/generated/**",
+    // Static assets, e.g. the map's world-atlas file, kept byte for byte.
+    "public/**"
+  ]
+}

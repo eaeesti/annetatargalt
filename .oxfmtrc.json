@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  // Prettier's width, which the code was written to. frontend/ and admin/
+  // have their own config for Tailwind class sorting, and a nested config
+  // replaces this one rather than extending it: keep the shared settings in
+  // step across all three.
+  "printWidth": 80,
+  "ignorePatterns": [
+    // Written by tools, which would undo any reformatting: Drizzle's
+    // migrations, Strapi's generated types and content-type schemas.
+    "backend/src/db/migrations/**",
+    "backend/types/generated/**",
+    "backend/src/api/**/content-types/**/schema.json",
+    "backend/src/components/**/*.json",
+    // Kept as written, for the record.
+    "docs/completed-migrations/**",
+    "**/pnpm-lock.yaml"
+  ]
+}

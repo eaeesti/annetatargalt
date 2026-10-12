@@ -9,7 +9,10 @@ pnpm develop          # starts all three concurrently (from repo root)
 cd frontend && pnpm develop
 cd backend && pnpm develop
 cd admin && pnpm dev
+pnpm format           # oxfmt, every app at once (from repo root)
 ```
+
+Each app has `pnpm lint` (oxlint), which enforces the `any` and `!` rules below.
 
 See [backend/AGENTS.md](backend/AGENTS.md) and [frontend/AGENTS.md](frontend/AGENTS.md) for subsystem-specific guidance.
 
