@@ -81,7 +81,7 @@ const securityHeaders = [
 
 /** @type {import("next").NextConfig} */
 const nextConfig = {
-  // This app sits next to a repo-root yarn.lock as well as its own. Turbopack,
+  // This app sits next to a repo-root lockfile as well as its own. Turbopack,
   // which builds by default from Next 16, walks up to the outermost lockfile
   // and would take the repo root as the project root — which resolves every
   // page relative to the wrong directory and fails the build outright. Say
