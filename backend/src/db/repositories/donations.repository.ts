@@ -146,8 +146,7 @@ export class DonationsRepository {
   }) {
     const { page, pageSize, sortBy = "datetime", sortDir = "desc" } = options;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const conditions: any[] = [];
+    const conditions = [];
     if (options.finalized !== undefined)
       conditions.push(eq(donations.finalized, options.finalized));
     if (options.dateFrom)

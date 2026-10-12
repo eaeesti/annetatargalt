@@ -45,7 +45,7 @@ const montonio = {
       });
       const data = (await response.json()) as { paymentUrl: string };
       return data.paymentUrl;
-    } catch (error) {
+    } catch {
       throw new Error("Failed to fetch redirect URL");
     }
   },

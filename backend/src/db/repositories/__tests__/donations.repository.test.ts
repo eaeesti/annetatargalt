@@ -11,8 +11,6 @@ import {
   donationsRepository,
   DonationsRepository,
 } from "../donations.repository";
-import { donorsRepository } from "../donors.repository";
-import { organizationDonationsRepository } from "../organization-donations.repository";
 import {
   cleanDatabase,
   createTestDonor,
@@ -355,12 +353,12 @@ describe("DonationsRepository", () => {
       const donor = await createTestDonor();
 
       // Create finalized donations
-      const donation1 = await createTestDonation({
+      await createTestDonation({
         donorId: donor.id,
         amount: 5000,
         finalized: true,
       });
-      const donation2 = await createTestDonation({
+      await createTestDonation({
         donorId: donor.id,
         amount: 3000,
         finalized: true,

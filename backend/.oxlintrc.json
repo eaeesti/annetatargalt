@@ -1,0 +1,24 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc"],
+  "env": { "node": true },
+  // oxlint's high-confidence bug checks. The backend had no linter before
+  // these; they found only unused code and needless regex escapes.
+  "categories": { "correctness": "error" },
+  "ignorePatterns": ["dist/**", ".strapi/**", "types/generated/**"],
+  // The repo's TypeScript conventions (AGENTS.md): no `any` and no `!`
+  // non-null assertions. Narrow the type instead.
+  "rules": {
+    "typescript/no-explicit-any": "error",
+    "typescript/no-non-null-assertion": "error"
+  },
+  "overrides": [
+    {
+      // In a test, `!` on a value the test just created is an assertion: if
+      // the value is missing, the test throws, which is the failure it should
+      // report.
+      "files": ["**/__tests__/**"],
+      "rules": { "typescript/no-non-null-assertion": "off" }
+    }
+  ]
+}
