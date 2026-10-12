@@ -119,6 +119,9 @@ export default function CampaignSection({
   ctaButtonText,
 }: StrapiCampaignSection) {
   const [progress, setProgress] = useState(0);
+  // The time of the first render, read once. Reading the clock in the render
+  // itself is impure, and the React Compiler may cache the result.
+  const [renderedAt] = useState(() => Date.now());
   const progressBarRef = useRef<HTMLDivElement | null>(null);
   const progressBarOnScreen = useOnScreen(progressBarRef);
 
@@ -159,12 +162,8 @@ export default function CampaignSection({
   }, [progress, data, progressBarOnScreen, percentage]);
 
   // Hide entire section if campaign has ended
-  if (endDate) {
-    const now = new Date().getTime();
-    const end = new Date(endDate).getTime();
-    if (now > end) {
-      return null;
-    }
+  if (endDate && renderedAt > new Date(endDate).getTime()) {
+    return null;
   }
 
   if (error) return;
