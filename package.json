@@ -8,17 +8,15 @@
   },
   "scripts": {
     "clear": "cd frontend && rm -rf .next && rm -rf cache",
-    "develop": "yarn clear && concurrently \"cd frontend && yarn develop\" \"cd backend && yarn develop\" \"cd admin && npm run dev\"",
-    "setup:frontend": "cd frontend && yarn",
-    "setup:backend": "cd backend && yarn",
-    "setup:admin": "cd admin && npm install",
-    "setup": "yarn install && yarn setup:frontend && yarn setup:backend && yarn setup:admin",
+    "develop": "pnpm run clear && concurrently \"cd frontend && pnpm develop\" \"cd backend && pnpm develop\" \"cd admin && pnpm dev\"",
+    "install:frontend": "cd frontend && pnpm install",
+    "install:backend": "cd backend && pnpm install",
+    "install:admin": "cd admin && pnpm install",
+    "install:all": "pnpm install && pnpm install:frontend && pnpm install:backend && pnpm install:admin",
     "generate-types": "node scripts/generate-strapi-types.mjs"
   },
   "dependencies": {
     "concurrently": "^7.6.0"
   },
-  "devDependencies": {
-    "@strapi/typescript-utils": "^5.38.0"
-  }
+  "packageManager": "pnpm@12.11.2"
 }

@@ -5,9 +5,10 @@ Estonian donation platform. Monorepo: Next.js frontend (`frontend/`) + Strapi v5
 Ports: Strapi **1337**, Next.js **3000**.
 
 ```bash
-yarn develop          # starts both concurrently (from repo root)
-cd frontend && yarn develop
-cd backend && yarn develop
+pnpm develop          # starts all three concurrently (from repo root)
+cd frontend && pnpm develop
+cd backend && pnpm develop
+cd admin && pnpm dev
 ```
 
 See [backend/AGENTS.md](backend/AGENTS.md) and [frontend/AGENTS.md](frontend/AGENTS.md) for subsystem-specific guidance.
