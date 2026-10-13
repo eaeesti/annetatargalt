@@ -30,7 +30,7 @@ export default function Banner({ topBannerText, closeText }: BannerProps) {
   return (
     <div className="flex items-center gap-6 bg-primary-600 p-3 pl-6">
       <div className="min-w-0 flex-1 text-sm text-white">
-        <Markdown className="prose-invert [&>p]:m-0 [&_a:hover]:text-slate-200 [&_a]:font-semibold [&_a]:underline [&_a]:decoration-from-font">
+        <Markdown className="prose-invert [&_a]:font-semibold [&_a]:underline [&_a]:decoration-from-font [&_a:hover]:text-slate-200 [&>p]:m-0">
           {topBannerText}
         </Markdown>
       </div>

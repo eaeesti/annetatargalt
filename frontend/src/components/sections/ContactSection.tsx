@@ -63,13 +63,13 @@ export default function ContactSection(props: ContactSectionProps) {
   };
 
   return (
-    <section className="grid w-full flex-grow grid-cols-1 justify-center lg:grid-cols-2">
-      <div className="bg-slate-100 px-6 pb-20 pt-24 sm:pt-32 lg:px-8 lg:py-48">
+    <section className="grid w-full grow grid-cols-1 justify-center lg:grid-cols-2">
+      <div className="bg-slate-100 px-6 pt-24 pb-20 sm:pt-32 lg:px-8 lg:py-48">
         <div className="mx-auto max-w-lg lg:mr-0">
           <h1 className="text-3xl font-bold tracking-tight text-primary-700">
             {props.title}
           </h1>
-          <Markdown className="prose prose-lg prose-primary mt-6 w-full text-slate-600">
+          <Markdown className="prose prose-lg mt-6 w-full text-slate-600 prose-primary">
             {props.description}
           </Markdown>
           <dl className="mt-10 space-y-4 text-base leading-7 text-slate-600">
@@ -86,7 +86,7 @@ export default function ContactSection(props: ContactSectionProps) {
           </dl>
         </div>
       </div>
-      <div className="px-6 pb-20 pt-12 sm:pt-16 lg:px-8 lg:py-48">
+      <div className="px-6 pt-12 pb-20 sm:pt-16 lg:px-8 lg:py-48">
         <form
           onSubmit={(event) => {
             event.preventDefault();
@@ -99,7 +99,7 @@ export default function ContactSection(props: ContactSectionProps) {
               <div>
                 <label
                   htmlFor="name"
-                  className="block text-sm font-semibold leading-6 text-slate-900"
+                  className="block text-sm leading-6 font-semibold text-slate-900"
                 >
                   {props.nameLabel}
                 </label>
@@ -109,7 +109,7 @@ export default function ContactSection(props: ContactSectionProps) {
                     name="name"
                     id="name"
                     autoComplete="name"
-                    className="block w-full rounded-md border-0 px-3.5 py-2 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6"
+                    className="block w-full rounded-md border-0 px-3.5 py-2 text-slate-900 shadow-xs ring-1 ring-slate-300 ring-inset placeholder:text-slate-400 focus:ring-2 focus:ring-primary-600 focus:ring-inset sm:text-sm sm:leading-6"
                     value={data.name || ""}
                     onChange={(event) =>
                       setData({ ...data, name: event.target.value })
@@ -120,7 +120,7 @@ export default function ContactSection(props: ContactSectionProps) {
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm font-semibold leading-6 text-slate-900"
+                  className="block text-sm leading-6 font-semibold text-slate-900"
                 >
                   {props.emailLabel}
                 </label>
@@ -130,7 +130,7 @@ export default function ContactSection(props: ContactSectionProps) {
                     name="email"
                     id="email"
                     autoComplete="email"
-                    className="block w-full rounded-md border-0 px-3.5 py-2 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6"
+                    className="block w-full rounded-md border-0 px-3.5 py-2 text-slate-900 shadow-xs ring-1 ring-slate-300 ring-inset placeholder:text-slate-400 focus:ring-2 focus:ring-primary-600 focus:ring-inset sm:text-sm sm:leading-6"
                     value={data.email || ""}
                     onChange={(event) =>
                       setData({ ...data, email: event.target.value })
@@ -141,7 +141,7 @@ export default function ContactSection(props: ContactSectionProps) {
               <div>
                 <label
                   htmlFor="message"
-                  className="block text-sm font-semibold leading-6 text-slate-900"
+                  className="block text-sm leading-6 font-semibold text-slate-900"
                 >
                   {props.messageLabel}
                 </label>
@@ -151,7 +151,7 @@ export default function ContactSection(props: ContactSectionProps) {
                     id="message"
                     rows={4}
                     maxLength={1024}
-                    className="block w-full rounded-md border-0 px-3.5 py-2 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6"
+                    className="block w-full rounded-md border-0 px-3.5 py-2 text-slate-900 shadow-xs ring-1 ring-slate-300 ring-inset placeholder:text-slate-400 focus:ring-2 focus:ring-primary-600 focus:ring-inset sm:text-sm sm:leading-6"
                     value={data.message || ""}
                     onChange={(event) =>
                       setData({ ...data, message: event.target.value })

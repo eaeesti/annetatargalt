@@ -24,7 +24,7 @@ export default function TextWithImageSection({
       <div className="container mt-24 w-full max-w-full sm:mt-36 sm:w-auto md:px-8 lg:mt-0 xl:max-w-7xl">
         <div
           className={classes(
-            "flex flex-col items-center gap-y-8 bg-slate-100 md:rounded-[2rem]",
+            "flex flex-col items-center gap-y-8 bg-slate-100 md:rounded-4xl",
             textOnRight
               ? "lg:ml-48 lg:flex-row xl:ml-64"
               : "lg:mr-48 lg:flex-row-reverse xl:mr-64",
@@ -33,7 +33,7 @@ export default function TextWithImageSection({
           <Image
             data={image}
             className={classes(
-              "mx-24 -mt-36 h-auto max-h-72 w-auto rounded-[2rem] bg-slate-200 shadow-2xl xs:-mt-48 xs:max-h-96 lg:mx-0 lg:my-16 lg:h-auto lg:max-h-none lg:w-96 xl:w-128",
+              "mx-24 -mt-36 h-auto max-h-72 w-auto rounded-4xl bg-slate-200 shadow-2xl xs:-mt-48 xs:max-h-96 lg:mx-0 lg:my-16 lg:h-auto lg:max-h-none lg:w-96 xl:w-128",
               textOnRight ? "lg:-ml-48 xl:-ml-64" : "lg:-mr-48 xl:-mr-64",
             )}
           />

@@ -32,7 +32,7 @@ export default function Organization({
           {organization.title}
         </h3>
       </Anchor>
-      <Markdown className="prose prose-primary w-full flex-grow">
+      <Markdown className="prose w-full grow prose-primary">
         {organization.introduction}
       </Markdown>
       <div className="mt-4 flex w-full flex-col flex-wrap items-stretch gap-4 xs:flex-row xs:items-center">

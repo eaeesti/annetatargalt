@@ -9,7 +9,7 @@ export default function TextSection({ text }: TextSectionProps) {
 
   return (
     <section className="flex justify-center px-4 py-24">
-      <Markdown className="prose prose-primary w-full max-w-3xl">
+      <Markdown className="prose w-full max-w-3xl prose-primary">
         {text}
       </Markdown>
     </section>

@@ -15,7 +15,7 @@ export default function ErrorScreen({
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-xl flex-col justify-center gap-4 p-6">
       <h1 className="text-xl font-semibold">This page couldn&apos;t load</h1>
-      <p className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-600">
+      <p className="text-sm leading-relaxed whitespace-pre-wrap text-neutral-600">
         {error?.message || "An unexpected error occurred."}
       </p>
       {reset && (

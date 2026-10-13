@@ -37,7 +37,7 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     name: global.metadata?.title ?? undefined,
     short_name: global.metadata?.title ?? undefined,
     description: global.metadata?.description ?? undefined,
-    theme_color: "#047857", // primary 700 from tailwind.config.js
+    theme_color: "#047857", // primary 700 from globals.css
     background_color: "#ffffff",
     display: "standalone",
     start_url: "/",

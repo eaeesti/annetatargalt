@@ -12,7 +12,7 @@ function BackButton({ href, backWord }: BackButtonProps) {
   return (
     <Button type="text" size="sm" href={href} className="font-medium">
       <ChevronLeftIcon
-        className="-ml-1 mr-1 h-5 w-5 flex-shrink-0"
+        className="mr-1 -ml-1 h-5 w-5 shrink-0"
         aria-hidden="true"
       />
       {backWord}
@@ -32,7 +32,7 @@ function BreadcrumbItem({ index, title, href }: BreadcrumbItemProps) {
       <div className="flex items-center">
         {index > 0 && (
           <ChevronRightIcon
-            className="mr-4 h-5 w-5 flex-shrink-0"
+            className="mr-4 h-5 w-5 shrink-0"
             aria-hidden="true"
           />
         )}

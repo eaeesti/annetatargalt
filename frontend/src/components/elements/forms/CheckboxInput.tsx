@@ -28,7 +28,7 @@ export default function CheckboxInput({
         aria-describedby={`${name}-description`}
         name={name}
         type="checkbox"
-        className="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary-600 focus:ring-primary-600"
+        className="h-4 w-4 cursor-pointer rounded-sm border-slate-300 text-primary-600 checked:border-transparent focus:ring-primary-600"
         checked={value}
         onChange={(event) => setValue(event.target.checked)}
       />

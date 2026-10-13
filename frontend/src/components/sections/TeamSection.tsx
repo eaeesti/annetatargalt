@@ -19,7 +19,7 @@ export default function TeamSection({
   return (
     <section className="bg-slate-50 px-4 py-12 pt-24 lg:px-8">
       <div className="container flex flex-col gap-12 lg:max-w-3xl">
-        <h2 className="inline-block max-w-full break-words text-2xl font-semibold tracking-tight text-primary-700 xs:text-2xl xs:font-bold sm:text-3xl">
+        <h2 className="inline-block max-w-full text-2xl font-semibold tracking-tight wrap-break-word text-primary-700 xs:text-2xl xs:font-bold sm:text-3xl">
           {title}
         </h2>
         <ul role="list" className="flex flex-col gap-12">
@@ -30,12 +30,12 @@ export default function TeamSection({
             >
               {teamMember.image && (
                 <Image
-                  className="aspect-[4/5] w-52 flex-none rounded-2xl object-cover"
+                  className="aspect-4/5 w-52 flex-none rounded-2xl object-cover"
                   data={teamMember.image}
                 />
               )}
               <div className="max-w-xl flex-auto">
-                <h3 className="text-lg font-semibold leading-8 tracking-tight text-slate-900">
+                <h3 className="text-lg leading-8 font-semibold tracking-tight text-slate-900">
                   {teamMember.name}
                 </h3>
                 {teamMember.role && (
@@ -44,7 +44,7 @@ export default function TeamSection({
                   </p>
                 )}
                 {teamMember.bio && (
-                  <Markdown className="prose prose-primary mt-6 w-full">
+                  <Markdown className="prose mt-6 w-full prose-primary">
                     {teamMember.bio}
                   </Markdown>
                 )}

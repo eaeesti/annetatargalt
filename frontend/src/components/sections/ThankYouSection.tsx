@@ -69,7 +69,7 @@ export default function ThankYouSection({
   };
 
   return (
-    <section className="flex h-full flex-grow bg-white px-4 py-24 sm:py-32 lg:px-8">
+    <section className="flex h-full grow bg-white px-4 py-24 sm:py-32 lg:px-8">
       <div className="container xl:max-w-5xl">
         <div className="mx-auto flex flex-col items-center gap-12 lg:mx-0">
           <svg
@@ -86,7 +86,7 @@ export default function ThankYouSection({
           <h1 className="mb-4 text-4xl font-bold tracking-tight text-primary-700 sm:text-5xl">
             {format(title ?? "", donationForTemplate)}
           </h1>
-          <Markdown className="prose-md prose prose-primary w-full max-w-3xl [&>p>strong]:text-primary-700">
+          <Markdown className="prose-md prose w-full max-w-3xl prose-primary [&>p>strong]:text-primary-700">
             {format(text1 ?? "", donationForTemplate)}
           </Markdown>
           <div className="w-full max-w-3xl rounded-xl bg-slate-50 px-8 py-6">
@@ -96,10 +96,10 @@ export default function ThankYouSection({
               totalText={global.totalText}
             />
           </div>
-          <Markdown className="prose-md prose prose-primary w-full max-w-3xl">
+          <Markdown className="prose-md prose w-full max-w-3xl prose-primary">
             {format(text2 ?? "", donationForTemplate)}
           </Markdown>
-          <Markdown className="prose-md prose prose-primary w-full max-w-3xl">
+          <Markdown className="prose-md prose w-full max-w-3xl prose-primary">
             {format(text3 ?? "", donationForTemplate)}
           </Markdown>
         </div>

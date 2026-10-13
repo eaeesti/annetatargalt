@@ -82,7 +82,7 @@ function ModalButton({ text, type = "primary", onClick }: ModalButtonProps) {
     <button
       type="button"
       className={classes(
-        "inline-flex w-full items-center justify-center rounded-md px-3 py-2 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2",
+        "inline-flex w-full items-center justify-center rounded-md px-3 py-2 text-sm font-semibold shadow-xs focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2",
         styles[type],
       )}
       onClick={onClick}
@@ -128,7 +128,7 @@ export default function Modal({ open, data, setOpen, closeText }: ModalProps) {
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+          <div className="bg-opacity-75 fixed inset-0 bg-gray-500 transition-opacity" />
         </Transition.Child>
 
         <div className="fixed inset-0 z-10 overflow-y-auto">
@@ -142,13 +142,13 @@ export default function Modal({ open, data, setOpen, closeText }: ModalProps) {
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <Dialog.Panel className="relative w-full max-w-sm transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:p-6">
+              <Dialog.Panel className="relative w-full max-w-sm transform overflow-hidden rounded-lg bg-white px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:p-6">
                 <div>
                   {icons[icon]}
                   <div className="text-center">
                     <Dialog.Title
                       as="h3"
-                      className="text-base font-semibold leading-6 text-gray-900"
+                      className="text-base leading-6 font-semibold text-gray-900"
                     >
                       {title}
                     </Dialog.Title>

@@ -192,13 +192,13 @@ export default function CampaignSection({
       />
       <div
         id="progress"
-        className="mx-auto flex max-w-6xl flex-col space-y-12 px-4 pb-32 pt-16 text-center sm:pt-32"
+        className="mx-auto flex max-w-6xl flex-col space-y-12 px-4 pt-16 pb-32 text-center sm:pt-32"
       >
         <h2 className="mb-8 text-2xl font-bold text-primary-700 md:text-4xl">
           {title}
         </h2>
         {topText && (
-          <Markdown className="prose prose-lg max-w-full text-slate-600 [&_strong]:whitespace-nowrap [&_strong]:text-2xl [&_strong]:text-primary-700">
+          <Markdown className="prose prose-lg max-w-full text-slate-600 [&_strong]:text-2xl [&_strong]:whitespace-nowrap [&_strong]:text-primary-700">
             {format(topText, numbers)}
           </Markdown>
         )}

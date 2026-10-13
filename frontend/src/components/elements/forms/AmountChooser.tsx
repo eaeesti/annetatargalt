@@ -41,7 +41,7 @@ function AmountInput({
       <label htmlFor="amount" className="sr-only">
         {label}
       </label>
-      <div className="relative rounded-md shadow-sm">
+      <div className="relative rounded-md shadow-xs">
         <input
           type="text"
           name="amount"
@@ -89,7 +89,7 @@ function AmountChooserOption({ value, label }: AmountChooserOptionProps) {
             ? "border-primary-600 ring-1 ring-primary-600"
             : "border-slate-300",
           active ? "bg-primary-50" : "",
-          "relative flex cursor-pointer justify-center rounded-lg border p-3 text-slate-900 shadow-sm focus:outline-none",
+          "relative flex cursor-pointer justify-center rounded-lg border p-3 text-slate-900 shadow-xs focus:outline-hidden",
         )
       }
     >

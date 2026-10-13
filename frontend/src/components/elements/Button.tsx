@@ -42,11 +42,11 @@ export default function Button({
 
   const buttons = {
     primary:
-      "text-white shadow-sm bg-primary-700 hover:bg-primary-600 focus-visible:outline-primary-700 disabled:hover:bg-primary-600",
+      "text-white shadow-xs bg-primary-700 hover:bg-primary-600 focus-visible:outline-primary-700 disabled:hover:bg-primary-600",
     secondary:
-      "text-primary-600 shadow-sm bg-primary-100 hover:bg-primary-200 focus-visible:outline-primary-600 disabled:hover:bg-primary-100",
+      "text-primary-600 shadow-xs bg-primary-100 hover:bg-primary-200 focus-visible:outline-primary-600 disabled:hover:bg-primary-100",
     white:
-      "text-primary-800 shadow-sm bg-white hover:bg-primary-100 focus-visible:outline-white disabled:hover:bg-white",
+      "text-primary-800 shadow-xs bg-white hover:bg-primary-100 focus-visible:outline-white disabled:hover:bg-white",
     text: "hover:opacity-70 focus-visible:outline-primary-600 disabled:hover:opacity-70",
   };
 
@@ -60,7 +60,7 @@ export default function Button({
 
   const effectiveSize = size === "text" ? "link" : (size ?? "md");
   const fullClassName = classes(
-    "flex gap-1.5 items-center justify-center font-semibold rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 text-center disabled:opacity-50 disabled:cursor-not-allowed",
+    "flex gap-1.5 items-center justify-center font-semibold rounded-md focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 text-center disabled:opacity-50 disabled:cursor-not-allowed",
     sizes[effectiveSize],
     type ? buttons[type] : undefined,
     className,
