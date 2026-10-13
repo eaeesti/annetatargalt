@@ -96,8 +96,8 @@
 }
 
 /*
-  Tailwind 4 makes the default border colour currentcolor and gives buttons
-  the default cursor; these keep Tailwind 3's grey borders and pointer.
+  Tailwind 4 makes the default border colour currentcolor; this keeps
+  Tailwind 3's grey borders.
 */
 @layer base {
   *,
@@ -108,9 +108,25 @@
     border-color: var(--color-gray-200, currentcolor);
   }
 
-  button:not(:disabled),
-  [role="button"]:not(:disabled) {
+  /* Tailwind 4 gives buttons the default cursor; anything clickable points. */
+  button,
+  [role="button"],
+  a,
+  select,
+  summary,
+  label[for],
+  [type="checkbox"],
+  [type="radio"],
+  [type="submit"],
+  [type="button"],
+  [type="reset"],
+  ::file-selector-button {
     cursor: pointer;
+  }
+
+  :disabled,
+  [aria-disabled="true"] {
+    cursor: default;
   }
 }
 
