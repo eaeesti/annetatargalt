@@ -3,8 +3,8 @@
 This is the code for the Anneta Targalt donation platform that runs at https://annetatargalt.ee/.
 
 - **Backend**: [Strapi v5](https://strapi.io/) (TypeScript) in `/backend`
-- **Frontend**: [Next.js 15](https://nextjs.org/) and [TailwindCSS](https://tailwindcss.com/) in `/frontend`
-- **Admin panel**: Next.js 15 with shadcn/ui in `/admin` (port 3001)
+- **Frontend**: [Next.js 16](https://nextjs.org/) and [Tailwind CSS 4](https://tailwindcss.com/) in `/frontend`
+- **Admin panel**: Next.js 16 with Tailwind CSS 4 and shadcn/ui in `/admin` (port 3001)
 
 ## Setup
 
