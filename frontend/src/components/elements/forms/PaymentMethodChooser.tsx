@@ -7,18 +7,18 @@ interface OptionProps {
 
 function Option({ id, label, paymentMethod, setPaymentMethod }: OptionProps) {
   return (
-    <div className="flex !cursor-pointer items-center gap-2">
+    <div className="flex cursor-pointer! items-center gap-2">
       <input
         id={id}
         name="payment-method"
         type="radio"
-        className="h-4 w-4 cursor-pointer border-slate-300 text-primary-600 focus:ring-primary-600"
+        className="h-4 w-4 cursor-pointer border-slate-300 text-primary-600 checked:border-transparent focus:ring-primary-600"
         onChange={() => setPaymentMethod(id)}
         checked={id === paymentMethod}
       />
       <label
         htmlFor={id}
-        className="block cursor-pointer text-sm font-medium leading-6 text-slate-900"
+        className="block cursor-pointer text-sm leading-6 font-medium text-slate-900"
       >
         {label}
       </label>
@@ -46,7 +46,7 @@ export default function PaymentMethodChooser({
       <div className="flex flex-row gap-4">
         <legend
           id="paymentMethodLabel"
-          className="text-sm font-medium leading-6 text-slate-900"
+          className="text-sm leading-6 font-medium text-slate-900"
         >
           {label}:
         </legend>

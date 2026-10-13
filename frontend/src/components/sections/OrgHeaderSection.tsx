@@ -38,7 +38,7 @@ export default function OrgHeaderSection({
 
   return (
     <header className="bg-slate-100">
-      <div className="bg-slate-200 px-4 pb-40 pt-24 lg:px-8">
+      <div className="bg-slate-200 px-4 pt-24 pb-40 lg:px-8">
         <div className="container xl:max-w-5xl">
           <Breadcrumbs
             breadcrumbs={breadcrumbsWithCause}
@@ -64,7 +64,7 @@ export default function OrgHeaderSection({
                   href={entity.homepage}
                   type="text"
                   size="sm"
-                  className="!gap-0.5 text-slate-600"
+                  className="gap-0.5! text-slate-600"
                   newTab
                 />
               )}

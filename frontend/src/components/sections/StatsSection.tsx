@@ -16,9 +16,7 @@ interface StatProps {
 function Stat({ term, value, unit }: StatProps) {
   return (
     <div className="mx-auto flex max-w-md flex-col justify-end gap-y-4">
-      <dt className="text-md leading-7 text-slate-600 [text-wrap:balance]">
-        {term}
-      </dt>
+      <dt className="text-md leading-7 text-balance text-slate-600">{term}</dt>
       <dd className="text-3xl font-semibold tracking-tight text-primary-700 sm:text-4xl">
         {unit ? `${value} ${unit}` : value}
       </dd>

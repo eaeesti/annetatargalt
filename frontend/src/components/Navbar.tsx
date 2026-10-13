@@ -23,10 +23,10 @@ export default function Navbar({ global }: NavbarProps) {
     <>
       <nav className="sticky top-0 z-10 flex w-full justify-center bg-white shadow-md shadow-primary-600/10">
         <div className="flex w-full max-w-7xl items-center justify-between gap-x-6 px-6 py-4 lg:px-8">
-          <div className="flex flex-grow lg:flex-grow-0">
+          <div className="flex grow lg:grow-0">
             <Anchor
               href="/"
-              className="-m-1.5 rounded-md p-1.5 hover:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+              className="-m-1.5 rounded-md p-1.5 hover:opacity-70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 focus-visible:outline-solid"
             >
               <span className="sr-only">{title}</span>
               <Image className="h-8 w-auto" data={navbar.logo} priority />
@@ -78,10 +78,7 @@ export default function Navbar({ global }: NavbarProps) {
         <div className="fixed inset-0 z-10" />
         <Dialog.Panel className="fixed inset-y-0 right-0 z-20 w-full overflow-y-auto bg-white px-6 py-4 sm:max-w-sm sm:ring-1 sm:ring-slate-900/10">
           <div className="flex items-center gap-x-6">
-            <Anchor
-              href="/"
-              className="-m-1.5 flex-grow p-1.5 hover:opacity-80"
-            >
+            <Anchor href="/" className="-m-1.5 grow p-1.5 hover:opacity-80">
               <span className="sr-only">{title}</span>
               <Image
                 className="h-8 w-auto sm:hidden"
@@ -115,7 +112,7 @@ export default function Navbar({ global }: NavbarProps) {
                 <Anchor
                   key={link.id}
                   href={link.href ?? "/"}
-                  className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-slate-900 hover:bg-primary-100"
+                  className="-mx-3 block rounded-lg px-3 py-2 text-base leading-7 font-semibold text-slate-900 hover:bg-primary-100"
                 >
                   {link.text}
                 </Anchor>

@@ -10,7 +10,7 @@ export default function FAQSection({ questions }: StrapiFAQSection) {
   const plausible = usePlausible();
 
   return (
-    <section className="flex-grow bg-white px-4 lg:px-8">
+    <section className="grow bg-white px-4 lg:px-8">
       <div className="container mx-auto py-8 sm:py-16 lg:max-w-3xl">
         <dl className="divide-y divide-slate-200">
           {questions.map((question) => (
@@ -26,7 +26,7 @@ export default function FAQSection({ questions }: StrapiFAQSection) {
                         }
                       }}
                     >
-                      <h2 className="text-lg font-semibold leading-7">
+                      <h2 className="text-lg leading-7 font-semibold">
                         {question.question}
                       </h2>
                       <span className="ml-4 flex h-7 items-center">
@@ -45,7 +45,7 @@ export default function FAQSection({ questions }: StrapiFAQSection) {
                     </Disclosure.Button>
                   </dt>
                   <Disclosure.Panel as="dd" className="mt-6 pr-12">
-                    <Markdown className="prose prose-primary w-full">
+                    <Markdown className="prose w-full prose-primary">
                       {question.answer}
                     </Markdown>
                   </Disclosure.Panel>

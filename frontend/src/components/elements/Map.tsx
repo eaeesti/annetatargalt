@@ -82,14 +82,14 @@ export default function Map({
             <p className="text-base font-medium text-slate-500">
               {info.displayCountry}
             </p>
-            <p className="whitespace-nowrap text-2xl font-bold text-primary-700">
+            <p className="text-2xl font-bold whitespace-nowrap text-primary-700">
               {info.name}
             </p>
             {info.website && (
               <Anchor
                 href={info.website}
                 newTab
-                className="mt-1 inline-flex items-center gap-1 whitespace-nowrap text-sm font-normal text-slate-500 hover:opacity-70"
+                className="mt-1 inline-flex items-center gap-1 text-sm font-normal whitespace-nowrap text-slate-500 hover:opacity-70"
               >
                 {new URL(info.website).hostname}
               </Anchor>

@@ -28,9 +28,9 @@ export default async function BlogPostsSection({
                 <div className="relative w-full">
                   <Image
                     data={post.image}
-                    className="aspect-[2/1] w-full rounded-2xl bg-slate-200 object-cover md:aspect-[3/2]"
+                    className="aspect-2/1 w-full rounded-2xl bg-slate-200 object-cover md:aspect-3/2"
                   />
-                  <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-slate-900/10" />
+                  <div className="absolute inset-0 rounded-2xl ring-1 ring-slate-900/10 ring-inset" />
                 </div>
                 {post.date && (
                   <time dateTime={post.date} className="text-xs text-slate-500">
@@ -45,7 +45,7 @@ export default async function BlogPostsSection({
                   </time>
                 )}
                 <div className="flex flex-col gap-4">
-                  <h3 className="text-lg font-semibold leading-6 text-slate-900">
+                  <h3 className="text-lg leading-6 font-semibold text-slate-900">
                     {post.title}
                   </h3>
                   <p className="line-clamp-3 text-sm leading-6 text-slate-600">

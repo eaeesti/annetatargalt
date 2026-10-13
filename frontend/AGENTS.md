@@ -117,4 +117,6 @@ Used only in client components that need real-time or user-triggered data. Serve
 
 ## Tailwind CSS
 
-All styling via Tailwind utility classes. No CSS modules or styled-components. The `@/` alias works in `className` strings via the tailwind config.
+All styling via Tailwind 4 utility classes. No CSS modules or styled-components. There is no `tailwind.config.js`: the theme (the `xs` breakpoint, the `primary` colours, the font), the `container` and `prose` customisations and the plugins are all in `src/app/globals.css`.
+
+Tailwind 4 puts utilities in a CSS layer above the forms plugin's base styles, so a utility always wins, even over the plugin's `:checked` and `:focus` rules. A radio or checkbox with a `border-*` class therefore needs `checked:border-transparent` to look checked.

@@ -19,7 +19,7 @@ function BankChooserOption({ value, label, icon }: BankChooserOptionProps) {
             ? "border-primary-600 ring-1 ring-primary-600"
             : "border-slate-300",
           active ? "bg-primary-50" : "",
-          "relative flex cursor-pointer items-center justify-center overflow-hidden rounded-lg border text-slate-900 shadow-sm focus:outline-none",
+          "relative flex cursor-pointer items-center justify-center overflow-hidden rounded-lg border text-slate-900 shadow-xs focus:outline-hidden",
         )
       }
     >
@@ -48,7 +48,7 @@ export default function BankChooser({
 }: BankChooserProps) {
   return (
     <RadioGroup value={bank} onChange={setBank}>
-      <RadioGroup.Label className="mb-2 block text-sm font-medium leading-6 text-slate-900">
+      <RadioGroup.Label className="mb-2 block text-sm leading-6 font-medium text-slate-900">
         {bankText}
       </RadioGroup.Label>
       <div className="grid grid-cols-4 gap-2 xs:gap-3">

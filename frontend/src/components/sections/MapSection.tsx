@@ -13,7 +13,7 @@ export default function MapSection({
     <section className="bg-slate-50 px-4 py-12 pt-24 lg:px-8">
       <div className="container flex flex-col gap-12 lg:max-w-3xl">
         <div className="flex flex-col gap-3">
-          <h2 className="inline-block max-w-full break-words text-2xl font-semibold tracking-tight text-primary-700 xs:text-2xl xs:font-bold sm:text-3xl">
+          <h2 className="inline-block max-w-full text-2xl font-semibold tracking-tight wrap-break-word text-primary-700 xs:text-2xl xs:font-bold sm:text-3xl">
             {title}
           </h2>
           {subtitle && <p className="text-base text-gray-600">{subtitle}</p>}

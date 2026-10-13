@@ -189,7 +189,7 @@ export default function DonationSection(props: DonationSectionProps) {
       : props.oneTimeDonationSummary;
 
   return (
-    <section className="flex h-full flex-grow items-start justify-center bg-slate-200 xs:px-4 xs:py-16 sm:px-8 sm:py-32">
+    <section className="flex h-full grow items-start justify-center bg-slate-200 xs:px-4 xs:py-16 sm:px-8 sm:py-32">
       <h1 className="sr-only">{props.page.metadata?.title}</h1>
       {!donated && (
         <div className="flex w-full max-w-lg flex-col gap-4 bg-white px-4 py-24 xs:rounded-2xl xs:px-12 xs:py-12">
@@ -349,7 +349,7 @@ export default function DonationSection(props: DonationSectionProps) {
               <h2 className="text-2xl font-bold tracking-tight text-primary-700 sm:text-3xl">
                 {props.tipTitle}
               </h2>
-              <Markdown className="prose prose-primary w-full">
+              <Markdown className="prose w-full prose-primary">
                 {props.tipText}
               </Markdown>
               <CheckboxInput
@@ -379,7 +379,7 @@ export default function DonationSection(props: DonationSectionProps) {
               <h2 className="text-2xl font-bold tracking-tight text-primary-700 sm:text-3xl">
                 {props.confirmText}
               </h2>
-              <Markdown className="prose prose-primary w-full [&>p>strong]:text-primary-700">
+              <Markdown className="prose w-full prose-primary [&>p>strong]:text-primary-700">
                 {summaryText}
               </Markdown>
               <PaymentSummary
@@ -437,7 +437,7 @@ export default function DonationSection(props: DonationSectionProps) {
       )}
       {donated && (
         <div className="flex max-w-lg flex-col gap-4 bg-white px-4 py-24 xs:rounded-2xl xs:px-12 xs:py-12">
-          <Markdown className="prose prose-primary w-full">
+          <Markdown className="prose w-full prose-primary">
             {format(props.recurringDonationGuide ?? "", {
               amount:
                 formatEstonianAmount(totalAmount) +

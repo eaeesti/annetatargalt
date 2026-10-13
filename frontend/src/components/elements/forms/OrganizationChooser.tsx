@@ -82,7 +82,7 @@ export default function OrganizationChooser({
 }: OrganizationChooserProps) {
   return (
     <fieldset>
-      <legend className="my-6 block text-xl font-semibold leading-6 tracking-tight text-primary-700">
+      <legend className="my-6 block text-xl leading-6 font-semibold tracking-tight text-primary-700">
         {chooseOrganizationsText}
       </legend>
       <div className="flex flex-col gap-10">

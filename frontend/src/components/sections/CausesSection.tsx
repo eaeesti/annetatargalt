@@ -18,14 +18,14 @@ export default function CausesSection({
     <>
       <section
         id={anchor ?? undefined}
-        className="flex flex-col items-center gap-6 px-4 pb-12 pt-24 lg:pt-36"
+        className="flex flex-col items-center gap-6 px-4 pt-24 pb-12 lg:pt-36"
       >
         <div className="w-full max-w-3xl">
           <h2 className="text-2xl font-bold tracking-tight text-primary-700 sm:text-3xl">
             {title}
           </h2>
         </div>
-        <Markdown className="prose prose-primary w-full max-w-3xl">
+        <Markdown className="prose w-full max-w-3xl prose-primary">
           {description}
         </Markdown>
       </section>

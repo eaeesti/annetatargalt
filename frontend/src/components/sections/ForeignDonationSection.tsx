@@ -83,7 +83,7 @@ export default function ForeignDonationSection(
   };
 
   return (
-    <section className="flex h-full flex-grow items-start justify-center bg-slate-200 xs:px-4 xs:py-16 sm:px-8 sm:py-32">
+    <section className="flex h-full grow items-start justify-center bg-slate-200 xs:px-4 xs:py-16 sm:px-8 sm:py-32">
       <h1 className="sr-only">{props.title}</h1>
       <div className="flex w-full max-w-lg flex-col gap-4 bg-white px-4 py-24 xs:rounded-2xl xs:px-12 xs:py-12">
         <form
@@ -93,7 +93,7 @@ export default function ForeignDonationSection(
           <h2 className="text-2xl font-bold tracking-tight text-primary-700 sm:text-3xl">
             {props.title}
           </h2>
-          <Markdown className="prose prose-primary w-full">
+          <Markdown className="prose w-full prose-primary">
             {props.description}
           </Markdown>
           <AmountChooser

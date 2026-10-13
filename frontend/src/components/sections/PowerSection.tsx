@@ -11,7 +11,7 @@ export default function PowerSection({
   return (
     <section className="bg-slate-100 py-16 sm:py-32">
       <div className="container flex w-full max-w-full flex-col items-center gap-16 px-4 sm:w-auto sm:gap-32 md:px-8 xl:max-w-6xl">
-        <h2 className="max-w-sm text-center text-2xl font-bold tracking-tight text-primary-700 [text-wrap:balance] sm:max-w-xl sm:text-4xl lg:max-w-none">
+        <h2 className="max-w-sm text-center text-2xl font-bold tracking-tight text-balance text-primary-700 sm:max-w-xl sm:text-4xl lg:max-w-none">
           {title}
         </h2>
         <div className="grid justify-center gap-24 lg:grid-cols-2">
@@ -29,7 +29,7 @@ export default function PowerSection({
                 <div className="overflow-hidden rounded-3xl bg-white shadow-lg">
                   <Image data={column.image} className="h-full w-full" />
                 </div>
-                <Markdown className="prose prose-sm prose-primary -mt-5 mb-3 max-w-full text-right text-xs [&>p>a>svg]:-mt-1">
+                <Markdown className="prose prose-sm -mt-5 mb-3 max-w-full text-right text-xs prose-primary [&>p>a>svg]:-mt-1">
                   {column.source}
                 </Markdown>
                 <Markdown className="prose prose-primary">

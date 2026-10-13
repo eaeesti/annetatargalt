@@ -41,7 +41,7 @@ export default function Summary({
               <span className="text-slate-600">{row.title}</span>
             )}
           </dt>
-          <dd className="whitespace-nowrap font-medium text-slate-900">
+          <dd className="font-medium whitespace-nowrap text-slate-900">
             {formatEstonianAmountWithCents(row.amount)}
             {currency}
           </dd>
@@ -49,7 +49,7 @@ export default function Summary({
       ))}
       <div className="flex items-center justify-between gap-3 py-2">
         <dt className="font-medium text-slate-900">{totalText}</dt>
-        <dd className="whitespace-nowrap font-medium text-primary-700">
+        <dd className="font-medium whitespace-nowrap text-primary-700">
           {formatEstonianAmountWithCents(totalAmount)}
           {currency}
         </dd>

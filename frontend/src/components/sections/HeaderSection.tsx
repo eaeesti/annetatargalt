@@ -28,7 +28,7 @@ export default function HeaderSection({
             {title}
           </h1>
           {subtitle && (
-            <Markdown className="prose-md prose prose-primary w-full max-w-3xl">
+            <Markdown className="prose-md prose w-full max-w-3xl prose-primary">
               {subtitle}
             </Markdown>
           )}

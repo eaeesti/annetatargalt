@@ -22,3 +22,11 @@ minimumReleaseAge: 1440
 # days are checked: older ones predate the trust data and raise false alarms.
 trustPolicy: no-downgrade
 trustPolicyIgnoreAfter: 43200
+
+# @tailwindcss/typography pins postcss-selector-parser 6.0.10, which has a
+# quadratic-time parsing advisory fixed only in 7.1.6. 7.0's one breaking
+# change (making insertions during iteration safe) does not affect how the
+# plugin builds its selectors: the prose styles render identically. Drop
+# this once the plugin moves to 7.
+overrides:
+  postcss-selector-parser: ^7.1.6

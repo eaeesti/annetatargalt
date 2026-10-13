@@ -40,7 +40,7 @@ export default function Steps({
               <button
                 type="button"
                 onClick={() => setStep(step)}
-                className="block h-2.5 w-2.5 rounded-full bg-primary-600 hover:bg-primary-800 focus-visible:outline focus-visible:outline-primary-600"
+                className="block h-2.5 w-2.5 rounded-full bg-primary-600 hover:bg-primary-800 focus-visible:outline-primary-600 focus-visible:outline-solid"
               >
                 <span className="sr-only">{`${stepText} ${step + 1}`}</span>
               </button>
