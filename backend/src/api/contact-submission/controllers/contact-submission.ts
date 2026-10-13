@@ -82,7 +82,8 @@ export default factories.createCoreController(
         return ctx.badRequest("Failed to send emails");
       }
 
-      return ctx.send();
+      // No content: what a bare send() already produced.
+      return ctx.send(null, 204);
     },
   }),
 );

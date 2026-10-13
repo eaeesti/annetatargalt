@@ -220,7 +220,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         .sendDedicationEmail(id);
     }
 
-    return ctx.send();
+    // No content: what a bare send() already produced.
+    return ctx.send(null, 204);
   },
 
   async decode(ctx: Context) {
