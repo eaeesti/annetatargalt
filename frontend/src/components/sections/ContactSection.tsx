@@ -4,7 +4,7 @@ import { EnvelopeIcon } from "@heroicons/react/24/outline";
 import Markdown from "../elements/Markdown";
 import { useState } from "react";
 import Button from "../elements/Button";
-import { getStrapiURL } from "@/utils/strapi";
+import { describeErrorResponse, getStrapiURL } from "@/utils/strapi";
 import Modal from "../Modal";
 import type { ModalData } from "../Modal";
 import type {
@@ -29,14 +29,29 @@ export default function ContactSection(props: ContactSectionProps) {
 
   const ready = data.name && data.email && data.message;
 
-  const submit = async () => {
-    const response = await fetch(getStrapiURL("/api/contact"), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
+  function showError(description: string) {
+    showModal({
+      icon: "error",
+      title: props.global.errorText ?? "",
+      description,
     });
+  }
+
+  const submit = async () => {
+    let response;
+    try {
+      response = await fetch(getStrapiURL("/api/contact"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+    } catch (error) {
+      // Offline, or the request never got an answer.
+      showError(String(error));
+      return;
+    }
 
     if (response.ok) {
       setData({});
@@ -46,19 +61,7 @@ export default function ContactSection(props: ContactSectionProps) {
         description: props.successDescription ?? "",
       });
     } else {
-      let errorMessage;
-      const responseText = await response.text();
-      try {
-        const responseData = JSON.parse(responseText);
-        errorMessage = `${responseData.error.name}: ${responseData.error.message}`;
-      } catch (error) {
-        errorMessage = responseText;
-      }
-      showModal({
-        icon: "error",
-        title: props.global.errorText ?? "",
-        description: errorMessage,
-      });
+      showError(await describeErrorResponse(response));
     }
   };
 

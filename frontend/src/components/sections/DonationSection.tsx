@@ -12,6 +12,7 @@ import IdCodeInput from "../elements/forms/IdCodeInput";
 import { formatEstonianAmount } from "@/utils/estonia";
 import CheckboxInput from "../elements/forms/CheckboxInput";
 import { makeDonationRequest } from "@/utils/donation";
+import { describeErrorResponse } from "@/utils/strapi";
 import { useRouter, useSearchParams } from "next/navigation";
 import BankChooser from "../elements/forms/BankChooser";
 import Markdown from "../elements/Markdown";
@@ -165,21 +166,32 @@ export default function DonationSection(props: DonationSectionProps) {
       donationData.dedicationMessage = donation.dedicationMessage;
     }
 
-    const response = await makeDonationRequest(donationData);
-    const data = await response.json();
-
-    if (response.ok) {
-      if (data.redirectURL) {
-        router.push(data.redirectURL);
-      } else {
-        setDonated(true);
-      }
-    } else {
+    const showError = (description: string) =>
       showModal({
         icon: "error",
         title: props.global.errorText ?? "Error",
-        description: `${data.error.name}: ${data.error.message}`,
+        description,
       });
+
+    let response;
+    try {
+      response = await makeDonationRequest(donationData);
+    } catch (error) {
+      // Offline, or the request never got an answer.
+      showError(String(error));
+      return;
+    }
+
+    if (!response.ok) {
+      showError(await describeErrorResponse(response));
+      return;
+    }
+
+    const data = await response.json();
+    if (data.redirectURL) {
+      router.push(data.redirectURL);
+    } else {
+      setDonated(true);
     }
   };
 
