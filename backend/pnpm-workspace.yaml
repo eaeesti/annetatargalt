@@ -34,19 +34,11 @@ autoInstallPeers: false
 # the same major, so force it. Drop an entry once Strapi ships that version
 # or newer.
 # - nodemailer: @strapi/provider-email-nodemailer pins 9.0.1.
-# - axios, dompurify, markdown-it: bundled into Strapi's admin panel.
-# - sharp: @strapi/upload makes image thumbnails with it (librsvg CVE).
-# - handlebars: @strapi/generators scaffolds code with it (template injection).
-# - postcss: styled-components, which Strapi's admin panel styles with, pins
-#   8.4.49 (path traversal and file read through source maps).
+# - markdown-it: @strapi/content-manager pins 14.3.0; it is bundled into
+#   Strapi's admin panel.
 overrides:
-  axios: ^1.20.0
-  dompurify: ^3.4.16
-  handlebars: ^4.7.10
   markdown-it: ^14.3.1
   nodemailer: ^10.0.13
-  postcss: ^8.5.28
-  sharp: ^0.35.5
 
 # Dependencies' install scripts run only when listed here as true; an unlisted
 # one fails the install until someone decides. All three are denied, and the
