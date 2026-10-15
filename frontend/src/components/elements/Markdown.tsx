@@ -57,11 +57,10 @@ export default function Markdown({
     none: () => false,
   }[newTabs];
 
-  return (
+  const markdown = (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[rehypeRaw, [rehypeSanitize, schema]]}
-      className={className}
       components={{
         // node is destructured to exclude it from ...rest (passing it to the DOM causes a warning)
         a({ children, href, node: _node, ...rest }) {
@@ -76,4 +75,8 @@ export default function Markdown({
       {children ?? ""}
     </ReactMarkdown>
   );
+
+  // react-markdown 10 dropped its className prop, which wrapped the output in
+  // a div only when a class was given. Same markup as before.
+  return className ? <div className={className}>{markdown}</div> : markdown;
 }
