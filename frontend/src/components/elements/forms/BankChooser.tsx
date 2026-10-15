@@ -1,5 +1,5 @@
 import { classes } from "@/utils/react";
-import { RadioGroup } from "@headlessui/react";
+import { Label, Radio, RadioGroup } from "@headlessui/react";
 import Image from "../Image";
 import type { StrapiBankIcon } from "@/types/generated/strapi";
 
@@ -11,23 +11,23 @@ interface BankChooserOptionProps {
 
 function BankChooserOption({ value, label, icon }: BankChooserOptionProps) {
   return (
-    <RadioGroup.Option
+    <Radio
       value={value}
-      className={({ active, checked }) =>
+      className={({ focus, checked }) =>
         classes(
           checked
             ? "border-primary-600 ring-1 ring-primary-600"
             : "border-slate-300",
-          active ? "bg-primary-50" : "",
+          focus ? "bg-primary-50" : "",
           "relative flex cursor-pointer items-center justify-center overflow-hidden rounded-lg border text-slate-900 shadow-xs focus:outline-hidden",
         )
       }
     >
       {icon && <Image data={icon} className="h-full w-full cursor-pointer" />}
-      <RadioGroup.Label className={icon ? "sr-only" : "cursor-pointer text-sm"}>
+      <Label className={icon ? "sr-only" : "cursor-pointer text-sm"}>
         {label}
-      </RadioGroup.Label>
-    </RadioGroup.Option>
+      </Label>
+    </Radio>
   );
 }
 
@@ -48,9 +48,9 @@ export default function BankChooser({
 }: BankChooserProps) {
   return (
     <RadioGroup value={bank} onChange={setBank}>
-      <RadioGroup.Label className="mb-2 block text-sm leading-6 font-medium text-slate-900">
+      <Label className="mb-2 block text-sm leading-6 font-medium text-slate-900">
         {bankText}
-      </RadioGroup.Label>
+      </Label>
       <div className="grid grid-cols-4 gap-2 xs:gap-3">
         {banks
           .filter((b): b is typeof b & { bank: string } => b.bank !== null)

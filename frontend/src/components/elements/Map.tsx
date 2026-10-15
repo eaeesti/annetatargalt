@@ -1,16 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ComposableMap, Geographies, Geography } from "react-simple-maps";
-import { mesh } from "topojson-client";
-import type { Topology, Objects } from "topojson-specification";
 import type { StrapiPartnerOrganization } from "@/types/generated/strapi";
 import Anchor from "./Anchor";
+import { classes } from "@/utils/react";
 
 // Served from public/, not from a CDN. connect-src in next.config.mjs allows
 // 'self' and the Strapi origin and nothing else, so fetching this from
 // cdn.jsdelivr.net is blocked by CSP and the map renders blank — react-simple-maps
-// swallows the fetch error, so the only symptom is an empty box. Widening
+// only logs the fetch error, so the only visible symptom is an empty box. Widening
 // connect-src to admit a CDN would give back the exfiltration path that policy
 // exists to close, for a file that never changes. The copy in public/ is
 // world-atlas@2's countries-50m.json, byte for byte.
@@ -51,7 +50,6 @@ export default function Map({
   const [selectedCountry, setSelectedCountry] = useState<string | null>(
     () => partnerOrganizations[0]?.mapCountry ?? null,
   );
-  const [topoData, setTopoData] = useState<Topology<Objects> | null>(null);
 
   const partners: Record<string, PartnerInfo> = {};
   partnerOrganizations.forEach((p) => {
@@ -62,15 +60,6 @@ export default function Map({
         website: p.website ?? null,
       };
   });
-
-  // One fetch, shared. Passing the parsed topology to <Geographies> rather than
-  // the URL stops it fetching the same 756 KB a second time — it only fetches
-  // when handed a string.
-  useEffect(() => {
-    fetch(GEO_URL)
-      .then((r) => r.json())
-      .then(setTopoData);
-  }, []);
 
   const info = selected;
 
@@ -105,8 +94,8 @@ export default function Map({
           className="w-full"
           height={800}
         >
-          <Geographies geography={topoData ?? undefined}>
-            {({ geographies, path }) => (
+          <Geographies geography={GEO_URL}>
+            {({ geographies, borders }) => (
               <>
                 {geographies
                   .filter(
@@ -121,17 +110,12 @@ export default function Map({
                     const partner = isPartner ? partners[countryName] : null;
                     const isSelected = countryName === selectedCountry;
                     const fill = isDefault
-                      ? "#475569"
+                      ? "fill-[#475569]"
                       : isSelected
-                        ? "#065f46"
+                        ? "fill-[#065f46]"
                         : isPartner
-                          ? "#047857"
-                          : "#e2e8f0";
-                    const fillHover = isDefault
-                      ? "#475569"
-                      : isPartner
-                        ? "#065f46"
-                        : "#e2e8f0";
+                          ? "fill-[#047857]"
+                          : "fill-[#e2e8f0]";
 
                     return (
                       <Geography
@@ -143,36 +127,23 @@ export default function Map({
                             setSelectedCountry(countryName);
                           }
                         }}
-                        cursor={isPartner && !isDefault ? "pointer" : "default"}
-                        style={{
-                          default: { fill, stroke: "none", outline: "none" },
-                          hover: {
-                            fill: fillHover,
-                            stroke: "none",
-                            outline: "none",
-                          },
-                          pressed: {
-                            fill: fillHover,
-                            stroke: "none",
-                            outline: "none",
-                          },
-                        }}
+                        // react-simple-maps 5 has no hover/pressed style
+                        // states any more, so hover is plain CSS.
+                        className={classes(
+                          fill,
+                          isPartner
+                            ? "cursor-pointer hover:fill-[#065f46] active:fill-[#065f46]"
+                            : "",
+                          "stroke-none outline-none",
+                        )}
                       />
                     );
                   })}
 
                 {/* Internal borders only — no outer coast lines */}
-                {topoData && (
+                {borders?.svgPath && (
                   <path
-                    d={
-                      path(
-                        mesh(
-                          topoData,
-                          topoData.objects.countries,
-                          (a, b) => a !== b,
-                        ),
-                      ) ?? ""
-                    }
+                    d={borders.svgPath}
                     fill="none"
                     stroke="#fff"
                     strokeWidth={0.7}

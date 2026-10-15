@@ -1,6 +1,10 @@
 "use client";
 
-import { Disclosure } from "@headlessui/react";
+import {
+  Disclosure,
+  DisclosureButton,
+  DisclosurePanel,
+} from "@headlessui/react";
 import { MinusSmallIcon, PlusSmallIcon } from "@heroicons/react/24/outline";
 import Markdown from "../elements/Markdown";
 import { usePlausible } from "next-plausible";
@@ -18,7 +22,7 @@ export default function FAQSection({ questions }: StrapiFAQSection) {
               {({ open }) => (
                 <>
                   <dt>
-                    <Disclosure.Button
+                    <DisclosureButton
                       className="flex w-full items-center justify-between text-left text-slate-800 hover:opacity-70"
                       onClick={() => {
                         if (question.plausibleEvent && !open) {
@@ -42,13 +46,13 @@ export default function FAQSection({ questions }: StrapiFAQSection) {
                           />
                         )}
                       </span>
-                    </Disclosure.Button>
+                    </DisclosureButton>
                   </dt>
-                  <Disclosure.Panel as="dd" className="mt-6 pr-12">
+                  <DisclosurePanel as="dd" className="mt-6 pr-12">
                     <Markdown className="prose w-full prose-primary">
                       {question.answer}
                     </Markdown>
-                  </Disclosure.Panel>
+                  </DisclosurePanel>
                 </>
               )}
             </Disclosure>

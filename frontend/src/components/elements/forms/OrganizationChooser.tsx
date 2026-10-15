@@ -2,7 +2,11 @@ import LockedIcon from "@/components/icons/LockedIcon";
 import Slider from "./Slider";
 import UnlockedIcon from "@/components/icons/UnlockedIcon";
 import { classes } from "@/utils/react";
-import { Disclosure } from "@headlessui/react";
+import {
+  Disclosure,
+  DisclosureButton,
+  DisclosurePanel,
+} from "@headlessui/react";
 import { ChevronUpIcon } from "@heroicons/react/24/solid";
 import Button from "../Button";
 import InfoIcon from "@/components/icons/InfoIcon";
@@ -91,7 +95,7 @@ export default function OrganizationChooser({
             {({ open }) => (
               <div className="flex flex-col gap-4">
                 <div className="flex flex-row items-center gap-3">
-                  <Disclosure.Button className="flex flex-row items-center gap-3 hover:opacity-70">
+                  <DisclosureButton className="flex flex-row items-center gap-3 hover:opacity-70">
                     <ChevronUpIcon
                       className={classes(
                         open ? "" : "rotate-180",
@@ -104,7 +108,7 @@ export default function OrganizationChooser({
                     >
                       {cause.title}
                     </label>
-                  </Disclosure.Button>
+                  </DisclosureButton>
                   <Button
                     href={`/${cause.slug}`}
                     newTab={true}
@@ -135,7 +139,7 @@ export default function OrganizationChooser({
                   }
                   aria-labelledby={`cause${cause.id}`}
                 />
-                <Disclosure.Panel className="flex w-full flex-col gap-6 rounded-xl bg-slate-50 px-6 py-8 shadow-lg shadow-slate-200">
+                <DisclosurePanel className="flex w-full flex-col gap-6 rounded-xl bg-slate-50 px-6 py-8 shadow-lg shadow-slate-200">
                   <CheckboxInput
                     name={`cause${cause.id}fund`}
                     value={proportions.goesToFund(cause.id) ?? false}
@@ -224,7 +228,7 @@ export default function OrganizationChooser({
                         </div>
                       ))}
                   </div>
-                </Disclosure.Panel>
+                </DisclosurePanel>
               </div>
             )}
           </Disclosure>

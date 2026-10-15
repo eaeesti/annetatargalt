@@ -1,5 +1,5 @@
 import { classes } from "@/utils/react";
-import { RadioGroup } from "@headlessui/react";
+import { Label, Radio, RadioGroup } from "@headlessui/react";
 import { useEffect, useRef, useState } from "react";
 import { validatePrice } from "@/utils/string";
 
@@ -81,20 +81,20 @@ interface AmountChooserOptionProps {
 
 function AmountChooserOption({ value, label }: AmountChooserOptionProps) {
   return (
-    <RadioGroup.Option
+    <Radio
       value={value}
-      className={({ active, checked }) =>
+      className={({ focus, checked }) =>
         classes(
           checked
             ? "border-primary-600 ring-1 ring-primary-600"
             : "border-slate-300",
-          active ? "bg-primary-50" : "",
+          focus ? "bg-primary-50" : "",
           "relative flex cursor-pointer justify-center rounded-lg border p-3 text-slate-900 shadow-xs focus:outline-hidden",
         )
       }
     >
-      <RadioGroup.Label className="cursor-pointer">{label}</RadioGroup.Label>
-    </RadioGroup.Option>
+      <Label className="cursor-pointer">{label}</Label>
+    </Radio>
   );
 }
 
@@ -142,7 +142,7 @@ export default function AmountChooser({
   return (
     <div className="flex flex-col gap-4">
       <RadioGroup value={selectedAmount} onChange={setSelectedAmount}>
-        <RadioGroup.Label className="sr-only">{amountText}</RadioGroup.Label>
+        <Label className="sr-only">{amountText}</Label>
         <div className="grid grid-cols-4 gap-3 xs:gap-4">
           {amountOptions.map((amountOption) => (
             <AmountChooserOption

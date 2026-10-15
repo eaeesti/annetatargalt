@@ -1,5 +1,11 @@
 import { Fragment } from "react";
-import { Dialog, Transition } from "@headlessui/react";
+import {
+  Dialog,
+  DialogPanel,
+  DialogTitle,
+  Transition,
+  TransitionChild,
+} from "@headlessui/react";
 import {
   CheckIcon,
   ExclamationTriangleIcon,
@@ -117,9 +123,9 @@ export default function Modal({ open, data, setOpen, closeText }: ModalProps) {
   } = data;
 
   return (
-    <Transition.Root show={open} as={Fragment}>
+    <Transition show={open} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={setOpen}>
-        <Transition.Child
+        <TransitionChild
           as={Fragment}
           enter="ease-out duration-300"
           enterFrom="opacity-0"
@@ -129,11 +135,11 @@ export default function Modal({ open, data, setOpen, closeText }: ModalProps) {
           leaveTo="opacity-0"
         >
           <div className="bg-opacity-75 fixed inset-0 bg-gray-500 transition-opacity" />
-        </Transition.Child>
+        </TransitionChild>
 
         <div className="fixed inset-0 z-10 overflow-y-auto">
           <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-            <Transition.Child
+            <TransitionChild
               as={Fragment}
               enter="ease-out duration-300"
               enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
@@ -142,16 +148,16 @@ export default function Modal({ open, data, setOpen, closeText }: ModalProps) {
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <Dialog.Panel className="relative w-full max-w-sm transform overflow-hidden rounded-lg bg-white px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:p-6">
+              <DialogPanel className="relative w-full max-w-sm transform overflow-hidden rounded-lg bg-white px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:p-6">
                 <div>
                   {icons[icon]}
                   <div className="text-center">
-                    <Dialog.Title
+                    <DialogTitle
                       as="h3"
                       className="text-base leading-6 font-semibold text-gray-900"
                     >
                       {title}
-                    </Dialog.Title>
+                    </DialogTitle>
                     <div className="mt-2 space-y-2">
                       {description.split("\n").map((descriptionLine, index) => (
                         <p key={index} className="text-sm text-gray-500">
@@ -173,11 +179,11 @@ export default function Modal({ open, data, setOpen, closeText }: ModalProps) {
                     />
                   ))}
                 </div>
-              </Dialog.Panel>
-            </Transition.Child>
+              </DialogPanel>
+            </TransitionChild>
           </div>
         </div>
       </Dialog>
-    </Transition.Root>
+    </Transition>
   );
 }
