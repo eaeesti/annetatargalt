@@ -42,10 +42,11 @@ export default function CausesSection({
               text: readAboutOrganizationsText,
               href: `/${cause.slug}`,
               type: "text",
-              size: "sm",
+              size: "text",
               arrow: true,
               newTab: null,
               plausibleEvent: null,
+              className: "text-primary-700 font-medium!",
             },
           ]}
         />
