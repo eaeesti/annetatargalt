@@ -8,7 +8,8 @@ interface TextWithImageSectionProps {
   title: string | null;
   text: string | null;
   image: StrapiMedia | null;
-  buttons: StrapiButton[];
+  // className lets a caller style a button beyond what the CMS can set.
+  buttons: (StrapiButton & { className?: string })[];
   textOnRight?: boolean;
 }
 
@@ -53,6 +54,7 @@ export default function TextWithImageSection({
                   arrow={button.arrow}
                   newTab={button.newTab}
                   plausibleEvent={button.plausibleEvent}
+                  className={button.className}
                 />
               ))}
             </div>
