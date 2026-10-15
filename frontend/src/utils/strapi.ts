@@ -26,6 +26,37 @@ export function getStrapiURL(path = ""): string {
   }${path}`;
 }
 
+/**
+ * What to show the user when a request to Strapi fails: Strapi's own
+ * "Name: message" when the body is a Strapi error, otherwise the HTTP status.
+ * A body that isn't Strapi's is a proxy's error page, which means nothing to
+ * a donor.
+ */
+export async function describeErrorResponse(
+  response: Response,
+): Promise<string> {
+  try {
+    const body: unknown = await response.json();
+    const error =
+      typeof body === "object" && body !== null && "error" in body
+        ? body.error
+        : null;
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "name" in error &&
+      "message" in error &&
+      typeof error.name === "string" &&
+      typeof error.message === "string"
+    ) {
+      return `${error.name}: ${error.message}`;
+    }
+  } catch {
+    // Not JSON: fall through to the status.
+  }
+  return `${response.status} ${response.statusText}`.trim();
+}
+
 export async function fetchAPI(
   path: string,
   urlParamsObject: Record<string, unknown> = {},
