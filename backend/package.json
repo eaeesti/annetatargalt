@@ -33,10 +33,10 @@
   },
   "dependencies": {
     "@fourlights/strapi-plugin-deep-populate": "^1.17.1",
-    "@strapi/plugin-users-permissions": "5.57.0",
-    "@strapi/provider-email-nodemailer": "5.57.0",
-    "@strapi/provider-upload-cloudinary": "5.57.0",
-    "@strapi/strapi": "5.57.0",
+    "@strapi/plugin-users-permissions": "5.58.0",
+    "@strapi/provider-email-nodemailer": "5.58.0",
+    "@strapi/provider-upload-cloudinary": "5.58.0",
+    "@strapi/strapi": "5.58.0",
     "csv-parse": "^7.0.3",
     "drizzle-orm": "0.45.4",
     "jsonwebtoken": "^9.0.3",
@@ -48,7 +48,7 @@
     "styled-components": "^6.6.0"
   },
   "devDependencies": {
-    "@strapi/typescript-utils": "5.57.0",
+    "@strapi/typescript-utils": "5.58.0",
     "@tsconfig/node18": "^18.2.7",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/koa": "^2.15.2",
@@ -58,7 +58,7 @@
     "@vitest/ui": "^4.1.11",
     "dotenv-cli": "^11.0.0",
     "drizzle-kit": "^0.31.11",
-    "oxlint": "^1.87.0",
+    "oxlint": "^1.88.0",
     "supertest": "^7.3.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
