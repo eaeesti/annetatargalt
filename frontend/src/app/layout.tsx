@@ -2,6 +2,9 @@ import "./globals.css";
 import { getGlobal } from "../utils/strapi";
 import { buildMetadata } from "../utils/seo";
 import PlausibleProvider from "next-plausible";
+// Both styles: with only the italic faces, upright text would get them too.
+// The family these declare is "Inter Variable", which --font-sans names.
+import "@fontsource-variable/inter/opsz.css";
 import "@fontsource-variable/inter/opsz-italic.css";
 
 export async function generateMetadata() {

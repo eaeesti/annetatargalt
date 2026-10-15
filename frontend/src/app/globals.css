@@ -7,8 +7,8 @@
   --breakpoint-xs: 475px;
 
   --font-sans:
-    "Inter var", "Inter", ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    "Inter Variable", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
   --color-primary-50: #eef8f2;
   --color-primary-100: #d4ede1;
