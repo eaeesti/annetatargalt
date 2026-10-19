@@ -159,8 +159,29 @@ describe("admin-auth login()", () => {
     );
   }
 
+  beforeEach(() => {
+    // Password sign-in only exists where Google sign-in isn't set up.
+    vi.stubEnv("GOOGLE_CLIENT_ID", "");
+    vi.stubEnv("GOOGLE_WORKSPACE_DOMAIN", "");
+  });
+
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  it("is off where Google sign-in is configured", async () => {
+    vi.stubEnv("GOOGLE_CLIENT_ID", "client-id");
+    vi.stubEnv("GOOGLE_WORKSPACE_DOMAIN", "example.org");
+    stubAdminLogin(true);
+    const { strapi, issue } = fakeStrapi(bridgeable);
+    const result = await adminAuthController({ strapi }).login(
+      fakeCtx({ email: "off@example.org", password: "secret" }),
+    );
+    expect(result).toMatchObject({ kind: "notFound" });
+    // Not even checked against Strapi: the password never leaves this process.
+    expect(fetch).not.toHaveBeenCalled();
+    expect(issue).not.toHaveBeenCalled();
   });
 
   it("issues a session for an admin in a bridgeable role", async () => {

@@ -31,6 +31,13 @@ interface Role {
   name: string;
 }
 
+/** Both settings Google sign-in needs; when they're set, it's the only way in. */
+function googleSettings() {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const domain = process.env.GOOGLE_WORKSPACE_DOMAIN;
+  return clientId && domain ? { clientId, domain } : null;
+}
+
 type BridgeResult =
   | { ok: true; jwt: string; user: { id: number; email: string } }
   | { ok: false; message: string };
@@ -47,8 +54,19 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
    * New users are provisioned automatically on first login with the
    * "DonationAdmin" role. Assign them a more restricted role in the Strapi UI
    * if needed.
+   *
+   * Off wherever Google sign-in is configured: there Google is the only way
+   * into the panel, and this endpoint, which anyone can reach, must not stay
+   * open as a second one. It remains for setups without Google, such as local
+   * development.
    */
   async login(ctx: Context) {
+    if (googleSettings()) {
+      return ctx.notFound(
+        "Password sign-in is turned off; sign in with Google",
+      );
+    }
+
     const { email, password } = ctx.request.body as {
       email?: string;
       password?: string;
@@ -120,11 +138,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
    * panel can't vouch for anyone on its own.
    */
   async google(ctx: Context) {
-    const clientId = process.env.GOOGLE_CLIENT_ID;
-    const domain = process.env.GOOGLE_WORKSPACE_DOMAIN;
-    if (!clientId || !domain) {
-      return ctx.notFound("Google sign-in is not configured");
-    }
+    const settings = googleSettings();
+    if (!settings) return ctx.notFound("Google sign-in is not configured");
 
     const { idToken, nonce } = ctx.request.body as {
       idToken?: string;
@@ -134,11 +149,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       return ctx.badRequest("idToken and nonce are required");
     }
 
-    const identity = await verifyGoogleIdToken(idToken, {
-      clientId,
-      domain,
-      nonce,
-    });
+    const identity = await verifyGoogleIdToken(idToken, { ...settings, nonce });
     if (!identity.ok) {
       // The reason lets the panel say which, without passing on free text.
       return ctx.unauthorized(
