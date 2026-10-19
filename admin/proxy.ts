@@ -17,9 +17,11 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (token && isLoginPage) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
+  // Deliberately no "already signed in, skip the login page" redirect. A
+  // cookie only shows the browser holds a token, not that Strapi still
+  // accepts it, and the dashboard sends a rejected token to /login: with that
+  // redirect the two bounced the browser between them forever. Signing in
+  // again just replaces the cookie.
 }
 
 export const config = {
