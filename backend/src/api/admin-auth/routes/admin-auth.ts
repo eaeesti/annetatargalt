@@ -9,5 +9,14 @@ export default {
         policies: [],
       },
     },
+    {
+      method: "POST",
+      path: "/admin-auth/google",
+      handler: "admin-auth.google",
+      config: {
+        auth: false,
+        policies: [],
+      },
+    },
   ],
 };
