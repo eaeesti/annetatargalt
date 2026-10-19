@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
-import { Separator } from "../../components/ui/separator";
 import {
   Card,
   CardContent,
@@ -19,7 +18,45 @@ interface LoginFormProps {
   initialError: string | null;
 }
 
+// One way in or the other: where Google sign-in is configured, the backend
+// turns password sign-in off.
 export function LoginForm({ googleEnabled, initialError }: LoginFormProps) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>Admin login</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {googleEnabled ? (
+            <GoogleSignIn error={initialError} />
+          ) : (
+            <PasswordForm />
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function GoogleSignIn({ error }: { error: string | null }) {
+  return (
+    <>
+      <Button
+        className="w-full"
+        // A route handler, not a page, and the browser has to leave for
+        // Google: this must be a real navigation, not <Link>.
+        // oxlint-disable-next-line next/no-html-link-for-pages
+        render={<a href="/api/auth/google" />}
+      >
+        Sign in with Google
+      </Button>
+      {error && <p className="text-sm text-destructive">{error}</p>}
+    </>
+  );
+}
+
+function PasswordForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -48,65 +85,34 @@ export function LoginForm({ googleEnabled, initialError }: LoginFormProps) {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>Admin login</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {googleEnabled && (
-            <>
-              <Button
-                variant="outline"
-                className="w-full"
-                // A route handler, not a page, and the browser has to leave
-                // for Google: this must be a real navigation, not <Link>.
-                // oxlint-disable-next-line next/no-html-link-for-pages
-                render={<a href="/api/auth/google" />}
-              >
-                Sign in with Google
-              </Button>
-              {initialError && (
-                <p className="text-sm text-destructive">{initialError}</p>
-              )}
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                <Separator className="flex-1" />
-                or
-                <Separator className="flex-1" />
-              </div>
-            </>
-          )}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                autoFocus
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in…" : "Sign in"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-1">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          type="email"
+          autoComplete="email"
+          autoFocus
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor="password">Password</Label>
+        <Input
+          id="password"
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+      </div>
+      {error && <p className="text-sm text-destructive">{error}</p>}
+      <Button type="submit" className="w-full" disabled={loading}>
+        {loading ? "Signing in…" : "Sign in"}
+      </Button>
+    </form>
   );
 }

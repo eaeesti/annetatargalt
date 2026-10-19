@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { googleConfig } from "../../../lib/google";
 import { setSessionCookie } from "../../../lib/session";
 
 const STRAPI_URL = process.env.STRAPI_URL ?? "http://localhost:1337";
 
 export async function POST(request: NextRequest) {
+  // Where Google sign-in is configured it's the only way in; the backend
+  // refuses passwords there too.
+  if (googleConfig()) {
+    return NextResponse.json({ error: "Sign in with Google" }, { status: 404 });
+  }
+
   const { email, password } = (await request.json()) as {
     email: string;
     password: string;
