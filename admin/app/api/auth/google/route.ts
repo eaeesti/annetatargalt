@@ -35,7 +35,12 @@ export function GET(request: NextRequest) {
     code_challenge_method: "S256",
     prompt: "select_account",
     ...(config.domain ? { hd: config.domain } : {}),
-  }).toString();
+  })
+    .toString()
+    // URLSearchParams writes a space as "+", which parts of Google's sign-in
+    // have been reported to read as a literal plus. Google's own client
+    // libraries send %20; so does this. A literal "+" is already %2B here.
+    .replaceAll("+", "%20");
 
   const response = NextResponse.redirect(url);
   response.cookies.set(
