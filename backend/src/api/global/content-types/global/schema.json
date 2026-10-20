@@ -10,7 +10,11 @@
   "options": {
     "draftAndPublish": false
   },
-  "pluginOptions": {},
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
   "attributes": {
     "title": {
       "type": "string"
@@ -26,7 +30,12 @@
       "required": false,
       "allowedTypes": [
         "images"
-      ]
+      ],
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     },
     "favicon32": {
       "type": "media",
@@ -34,7 +43,12 @@
       "required": false,
       "allowedTypes": [
         "images"
-      ]
+      ],
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     },
     "chromeIcon192": {
       "type": "media",
@@ -42,7 +56,12 @@
       "required": false,
       "allowedTypes": [
         "images"
-      ]
+      ],
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     },
     "chromeIcon512": {
       "type": "media",
@@ -50,7 +69,12 @@
       "required": false,
       "allowedTypes": [
         "images"
-      ]
+      ],
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     },
     "appleTouchIcon": {
       "type": "media",
@@ -58,7 +82,12 @@
       "required": false,
       "allowedTypes": [
         "images"
-      ]
+      ],
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     },
     "navbar": {
       "type": "component",
@@ -92,7 +121,12 @@
     },
     "currency": {
       "type": "string",
-      "default": "€"
+      "default": "€",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     },
     "tipOrganization": {
       "type": "string"
@@ -100,7 +134,8 @@
     "dateLocale": {
       "type": "enumeration",
       "enum": [
-        "et-EE"
+        "et-EE",
+        "en-GB"
       ]
     },
     "blogSlug": {
@@ -114,11 +149,21 @@
     },
     "tipOrganizationInternalId": {
       "type": "string",
-      "maxLength": 64
+      "maxLength": 64,
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     },
     "externalOrganizationInternalId": {
       "type": "string",
-      "maxLength": 64
+      "maxLength": 64,
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     },
     "topBannerText": {
       "type": "richtext"

@@ -87,6 +87,75 @@ async function ensureLocales(strapi: Core.Strapi): Promise<void> {
     await locales.setDefaultLocale({ code: "et" });
     strapi.log.info("✅ Set Estonian as the default locale");
   }
+
+  // A database that got the localized content types in the same start as
+  // this function (a developer pulling both changes at once) has had its
+  // entries labelled English already, before this ran. English entries only
+  // ever exist as translations of Estonian ones, so a localized type with
+  // English entries but not a single Estonian one is exactly that case.
+  const { isLocalizedContentType } = strapi
+    .plugin("i18n")
+    .service("content-types") as {
+    isLocalizedContentType(contentType: unknown): boolean;
+  };
+  for (const contentType of Object.values(strapi.contentTypes)) {
+    const { uid } = contentType;
+    if (!uid.startsWith("api::") || !isLocalizedContentType(contentType)) {
+      continue;
+    }
+    const query = strapi.db.query(uid);
+    if ((await query.count({ where: { locale: "et" } })) > 0) continue;
+    const { count } = await query.updateMany({
+      where: { locale: "en" },
+      data: { locale: "et" },
+    });
+    if (count > 0) {
+      strapi.log.warn(
+        `⚠️ Relabelled ${count} ${uid} entr${count === 1 ? "y" : "ies"} from English to Estonian`,
+      );
+    }
+  }
+}
+
+/**
+ * Lets every admin role that can work on a localized content type do so in
+ * every language. When a type is made localized, Strapi limits existing
+ * roles' permissions on it to the default locale, so staff and translation
+ * volunteers couldn't touch the English version. Whoever may edit a page in
+ * Estonian may edit its translation too.
+ */
+async function grantAllLocales(strapi: Core.Strapi): Promise<void> {
+  type Permission = {
+    id: number;
+    subject: string | null;
+    properties: { locales?: string[] } | null;
+  };
+
+  const codes = LOCALES.map((locale) => locale.code);
+  const permissions = (await strapi.db.query("admin::permission").findMany({
+    where: { action: { $startsWith: "plugin::content-manager.explorer." } },
+  })) as Permission[];
+
+  const toWiden = permissions.filter((permission) => {
+    const locales = permission.properties?.locales;
+    // Only permissions that already carry a locale list belong to localized
+    // types; adding one to any other permission would be meaningless.
+    return (
+      Array.isArray(locales) && codes.some((code) => !locales.includes(code))
+    );
+  });
+
+  for (const permission of toWiden) {
+    await strapi.db.query("admin::permission").update({
+      where: { id: permission.id },
+      data: { properties: { ...permission.properties, locales: codes } },
+    });
+  }
+  if (toWiden.length > 0) {
+    strapi.log.info(
+      `✅ Extended ${toWiden.length} admin permission(s) to every locale`,
+    );
+  }
 }
 
 /**
@@ -627,6 +696,7 @@ export default {
     }
 
     await safely(strapi, "ensureLocales", () => ensureLocales(strapi));
+    await safely(strapi, "grantAllLocales", () => grantAllLocales(strapi));
     await safely(strapi, "bootstrapApiToken", () => bootstrapApiToken(strapi));
     await safely(strapi, "bootstrapDonationPermissions", () =>
       bootstrapDonationPermissions(strapi),
