@@ -50,6 +50,45 @@ async function safely(
   }
 }
 
+const LOCALES = [
+  { code: "et", name: "Estonian (et)" },
+  { code: "en", name: "English (en)" },
+];
+
+/**
+ * Makes sure both site languages exist and Estonian is the default.
+ *
+ * The default matters most at the moment a content type is first made
+ * localized: Strapi then labels every existing entry with the default locale,
+ * during startup and before this runs. This installation started out with
+ * only English, as the default, so this had to ship and run once before any
+ * content type was localized; otherwise all of the Estonian content would
+ * have been labelled English. Never turn localization off again for a type,
+ * either: Strapi deletes every non-default-locale entry when that happens.
+ */
+async function ensureLocales(strapi: Core.Strapi): Promise<void> {
+  type LocalesService = {
+    find(): Promise<{ code: string }[]>;
+    create(locale: { code: string; name: string }): Promise<unknown>;
+    getDefaultLocale(): Promise<string | null>;
+    setDefaultLocale(params: { code: string }): Promise<unknown>;
+  };
+  const locales = strapi.plugin("i18n").service("locales") as LocalesService;
+
+  const existing = new Set((await locales.find()).map((locale) => locale.code));
+  for (const locale of LOCALES) {
+    if (!existing.has(locale.code)) {
+      await locales.create(locale);
+      strapi.log.info(`✅ Created locale '${locale.code}'`);
+    }
+  }
+
+  if ((await locales.getDefaultLocale()) !== "et") {
+    await locales.setDefaultLocale({ code: "et" });
+    strapi.log.info("✅ Set Estonian as the default locale");
+  }
+}
+
 /**
  * Creates the "Public API Token" used by the Next.js frontend if it doesn't
  * already exist, and writes its value to frontend/.env.local so developers
@@ -587,6 +626,7 @@ export default {
       // Don't exit - let Strapi handle DB connection errors
     }
 
+    await safely(strapi, "ensureLocales", () => ensureLocales(strapi));
     await safely(strapi, "bootstrapApiToken", () => bootstrapApiToken(strapi));
     await safely(strapi, "bootstrapDonationPermissions", () =>
       bootstrapDonationPermissions(strapi),
