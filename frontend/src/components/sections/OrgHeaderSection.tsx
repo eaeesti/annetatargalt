@@ -6,6 +6,7 @@ import type {
   StrapiOrganization,
   StrapiOrgHeaderSection,
 } from "@/types/generated/strapi";
+import { localeOf, pagePath } from "@/utils/locale";
 
 interface OrgHeaderSectionProps extends StrapiOrgHeaderSection {
   entity: StrapiOrganization;
@@ -31,7 +32,7 @@ export default function OrgHeaderSection({
         {
           id: 0,
           title: cause.title,
-          href: `/${cause.slug}`,
+          href: pagePath(cause.slug ?? "", localeOf(entity)),
         },
       ]
     : breadcrumbs;

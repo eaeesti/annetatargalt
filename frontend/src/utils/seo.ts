@@ -1,9 +1,39 @@
 import type { Metadata } from "next";
 import type { StrapiGlobal, StrapiMetadata } from "@/types/generated/strapi";
+import { DEFAULT_LOCALE } from "./locale";
+import type { Locale } from "./locale";
+
+interface Languages {
+  locale: Locale;
+  /** The page's path in each language that has it. */
+  paths: Partial<Record<Locale, string>>;
+  /** Whether this language's version is public yet. */
+  launched: boolean;
+}
+
+/**
+ * Canonical and hreflang links once a language is public. Before that an
+ * English page is reachable for reviewers but asks not to be indexed, and
+ * the Estonian pages don't point at it.
+ */
+function languageMetadata({ locale, paths, launched }: Languages): Metadata {
+  if (!launched) {
+    return locale === DEFAULT_LOCALE ? {} : { robots: { index: false } };
+  }
+  const languages: Record<string, string> = { ...paths };
+  if (paths[DEFAULT_LOCALE]) languages["x-default"] = paths[DEFAULT_LOCALE];
+  return {
+    alternates: {
+      canonical: paths[locale],
+      ...(Object.keys(paths).length > 1 ? { languages } : {}),
+    },
+  };
+}
 
 export function buildMetadata(
   global: StrapiGlobal,
   pageMetadata: Partial<StrapiMetadata> | null | undefined,
+  languages?: Languages,
 ): Metadata {
   const globalMetadata = global.metadata;
 
@@ -45,5 +75,6 @@ export function buildMetadata(
       pageMetadata.description ?? globalMetadata?.description ?? null,
     openGraph,
     icons,
+    ...(languages ? languageMetadata(languages) : {}),
   };
 }

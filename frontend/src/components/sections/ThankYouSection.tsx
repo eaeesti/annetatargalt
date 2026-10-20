@@ -15,6 +15,7 @@ import type {
   StrapiGlobal,
   StrapiThankYouSection,
 } from "@/types/generated/strapi";
+import { localeOf } from "@/utils/locale";
 
 interface DecodedDonation {
   donor: { firstName: string };
@@ -94,6 +95,7 @@ export default function ThankYouSection({
               donation={decoded.donation}
               currency={global.currency}
               totalText={global.totalText}
+              locale={localeOf(global)}
             />
           </div>
           <Markdown className="prose-md prose w-full max-w-3xl prose-primary">

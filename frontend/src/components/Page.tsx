@@ -15,16 +15,23 @@ interface PageProps {
   page: StrapiPage | StrapiSpecialPage;
   global: StrapiGlobal;
   entity?: StrapiCause | StrapiOrganization | StrapiBlogPost;
+  /** This page in the other language; no switch is shown without it. */
+  languageSwitchHref?: string;
 }
 
-export default function Page({ page, global, entity }: PageProps) {
+export default function Page({
+  page,
+  global,
+  entity,
+  languageSwitchHref,
+}: PageProps) {
   return (
     <>
       <Banner
         topBannerText={global.topBannerText}
         closeText={global.closeText}
       />
-      <Navbar global={global} />
+      <Navbar global={global} languageSwitchHref={languageSwitchHref} />
       {page?.sections?.map((section) => (
         <Section
           key={section.id}

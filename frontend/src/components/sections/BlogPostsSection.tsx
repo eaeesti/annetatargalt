@@ -6,6 +6,7 @@ import type {
   StrapiGlobal,
   StrapiPage,
 } from "@/types/generated/strapi";
+import { localeOf, pagePath } from "@/utils/locale";
 
 interface BlogPostsSectionProps extends StrapiBlogPostsSection {
   global: StrapiGlobal;
@@ -16,14 +17,18 @@ export default async function BlogPostsSection({
   global,
   page,
 }: BlogPostsSectionProps) {
-  const blogPosts = await getBlogPosts();
+  const locale = localeOf(page);
+  const blogPosts = await getBlogPosts(locale);
 
   return (
     <div className="bg-white py-16 sm:py-24">
       <div className="mx-auto max-w-7xl px-0 sm:px-4 lg:px-8">
         <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-2 gap-y-12 md:mx-0 md:max-w-none md:grid-cols-2 lg:grid-cols-3">
           {blogPosts.map((post) => (
-            <Anchor key={post.id} href={`/${page.slug}/${post.slug}`}>
+            <Anchor
+              key={post.id}
+              href={pagePath(`${page.slug}/${post.slug}`, locale)}
+            >
               <article className="group flex flex-col items-start gap-6 p-6 hover:cursor-pointer hover:bg-slate-100 sm:rounded-3xl">
                 <div className="relative w-full">
                   <Image

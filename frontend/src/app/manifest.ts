@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { getGlobal } from "@/utils/strapi";
 
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
-  const global = await getGlobal().catch(() => null);
+  const global = await getGlobal("et").catch(() => null);
 
   const icons: MetadataRoute.Manifest["icons"] = [];
 

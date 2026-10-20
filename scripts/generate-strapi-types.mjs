@@ -179,6 +179,15 @@ function generateInterfaceBody(schema, { uid, isContentType = false }) {
     lines.push(`  ${name}: ${attrToType(attr)};`);
   }
 
+  if (isContentType && schema.pluginOptions?.i18n?.localized) {
+    // Added by Strapi's i18n plugin. `localizations` is only there when a
+    // query populates it: the same document in its other locales.
+    lines.push("  locale: string | null;");
+    lines.push(
+      "  localizations?: { locale: string | null; slug?: string | null }[];",
+    );
+  }
+
   if (isContentType) {
     lines.push("  createdAt: string | null;");
     lines.push("  updatedAt: string | null;");

@@ -31,6 +31,7 @@ import type {
   StrapiGlobal,
   StrapiPage,
 } from "@/types/generated/strapi";
+import { localeOf } from "@/utils/locale";
 
 interface DonationSectionProps extends StrapiDonationSection {
   global: StrapiGlobal;
@@ -247,6 +248,7 @@ export default function DonationSection(props: DonationSectionProps) {
                 setProportions={(proportions) =>
                   setDonation({ ...donation, proportions })
                 }
+                locale={localeOf(props.global)}
               />
               <Button
                 text={props.nextButtonText}
@@ -402,6 +404,7 @@ export default function DonationSection(props: DonationSectionProps) {
                 tipOrganization={props.global.tipOrganization}
                 tipAmount={tipAmount}
                 totalAmount={totalAmount}
+                locale={localeOf(props.global)}
               />
               {donation.type === "recurring" && (
                 <BankChooser

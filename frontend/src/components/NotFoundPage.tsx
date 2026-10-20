@@ -3,9 +3,10 @@ import Navbar from "@/components/Navbar";
 import Button from "@/components/elements/Button";
 import Markdown from "@/components/elements/Markdown";
 import { getGlobal } from "@/utils/strapi";
+import type { Locale } from "@/utils/locale";
 
-export default async function NotFound() {
-  const global = await getGlobal().catch(() => null);
+export default async function NotFoundPage({ locale }: { locale: Locale }) {
+  const global = await getGlobal(locale).catch(() => null);
 
   if (!global?.notFoundPage) {
     return (
@@ -15,7 +16,7 @@ export default async function NotFound() {
             404
           </p>
           <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900">
-            Page not found
+            {locale === "et" ? "Lehte ei leitud" : "Page not found"}
           </h1>
         </div>
       </main>

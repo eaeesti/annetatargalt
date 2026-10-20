@@ -7,15 +7,26 @@ import Anchor from "./elements/Anchor";
 import Button from "./elements/Button";
 import Image from "./elements/Image";
 import type { StrapiGlobal } from "@/types/generated/strapi";
+import { localeOf, otherLocale, pagePath } from "@/utils/locale";
 
 interface NavbarProps {
   global: StrapiGlobal;
+  /** The current page in the other language. */
+  languageSwitchHref?: string;
 }
 
-export default function Navbar({ global }: NavbarProps) {
+export default function Navbar({ global, languageSwitchHref }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const { title, navbar } = global;
+  const { title, navbar, languageSwitchText } = global;
+  const locale = localeOf(global);
+  const home = pagePath("/", locale);
+  const switchLanguage = languageSwitchHref &&
+    languageSwitchText && {
+      href: languageSwitchHref,
+      text: languageSwitchText,
+      lang: otherLocale(locale),
+    };
 
   if (!navbar) return;
 
@@ -25,7 +36,7 @@ export default function Navbar({ global }: NavbarProps) {
         <div className="flex w-full max-w-7xl items-center justify-between gap-x-6 px-6 py-4 lg:px-8">
           <div className="flex grow lg:grow-0">
             <Anchor
-              href="/"
+              href={home}
               className="-m-1.5 rounded-md p-1.5 hover:opacity-70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 focus-visible:outline-solid"
             >
               <span className="sr-only">{title}</span>
@@ -43,6 +54,16 @@ export default function Navbar({ global }: NavbarProps) {
                 newTab={link.newTab}
               />
             ))}
+            {switchLanguage && (
+              <Anchor
+                href={switchLanguage.href}
+                hrefLang={switchLanguage.lang}
+                lang={switchLanguage.lang}
+                className="flex items-center rounded-md px-4 py-2.5 font-semibold text-slate-500 hover:opacity-70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 focus-visible:outline-solid"
+              >
+                {switchLanguage.text}
+              </Anchor>
+            )}
           </div>
           <div className="">
             {navbar.ctaButton && (
@@ -78,7 +99,7 @@ export default function Navbar({ global }: NavbarProps) {
         <div className="fixed inset-0 z-10" />
         <DialogPanel className="fixed inset-y-0 right-0 z-20 w-full overflow-y-auto bg-white px-6 py-4 sm:max-w-sm sm:ring-1 sm:ring-slate-900/10">
           <div className="flex items-center gap-x-6">
-            <Anchor href="/" className="-m-1.5 grow p-1.5 hover:opacity-80">
+            <Anchor href={home} className="-m-1.5 grow p-1.5 hover:opacity-80">
               <span className="sr-only">{title}</span>
               <Image
                 className="h-8 w-auto sm:hidden"
@@ -117,6 +138,16 @@ export default function Navbar({ global }: NavbarProps) {
                   {link.text}
                 </Anchor>
               ))}
+              {switchLanguage && (
+                <Anchor
+                  href={switchLanguage.href}
+                  hrefLang={switchLanguage.lang}
+                  lang={switchLanguage.lang}
+                  className="-mx-3 block rounded-lg px-3 py-2 text-base leading-7 font-semibold text-slate-500 hover:bg-primary-100"
+                >
+                  {switchLanguage.text}
+                </Anchor>
+              )}
             </div>
           </div>
         </DialogPanel>

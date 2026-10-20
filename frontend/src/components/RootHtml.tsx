@@ -1,33 +1,26 @@
-import "./globals.css";
-import { getGlobal } from "../utils/strapi";
-import { buildMetadata } from "../utils/seo";
+import "@/app/globals.css";
 import PlausibleProvider from "next-plausible";
 // Both styles: with only the italic faces, upright text would get them too.
 // The family these declare is "Inter Variable", which --font-sans names.
 import "@fontsource-variable/inter/opsz.css";
 import "@fontsource-variable/inter/opsz-italic.css";
+import type { Locale } from "@/utils/locale";
 
-export async function generateMetadata() {
-  try {
-    const global = await getGlobal();
-    return buildMetadata(global, {});
-  } catch {
-    // Let the page's own getGlobal()/getPage() call throw so error.tsx can show
-    // the actionable message — don't blow up metadata generation here.
-    return {};
-  }
-}
-
-export default async function RootLayout({
+/** The document shell both languages' root layouts share. */
+export default function RootHtml({
+  locale,
   children,
 }: {
+  locale: Locale;
   children: React.ReactNode;
 }) {
   const plausibleDomain = process.env.PLAUSIBLE_DOMAIN;
 
   return (
-    <html lang="et" className="h-full">
+    <html lang={locale} className="h-full">
       {plausibleDomain && (
+        // The App Router's own <head>: next/head belongs to the Pages Router.
+        // oxlint-disable-next-line next/no-head-element
         <head>
           <PlausibleProvider
             domain={plausibleDomain}
