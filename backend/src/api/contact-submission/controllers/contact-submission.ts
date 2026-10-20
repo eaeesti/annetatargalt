@@ -4,6 +4,7 @@ import {
   FixedWindowLimiter,
   isProxyAddress,
 } from "../../../utils/rate-limiter";
+import { format, sanitize } from "../../../utils/string";
 
 // Every submission both writes a row and sends mail through the org's account,
 // from an endpoint the browser reaches directly with no challenge in front of
@@ -58,21 +59,32 @@ export default factories.createCoreController(
       }
       const recipientEmails = recipients.split(/\r\n|\r|\n/);
 
-      const template = {
-        subject: emailConfig.contactFormSubmissionSubject,
-        text: emailConfig.contactFormSubmissionText,
-        html: emailConfig.contactFormSubmissionHtml,
+      // Filled in here rather than by Strapi's sendTemplatedEmail, which
+      // inserts values unescaped: the HTML part would carry whatever a
+      // visitor typed into the team's inbox as markup. The plain-text part
+      // keeps the values as typed.
+      const values = {
+        name: String(submission.name ?? ""),
+        email: String(submission.email ?? ""),
+        message: String(submission.message ?? ""),
+      };
+      const htmlValues = {
+        name: sanitize(values.name),
+        email: sanitize(values.email),
+        message: sanitize(values.message),
+      };
+      const email = {
+        subject: format(emailConfig.contactFormSubmissionSubject ?? "", values),
+        text: format(emailConfig.contactFormSubmissionText ?? "", values),
+        html: format(emailConfig.contactFormSubmissionHtml ?? "", htmlValues),
       };
 
       const emailPromises = recipientEmails.map((recipientEmail: string) =>
-        strapi.plugins["email"].services.email.sendTemplatedEmail(
-          {
-            to: recipientEmail,
-            replyTo: submission.email,
-          },
-          template,
-          submission,
-        ),
+        strapi.plugins["email"].services.email.send({
+          to: recipientEmail,
+          replyTo: values.email,
+          ...email,
+        }),
       );
 
       try {
