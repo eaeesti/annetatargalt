@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "../../components/ui/card";
+import { BrandLogo } from "../../components/brand-logo";
 
 interface LoginFormProps {
   googleEnabled: boolean;
@@ -24,8 +25,9 @@ export function LoginForm({ googleEnabled, initialError }: LoginFormProps) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>Admin login</CardTitle>
+        <CardHeader className="items-center gap-3 text-center">
+          <BrandLogo className="mx-auto h-12 text-primary" />
+          <CardTitle>Anneta Targalt admin</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {googleEnabled ? (

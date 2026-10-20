@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { BrandLogo } from "../../../components/brand-logo";
 import { Button } from "../../../components/ui/button";
 import {
   Sidebar,
@@ -42,7 +43,15 @@ export function AppSidebar({ user }: { user: User | null }) {
   return (
     <Sidebar>
       <SidebarHeader className="border-b px-4 py-4">
-        <span className="text-sm font-semibold">Anneta Targalt Admin</span>
+        <Link href="/" className="flex flex-col items-start gap-2">
+          <BrandLogo className="h-7 text-sidebar-primary" />
+          <span className="text-sm leading-tight font-semibold">
+            Anneta Targalt
+            <span className="ml-1.5 font-normal text-muted-foreground">
+              Admin
+            </span>
+          </span>
+        </Link>
       </SidebarHeader>
       <SidebarContent className="px-2 py-2">
         <SidebarMenu>

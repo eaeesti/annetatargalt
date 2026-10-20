@@ -26,7 +26,7 @@ function shortMonth(yyyymm: string) {
 }
 
 const chartConfig = {
-  newDonors: { label: "New", color: "hsl(142 76% 36%)" },
+  newDonors: { label: "New", color: "var(--chart-2)" },
   churned: { label: "Churned", color: "hsl(0 72% 51%)" },
   active: { label: "Active", color: "var(--chart-1)" },
 } satisfies ChartConfig;
