@@ -15,6 +15,16 @@ describe("format", () => {
     ).toBe("Hi, Alice!");
   });
 
+  it("replaces every occurrence of a placeholder", () => {
+    expect(
+      format("Dear <%= name %>, thank you, <%= name %>!", { name: "Mari" }),
+    ).toBe("Dear Mari, thank you, Mari!");
+  });
+
+  it("inserts values literally, even with $ patterns", () => {
+    expect(format("Hi <%= name %>", { name: "A$&B$1" })).toBe("Hi A$&B$1");
+  });
+
   it("leaves unmatched placeholders untouched", () => {
     expect(format("Hello <%= name %>", {})).toBe("Hello <%= name %>");
   });
