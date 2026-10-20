@@ -1,4 +1,6 @@
 import Summary from "./Summary";
+import { pagePath } from "@/utils/locale";
+import type { Locale } from "@/utils/locale";
 
 interface OrganizationDonation {
   organization: {
@@ -18,18 +20,23 @@ interface DonationSummaryProps {
   donation: DecodedDonation;
   currency: string | null;
   totalText: string | null;
+  locale: Locale;
 }
 
 export default function DonationSummary({
   donation,
   currency,
   totalText,
+  locale,
 }: DonationSummaryProps) {
   const summary = donation.organizationDonations.map(
     (organizationDonation) => ({
       title: organizationDonation.organization.title ?? "",
       href: organizationDonation.organization.cause
-        ? `/${organizationDonation.organization.cause.slug ?? ""}/${organizationDonation.organization.slug ?? ""}`
+        ? pagePath(
+            `${organizationDonation.organization.cause.slug ?? ""}/${organizationDonation.organization.slug ?? ""}`,
+            locale,
+          )
         : "",
       amount: organizationDonation.amount / 100,
     }),

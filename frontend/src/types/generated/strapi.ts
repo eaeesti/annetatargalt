@@ -442,6 +442,8 @@ export interface StrapiBlogAuthor {
   name: string | null;
   role: string | null;
   posts: StrapiBlogPost[];
+  locale: string | null;
+  localizations?: { locale: string | null; slug?: string | null }[];
   createdAt: string | null;
   updatedAt: string | null;
 }
@@ -457,6 +459,8 @@ export interface StrapiBlogPost {
   image: StrapiMedia | null;
   preview: string | null;
   content: string | null;
+  locale: string | null;
+  localizations?: { locale: string | null; slug?: string | null }[];
   createdAt: string | null;
   updatedAt: string | null;
   publishedAt: string | null;
@@ -473,6 +477,8 @@ export interface StrapiCause {
   organizations: StrapiOrganization[];
   image: StrapiMedia | null;
   active: boolean | null;
+  locale: string | null;
+  localizations?: { locale: string | null; slug?: string | null }[];
   createdAt: string | null;
   updatedAt: string | null;
 }
@@ -498,6 +504,8 @@ export interface StrapiDonationInfo {
   merchantReferencePrefix: string | null;
   externalRecurringPaymentComment: string | null;
   externalMerchantReferencePrefix: string | null;
+  locale: string | null;
+  localizations?: { locale: string | null; slug?: string | null }[];
   createdAt: string | null;
   updatedAt: string | null;
 }
@@ -527,6 +535,8 @@ export interface StrapiEmailConfig {
   externalRecurringConfirmationText: string | null;
   externalRecurringConfirmationHtml: string | null;
   externalRecurringConfirmationSubject: string | null;
+  locale: string | null;
+  localizations?: { locale: string | null; slug?: string | null }[];
   createdAt: string | null;
   updatedAt: string | null;
 }
@@ -551,13 +561,16 @@ export interface StrapiGlobal {
   totalText: string | null;
   currency: string | null;
   tipOrganization: string | null;
-  dateLocale: "et-EE" | null;
+  dateLocale: "et-EE" | "en-GB" | null;
   blogSlug: string | null;
   donateText: string | null;
   readMoreText: string | null;
   tipOrganizationInternalId: string | null;
   externalOrganizationInternalId: string | null;
   topBannerText: string | null;
+  languageSwitchText: string | null;
+  locale: string | null;
+  localizations?: { locale: string | null; slug?: string | null }[];
   createdAt: string | null;
   updatedAt: string | null;
 }
@@ -576,6 +589,8 @@ export interface StrapiOrganization {
   logo: StrapiMedia | null;
   active: boolean | null;
   internalId: string | null;
+  locale: string | null;
+  localizations?: { locale: string | null; slug?: string | null }[];
   createdAt: string | null;
   updatedAt: string | null;
 }
@@ -587,6 +602,8 @@ export interface StrapiPage {
   slug: string | null;
   metadata: StrapiMetadata | null;
   sections: StrapiSection[];
+  locale: string | null;
+  localizations?: { locale: string | null; slug?: string | null }[];
   createdAt: string | null;
   updatedAt: string | null;
 }
@@ -598,6 +615,8 @@ export interface StrapiSpecialPage {
   slugPattern: string | null;
   collectionType: string | null;
   sections: StrapiSection[];
+  locale: string | null;
+  localizations?: { locale: string | null; slug?: string | null }[];
   createdAt: string | null;
   updatedAt: string | null;
 }

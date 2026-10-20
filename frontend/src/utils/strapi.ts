@@ -8,6 +8,7 @@ import type {
   StrapiOrganization,
   StrapiCause,
 } from "@/types/generated/strapi";
+import type { Locale } from "./locale";
 
 type SpecialPageEntity = StrapiCause | StrapiOrganization | StrapiBlogPost;
 function headersWithAuthToken(): { headers: { Authorization: string } } {
@@ -57,6 +58,16 @@ export async function describeErrorResponse(
   return `${response.status} ${response.statusText}`.trim();
 }
 
+/** A response from Strapi that wasn't a success, with its HTTP status. */
+export class StrapiHttpError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
 export async function fetchAPI(
   path: string,
   urlParamsObject: Record<string, unknown> = {},
@@ -92,9 +103,10 @@ export async function fetchAPI(
         );
       }
       const body = await response.text().catch(() => "");
-      throw new Error(
+      throw new StrapiHttpError(
         `Strapi returned HTTP ${response.status} for GET /api${path}` +
           (body ? `: ${body.slice(0, 300)}` : ""),
+        response.status,
       );
     }
 
@@ -117,11 +129,16 @@ export async function fetchAPI(
   }
 }
 
-export async function getPageBySlug(slug: string): Promise<StrapiPage> {
+export async function getPageBySlug(
+  slug: string,
+  locale: Locale,
+): Promise<StrapiPage> {
   const path = "/pages";
   const options = headersWithAuthToken();
+  // populate "*" includes localizations: the page's slug in the other language.
   const urlParamsObject = {
     filters: { slug },
+    locale,
     populate: "*",
   };
 
@@ -141,17 +158,32 @@ export async function getPageBySlug(slug: string): Promise<StrapiPage> {
   }
 }
 
-export async function getGlobal(): Promise<StrapiGlobal> {
+/**
+ * A language's global settings, or null when it has none yet. Callers outside
+ * a page render use this; pages use getGlobal().
+ */
+export async function findGlobal(locale: Locale): Promise<StrapiGlobal | null> {
   const path = "/global";
   const options = headersWithAuthToken();
-  const urlParamsObject = { populate: "*" };
+  const urlParamsObject = { locale, populate: "*" };
 
-  const response = (await fetchAPI(path, urlParamsObject, options)) as {
-    data: StrapiGlobal;
-  };
+  try {
+    const response = (await fetchAPI(path, urlParamsObject, options)) as {
+      data: StrapiGlobal;
+    };
+    // Singleton types return data directly (not in an array)
+    return response.data;
+  } catch (error) {
+    if (error instanceof StrapiHttpError && error.status === 404) return null;
+    throw error;
+  }
+}
 
-  // Singleton types return data directly (not in an array)
-  return response.data;
+/** A language's global settings; a language without them has no site. */
+export async function getGlobal(locale: Locale): Promise<StrapiGlobal> {
+  const global = await findGlobal(locale);
+  if (!global) notFound();
+  return global;
 }
 
 type SpecialPageWithPattern = StrapiSpecialPage & {
@@ -159,10 +191,12 @@ type SpecialPageWithPattern = StrapiSpecialPage & {
   collectionType: string;
 };
 
-export async function getSpecialPages(): Promise<SpecialPageWithPattern[]> {
+export async function getSpecialPages(
+  locale: Locale,
+): Promise<SpecialPageWithPattern[]> {
   const path = "/special-pages";
   const options = headersWithAuthToken();
-  const urlParamsObject = { populate: "*" };
+  const urlParamsObject = { locale, populate: "*" };
 
   const response = (await fetchAPI(path, urlParamsObject, options)) as {
     data: StrapiSpecialPage[];
@@ -181,8 +215,10 @@ export async function getSpecialPages(): Promise<SpecialPageWithPattern[]> {
 
 export async function findSpecialPage(
   slug: string,
+  locale: Locale,
 ): Promise<{ page: SpecialPageWithPattern; entity: SpecialPageEntity } | null> {
-  const specialPages = await getSpecialPages();
+  // Each language has its own special pages, so its own slug patterns.
+  const specialPages = await getSpecialPages(locale);
 
   const foundSpecialPage = specialPages.find((specialPage) =>
     new RegExp(specialPage.slugPattern).test(slug),
@@ -197,6 +233,7 @@ export async function findSpecialPage(
   const entity = await getEntityBySlug(
     foundSpecialPage.collectionType,
     endpoint,
+    locale,
   );
 
   return { page: foundSpecialPage, entity: entity as SpecialPageEntity };
@@ -205,11 +242,13 @@ export async function findSpecialPage(
 export async function getEntityBySlug(
   type: string,
   slug: string,
+  locale: Locale,
 ): Promise<unknown> {
   const path = `/${type}`;
   const options = headersWithAuthToken();
   const urlParamsObject = {
     filters: { slug },
+    locale,
     populate: "*",
   };
 
@@ -229,10 +268,31 @@ export async function getEntityBySlug(
   }
 }
 
-export async function getAllSlugs(): Promise<string[]> {
+/**
+ * The same document in another language, or null when it has no translation
+ * there (Strapi answers 404).
+ */
+export async function fetchEntityInLocale(
+  type: string,
+  documentId: string,
+  locale: Locale,
+): Promise<SpecialPageEntity | null> {
+  try {
+    const response = (await fetchAPI(
+      `/${type}/${documentId}`,
+      { locale, populate: "*" },
+      headersWithAuthToken(),
+    )) as { data?: SpecialPageEntity };
+    return response.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function getAllSlugs(locale: Locale): Promise<string[]> {
   const pagesPath = "/pages";
   const options = headersWithAuthToken();
-  const urlParamsObject = { populate: "*" };
+  const urlParamsObject = { locale, populate: "*" };
 
   const pagesResponse = (await fetchAPI(
     pagesPath,
@@ -264,8 +324,8 @@ export async function getAllSlugs(): Promise<string[]> {
     )
     .flat();
 
-  const blogPosts = await getBlogPosts();
-  const global = await getGlobal();
+  const blogPosts = await getBlogPosts(locale);
+  const global = await getGlobal(locale);
   const blogPostSlugs = blogPosts.map(
     (blogPost) => `${global?.blogSlug || "blog"}/${blogPost.slug}`,
   );
@@ -280,10 +340,10 @@ export async function getAllSlugs(): Promise<string[]> {
   return allSlugs;
 }
 
-export async function getBlogPosts(): Promise<StrapiBlogPost[]> {
+export async function getBlogPosts(locale: Locale): Promise<StrapiBlogPost[]> {
   const path = "/blog-posts";
   const options = headersWithAuthToken();
-  const urlParamsObject = { populate: "*", sort: "date:desc" };
+  const urlParamsObject = { locale, populate: "*", sort: "date:desc" };
 
   const response = (await fetchAPI(path, urlParamsObject, options)) as {
     data: StrapiBlogPost[];
@@ -310,10 +370,13 @@ export function snakeCaseToPascalCase(string: string): string {
     .join("");
 }
 
-export async function getOrganizations(): Promise<StrapiOrganization[]> {
+export async function getOrganizations(
+  locale: Locale,
+): Promise<StrapiOrganization[]> {
   const path = "/organizations";
   const options = headersWithAuthToken();
   const urlParamsObject = {
+    locale,
     populate: "*",
     sort: "title:asc",
     filters: {

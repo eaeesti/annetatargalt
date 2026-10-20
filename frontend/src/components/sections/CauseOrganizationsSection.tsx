@@ -4,6 +4,7 @@ import type {
   StrapiCauseOrganizationsSection,
   StrapiGlobal,
 } from "@/types/generated/strapi";
+import { localeOf, pagePath } from "@/utils/locale";
 
 interface CauseOrganizationsSectionProps extends StrapiCauseOrganizationsSection {
   entity: StrapiCause;
@@ -38,7 +39,10 @@ export default function CauseOrganizationsSection({
               donateButtonText={global.donateText}
               donateLink={global.donateLink}
               readMoreText={global.readMoreText}
-              organizationLink={`/${entity.slug}/${fund.slug}`}
+              organizationLink={pagePath(
+                `${entity.slug}/${fund.slug}`,
+                localeOf(entity),
+              )}
             />
           </div>
         )}
@@ -54,7 +58,10 @@ export default function CauseOrganizationsSection({
               donateButtonText={global.donateText}
               donateLink={global.donateLink}
               readMoreText={global.readMoreText}
-              organizationLink={`/${entity.slug}/${organization.slug}`}
+              organizationLink={pagePath(
+                `${entity.slug}/${organization.slug}`,
+                localeOf(entity),
+              )}
             />
           ))}
         </div>

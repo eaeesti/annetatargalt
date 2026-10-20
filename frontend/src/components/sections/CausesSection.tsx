@@ -1,13 +1,14 @@
 import Markdown from "../elements/Markdown";
 import TextWithImageSection from "./TextWithImageSection";
 import type { StrapiCausesSection, StrapiPage } from "@/types/generated/strapi";
+import { localeOf, pagePath } from "@/utils/locale";
 
 interface CausesSectionProps extends StrapiCausesSection {
   page: StrapiPage;
 }
 
 export default function CausesSection({
-  page: { slug },
+  page,
   title,
   description,
   causes,
@@ -40,7 +41,7 @@ export default function CausesSection({
             {
               id: 0,
               text: readAboutOrganizationsText,
-              href: `/${cause.slug}`,
+              href: pagePath(cause.slug ?? "", localeOf(page)),
               type: "text",
               size: "text",
               arrow: true,

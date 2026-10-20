@@ -4,6 +4,7 @@ import type {
   StrapiGlobal,
   StrapiOrganizationsSection,
 } from "@/types/generated/strapi";
+import { localeOf, pagePath } from "@/utils/locale";
 
 interface OrganizationsSectionProps extends StrapiOrganizationsSection {
   global: StrapiGlobal;
@@ -12,7 +13,8 @@ interface OrganizationsSectionProps extends StrapiOrganizationsSection {
 export default async function OrganizationsSection({
   global,
 }: OrganizationsSectionProps) {
-  const organizations = await getOrganizations();
+  const locale = localeOf(global);
+  const organizations = await getOrganizations(locale);
 
   return (
     <section className="bg-slate-200 py-24">
@@ -26,7 +28,10 @@ export default async function OrganizationsSection({
               donateButtonText={global.donateText}
               donateLink={global.donateLink}
               readMoreText={global.readMoreText}
-              organizationLink={`/${organization.cause?.slug}/${organization.slug}`}
+              organizationLink={pagePath(
+                `${organization.cause?.slug}/${organization.slug}`,
+                locale,
+              )}
             />
           ))}
         </div>

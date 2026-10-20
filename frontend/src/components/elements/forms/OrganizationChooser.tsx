@@ -13,6 +13,8 @@ import InfoIcon from "@/components/icons/InfoIcon";
 import CheckboxInput from "./CheckboxInput";
 import type { StrapiCause } from "@/types/generated/strapi";
 import Proportions from "@/utils/proportions";
+import { pagePath } from "@/utils/locale";
+import type { Locale } from "@/utils/locale";
 
 interface ProportionSliderProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
@@ -73,6 +75,7 @@ interface OrganizationChooserProps {
   causes: { data: StrapiCause[] };
   proportions: Proportions;
   setProportions: (proportions: Proportions) => void;
+  locale: Locale;
 }
 
 export default function OrganizationChooser({
@@ -83,6 +86,7 @@ export default function OrganizationChooser({
   causes,
   proportions,
   setProportions,
+  locale,
 }: OrganizationChooserProps) {
   return (
     <fieldset>
@@ -110,7 +114,7 @@ export default function OrganizationChooser({
                     </label>
                   </DisclosureButton>
                   <Button
-                    href={`/${cause.slug}`}
+                    href={pagePath(cause.slug ?? "", locale)}
                     newTab={true}
                     size="link"
                     type="text"
@@ -175,7 +179,10 @@ export default function OrganizationChooser({
                               {organization.title}
                             </label>
                             <Button
-                              href={`/${cause.slug}/${organization.slug}`}
+                              href={pagePath(
+                                `${cause.slug}/${organization.slug}`,
+                                locale,
+                              )}
                               newTab={true}
                               size="link"
                               type="text"
