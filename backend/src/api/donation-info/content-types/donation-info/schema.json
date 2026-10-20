@@ -10,31 +10,65 @@
   "options": {
     "draftAndPublish": false
   },
-  "pluginOptions": {},
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
   "attributes": {
     "returnPath": {
       "type": "string",
       "default": "annetatud"
     },
     "iban": {
-      "type": "string"
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     },
     "recipient": {
-      "type": "string"
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     },
     "recurringPaymentComment": {
-      "type": "string"
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     },
     "merchantReferencePrefix": {
-      "type": "string"
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     },
     "externalRecurringPaymentComment": {
       "type": "string",
-      "default": "Efektiivne Altruism Eesti püsiannetus"
+      "default": "Efektiivne Altruism Eesti püsiannetus",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     },
     "externalMerchantReferencePrefix": {
       "type": "string",
-      "default": "Efektiivne Altruism Eesti annetus"
+      "default": "Efektiivne Altruism Eesti annetus",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     }
   }
 }
