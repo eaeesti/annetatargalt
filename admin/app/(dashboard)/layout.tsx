@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { strapiAdmin } from "../../lib/api";
 import { AppSidebar } from "./_components/app-sidebar";
+import { BrandLogo } from "../../components/brand-logo";
 import {
   SidebarInset,
   SidebarProvider,
@@ -38,6 +39,7 @@ export default async function DashboardLayout({
       <SidebarInset className="overflow-auto">
         <header className="flex items-center gap-2 border-b bg-background px-4 py-3 md:hidden">
           <SidebarTrigger />
+          <BrandLogo className="h-5 text-primary" />
           <span className="text-sm font-semibold">Anneta Targalt Admin</span>
         </header>
         <div className="min-w-0 flex-1 bg-muted/40">
