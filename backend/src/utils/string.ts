@@ -19,7 +19,11 @@ export function urlWithParams(
  */
 export function format(string: string, values: Record<string, string>): string {
   return Object.entries(values).reduce(
-    (previous, [key, value]) => previous.replace("<%= " + key + " %>", value),
+    // Every occurrence, and the value inserted as is: replace() with a string
+    // only replaced the first one, and would expand "$&" and the like inside
+    // a donor's name.
+    (previous, [key, value]) =>
+      previous.split("<%= " + key + " %>").join(value),
     string,
   );
 }
