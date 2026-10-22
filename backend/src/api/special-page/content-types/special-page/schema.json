@@ -17,10 +17,20 @@
   },
   "attributes": {
     "name": {
-      "type": "string"
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "slugPattern": {
-      "type": "string"
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "collectionType": {
       "type": "string",
@@ -44,7 +54,12 @@
         "special-sections.org-header-section",
         "special-sections.organization-cta-section",
         "special-sections.blog-header-section"
-      ]
+      ],
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     }
   }
 }

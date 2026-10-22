@@ -475,7 +475,12 @@ export interface ApiBlogAuthorBlogAuthor extends Struct.CollectionTypeSchema {
       }>;
     posts: Schema.Attribute.Relation<'oneToMany', 'api::blog-post.blog-post'>;
     publishedAt: Schema.Attribute.DateTime;
-    role: Schema.Attribute.String;
+    role: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -503,7 +508,12 @@ export interface ApiBlogPostBlogPost extends Struct.CollectionTypeSchema {
       'manyToOne',
       'api::blog-author.blog-author'
     >;
-    content: Schema.Attribute.RichText;
+    content: Schema.Attribute.RichText &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -524,11 +534,31 @@ export interface ApiBlogPostBlogPost extends Struct.CollectionTypeSchema {
       'oneToMany',
       'api::blog-post.blog-post'
     >;
-    metadata: Schema.Attribute.Component<'meta.metadata', false>;
-    preview: Schema.Attribute.RichText;
+    metadata: Schema.Attribute.Component<'meta.metadata', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    preview: Schema.Attribute.RichText &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     publishedAt: Schema.Attribute.DateTime;
-    slug: Schema.Attribute.String;
-    title: Schema.Attribute.String;
+    slug: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -559,7 +589,12 @@ export interface ApiCauseCause extends Struct.CollectionTypeSchema {
         };
       }> &
       Schema.Attribute.DefaultTo<true>;
-    content: Schema.Attribute.RichText;
+    content: Schema.Attribute.RichText &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -569,17 +604,38 @@ export interface ApiCauseCause extends Struct.CollectionTypeSchema {
           localized: false;
         };
       }>;
-    introduction: Schema.Attribute.RichText;
+    introduction: Schema.Attribute.RichText &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::cause.cause'>;
-    metadata: Schema.Attribute.Component<'meta.metadata', false>;
+    metadata: Schema.Attribute.Component<'meta.metadata', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     organizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::organization.organization'
     >;
     publishedAt: Schema.Attribute.DateTime;
-    slug: Schema.Attribute.String & Schema.Attribute.Unique;
-    title: Schema.Attribute.String;
+    slug: Schema.Attribute.String &
+      Schema.Attribute.Unique &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -687,6 +743,11 @@ export interface ApiDonationInfoDonationInfo extends Struct.SingleTypeSchema {
         };
       }>;
     returnPath: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }> &
       Schema.Attribute.DefaultTo<'annetatud'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -711,15 +772,30 @@ export interface ApiEmailConfigEmailConfig extends Struct.SingleTypeSchema {
     };
   };
   attributes: {
-    confirmationHtml: Schema.Attribute.Text;
+    confirmationHtml: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     confirmationReplyTo: Schema.Attribute.Email &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: false;
         };
       }>;
-    confirmationSubject: Schema.Attribute.String;
-    confirmationText: Schema.Attribute.Text;
+    confirmationSubject: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    confirmationText: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     contactFormSubmissionHtml: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -747,26 +823,96 @@ export interface ApiEmailConfigEmailConfig extends Struct.SingleTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    dedicationHtml: Schema.Attribute.Text;
-    dedicationMessageHtml: Schema.Attribute.Text;
-    dedicationMessageText: Schema.Attribute.Text;
-    dedicationSubject: Schema.Attribute.String;
-    dedicationText: Schema.Attribute.Text;
-    externalConfirmationHtml: Schema.Attribute.Text;
-    externalConfirmationSubject: Schema.Attribute.String;
-    externalConfirmationText: Schema.Attribute.Text;
-    externalRecurringConfirmationHtml: Schema.Attribute.Text;
-    externalRecurringConfirmationSubject: Schema.Attribute.String;
-    externalRecurringConfirmationText: Schema.Attribute.Text;
+    dedicationHtml: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    dedicationMessageHtml: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    dedicationMessageText: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    dedicationSubject: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    dedicationText: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    externalConfirmationHtml: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    externalConfirmationSubject: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    externalConfirmationText: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    externalRecurringConfirmationHtml: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    externalRecurringConfirmationSubject: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    externalRecurringConfirmationText: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::email-config.email-config'
     >;
     publishedAt: Schema.Attribute.DateTime;
-    recurringConfirmationHtml: Schema.Attribute.Text;
-    recurringConfirmationSubject: Schema.Attribute.String;
-    recurringConfirmationText: Schema.Attribute.Text;
+    recurringConfirmationHtml: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    recurringConfirmationSubject: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    recurringConfirmationText: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -796,8 +942,18 @@ export interface ApiGlobalGlobal extends Struct.SingleTypeSchema {
           localized: false;
         };
       }>;
-    backWord: Schema.Attribute.String;
-    blogSlug: Schema.Attribute.String;
+    backWord: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    blogSlug: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     chromeIcon192: Schema.Attribute.Media<'images'> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -810,7 +966,12 @@ export interface ApiGlobalGlobal extends Struct.SingleTypeSchema {
           localized: false;
         };
       }>;
-    closeText: Schema.Attribute.String;
+    closeText: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -821,10 +982,30 @@ export interface ApiGlobalGlobal extends Struct.SingleTypeSchema {
         };
       }> &
       Schema.Attribute.DefaultTo<'\u20AC'>;
-    dateLocale: Schema.Attribute.Enumeration<['et-EE', 'en-GB']>;
-    donateLink: Schema.Attribute.String;
-    donateText: Schema.Attribute.String;
-    errorText: Schema.Attribute.String;
+    dateLocale: Schema.Attribute.Enumeration<['et-EE', 'en-GB']> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    donateLink: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    donateText: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    errorText: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     externalOrganizationInternalId: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -846,16 +1027,51 @@ export interface ApiGlobalGlobal extends Struct.SingleTypeSchema {
           localized: false;
         };
       }>;
-    footer: Schema.Attribute.Component<'meta.footer', false>;
-    languageSwitchText: Schema.Attribute.String;
+    footer: Schema.Attribute.Component<'meta.footer', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    languageSwitchText: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::global.global'>;
-    metadata: Schema.Attribute.Component<'meta.metadata', false>;
-    navbar: Schema.Attribute.Component<'meta.navbar', false>;
-    notFoundPage: Schema.Attribute.Component<'meta.not-found-page', false>;
+    metadata: Schema.Attribute.Component<'meta.metadata', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    navbar: Schema.Attribute.Component<'meta.navbar', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    notFoundPage: Schema.Attribute.Component<'meta.not-found-page', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     publishedAt: Schema.Attribute.DateTime;
-    readMoreText: Schema.Attribute.String;
-    tipOrganization: Schema.Attribute.String;
+    readMoreText: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    tipOrganization: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     tipOrganizationInternalId: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -865,9 +1081,24 @@ export interface ApiGlobalGlobal extends Struct.SingleTypeSchema {
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 64;
       }>;
-    title: Schema.Attribute.String;
-    topBannerText: Schema.Attribute.RichText;
-    totalText: Schema.Attribute.String;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    topBannerText: Schema.Attribute.RichText &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    totalText: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -900,7 +1131,12 @@ export interface ApiOrganizationOrganization
       }> &
       Schema.Attribute.DefaultTo<true>;
     cause: Schema.Attribute.Relation<'manyToOne', 'api::cause.cause'>;
-    content: Schema.Attribute.RichText;
+    content: Schema.Attribute.RichText &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -928,7 +1164,12 @@ export interface ApiOrganizationOrganization
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 64;
       }>;
-    introduction: Schema.Attribute.RichText;
+    introduction: Schema.Attribute.RichText &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -940,10 +1181,26 @@ export interface ApiOrganizationOrganization
           localized: false;
         };
       }>;
-    metadata: Schema.Attribute.Component<'meta.metadata', false>;
+    metadata: Schema.Attribute.Component<'meta.metadata', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     publishedAt: Schema.Attribute.DateTime;
-    slug: Schema.Attribute.String & Schema.Attribute.Unique;
-    title: Schema.Attribute.String;
+    slug: Schema.Attribute.String &
+      Schema.Attribute.Unique &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -972,8 +1229,18 @@ export interface ApiPagePage extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::page.page'>;
-    metadata: Schema.Attribute.Component<'meta.metadata', false>;
-    name: Schema.Attribute.String;
+    metadata: Schema.Attribute.Component<'meta.metadata', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    name: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     publishedAt: Schema.Attribute.DateTime;
     sections: Schema.Attribute.DynamicZone<
       [
@@ -998,8 +1265,19 @@ export interface ApiPagePage extends Struct.CollectionTypeSchema {
         'sections.foreign-donation-section',
         'sections.map-section',
       ]
-    >;
-    slug: Schema.Attribute.String & Schema.Attribute.Unique;
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    slug: Schema.Attribute.String &
+      Schema.Attribute.Unique &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1037,7 +1315,12 @@ export interface ApiSpecialPageSpecialPage extends Struct.CollectionTypeSchema {
       'oneToMany',
       'api::special-page.special-page'
     >;
-    name: Schema.Attribute.String;
+    name: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     publishedAt: Schema.Attribute.DateTime;
     sections: Schema.Attribute.DynamicZone<
       [
@@ -1053,8 +1336,18 @@ export interface ApiSpecialPageSpecialPage extends Struct.CollectionTypeSchema {
         'special-sections.organization-cta-section',
         'special-sections.blog-header-section',
       ]
-    >;
-    slugPattern: Schema.Attribute.String;
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    slugPattern: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

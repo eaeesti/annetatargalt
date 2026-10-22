@@ -24,7 +24,12 @@
       }
     },
     "role": {
-      "type": "string"
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "posts": {
       "type": "relation",

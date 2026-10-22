@@ -17,16 +17,31 @@
   },
   "attributes": {
     "name": {
-      "type": "string"
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "slug": {
       "type": "string",
-      "unique": true
+      "unique": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "metadata": {
       "type": "component",
       "component": "meta.metadata",
-      "repeatable": false
+      "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "sections": {
       "type": "dynamiczone",
@@ -51,7 +66,12 @@
         "sections.partner-section",
         "sections.foreign-donation-section",
         "sections.map-section"
-      ]
+      ],
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     }
   }
 }
