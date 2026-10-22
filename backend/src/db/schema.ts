@@ -35,6 +35,8 @@ export const recurringDonations = pgTable(
     comment: text("comment"),
     bank: varchar("bank", { length: 64 }),
     amount: integer("amount").notNull(), // in cents
+    // The site language the donor set it up in: its emails go out in it.
+    locale: varchar("locale", { length: 8 }).default("et").notNull(),
     datetime: timestamp("datetime").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -98,6 +100,9 @@ export const donations = pgTable(
     dedicationEmail: varchar("dedication_email", { length: 256 }),
     dedicationMessage: text("dedication_message"),
     externalDonation: boolean("external_donation").default(false).notNull(),
+    // The site language the donor gave in: the payment page, the page they
+    // return to and their emails are all in it.
+    locale: varchar("locale", { length: 8 }).default("et").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
