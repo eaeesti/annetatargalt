@@ -47,6 +47,7 @@ export default function DonationSummary({
       summary={summary}
       currency={currency}
       totalText={totalText}
+      locale={locale}
       totalAmount={donation.amount / 100}
     />
   );

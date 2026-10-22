@@ -9,7 +9,7 @@ import Steps from "../elements/forms/Steps";
 import NameInput from "../elements/forms/NameInput";
 import EmailInput from "../elements/forms/EmailInput";
 import IdCodeInput from "../elements/forms/IdCodeInput";
-import { formatEstonianAmount } from "@/utils/estonia";
+import { formatAmount, withCurrency } from "@/utils/money";
 import CheckboxInput from "../elements/forms/CheckboxInput";
 import { makeDonationRequest } from "@/utils/donation";
 import { describeErrorResponse } from "@/utils/strapi";
@@ -72,12 +72,13 @@ export default function DonationSection(props: DonationSectionProps) {
     setModalOpen(true);
   }
 
+  const locale = localeOf(props.global);
   const amounts = [props.amount1, props.amount2, props.amount3];
   const amountOptions = amounts
     .filter((a): a is number => a !== null)
     .map((amount) => ({
       value: amount,
-      label: `${amount}${props.global.currency}`,
+      label: withCurrency(amount, props.global.currency, locale),
     }));
   const typeParam = searchParams.get("type");
   const orgParam = searchParams.get("org");
@@ -141,6 +142,8 @@ export default function DonationSection(props: DonationSectionProps) {
       idCode: donation.idCode,
       bank: donation.bank,
       paymentMethod: donation.paymentMethod,
+      // Picks the language of the payment page, the thank-you page and emails.
+      locale,
     };
     const amountEntries = donation.proportions
       .calculateAmounts(donation.amount, causes)
@@ -248,7 +251,7 @@ export default function DonationSection(props: DonationSectionProps) {
                 setProportions={(proportions) =>
                   setDonation({ ...donation, proportions })
                 }
-                locale={localeOf(props.global)}
+                locale={locale}
               />
               <Button
                 text={props.nextButtonText}
@@ -404,7 +407,7 @@ export default function DonationSection(props: DonationSectionProps) {
                 tipOrganization={props.global.tipOrganization}
                 tipAmount={tipAmount}
                 totalAmount={totalAmount}
-                locale={localeOf(props.global)}
+                locale={locale}
               />
               {donation.type === "recurring" && (
                 <BankChooser
@@ -454,9 +457,11 @@ export default function DonationSection(props: DonationSectionProps) {
         <div className="flex max-w-lg flex-col gap-4 bg-white px-4 py-24 xs:rounded-2xl xs:px-12 xs:py-12">
           <Markdown className="prose w-full prose-primary">
             {format(props.recurringDonationGuide ?? "", {
-              amount:
-                formatEstonianAmount(totalAmount) +
-                (props.global.currency ?? ""),
+              amount: withCurrency(
+                formatAmount(totalAmount, locale),
+                props.global.currency,
+                locale,
+              ),
             })}
           </Markdown>
         </div>

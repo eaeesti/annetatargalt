@@ -68,6 +68,7 @@ export default function PaymentSummary({
       summary={summary}
       currency={currency}
       totalText={totalText}
+      locale={locale}
       totalAmount={totalAmount}
     />
   );

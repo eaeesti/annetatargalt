@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import useSWR from "swr";
 import { getStrapiURL } from "@/utils/strapi";
 import { format } from "@/utils/string";
-import { formatEstonianAmount } from "@/utils/estonia";
+import { formatAmount } from "@/utils/money";
 import { useRouter } from "next/navigation";
 import LoadingSection from "./LoadingSection";
 import DonationSummary from "../elements/DonationSummary";
@@ -15,7 +15,7 @@ import type {
   StrapiGlobal,
   StrapiThankYouSection,
 } from "@/types/generated/strapi";
-import { localeOf } from "@/utils/locale";
+import { localeOf, pagePath } from "@/utils/locale";
 
 interface DecodedDonation {
   donor: { firstName: string };
@@ -42,6 +42,7 @@ export default function ThankYouSection({
   global,
 }: ThankYouSectionProps) {
   const router = useRouter();
+  const locale = localeOf(global);
 
   const searchParams = useSearchParams();
   const orderToken = searchParams.get("order-token");
@@ -58,15 +59,15 @@ export default function ThankYouSection({
 
   useEffect(() => {
     if (!isLoading && !decoded?.donation) {
-      router.push("/");
+      router.push(pagePath("/", locale));
     }
-  }, [isLoading, decoded, router]);
+  }, [isLoading, decoded, router, locale]);
 
   if (isLoading || !decoded?.donation) return <LoadingSection />;
 
   const donationForTemplate = {
     ...decoded.donation.donor,
-    amount: formatEstonianAmount(decoded.donation.amount / 100),
+    amount: formatAmount(decoded.donation.amount / 100, locale),
   };
 
   return (
@@ -95,7 +96,7 @@ export default function ThankYouSection({
               donation={decoded.donation}
               currency={global.currency}
               totalText={global.totalText}
-              locale={localeOf(global)}
+              locale={locale}
             />
           </div>
           <Markdown className="prose-md prose w-full max-w-3xl prose-primary">
