@@ -18,7 +18,12 @@
   "attributes": {
     "returnPath": {
       "type": "string",
-      "default": "annetatud"
+      "default": "annetatud",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "iban": {
       "type": "string",

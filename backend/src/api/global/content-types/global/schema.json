@@ -17,12 +17,22 @@
   },
   "attributes": {
     "title": {
-      "type": "string"
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "metadata": {
       "type": "component",
       "repeatable": false,
-      "component": "meta.metadata"
+      "component": "meta.metadata",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "favicon16": {
       "type": "media",
@@ -92,32 +102,72 @@
     "navbar": {
       "type": "component",
       "repeatable": false,
-      "component": "meta.navbar"
+      "component": "meta.navbar",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "footer": {
       "type": "component",
       "repeatable": false,
-      "component": "meta.footer"
+      "component": "meta.footer",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "notFoundPage": {
       "type": "component",
       "repeatable": false,
-      "component": "meta.not-found-page"
+      "component": "meta.not-found-page",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "backWord": {
-      "type": "string"
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "donateLink": {
-      "type": "string"
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "closeText": {
-      "type": "string"
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "errorText": {
-      "type": "string"
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "totalText": {
-      "type": "string"
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "currency": {
       "type": "string",
@@ -129,23 +179,48 @@
       }
     },
     "tipOrganization": {
-      "type": "string"
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "dateLocale": {
       "type": "enumeration",
       "enum": [
         "et-EE",
         "en-GB"
-      ]
+      ],
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "blogSlug": {
-      "type": "string"
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "donateText": {
-      "type": "string"
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "readMoreText": {
-      "type": "string"
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "tipOrganizationInternalId": {
       "type": "string",
@@ -166,10 +241,20 @@
       }
     },
     "topBannerText": {
-      "type": "richtext"
+      "type": "richtext",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "languageSwitchText": {
-      "type": "string"
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     }
   }
 }
