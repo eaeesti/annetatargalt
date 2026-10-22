@@ -85,6 +85,13 @@
       "when": 1791118302224,
       "tag": "0011_drop_recurring_donations_active",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792701192558,
+      "tag": "0012_donation_locale",
+      "breakpoints": true
     }
   ]
 }

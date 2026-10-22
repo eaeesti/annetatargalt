@@ -303,6 +303,7 @@ export class DonationsRepository {
         dedicationMessage: data.dedicationMessage || null,
         externalDonation:
           data.externalDonation !== undefined ? data.externalDonation : false,
+        locale: data.locale,
         recurringDonationId: data.recurringDonationId || null,
         donationTransferId: data.donationTransferId || null,
         transactionId: data.transactionId || null,

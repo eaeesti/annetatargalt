@@ -6,7 +6,12 @@ import {
 } from "../../../../utils/donation";
 import { createRecurringPaymentLink, type Bank } from "../../../../utils/banks";
 import montonio from "../../../../utils/montonio";
-import { formatEstonianAmount } from "../../../../utils/estonia";
+import { formatAmount, withCurrency } from "../../../../utils/money";
+import {
+  DEFAULT_LOCALE,
+  toLocale,
+  type Locale,
+} from "../../../../utils/locale";
 import { format, textIntoParagraphs, sanitize } from "../../../../utils/string";
 import type { Donor } from "../../../../db/schema";
 import {
@@ -40,6 +45,8 @@ interface DonationInput {
   dedicationEmail?: string | null;
   dedicationMessage?: string | null;
   comment?: string | null;
+  // The site language the form was in; anything else means Estonian.
+  locale?: string;
   amounts: OrgAmount[];
 }
 
@@ -48,6 +55,7 @@ interface ForeignDonationInput {
   lastName: string;
   email: string;
   amount: number;
+  locale?: string;
 }
 
 type ValidationResult = { valid: true } | { valid: false; reason: string };
@@ -79,6 +87,38 @@ function emailService(strapi: Core.Strapi) {
       };
     }
   ).plugins.email.services.email;
+}
+
+/**
+ * Something from the CMS in a language, or in Estonian when it has no version
+ * in that language.
+ */
+async function inLocale<T>(
+  locale: Locale,
+  find: (locale: Locale) => Promise<T | null>,
+): Promise<T | null> {
+  const found = await find(locale);
+  return found || locale === DEFAULT_LOCALE ? found : find(DEFAULT_LOCALE);
+}
+
+function findEmailConfig(strapi: Core.Strapi, locale: Locale) {
+  return inLocale(locale, (l) =>
+    strapi.documents("api::email-config.email-config").findFirst({ locale: l }),
+  );
+}
+
+/** "Organization: 25€", one line per organization, for the emails. */
+function emailSummary(
+  rows: { organization: { title?: string | null } | null; amount: number }[],
+  currency: string | null | undefined,
+  locale: Locale,
+): string {
+  return rows
+    .map(({ organization, amount }) => {
+      const formatted = formatAmount(amount / 100, locale);
+      return `${organization?.title}: ${withCurrency(formatted, currency, locale)}`;
+    })
+    .join("\n");
 }
 
 // ─── Service ─────────────────────────────────────────────────────────────────
@@ -255,7 +295,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   async createMontonioPayload(
-    donation: { id: number; amount: number },
+    donation: { id: number; amount: number; locale: string },
     {
       paymentMethod = "paymentInitiation",
       currency = "EUR",
@@ -268,9 +308,12 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       externalDonation?: boolean;
     } = {},
   ) {
-    const donationInfo = await strapi
-      .documents("api::donation-info.donation-info")
-      .findFirst();
+    const locale = toLocale(donation.locale);
+    const donationInfo = await inLocale(locale, (l) =>
+      strapi
+        .documents("api::donation-info.donation-info")
+        .findFirst({ locale: l }),
+    );
     if (!donationInfo) throw new Error("Donation info not found");
 
     const amount = donation.amount / 100;
@@ -289,14 +332,14 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       notificationUrl: `${process.env.MONTONIO_RETURN_URL}/confirm`,
       grandTotal: amount,
       currency,
-      locale: "et",
+      locale,
       payment: {
         amount,
         currency,
         method: paymentMethod,
         methodOptions: {
           preferredCountry: "EE",
-          preferredLocale: "et",
+          preferredLocale: locale,
         },
       },
     };
@@ -366,6 +409,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       amount: donation.amount,
       datetime: new Date(),
       comment: "Foreign donation",
+      locale: toLocale(donation.locale),
     });
 
     const global = await strapi.documents("api::global.global").findFirst();
@@ -414,6 +458,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       dedicationMessage: donation.dedicationMessage,
       comment: donation.comment,
       externalDonation: externalDonation || false,
+      locale: toLocale(donation.locale),
     });
 
     const organizationDonationsData = donation.amounts.map(
@@ -453,6 +498,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       companyName: donation.companyName,
       companyCode: donation.companyCode,
       comment: donation.comment,
+      locale: toLocale(donation.locale),
     });
 
     const organizationRecurringDonationsData = donation.amounts.map(
@@ -507,11 +553,6 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   async sendConfirmationEmail(donationId: number) {
-    const emailConfig = await strapi
-      .documents("api::email-config.email-config")
-      .findFirst();
-    if (!emailConfig) throw new Error("Email config not found");
-
     const global = await strapi.documents("api::global.global").findFirst();
     if (!global) throw new Error("Global config not found");
 
@@ -525,28 +566,27 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       throw new Error(`Donation ${donationId} has no associated donor`);
     }
 
+    const emailConfig = await findEmailConfig(strapi, donation.locale);
+    if (!emailConfig) throw new Error("Email config not found");
+
     const template = {
       subject: emailConfig.confirmationSubject,
       text: emailConfig.confirmationText,
       html: emailConfig.confirmationHtml,
     };
 
-    const summary = donation.organizationDonations
-      .map((organizationDonation) => {
-        const organization = organizationDonation.organization;
-        const amount = formatEstonianAmount(organizationDonation.amount / 100);
-        return `${organization?.title}: ${amount}${global.currency}`;
-      })
-      .join("\n");
-
     const data = {
       firstName: donation.donor.firstName,
       firstNameHtml: sanitize(donation.donor.firstName ?? ""),
       lastName: donation.donor.lastName,
       lastNameHtml: sanitize(donation.donor.lastName ?? ""),
-      amount: formatEstonianAmount(donation.amount / 100),
+      amount: formatAmount(donation.amount / 100, donation.locale),
       currency: global.currency,
-      summary,
+      summary: emailSummary(
+        donation.organizationDonations,
+        global.currency,
+        donation.locale,
+      ),
     };
 
     await emailService(strapi).sendTemplatedEmail(
@@ -560,11 +600,6 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   async sendExternalConfirmationEmail(donationId: number) {
-    const emailConfig = await strapi
-      .documents("api::email-config.email-config")
-      .findFirst();
-    if (!emailConfig) throw new Error("Email config not found");
-
     const global = await strapi.documents("api::global.global").findFirst();
     if (!global) throw new Error("Global config not found");
 
@@ -582,6 +617,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       throw new Error(`Donor ${donation.donorId} not found`);
     }
 
+    const locale = toLocale(donation.locale);
+    const emailConfig = await findEmailConfig(strapi, locale);
+    if (!emailConfig) throw new Error("Email config not found");
+
     const template = {
       subject: emailConfig.externalConfirmationSubject,
       text: emailConfig.externalConfirmationText,
@@ -593,7 +632,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       firstNameHtml: sanitize(donor.firstName ?? ""),
       lastName: donor.lastName,
       lastNameHtml: sanitize(donor.lastName ?? ""),
-      amount: formatEstonianAmount(donation.amount / 100),
+      amount: formatAmount(donation.amount / 100, locale),
       currency: global.currency,
     };
 
@@ -608,11 +647,6 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   async sendRecurringConfirmationEmail(recurringDonationId: number) {
-    const emailConfig = await strapi
-      .documents("api::email-config.email-config")
-      .findFirst();
-    if (!emailConfig) throw new Error("Email config not found");
-
     const global = await strapi.documents("api::global.global").findFirst();
     if (!global) throw new Error("Global config not found");
 
@@ -629,30 +663,28 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       );
     }
 
+    const { locale } = recurringDonation;
+    const emailConfig = await findEmailConfig(strapi, locale);
+    if (!emailConfig) throw new Error("Email config not found");
+
     const template = {
       subject: emailConfig.recurringConfirmationSubject,
       text: emailConfig.recurringConfirmationText,
       html: emailConfig.recurringConfirmationHtml,
     };
 
-    const summary = recurringDonation.organizationRecurringDonations
-      .map((organizationRecurringDonation) => {
-        const organization = organizationRecurringDonation.organization;
-        const amount = formatEstonianAmount(
-          organizationRecurringDonation.amount / 100,
-        );
-        return `${organization?.title}: ${amount}${global.currency}`;
-      })
-      .join("\n");
-
     const data = {
       firstName: recurringDonation.donor.firstName,
       firstNameHtml: sanitize(recurringDonation.donor.firstName ?? ""),
       lastName: recurringDonation.donor.lastName,
       lastNameHtml: sanitize(recurringDonation.donor.lastName ?? ""),
-      amount: formatEstonianAmount(recurringDonation.amount / 100),
+      amount: formatAmount(recurringDonation.amount / 100, locale),
       currency: global.currency,
-      summary,
+      summary: emailSummary(
+        recurringDonation.organizationRecurringDonations,
+        global.currency,
+        locale,
+      ),
     };
 
     await emailService(strapi).sendTemplatedEmail(
@@ -666,10 +698,6 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   async sendExternalRecurringConfirmationEmail(recurringDonationId: number) {
-    const emailConfig = await strapi
-      .documents("api::email-config.email-config")
-      .findFirst();
-    if (!emailConfig) throw new Error("Email config not found");
     const global = await strapi.documents("api::global.global").findFirst();
     if (!global) throw new Error("Global config not found");
 
@@ -684,6 +712,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       throw new Error(`Donor ${recurringDonation.donorId} not found`);
     }
 
+    const locale = toLocale(recurringDonation.locale);
+    const emailConfig = await findEmailConfig(strapi, locale);
+    if (!emailConfig) throw new Error("Email config not found");
+
     const template = {
       subject: emailConfig.externalRecurringConfirmationSubject,
       text: emailConfig.externalRecurringConfirmationText,
@@ -695,7 +727,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       firstNameHtml: sanitize(donor.firstName ?? ""),
       lastName: donor.lastName,
       lastNameHtml: sanitize(donor.lastName ?? ""),
-      amount: formatEstonianAmount(recurringDonation.amount / 100),
+      amount: formatAmount(recurringDonation.amount / 100, locale),
       currency: global.currency,
     };
 
@@ -710,11 +742,6 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   async sendDedicationEmail(donationId: number) {
-    const emailConfig = await strapi
-      .documents("api::email-config.email-config")
-      .findFirst();
-    if (!emailConfig) throw new Error("Email config not found");
-
     const global = await strapi.documents("api::global.global").findFirst();
     if (!global) throw new Error("Global config not found");
 
@@ -733,6 +760,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       throw new Error(`Donation ${donationId} not found`);
     }
 
+    const { locale } = donationWithDetails;
+    const emailConfig = await findEmailConfig(strapi, locale);
+    if (!emailConfig) throw new Error("Email config not found");
+
     const template = {
       subject: emailConfig.dedicationSubject,
       text: format(emailConfig.dedicationText ?? "", {
@@ -749,18 +780,16 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
     const donorName = `${donationWithDetails.donor.firstName} ${donationWithDetails.donor.lastName}`;
     const dedicationMessage = `"${donation.dedicationMessage}"`;
-    const summary = donationWithDetails.organizationDonations
-      .map((organizationDonation) => {
-        const organization = organizationDonation.organization;
-        const amount = formatEstonianAmount(organizationDonation.amount / 100);
-        return `${organization?.title}: ${amount}${global.currency}`;
-      })
-      .join("\n");
+    const summary = emailSummary(
+      donationWithDetails.organizationDonations,
+      global.currency,
+      locale,
+    );
 
     const data = {
       dedicationName: donation.dedicationName,
       donorName,
-      amount: formatEstonianAmount(donation.amount / 100),
+      amount: formatAmount(donation.amount / 100, locale),
       currency: global.currency,
       dedicationMessage,
       dedicationNameHtml: sanitize(donation.dedicationName ?? ""),
@@ -959,17 +988,18 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       ? await donorsRepository.findById(donation.donorId)
       : undefined;
 
+    // In the donor's language: these titles and links go into their emails
+    // and onto the page they return to.
+    const locale = toLocale(donation.locale);
     const organizationDonations = await Promise.all(
       donation.organizationDonations.map(async (orgDonation) => {
-        const organizations = await strapi
-          .documents("api::organization.organization")
-          .findMany({
+        const organization = await inLocale(locale, (l) =>
+          strapi.documents("api::organization.organization").findFirst({
             filters: { internalId: orgDonation.organizationInternalId },
             populate: ["cause"],
-            limit: 1,
-          });
-
-        const organization = organizations[0] || null;
+            locale: l,
+          }),
+        );
 
         return {
           id: orgDonation.id,
@@ -982,6 +1012,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     return {
       id: donation.id,
       amount: donation.amount,
+      locale,
       donor,
       organizationDonations,
     };
@@ -1002,18 +1033,17 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         recurringDonationId,
       );
 
+    const locale = toLocale(recurringDonation.locale);
     const organizationRecurringDonationsWithOrgs = await Promise.all(
       organizationRecurringDonations.map(async (orgRecurringDonation) => {
-        const organizations = await strapi
-          .documents("api::organization.organization")
-          .findMany({
+        const organization = await inLocale(locale, (l) =>
+          strapi.documents("api::organization.organization").findFirst({
             filters: {
               internalId: orgRecurringDonation.organizationInternalId,
             },
-            limit: 1,
-          });
-
-        const organization = organizations[0] || null;
+            locale: l,
+          }),
+        );
 
         return {
           id: orgRecurringDonation.id,
@@ -1026,6 +1056,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     return {
       id: recurringDonation.id,
       amount: recurringDonation.amount,
+      locale,
       donor,
       organizationRecurringDonations: organizationRecurringDonationsWithOrgs,
     };

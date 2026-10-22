@@ -222,6 +222,7 @@ export class RecurringDonationsRepository {
         companyCode: data.companyCode || null,
         comment: data.comment || null,
         bank: data.bank || null,
+        locale: data.locale,
         datetime:
           typeof data.datetime === "string"
             ? new Date(data.datetime)
