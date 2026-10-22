@@ -9,6 +9,8 @@ import CheckboxInput from "../elements/forms/CheckboxInput";
 import Markdown from "../elements/Markdown";
 import Button from "../elements/Button";
 import { makeForeignDonationRequest } from "@/utils/donation";
+import { withCurrency } from "@/utils/money";
+import { localeOf } from "@/utils/locale";
 import Modal from "../Modal";
 import type { ModalData } from "../Modal";
 import { useRouter } from "next/navigation";
@@ -33,12 +35,13 @@ export default function ForeignDonationSection(
     setModalOpen(true);
   }
 
+  const locale = localeOf(props.global);
   const amounts = [props.amount1, props.amount2, props.amount3];
   const amountOptions = amounts
     .filter((a): a is number => a !== null)
     .map((amount) => ({
       value: amount,
-      label: `${amount}${props.global.currency}`,
+      label: withCurrency(amount, props.global.currency, locale),
     }));
 
   const [donation, setDonation] = useState({
@@ -59,6 +62,7 @@ export default function ForeignDonationSection(
       firstName: donation.firstName,
       lastName: donation.lastName,
       email: donation.email,
+      locale,
     };
     donationData.amount = donation.amount * 100;
 

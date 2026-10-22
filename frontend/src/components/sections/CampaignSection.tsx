@@ -3,12 +3,16 @@
 import { format } from "@/utils/string";
 import Markdown from "../elements/Markdown";
 import Button from "../elements/Button";
-import { formatEstonianAmount } from "@/utils/estonia";
+import { formatAmount } from "@/utils/money";
+import { localeOf } from "@/utils/locale";
 import useSWR from "swr";
 import { fetcher } from "@/utils/react";
 import { getStrapiURL } from "@/utils/strapi";
 import { useEffect, useRef, useState } from "react";
-import type { StrapiCampaignSection } from "@/types/generated/strapi";
+import type {
+  StrapiCampaignSection,
+  StrapiGlobal,
+} from "@/types/generated/strapi";
 
 // https://stackoverflow.com/a/67826055/12123296
 function useOnScreen(ref: React.RefObject<HTMLElement | null>) {
@@ -119,7 +123,8 @@ export default function CampaignSection({
   countdownText,
   ctaButtonHref,
   ctaButtonText,
-}: StrapiCampaignSection) {
+  global,
+}: StrapiCampaignSection & { global: StrapiGlobal }) {
   const [progress, setProgress] = useState(0);
   // The time of the first render, read once. Reading the clock in the render
   // itself is impure, and the React Compiler may cache the result.
@@ -175,10 +180,11 @@ export default function CampaignSection({
 
   const amountProgress = (progress / 100) * goal;
 
+  const locale = localeOf(global);
   const numbers = {
-    amount: formatEstonianAmount(Math.floor(amountProgress)),
-    goal: formatEstonianAmount(goal),
-    remainingUntilGoal: formatEstonianAmount(Math.ceil(goal - amountProgress)),
+    amount: formatAmount(Math.floor(amountProgress), locale),
+    goal: formatAmount(goal, locale),
+    remainingUntilGoal: formatAmount(Math.ceil(goal - amountProgress), locale),
   };
 
   return (

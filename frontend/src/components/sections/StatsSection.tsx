@@ -1,11 +1,15 @@
 "use client";
 
-import { formatEstonianAmount } from "@/utils/estonia";
+import { formatAmount } from "@/utils/money";
+import { localeOf } from "@/utils/locale";
 import { fetcher } from "@/utils/react";
 import useSWR from "swr";
 import LoadingSection from "./LoadingSection";
 import { getStrapiURL } from "@/utils/strapi";
-import type { StrapiStatsSection } from "@/types/generated/strapi";
+import type {
+  StrapiGlobal,
+  StrapiStatsSection,
+} from "@/types/generated/strapi";
 
 interface StatProps {
   term: string | null;
@@ -32,7 +36,8 @@ export default function StatsSection({
   donationAmountCurrency,
   transactionFeeText,
   transactionFeeValue,
-}: StrapiStatsSection) {
+  global,
+}: StrapiStatsSection & { global: StrapiGlobal }) {
   const { data, error, isLoading } = useSWR(
     getStrapiURL("/api/stats"),
     fetcher,
@@ -54,7 +59,7 @@ export default function StatsSection({
           <Stat term={operatingSinceText} value={operatingSinceValue} />
           <Stat
             term={donationAmountText}
-            value={formatEstonianAmount(donationAmount)}
+            value={formatAmount(donationAmount, localeOf(global))}
             unit={donationAmountCurrency}
           />
           <Stat term={transactionFeeText} value={transactionFeeValue} />

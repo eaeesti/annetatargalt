@@ -1,4 +1,5 @@
-import { formatEstonianAmountWithCents } from "@/utils/estonia";
+import { formatAmountWithCents, withCurrency } from "@/utils/money";
+import type { Locale } from "@/utils/locale";
 import Anchor from "./Anchor";
 
 interface SummaryRow {
@@ -12,6 +13,7 @@ interface SummaryProps {
   currency: string | null;
   totalText: string | null;
   totalAmount: number;
+  locale: Locale;
 }
 
 export default function Summary({
@@ -19,7 +21,11 @@ export default function Summary({
   currency,
   totalText,
   totalAmount,
+  locale,
 }: SummaryProps) {
+  const money = (amount: number) =>
+    withCurrency(formatAmountWithCents(amount, locale), currency, locale);
+
   return (
     <dl className="w-full divide-y divide-slate-200 text-sm">
       {summary.map((row, index) => (
@@ -42,16 +48,14 @@ export default function Summary({
             )}
           </dt>
           <dd className="font-medium whitespace-nowrap text-slate-900">
-            {formatEstonianAmountWithCents(row.amount)}
-            {currency}
+            {money(row.amount)}
           </dd>
         </div>
       ))}
       <div className="flex items-center justify-between gap-3 py-2">
         <dt className="font-medium text-slate-900">{totalText}</dt>
         <dd className="font-medium whitespace-nowrap text-primary-700">
-          {formatEstonianAmountWithCents(totalAmount)}
-          {currency}
+          {money(totalAmount)}
         </dd>
       </div>
     </dl>
