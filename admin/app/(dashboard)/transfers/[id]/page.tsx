@@ -37,6 +37,12 @@ type LinkedPayment = {
   counterpartyName: string | null;
   description: string | null;
   note: string | null;
+  file: {
+    id: number;
+    fileName: string;
+    sizeBytes: number;
+    uploadedAt: string;
+  } | null;
 };
 
 type TransferDetail = {
