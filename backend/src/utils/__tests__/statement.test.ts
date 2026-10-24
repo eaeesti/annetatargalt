@@ -5,6 +5,7 @@ import {
   planRecurringImport,
   looksLikeCardPayout,
   classifyCreditLine,
+  classifyDebitLine,
   computePayoutGrossFee,
   parsePayoutUuidPrefix,
   type RecurringTemplate,
@@ -286,6 +287,19 @@ describe("classifyCreditLine", () => {
         existingCategory: "card-payout",
       }),
     ).toEqual({ category: "card-payout", reclassify: false });
+  });
+});
+
+describe("classifyDebitLine", () => {
+  it("a new line, or a migration stub, is money out", () => {
+    expect(classifyDebitLine(undefined)).toBe("outgoing");
+    expect(classifyDebitLine("unimported")).toBe("outgoing");
+  });
+
+  it("keeps a category someone gave the line", () => {
+    expect(classifyDebitLine("undecided")).toBe("undecided");
+    expect(classifyDebitLine("ignored")).toBe("ignored");
+    expect(classifyDebitLine("outgoing")).toBe("outgoing");
   });
 });
 
@@ -648,5 +662,24 @@ describe("categorizeStatement", () => {
     );
     // STUB is a stub to overwrite, NEW is brand new — both get written
     expect(report.counts.unrecorded).toBe(2);
+  });
+
+  it("counts recorded lines that are missing a direction, apart from new ones and stubs", () => {
+    const report = categorizeStatement(
+      baseInput({
+        transactions: [
+          txn({ archivingCode: "OLD" }),
+          txn({ direction: "D", archivingCode: "OLDOUT" }),
+          txn({ archivingCode: "DONE" }),
+          txn({ archivingCode: "STUB" }),
+          txn({ archivingCode: "NEW" }),
+        ],
+        recordedCodes: new Set(["OLD", "OLDOUT", "DONE", "STUB"]),
+        unimportedCodes: new Set(["STUB"]),
+        undirectedCodes: new Set(["OLD", "OLDOUT", "STUB"]),
+      }),
+    );
+    expect(report.counts.undirected).toBe(2); // OLD, OLDOUT
+    expect(report.counts.unrecorded).toBe(2); // STUB, NEW
   });
 });

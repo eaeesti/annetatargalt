@@ -32,6 +32,7 @@ import {
   parsePayoutUuidPrefix,
   looksLikeCardPayout,
   classifyCreditLine,
+  classifyDebitLine,
   computePayoutGrossFee,
   derivePayoutFees,
   selectTemplate,
@@ -295,6 +296,7 @@ export function createStatementService(strapi: Core.Strapi) {
         ignoredCodes,
         recordedCodes,
         unimportedCodes,
+        undirectedCodes,
         index,
       ] = await Promise.all([
         donationsRepository.findForReconciliation({ onlyUnreconciled: true }),
@@ -302,6 +304,7 @@ export function createStatementService(strapi: Core.Strapi) {
         bankTransactionsRepository.ignoredCodes(),
         bankTransactionsRepository.recordedCodes(),
         bankTransactionsRepository.unimportedCodes(),
+        bankTransactionsRepository.undirectedCodes(),
         loadDonorTemplates(),
       ]);
 
@@ -312,6 +315,7 @@ export function createStatementService(strapi: Core.Strapi) {
         ignoredCodes,
         recordedCodes,
         unimportedCodes,
+        undirectedCodes,
         donorsByCode: index.byCode,
       });
 
@@ -367,6 +371,7 @@ export function createStatementService(strapi: Core.Strapi) {
         created: 0,
         ignored: 0,
         recorded: 0,
+        directionsFilled: 0,
         payoutFeesDerived: 0,
       };
 
@@ -480,6 +485,8 @@ export function createStatementService(strapi: Core.Strapi) {
       const existingCategories = await bankTransactionsRepository.categoriesFor(
         [...creditLines, ...debitLines].map((t) => t.archivingCode),
       );
+      const undirectedCodes =
+        await bankTransactionsRepository.undirectedCodes();
 
       /** reject a negative fee or one implausibly large vs the net credited */
       const clampFee = (
@@ -533,7 +540,7 @@ export function createStatementService(strapi: Core.Strapi) {
         };
       });
 
-      // debit lines — always recorded as `outgoing` (amount stored positive)
+      // debit lines — `outgoing` when new (amount stored positive)
       for (const txn of debitLines) {
         bankRows.push({
           archivingCode: txn.archivingCode,
@@ -544,7 +551,9 @@ export function createStatementService(strapi: Core.Strapi) {
           counterpartyName: txn.counterpartyName || null,
           counterpartyAccount: txn.counterpartyAccount || null,
           senderCode: txn.idOrRegCode || null,
-          category: "outgoing",
+          category: classifyDebitLine(
+            existingCategories.get(txn.archivingCode),
+          ),
           note: null,
           importedBy: userEmail,
         });
@@ -613,6 +622,9 @@ export function createStatementService(strapi: Core.Strapi) {
 
         // FIRST — the FK on donations.transaction_id needs these rows to exist
         summary.recorded = await bankRepo.upsertMany(bankRows);
+        summary.directionsFilled = [...statementCodes].filter((code) =>
+          undirectedCodes.has(code),
+        ).length;
 
         for (const imp of allImports) {
           const donation = await donationsRepo.create({

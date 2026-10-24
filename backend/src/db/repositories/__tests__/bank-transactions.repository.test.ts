@@ -166,6 +166,41 @@ describe("BankTransactionsRepository", () => {
       expect(row.note).toBe("misdirected"); // frozen
     });
 
+    it("fills in a missing direction on re-import, and lists rows still missing one", async () => {
+      await bankTransactionsRepository.upsertMany([
+        {
+          archivingCode: "OUT",
+          category: "undecided",
+          amountCents: 400,
+          description: "Card payment",
+        },
+        { archivingCode: "IN", category: "ignored", amountCents: 300 },
+        { archivingCode: "STUB", category: "unimported" },
+      ]);
+      expect(await bankTransactionsRepository.undirectedCodes()).toEqual(
+        new Set(["OUT", "IN"]),
+      );
+
+      await bankTransactionsRepository.upsertMany([
+        {
+          archivingCode: "OUT",
+          category: "undecided",
+          amountCents: 400,
+          direction: "D",
+          description: "should not overwrite",
+        },
+      ]);
+      expect(await bankTransactionsRepository.undirectedCodes()).toEqual(
+        new Set(["IN"]),
+      );
+      const out = (await bankTransactionsRepository.findAll()).find(
+        (r) => r.archivingCode === "OUT",
+      );
+      expect(out?.direction).toBe("D");
+      expect(out?.category).toBe("undecided");
+      expect(out?.description).toBe("Card payment");
+    });
+
     it("stores card-payout gross/fee", async () => {
       await bankTransactionsRepository.upsertMany([
         {
