@@ -223,6 +223,44 @@ export function computePayoutGrossFee(
   return { grossCents: null, feeCents: null };
 }
 
+/**
+ * A card payout's gross and fee worked out from the donations linked to it,
+ * for when Montonio's payouts API couldn't price it: gross = Σ donations,
+ * fee = gross − net, and each donation's slice of the fee pro-rata by amount.
+ * Null while a linked donation is pending (its amount can still change), or
+ * when the fee isn't plausible, as with a batch that is only partly linked.
+ */
+export function derivePayoutFees(
+  netCents: number,
+  donations: { id: number; amountCents: number; finalized: boolean }[],
+): {
+  grossCents: number;
+  feeCents: number;
+  feeByDonation: { id: number; feeCents: number }[];
+} | null {
+  if (donations.length === 0 || donations.some((d) => !d.finalized)) {
+    return null;
+  }
+  const { grossCents, feeCents } = computePayoutGrossFee(
+    [
+      {
+        donationId: null,
+        grossCents: donations.reduce((s, d) => s + d.amountCents, 0),
+      },
+    ],
+    netCents,
+  );
+  if (grossCents === null || feeCents === null) return null;
+  return {
+    grossCents,
+    feeCents,
+    feeByDonation: donations.map((d) => ({
+      id: d.id,
+      feeCents: Math.round((feeCents * d.amountCents) / grossCents),
+    })),
+  };
+}
+
 // ─── Bank-row category (statement apply) ─────────────────────────────────────
 
 export type BankRowCategory =

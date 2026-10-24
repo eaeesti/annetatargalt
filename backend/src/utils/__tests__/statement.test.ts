@@ -10,6 +10,7 @@ import {
   type RecurringTemplate,
   type DonorTemplates,
   type StatementInput,
+  derivePayoutFees,
 } from "../statement";
 import type { BankTransaction, ReconcilableDonation } from "../reconciliation";
 
@@ -285,6 +286,56 @@ describe("classifyCreditLine", () => {
         existingCategory: "card-payout",
       }),
     ).toEqual({ category: "card-payout", reclassify: false });
+  });
+});
+
+describe("derivePayoutFees", () => {
+  const donation = (id: number, amountCents: number, finalized = true) => ({
+    id,
+    amountCents,
+    finalized,
+  });
+
+  it("takes the gross from the linked donations and the fee from the difference", () => {
+    // Two card donations, €30 and €10; the bank got €39 after a €1 fee.
+    expect(
+      derivePayoutFees(3900, [donation(1, 3000), donation(2, 1000)]),
+    ).toEqual({
+      grossCents: 4000,
+      feeCents: 100,
+      feeByDonation: [
+        { id: 1, feeCents: 75 },
+        { id: 2, feeCents: 25 },
+      ],
+    });
+  });
+
+  it("gives a zero fee for a bank-link payout paid out in full", () => {
+    expect(derivePayoutFees(2000, [donation(1, 2000)])).toEqual({
+      grossCents: 2000,
+      feeCents: 0,
+      feeByDonation: [{ id: 1, feeCents: 0 }],
+    });
+  });
+
+  it("waits while a linked donation is pending", () => {
+    expect(
+      derivePayoutFees(3900, [donation(1, 3000), donation(2, 1000, false)]),
+    ).toBeNull();
+  });
+
+  it("gives up on a payout that is only partly linked", () => {
+    // Only one of the payout's donations is linked, so it adds up to less
+    // than the bank received.
+    expect(derivePayoutFees(3900, [donation(1, 3000)])).toBeNull();
+  });
+
+  it("gives up on an implausibly large fee", () => {
+    expect(derivePayoutFees(1000, [donation(1, 2000)])).toBeNull();
+  });
+
+  it("needs at least one linked donation", () => {
+    expect(derivePayoutFees(1000, [])).toBeNull();
   });
 });
 

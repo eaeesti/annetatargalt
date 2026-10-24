@@ -33,6 +33,7 @@ import {
   looksLikeCardPayout,
   classifyCreditLine,
   computePayoutGrossFee,
+  derivePayoutFees,
   selectTemplate,
   planRecurringImport,
   type RecurringTemplate,
@@ -361,7 +362,13 @@ export function createStatementService(strapi: Core.Strapi) {
     },
 
     async apply(payload: ApplyPayload, userEmail: string) {
-      const summary = { reconciled: 0, created: 0, ignored: 0, recorded: 0 };
+      const summary = {
+        reconciled: 0,
+        created: 0,
+        ignored: 0,
+        recorded: 0,
+        payoutFeesDerived: 0,
+      };
 
       // ── validate + normalize the echoed statement lines ─────────────────
       // apply trusts the client for the bank-row metadata (date/amount/…) but
@@ -652,6 +659,32 @@ export function createStatementService(strapi: Core.Strapi) {
         }
 
         summary.ignored = ignoreByCode.size;
+
+        // A card payout Montonio couldn't price, here or in an earlier import,
+        // gets its gross and fee from the donations now linked to it.
+        for (const row of await bankRepo.cardPayoutsMissingFee()) {
+          const detail = await bankRepo.findByCodeWithDonations(
+            row.archivingCode,
+          );
+          const derived = derivePayoutFees(
+            row.amount ?? 0,
+            (detail?.donations ?? []).map((d) => ({
+              id: d.id,
+              amountCents: d.amount,
+              finalized: d.finalized,
+            })),
+          );
+          if (!derived) continue;
+          await bankRepo.recordPayoutTotals(
+            row.archivingCode,
+            derived.grossCents,
+            derived.feeCents,
+          );
+          for (const d of derived.feeByDonation) {
+            await donationsRepo.setProcessorFee(d.id, d.feeCents);
+          }
+          summary.payoutFeesDerived++;
+        }
 
         await aliasRepo.add(
           (payload.rememberSenders ?? [])
