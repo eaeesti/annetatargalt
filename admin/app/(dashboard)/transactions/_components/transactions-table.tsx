@@ -89,6 +89,15 @@ function fmtDate(iso: string | null): string {
   return iso ? iso.slice(0, 10) : "—";
 }
 
+/**
+ * Montonio pays out bank-link payments in the same batches as card payments,
+ * fee-free, so "card-payout" rows are really Montonio payouts. Only the label
+ * says so; the stored category keeps its name.
+ */
+function categoryLabel(c: string): string {
+  return c === "card-payout" ? "Montonio payout" : c;
+}
+
 function categoryVariant(
   c: string,
 ): "default" | "secondary" | "destructive" | "outline" {
@@ -233,7 +242,7 @@ export function TransactionsTable({
               className="h-7"
               onClick={() => pushUrl({ category: c, page: "1" })}
             >
-              {c}
+              {categoryLabel(c)}
             </Button>
           ))}
         </div>
@@ -364,7 +373,7 @@ export function TransactionsTable({
                       </TableCell>
                       <TableCell>
                         <Badge variant={categoryVariant(row.category)}>
-                          {row.category}
+                          {categoryLabel(row.category)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
@@ -419,7 +428,7 @@ export function TransactionsTable({
                                 >
                                   {RECLASSIFY_CATEGORIES.map((c) => (
                                     <option key={c} value={c}>
-                                      {c}
+                                      {categoryLabel(c)}
                                     </option>
                                   ))}
                                   {row.category === "unimported" && (
