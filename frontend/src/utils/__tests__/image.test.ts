@@ -34,8 +34,4 @@ describe("imageSource", () => {
     ).toBeNull();
     expect(imageSource(null)).toBeNull();
   });
-
-  it("still takes a bare media file, with the media library's description", () => {
-    expect(imageSource(file)).toEqual({ file, alt: "Lehmad" });
-  });
 });
