@@ -9,7 +9,7 @@ import CheckboxInput from "../elements/forms/CheckboxInput";
 import Markdown from "../elements/Markdown";
 import Button from "../elements/Button";
 import { makeForeignDonationRequest } from "@/utils/donation";
-import { describeErrorResponse } from "@/utils/strapi";
+import { describeErrorResponse, readStrapiJson } from "@/utils/strapi";
 import { withCurrency } from "@/utils/money";
 import { localeOf } from "@/utils/locale";
 import Modal from "../Modal";
@@ -88,7 +88,7 @@ export default function ForeignDonationSection(
       return;
     }
 
-    const data = await response.json();
+    const data = await readStrapiJson<{ redirectURL: string }>(response);
     router.push(data.redirectURL);
   };
 

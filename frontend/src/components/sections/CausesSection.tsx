@@ -1,10 +1,14 @@
 import Markdown from "../elements/Markdown";
 import TextWithImageSection from "./TextWithImageSection";
-import type { StrapiCausesSection, StrapiPage } from "@/types/generated/strapi";
+import type {
+  StrapiCausesSection,
+  StrapiPage,
+  StrapiSpecialPage,
+} from "@/types/generated/strapi";
 import { localeOf, pagePath } from "@/utils/locale";
 
 interface CausesSectionProps extends StrapiCausesSection {
-  page: StrapiPage;
+  page: StrapiPage | StrapiSpecialPage;
 }
 
 export default function CausesSection({

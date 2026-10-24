@@ -132,7 +132,7 @@ export default function CampaignSection({
   const progressBarRef = useRef<HTMLDivElement | null>(null);
   const progressBarOnScreen = useOnScreen(progressBarRef);
 
-  const { data, error, isLoading } = useSWR(
+  const { data, error, isLoading } = useSWR<{ campaignSum: number }>(
     getStrapiURL("/api/stats"),
     fetcher,
   );
@@ -145,7 +145,7 @@ export default function CampaignSection({
   if (isLoading) {
     amount = 0;
   } else if (data) {
-    amount = (data as { campaignSum: number }).campaignSum / 100;
+    amount = data.campaignSum / 100;
   } else {
     amount = 0;
   }

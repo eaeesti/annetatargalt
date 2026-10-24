@@ -91,7 +91,7 @@ Avoid:
 
 ## Strapi API Layer (`utils/strapi.ts`)
 
-All Strapi fetches go through `fetchAPI(path, urlParamsObject, options)`. The CMS API is Strapi v5:
+All Strapi fetches go through `fetchAPI<T>(path, urlParamsObject, options)`, which returns the body as the `T` the caller names, e.g. `fetchAPI<{ data: StrapiPage[] }>(...)`. Strapi's JSON is the one thing the site trusts without checking: `readStrapiJson` is the one place that happens, and `fetchAPI`, the SWR `fetcher` and the donation forms all read through it. Anything else from outside (query strings, browser storage, third parties) is read as `unknown` and narrowed. The CMS API is Strapi v5:
 
 - Collection types return `{ data: Item[] }` — always guard `response.data?.length`.
 - Single types return `{ data: Item }` — access as `response.data`.

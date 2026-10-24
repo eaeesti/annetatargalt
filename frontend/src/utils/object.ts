@@ -30,3 +30,15 @@ export function pick<V>(
       return obj;
     }, {});
 }
+
+/**
+ * The string in a field whose name is only known at runtime, such as one a
+ * CMS editor picked, or null when that field holds anything else.
+ * @example
+ * stringField({ a: "x", b: 2 }, "a"); // "x"
+ * stringField({ a: "x", b: 2 }, "b"); // null
+ */
+export function stringField(object: object, field: string): string | null {
+  const value: unknown = Reflect.get(object, field);
+  return typeof value === "string" ? value : null;
+}

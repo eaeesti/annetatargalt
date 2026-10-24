@@ -50,14 +50,16 @@ export default class Proportions {
   proportions: Map<ProportionKey, ProportionEntry>;
 
   constructor(entries: Array<[ProportionKey, Partial<ProportionEntry>]>) {
-    const preparedEntries = entries.map(([key, value]) => [
-      key,
-      {
-        locked: false,
-        proportion: Math.floor(100 / entries.length),
-        ...value,
-      },
-    ]) as Array<[ProportionKey, ProportionEntry]>;
+    const preparedEntries = entries.map(
+      ([key, value]): [ProportionKey, ProportionEntry] => [
+        key,
+        {
+          locked: false,
+          proportion: Math.floor(100 / entries.length),
+          ...value,
+        },
+      ],
+    );
     this.proportions = new Map(preparedEntries);
   }
 
@@ -303,13 +305,14 @@ export default class Proportions {
   toJSON(): Record<string, { proportion: number; proportions?: Proportions }> {
     return Object.fromEntries(
       this.entries()
-        .map(([key, value]) => [
-          key,
-          { proportion: value.proportion, proportions: value.proportions },
-        ])
-        .filter(
-          ([_, value]) => (value as { proportion: number }).proportion > 0,
-        ),
+        .map(
+          ([key, value]) =>
+            [
+              key,
+              { proportion: value.proportion, proportions: value.proportions },
+            ] as const,
+        )
+        .filter(([_, value]) => value.proportion > 0),
     );
   }
 

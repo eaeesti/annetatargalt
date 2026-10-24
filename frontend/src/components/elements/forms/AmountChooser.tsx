@@ -134,10 +134,10 @@ export default function AmountChooser({
   });
 
   useEffect(() => {
-    if (otherAmountSelected) return;
-    setAmountRef.current(selectedAmount as number);
+    if (selectedAmount === "other") return;
+    setAmountRef.current(selectedAmount);
     setValidity((ready) => ({ ...ready, amount: true }));
-  }, [selectedAmount, otherAmountSelected, setValidity]);
+  }, [selectedAmount, setValidity]);
 
   return (
     <div className="flex flex-col gap-4">
