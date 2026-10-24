@@ -196,13 +196,15 @@ export default async function TransferDetailPage({
             ) : (
               <span className="block text-muted-foreground">None recorded</span>
             )}
-            {tipName && (
-              <CardFeeSwitch
-                transferId={transfer.id}
-                deductCardFees={transfer.deductCardFees}
-                tipOrganizationName={tipName}
-              />
-            )}
+            {/* no fees, and none still to come: nothing to take off */}
+            {tipName &&
+              (feeTotal > 0 || transfer.donationsWithUnknownFee > 0) && (
+                <CardFeeSwitch
+                  transferId={transfer.id}
+                  deductCardFees={transfer.deductCardFees}
+                  tipOrganizationName={tipName}
+                />
+              )}
             {transfer.cardFeesNotDeductedCents > 0 && (
               <span className="block text-xs text-destructive">
                 {formatEuros(transfer.cardFeesNotDeductedCents)} of the fees is
