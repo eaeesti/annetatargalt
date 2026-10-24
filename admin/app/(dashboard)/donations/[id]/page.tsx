@@ -114,7 +114,10 @@ export default async function DonationDetailPage({
     fetchOrgNameMap(),
   ]);
 
-  if (!res.ok) notFound();
+  // a bad or unknown ID is "not found"; anything else is the error page,
+  // whose Try again fetches it again
+  if (res.status === 404 || res.status === 400) notFound();
+  if (!res.ok) throw new Error(`Couldn't load the donation (${res.status})`);
 
   const { data: donation } = (await res.json()) as { data: DonationDetail };
 
