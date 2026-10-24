@@ -175,12 +175,12 @@ export default async function DonationDetailPage({
         )}
         <Field label="Transaction ID">
           {donation.transactionId ? (
-            <span className="font-mono text-xs">
+            <span className="flex flex-wrap gap-x-2 font-mono text-xs">
               <EntityLink href={bankTransactionHref(donation.transactionId)}>
                 {donation.transactionId}
               </EntityLink>
               {donation.transactionMatchSource && (
-                <span className="ml-2 text-muted-foreground">
+                <span className="text-muted-foreground">
                   ({donation.transactionMatchSource})
                 </span>
               )}

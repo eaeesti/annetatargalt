@@ -217,7 +217,7 @@ export default async function DonorDetailPage({ params }: { params: Params }) {
                     </Badge>
                   )}
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex min-w-0 items-center gap-3">
                   {d.organizationDonations.length > 0 && (
                     <span className="hidden max-w-48 truncate text-xs text-muted-foreground sm:block">
                       {d.organizationDonations

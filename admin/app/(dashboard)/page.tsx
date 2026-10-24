@@ -79,12 +79,16 @@ function StatCard({
   info?: string;
 }) {
   return (
-    <div className="space-y-1 rounded-lg border bg-card p-5">
+    <div className="@container space-y-1 rounded-lg border bg-card p-5">
       <p className="flex items-center gap-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
         {label}
         {info && <InfoTooltip text={info} />}
       </p>
-      <p className="text-2xl font-bold tabular-nums">{value}</p>
+      {/* Sized to the card, which narrows with the sidebar as well as the
+          screen: a six-figure total needs about 12rem at text-2xl. */}
+      <p className="text-lg font-bold tabular-nums @[12rem]:text-2xl">
+        {value}
+      </p>
       {sub && <p className="text-sm text-muted-foreground">{sub}</p>}
     </div>
   );
@@ -104,11 +108,11 @@ function PeriodRow({
   showDelta?: boolean;
 }) {
   return (
-    <div className="grid grid-cols-[14rem_1fr_1fr] items-center gap-4 border-b py-2 text-sm last:border-0">
-      <span className="font-medium whitespace-nowrap text-muted-foreground">
+    <div className="grid grid-cols-2 items-center gap-x-4 gap-y-1 border-b py-2 text-sm last:border-0 @xl:grid-cols-[14rem_1fr_1fr] @xl:gap-4">
+      <span className="col-span-2 font-medium text-muted-foreground @xl:col-span-1 @xl:whitespace-nowrap">
         {label}
       </span>
-      <div className="flex items-center gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
         <span className="font-medium tabular-nums">
           {formatEur(current.total)}
         </span>
@@ -120,7 +124,7 @@ function PeriodRow({
           />
         )}
       </div>
-      <div className="flex items-center gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-muted-foreground tabular-nums">
           {formatCount(current.count)} donations
         </span>
@@ -213,7 +217,7 @@ async function StatsSection() {
       </div>
 
       {/* Period comparison */}
-      <div className="space-y-1 rounded-lg border bg-card p-5">
+      <div className="@container space-y-1 rounded-lg border bg-card p-5">
         <h2 className="pb-2 text-sm font-semibold tracking-wide text-muted-foreground uppercase">
           Period comparison (vs prior period)
         </h2>

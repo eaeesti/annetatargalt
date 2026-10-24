@@ -150,9 +150,12 @@ export function TransfersTable({
         id: "notes",
         accessorKey: "notes",
         header: "Notes",
+        // Takes whatever width the other columns leave, and only then
+        // truncates: max-w-0 stops the text from widening the table.
+        meta: { className: "w-full max-w-0 min-w-40" },
         cell: ({ row }) => (
           <span
-            className="block max-w-[16rem] truncate text-sm text-muted-foreground"
+            className="block truncate text-sm text-muted-foreground"
             title={row.original.notes ?? undefined}
           >
             {row.original.notes ?? "—"}
@@ -257,7 +260,10 @@ export function TransfersTable({
             {table.getHeaderGroups().map((hg) => (
               <TableRow key={hg.id}>
                 {hg.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead
+                    key={header.id}
+                    className={header.column.columnDef.meta?.className}
+                  >
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -287,7 +293,10 @@ export function TransfersTable({
                   onClick={() => router.push(`/transfers/${row.original.id}`)}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell
+                      key={cell.id}
+                      className={cell.column.columnDef.meta?.className}
+                    >
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext(),
@@ -301,7 +310,7 @@ export function TransfersTable({
         </Table>
       </div>
 
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>Rows per page:</span>
           <div className="flex gap-1">

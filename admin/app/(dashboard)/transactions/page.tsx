@@ -69,6 +69,10 @@ export default async function TransactionsPage({
   const dateFrom = isoish(str(params.dateFrom));
   const dateTo = isoish(str(params.dateTo));
   const search = str(params.search)?.slice(0, 128);
+  const amount = (v: string | undefined) =>
+    v && Number.isFinite(Number(v)) ? v : undefined;
+  const amountMin = amount(str(params.amountMin));
+  const amountMax = amount(str(params.amountMax));
 
   const qs = new URLSearchParams({
     page: String(page),
@@ -80,6 +84,8 @@ export default async function TransactionsPage({
     ...(dateFrom && { dateFrom }),
     ...(dateTo && { dateTo }),
     ...(search && { search }),
+    ...(amountMin && { amountMin }),
+    ...(amountMax && { amountMax }),
   });
 
   const [listRes, summaryRes] = await Promise.all([
