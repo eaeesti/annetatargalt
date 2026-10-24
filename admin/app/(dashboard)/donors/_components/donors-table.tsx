@@ -7,6 +7,7 @@ import {
   type SortingState,
   flexRender,
   getCoreRowModel,
+  type VisibilityState,
   useReactTable,
 } from "@tanstack/react-table";
 import { SortIcon } from "../../../../components/sort-icon";
@@ -31,6 +32,11 @@ import { EntityLink } from "../../../../components/entity-link";
 import { donorHref } from "../../../../lib/entity-links";
 import { useRememberListUrl } from "../../../../components/remembered-link";
 import { ariaSort } from "../../../../lib/aria-sort";
+import {
+  ColumnPicker,
+  tableColumns,
+} from "../../../../components/column-picker";
+import { useSavedColumnVisibility } from "../../../../hooks/use-saved-column-visibility";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -78,6 +84,27 @@ interface DonorsTableProps {
 
 const PAGE_SIZES = [25, 50, 100, 250] as const;
 
+// Every column starts shown on a wider screen.
+const NO_HIDDEN_COLUMNS: VisibilityState = {};
+
+const COLUMN_LABELS: Record<string, string> = {
+  id: "ID",
+  lastName: "Name",
+  email: "Email",
+  recurringDonor: "Recurring",
+  totalDonated: "Total donated",
+  donationCount: "Donations",
+  lastDonationDate: "Last donation",
+};
+
+// A phone shows who, how much in all, and when they last gave.
+const PHONE_HIDDEN: VisibilityState = {
+  id: false,
+  email: false,
+  recurringDonor: false,
+  donationCount: false,
+};
+
 export function DonorsTable({
   data,
   pagination,
@@ -86,6 +113,13 @@ export function DonorsTable({
 }: DonorsTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const {
+    columnVisibility,
+    onColumnVisibilityChange,
+    setColumnVisible,
+    resetColumnVisibility,
+    isDefault,
+  } = useSavedColumnVisibility("donors", NO_HIDDEN_COLUMNS, PHONE_HIDDEN);
   useRememberListUrl("/donors");
 
   function pushUrl(updates: Record<string, string | undefined>) {
@@ -220,7 +254,8 @@ export function DonorsTable({
     manualPagination: true,
     manualSorting: true,
     pageCount: pagination.pageCount,
-    state: { sorting },
+    state: { sorting, columnVisibility },
+    onColumnVisibilityChange,
   });
 
   const FILTER_DEFS: FilterDef[] = [
@@ -262,8 +297,14 @@ export function DonorsTable({
           params={filterParams}
           onChange={pushUrl}
         />
-        <div className="ml-auto">
+        <div className="ml-auto flex flex-wrap items-center gap-2">
           <ExportCsvButton table="donors" sortBy={sortBy} sortDir={sortDir} />
+          <ColumnPicker
+            columns={tableColumns(table, COLUMN_LABELS)}
+            onToggle={setColumnVisible}
+            isDefault={isDefault}
+            onReset={resetColumnVisibility}
+          />
         </div>
       </div>
 

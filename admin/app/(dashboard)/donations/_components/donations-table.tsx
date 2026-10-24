@@ -10,7 +10,10 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ColumnPicker } from "../../../../components/column-picker";
+import {
+  ColumnPicker,
+  tableColumns,
+} from "../../../../components/column-picker";
 import { ExportCsvButton } from "../../../../components/export-csv-button";
 import { SortIcon } from "../../../../components/sort-icon";
 import { useSavedColumnVisibility } from "../../../../hooks/use-saved-column-visibility";
@@ -114,6 +117,9 @@ const DEFAULT_COLUMNS: VisibilityState = {
   donationTransfer: false,
 };
 
+// A phone shows when, how much, who and whether it went through.
+const PHONE_HIDDEN: VisibilityState = { id: false };
+
 export function DonationsTable({
   data,
   pagination,
@@ -129,9 +135,10 @@ export function DonationsTable({
   const {
     columnVisibility,
     onColumnVisibilityChange,
+    setColumnVisible,
     resetColumnVisibility,
     isDefault,
-  } = useSavedColumnVisibility("donations", DEFAULT_COLUMNS);
+  } = useSavedColumnVisibility("donations", DEFAULT_COLUMNS, PHONE_HIDDEN);
 
   function pushUrl(updates: Record<string, string | undefined>) {
     const sp = new URLSearchParams(window.location.search);
@@ -480,8 +487,8 @@ export function DonationsTable({
             sortDir={sortDir}
           />
           <ColumnPicker
-            table={table}
-            labels={columnLabels}
+            columns={tableColumns(table, columnLabels)}
+            onToggle={setColumnVisible}
             isDefault={isDefault}
             onReset={resetColumnVisibility}
           />

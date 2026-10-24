@@ -28,6 +28,9 @@ import {
   CONNECTION_FAILED,
   failureMessage,
 } from "../../../../lib/failure-message";
+import { ColumnPicker } from "../../../../components/column-picker";
+import { useSavedColumnVisibility } from "../../../../hooks/use-saved-column-visibility";
+import type { VisibilityState } from "@tanstack/react-table";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -103,6 +106,29 @@ function fmtDate(iso: string | null): string {
  * fee-free, so "card-payout" rows are really Montonio payouts. Only the label
  * says so; the stored category keeps its name.
  */
+/** The columns someone can show or hide; the expand arrow always shows. */
+const COLUMNS = [
+  { id: "date", label: "Date" },
+  { id: "counterparty", label: "Counterparty" },
+  { id: "amount", label: "Amount" },
+  { id: "category", label: "Category" },
+  { id: "donations", label: "Donations" },
+  { id: "allocated", label: "Allocated" },
+  { id: "transfer", label: "Transfer" },
+  { id: "ok", label: "OK" },
+];
+
+// Every column starts shown on a wider screen.
+const NO_HIDDEN_COLUMNS: VisibilityState = {};
+
+// A phone shows when, how much, what kind of line and whether it ties out.
+const PHONE_HIDDEN: VisibilityState = {
+  counterparty: false,
+  donations: false,
+  allocated: false,
+  transfer: false,
+};
+
 function categoryLabel(c: string): string {
   return c === "card-payout" ? "Montonio payout" : c;
 }
@@ -246,7 +272,15 @@ export function TransactionsTable({
     if (value !== null) filterParams[k] = value;
   }
 
-  const colSpan = 9;
+  const {
+    columnVisibility,
+    setColumnVisible,
+    resetColumnVisibility,
+    isDefault,
+  } = useSavedColumnVisibility("transactions", NO_HIDDEN_COLUMNS, PHONE_HIDDEN);
+  const show = (id: string) => columnVisibility[id] !== false;
+  // the expand arrow, plus every column that's shown
+  const colSpan = 1 + COLUMNS.filter((column) => show(column.id)).length;
 
   return (
     <div className="space-y-4">
@@ -303,6 +337,15 @@ export function TransactionsTable({
           sortBy={sortBy}
           sortDir={sortDir}
         />
+        <ColumnPicker
+          columns={COLUMNS.map((column) => ({
+            ...column,
+            visible: show(column.id),
+          }))}
+          onToggle={setColumnVisible}
+          isDefault={isDefault}
+          onReset={resetColumnVisibility}
+        />
       </div>
 
       <div className="overflow-hidden rounded-md border bg-background">
@@ -310,54 +353,71 @@ export function TransactionsTable({
           <TableHeader>
             <TableRow>
               <TableHead className="w-6" />
-              <TableHead aria-sort={ariaSort("date", sortBy, sortDir)}>
-                <button
-                  className="inline-flex items-center"
-                  onClick={() => handleSort("date")}
+              {show("date") && (
+                <TableHead aria-sort={ariaSort("date", sortBy, sortDir)}>
+                  <button
+                    className="inline-flex items-center"
+                    onClick={() => handleSort("date")}
+                  >
+                    Date{" "}
+                    <SortIcon col="date" sortBy={sortBy} sortDir={sortDir} />
+                  </button>
+                </TableHead>
+              )}
+              {show("counterparty") && (
+                <TableHead
+                  aria-sort={ariaSort("counterpartyName", sortBy, sortDir)}
                 >
-                  Date <SortIcon col="date" sortBy={sortBy} sortDir={sortDir} />
-                </button>
-              </TableHead>
-              <TableHead
-                aria-sort={ariaSort("counterpartyName", sortBy, sortDir)}
-              >
-                <button
-                  className="inline-flex items-center"
-                  onClick={() => handleSort("counterpartyName")}
+                  <button
+                    className="inline-flex items-center"
+                    onClick={() => handleSort("counterpartyName")}
+                  >
+                    Counterparty{" "}
+                    <SortIcon
+                      col="counterpartyName"
+                      sortBy={sortBy}
+                      sortDir={sortDir}
+                    />
+                  </button>
+                </TableHead>
+              )}
+              {show("amount") && (
+                <TableHead
+                  className="text-right"
+                  aria-sort={ariaSort("amount", sortBy, sortDir)}
                 >
-                  Counterparty{" "}
-                  <SortIcon
-                    col="counterpartyName"
-                    sortBy={sortBy}
-                    sortDir={sortDir}
-                  />
-                </button>
-              </TableHead>
-              <TableHead
-                className="text-right"
-                aria-sort={ariaSort("amount", sortBy, sortDir)}
-              >
-                <button
-                  className="inline-flex items-center"
-                  onClick={() => handleSort("amount")}
-                >
-                  Amount{" "}
-                  <SortIcon col="amount" sortBy={sortBy} sortDir={sortDir} />
-                </button>
-              </TableHead>
-              <TableHead aria-sort={ariaSort("category", sortBy, sortDir)}>
-                <button
-                  className="inline-flex items-center"
-                  onClick={() => handleSort("category")}
-                >
-                  Category{" "}
-                  <SortIcon col="category" sortBy={sortBy} sortDir={sortDir} />
-                </button>
-              </TableHead>
-              <TableHead className="text-right">Donations</TableHead>
-              <TableHead className="text-right">Allocated</TableHead>
-              <TableHead>Transfer</TableHead>
-              <TableHead className="text-center">OK</TableHead>
+                  <button
+                    className="inline-flex items-center"
+                    onClick={() => handleSort("amount")}
+                  >
+                    Amount{" "}
+                    <SortIcon col="amount" sortBy={sortBy} sortDir={sortDir} />
+                  </button>
+                </TableHead>
+              )}
+              {show("category") && (
+                <TableHead aria-sort={ariaSort("category", sortBy, sortDir)}>
+                  <button
+                    className="inline-flex items-center"
+                    onClick={() => handleSort("category")}
+                  >
+                    Category{" "}
+                    <SortIcon
+                      col="category"
+                      sortBy={sortBy}
+                      sortDir={sortDir}
+                    />
+                  </button>
+                </TableHead>
+              )}
+              {show("donations") && (
+                <TableHead className="text-right">Donations</TableHead>
+              )}
+              {show("allocated") && (
+                <TableHead className="text-right">Allocated</TableHead>
+              )}
+              {show("transfer") && <TableHead>Transfer</TableHead>}
+              {show("ok") && <TableHead className="text-center">OK</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -387,61 +447,77 @@ export function TransactionsTable({
                           <ChevronDown className="h-4 w-4 opacity-40" />
                         )}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {fmtDate(row.date)}
-                      </TableCell>
-                      <TableCell>
-                        <span className="block max-w-xs truncate">
-                          {row.counterpartyName ?? "—"}
-                        </span>
-                        <span className="block max-w-xs truncate text-xs text-muted-foreground">
-                          {row.description}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right whitespace-nowrap tabular-nums">
-                        {row.direction === "D" && "−"}
-                        {eur(row.amount)}
-                        {row.category === "card-payout" &&
-                          typeof row.feeAmount === "number" && (
-                            <span className="block text-xs text-muted-foreground">
-                              fee {eur(row.feeAmount)}
-                            </span>
+                      {show("date") && (
+                        <TableCell className="whitespace-nowrap">
+                          {fmtDate(row.date)}
+                        </TableCell>
+                      )}
+                      {show("counterparty") && (
+                        <TableCell>
+                          <span className="block max-w-xs truncate">
+                            {row.counterpartyName ?? "—"}
+                          </span>
+                          <span className="block max-w-xs truncate text-xs text-muted-foreground">
+                            {row.description}
+                          </span>
+                        </TableCell>
+                      )}
+                      {show("amount") && (
+                        <TableCell className="text-right whitespace-nowrap tabular-nums">
+                          {row.direction === "D" && "−"}
+                          {eur(row.amount)}
+                          {row.category === "card-payout" &&
+                            typeof row.feeAmount === "number" && (
+                              <span className="block text-xs text-muted-foreground">
+                                fee {eur(row.feeAmount)}
+                              </span>
+                            )}
+                        </TableCell>
+                      )}
+                      {show("category") && (
+                        <TableCell>
+                          <Badge variant={categoryVariant(row.category)}>
+                            {categoryLabel(row.category)}
+                          </Badge>
+                        </TableCell>
+                      )}
+                      {show("donations") && (
+                        <TableCell className="text-right tabular-nums">
+                          {row.linkedDonationCount || "—"}
+                        </TableCell>
+                      )}
+                      {show("allocated") && (
+                        <TableCell className="text-right tabular-nums">
+                          {row.linkedDonationCount
+                            ? eur(row.allocatedCents)
+                            : "—"}
+                        </TableCell>
+                      )}
+                      {show("transfer") && (
+                        <TableCell className="whitespace-nowrap tabular-nums">
+                          {row.donationTransferId ? (
+                            <EntityLink
+                              href={transferHref(row.donationTransferId)}
+                              stopRowClick
+                            >
+                              #{row.donationTransferId}
+                            </EntityLink>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
                           )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={categoryVariant(row.category)}>
-                          {categoryLabel(row.category)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {row.linkedDonationCount || "—"}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {row.linkedDonationCount
-                          ? eur(row.allocatedCents)
-                          : "—"}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap tabular-nums">
-                        {row.donationTransferId ? (
-                          <EntityLink
-                            href={transferHref(row.donationTransferId)}
-                            stopRowClick
-                          >
-                            #{row.donationTransferId}
-                          </EntityLink>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {typeof row.balanced !== "boolean" ? (
-                          <span className="text-muted-foreground">·</span>
-                        ) : row.balanced ? (
-                          <span className="text-emerald-600">✓</span>
-                        ) : (
-                          <span className="text-destructive">✗</span>
-                        )}
-                      </TableCell>
+                        </TableCell>
+                      )}
+                      {show("ok") && (
+                        <TableCell className="text-center">
+                          {typeof row.balanced !== "boolean" ? (
+                            <span className="text-muted-foreground">·</span>
+                          ) : row.balanced ? (
+                            <span className="text-emerald-600">✓</span>
+                          ) : (
+                            <span className="text-destructive">✗</span>
+                          )}
+                        </TableCell>
+                      )}
                     </TableRow>
 
                     {isOpen && (
