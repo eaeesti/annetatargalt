@@ -13,6 +13,8 @@ import {
   CONNECTION_FAILED,
   failureMessage,
 } from "../../../../lib/failure-message";
+import { type AttachedFile, PaymentFile } from "./payment-file";
+import { PdfBatchUpload } from "./pdf-batch-upload";
 
 type LinkedPayment = {
   archivingCode: string;
@@ -21,6 +23,18 @@ type LinkedPayment = {
   counterpartyName: string | null;
   description: string | null;
   note: string | null;
+  file: AttachedFile | null;
+};
+
+/** an outgoing payment not on any round yet */
+type Candidate = {
+  archivingCode: string;
+  date: string | null;
+  amountCents: number | null;
+  counterpartyName: string | null;
+  description: string | null;
+  /** has a PDF, kept from a round it was unlinked from */
+  hasFile: boolean;
 };
 
 const eur = (c: number | null) =>
@@ -66,9 +80,12 @@ export function TransferReconciliation({
   const [busy, setBusy] = useState(false);
   // linking or unlinking payments
   const [linkError, setLinkError] = useState<string | null>(null);
+  // attaching a PDF to a payment
+  const [fileError, setFileError] = useState<string | null>(null);
   const [picker, setPicker] = useState(false);
+  const [batchUpload, setBatchUpload] = useState(false);
   const [candidates, setCandidates] = useState<
-    LinkedPayment[] | "loading" | "error"
+    Candidate[] | "loading" | "error"
   >([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -171,7 +188,7 @@ export function TransferReconciliation({
     try {
       const res = await fetch(`/api/transfers/unlinked-outgoing?${qs}`);
       if (!res.ok) throw new Error();
-      const { data } = await readJson<{ data: LinkedPayment[] }>(res);
+      const { data } = await readJson<{ data: Candidate[] }>(res);
       setCandidates(data);
     } catch {
       setCandidates("error");
@@ -373,69 +390,86 @@ export function TransferReconciliation({
       )}
 
       {linked.length > 0 ? (
-        <table className="w-full text-xs">
-          <thead className="text-muted-foreground">
-            <tr className="text-left">
-              <th className="py-1 pr-3">Date</th>
-              <th className="py-1 pr-3">Counterparty</th>
-              <th className="py-1 pr-3 text-right">Amount</th>
-              <th className="py-1 pr-3">Note</th>
-              <th className="py-1" />
-            </tr>
-          </thead>
-          <tbody>
-            {linked.map((p) => (
-              // top-aligned, so a note that grows keeps the row's first line level
-              <tr
-                key={p.archivingCode}
-                className="border-t border-border/50 align-top"
-              >
-                <td className="pt-2 pr-3 pb-1 whitespace-nowrap">
-                  <EntityLink
-                    href={bankTransactionHref(p.archivingCode)}
-                    newTab
-                  >
-                    {fmtDate(p.date)}
-                  </EntityLink>
-                </td>
-                <td className="pt-2 pr-3 pb-1">{p.counterpartyName ?? "—"}</td>
-                <td className="pt-2 pr-3 pb-1 text-right tabular-nums">
-                  {eur(p.amountCents)}
-                </td>
-                <td className="py-1 pr-3">
-                  <Textarea
-                    value={notes[p.archivingCode] ?? ""}
-                    onChange={(e) =>
-                      setNotes((n) => ({
-                        ...n,
-                        [p.archivingCode]: e.target.value,
-                      }))
-                    }
-                    onBlur={() => saveNote(p.archivingCode, p.note ?? "")}
-                    disabled={savingNote === p.archivingCode}
-                    aria-label={`Note on the ${eur(p.amountCents)} payment of ${fmtDate(p.date)}`}
-                    className="rounded-md px-1.5 py-px text-xs"
-                  />
-                  {noteErrors[p.archivingCode] && (
-                    <p role="alert" className="mt-1 text-destructive">
-                      {noteErrors[p.archivingCode]}
-                    </p>
-                  )}
-                </td>
-                <td className="pt-2 pb-1 text-right">
-                  <button
-                    className="text-muted-foreground hover:text-destructive disabled:opacity-50"
-                    disabled={busy}
-                    onClick={() => patch({ unlinkCodes: [p.archivingCode] })}
-                    aria-label={`Unlink the ${eur(p.amountCents)} payment of ${fmtDate(p.date)}`}
-                  >
-                    Unlink
-                  </button>
-                </td>
+        // scrolls sideways on a phone rather than squeezing the notes
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-xl text-xs">
+            <thead className="text-muted-foreground">
+              <tr className="text-left">
+                <th className="py-1 pr-3">Date</th>
+                <th className="py-1 pr-3">Counterparty</th>
+                <th className="py-1 pr-3 text-right">Amount</th>
+                <th className="py-1 pr-3">PDF</th>
+                <th className="py-1 pr-3">Note</th>
+                <th className="py-1" />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {linked.map((p) => (
+                // top-aligned, so a note that grows keeps the row's first line level
+                <tr
+                  key={p.archivingCode}
+                  className="border-t border-border/50 align-top"
+                >
+                  <td className="pt-2 pr-3 pb-1 whitespace-nowrap">
+                    <EntityLink
+                      href={bankTransactionHref(p.archivingCode)}
+                      newTab
+                    >
+                      {fmtDate(p.date)}
+                    </EntityLink>
+                  </td>
+                  <td className="pt-2 pr-3 pb-1">
+                    {p.counterpartyName ?? "—"}
+                  </td>
+                  <td className="pt-2 pr-3 pb-1 text-right tabular-nums">
+                    {eur(p.amountCents)}
+                  </td>
+                  <td className="pt-2 pr-3 pb-1">
+                    {/* one text line high, so the icon sits level with the row's text */}
+                    <div className="flex h-4 items-center">
+                      <PaymentFile
+                        archivingCode={p.archivingCode}
+                        file={p.file}
+                        paymentLabel={`the ${eur(p.amountCents)} payment of ${fmtDate(p.date)}`}
+                        onError={setFileError}
+                      />
+                    </div>
+                  </td>
+                  <td className="py-1 pr-3">
+                    <Textarea
+                      value={notes[p.archivingCode] ?? ""}
+                      onChange={(e) =>
+                        setNotes((n) => ({
+                          ...n,
+                          [p.archivingCode]: e.target.value,
+                        }))
+                      }
+                      onBlur={() => saveNote(p.archivingCode, p.note ?? "")}
+                      disabled={savingNote === p.archivingCode}
+                      aria-label={`Note on the ${eur(p.amountCents)} payment of ${fmtDate(p.date)}`}
+                      className="rounded-md px-1.5 py-px text-xs"
+                    />
+                    {noteErrors[p.archivingCode] && (
+                      <p role="alert" className="mt-1 text-destructive">
+                        {noteErrors[p.archivingCode]}
+                      </p>
+                    )}
+                  </td>
+                  <td className="pt-2 pb-1 text-right">
+                    <button
+                      className="text-muted-foreground hover:text-destructive disabled:opacity-50"
+                      disabled={busy}
+                      onClick={() => patch({ unlinkCodes: [p.archivingCode] })}
+                      aria-label={`Unlink the ${eur(p.amountCents)} payment of ${fmtDate(p.date)}`}
+                    >
+                      Unlink
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
         <p className="text-xs text-muted-foreground">
           No bank payments linked yet.
@@ -447,16 +481,39 @@ export function TransferReconciliation({
           {linkError}
         </p>
       )}
+      {fileError && (
+        <p role="alert" className="text-xs text-destructive">
+          {fileError}
+        </p>
+      )}
 
-      {!picker && (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setPicker(true)}
-          disabled={busy}
-        >
-          Link a payment
-        </Button>
+      {!picker && !batchUpload && (
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setPicker(true)}
+            disabled={busy}
+          >
+            Link a payment
+          </Button>
+          {hasPayments && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setBatchUpload(true)}
+            >
+              Upload PDFs
+            </Button>
+          )}
+        </div>
+      )}
+
+      {batchUpload && (
+        <PdfBatchUpload
+          payments={linked}
+          onClose={() => setBatchUpload(false)}
+        />
       )}
 
       {picker && (
@@ -563,6 +620,11 @@ export function TransferReconciliation({
                           {c.description && (
                             <span className="block text-muted-foreground">
                               {c.description}
+                            </span>
+                          )}
+                          {c.hasFile && (
+                            <span className="block text-muted-foreground">
+                              PDF attached
                             </span>
                           )}
                         </td>
