@@ -9,6 +9,11 @@ import { formatEuros } from "../../../../lib/money";
 import { ReconciledMark } from "./reconciled-mark";
 import { CandidatePicker } from "./candidate-picker";
 import { formatDateTime } from "../../../../lib/dates";
+import { ConfirmButton } from "../../../../components/confirm-button";
+import {
+  CONNECTION_FAILED,
+  failureMessage,
+} from "../../../../lib/failure-message";
 
 type Row = {
   id: number;
@@ -42,48 +47,34 @@ export function TransferDonationsEditor({
   donations: Row[];
 }) {
   const router = useRouter();
-  const [busy, setBusy] = useState<number | "add" | null>(null);
   const [adding, setAdding] = useState(false);
+  const [busyAdding, setBusyAdding] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
 
-  async function patch(body: Record<string, unknown>): Promise<boolean> {
+  /** null when it worked, else what went wrong */
+  async function patch(body: Record<string, unknown>): Promise<string | null> {
     const res = await fetch(`/api/transfers/${transferId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    if (!res.ok) {
-      const j = await res.json().catch(() => ({}));
-      alert(j.error?.message ?? "Failed to save");
-      return false;
-    }
-    return true;
-  }
-
-  async function removeDonation(id: number) {
-    if (!confirm(`Remove donation #${id} from transfer #${transferId}?`))
-      return;
-    setBusy(id);
-    try {
-      if (await patch({ removeDonationIds: [id] })) router.refresh();
-    } catch {
-      alert("Failed to save — check your connection and try again");
-    } finally {
-      setBusy(null);
-    }
+    if (!res.ok) return failureMessage(res, "Couldn't save the change.");
+    router.refresh();
+    return null;
   }
 
   async function addSelected(ids: number[]) {
     if (ids.length === 0) return;
-    setBusy("add");
+    setBusyAdding(true);
+    setAddError(null);
     try {
-      if (await patch({ addDonationIds: ids })) {
-        setAdding(false);
-        router.refresh();
-      }
+      const failed = await patch({ addDonationIds: ids });
+      if (failed) setAddError(failed);
+      else setAdding(false);
     } catch {
-      alert("Failed to save — check your connection and try again");
+      setAddError(CONNECTION_FAILED);
     } finally {
-      setBusy(null);
+      setBusyAdding(false);
     }
   }
 
@@ -134,14 +125,20 @@ export function TransferDonationsEditor({
                     </span>
                   )}
                 </span>
-                <button
-                  className="text-xs text-muted-foreground hover:text-destructive disabled:opacity-50"
-                  disabled={busy === d.id}
-                  onClick={() => removeDonation(d.id)}
-                  aria-label={`Remove donation #${d.id} from this transfer`}
+                <ConfirmButton
+                  title={`Remove donation #${d.id} from transfer #${transferId}?`}
+                  description="It goes back to the donations not yet transferred."
+                  confirmLabel="Remove"
+                  action={() => patch({ removeDonationIds: [d.id] })}
+                  trigger={
+                    <button
+                      className="text-xs text-muted-foreground hover:text-destructive"
+                      aria-label={`Remove donation #${d.id} from this transfer`}
+                    />
+                  }
                 >
-                  {busy === d.id ? "…" : "Remove"}
-                </button>
+                  Remove
+                </ConfirmButton>
               </div>
             </div>
           ))}
@@ -174,15 +171,22 @@ export function TransferDonationsEditor({
             loadLabel="Load"
           >
             {(chosen) => (
-              <Button
-                size="sm"
-                onClick={() => addSelected(chosen.map((c) => c.id))}
-                disabled={busy === "add" || chosen.length === 0}
-              >
-                {busy === "add"
-                  ? "Adding…"
-                  : `Add ${chosen.length} donation${chosen.length === 1 ? "" : "s"}`}
-              </Button>
+              <span className="inline-flex flex-wrap items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => addSelected(chosen.map((c) => c.id))}
+                  disabled={busyAdding || chosen.length === 0}
+                >
+                  {busyAdding
+                    ? "Adding…"
+                    : `Add ${chosen.length} donation${chosen.length === 1 ? "" : "s"}`}
+                </Button>
+                {addError && (
+                  <span role="alert" className="text-xs text-destructive">
+                    {addError}
+                  </span>
+                )}
+              </span>
             )}
           </CandidatePicker>
         </div>

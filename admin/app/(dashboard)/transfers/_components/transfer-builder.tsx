@@ -7,6 +7,10 @@ import { Input } from "../../../../components/ui/input";
 import { formatEuros } from "../../../../lib/money";
 import { CandidatePicker, type Candidate } from "./candidate-picker";
 import { currentDay } from "../../../../lib/dates";
+import {
+  CONNECTION_FAILED,
+  failureMessage,
+} from "../../../../lib/failure-message";
 
 function perOrgTotals(chosen: Candidate[]): [string, number][] {
   const m = new Map<string, number>();
@@ -29,10 +33,12 @@ export function TransferBuilder({
   const [transferDate, setTransferDate] = useState(currentDay());
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function create() {
     if (!transferDate || chosen.length === 0) return;
     setSubmitting(true);
+    setError(null);
     try {
       const res = await fetch(`/api/transfers`, {
         method: "POST",
@@ -44,14 +50,13 @@ export function TransferBuilder({
         }),
       });
       if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        alert(j.error?.message ?? "Failed to create transfer");
+        setError(await failureMessage(res, "Couldn't create the transfer."));
         return;
       }
       const json = await res.json();
       router.push(`/transfers/${json.data.id}`);
     } catch {
-      alert("Failed to create transfer — check your connection and try again");
+      setError(CONNECTION_FAILED);
     } finally {
       setSubmitting(false);
     }
@@ -155,6 +160,11 @@ export function TransferBuilder({
                 ? "Creating…"
                 : `Create transfer (${chosen.length} donations)`}
             </Button>
+            {error && (
+              <p role="alert" className="w-full text-xs text-destructive">
+                {error}
+              </p>
+            )}
           </div>
         </div>
       )}

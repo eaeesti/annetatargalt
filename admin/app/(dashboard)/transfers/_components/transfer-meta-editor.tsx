@@ -4,6 +4,10 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "../../../../components/ui/button";
 import { Input } from "../../../../components/ui/input";
+import {
+  CONNECTION_FAILED,
+  failureMessage,
+} from "../../../../lib/failure-message";
 
 export function TransferMetaEditor({
   transferId,
@@ -19,9 +23,11 @@ export function TransferMetaEditor({
   const [date, setDate] = useState(datetime.slice(0, 10));
   const [note, setNote] = useState(notes ?? "");
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function save() {
     setBusy(true);
+    setError(null);
     try {
       const res = await fetch(`/api/transfers/${transferId}`, {
         method: "PATCH",
@@ -29,14 +35,13 @@ export function TransferMetaEditor({
         body: JSON.stringify({ datetime: date, notes: note || null }),
       });
       if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        alert(j.error?.message ?? "Failed to save");
+        setError(await failureMessage(res, "Couldn't save the change."));
         return;
       }
       setEditing(false);
       router.refresh();
     } catch {
-      alert("Failed to save — check your connection and try again");
+      setError(CONNECTION_FAILED);
     } finally {
       setBusy(false);
     }
@@ -74,11 +79,19 @@ export function TransferMetaEditor({
       <Button
         size="sm"
         variant="outline"
-        onClick={() => setEditing(false)}
+        onClick={() => {
+          setEditing(false);
+          setError(null);
+        }}
         disabled={busy}
       >
         Cancel
       </Button>
+      {error && (
+        <p role="alert" className="w-full text-xs text-destructive">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
