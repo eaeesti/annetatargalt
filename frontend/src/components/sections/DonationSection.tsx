@@ -1,6 +1,12 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import {
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { at } from "@/utils/object";
 import AmountChooser from "../elements/forms/AmountChooser";
 import DonationTypeChooser from "../elements/forms/DonationTypeChooser";
@@ -33,31 +39,18 @@ import type {
   StrapiPage,
 } from "@/types/generated/strapi";
 import { localeOf } from "@/utils/locale";
+import {
+  clearDonationDraft,
+  donationDraftJson,
+  loadDonationDraft,
+  parseDonationDraft,
+  saveDonationDraft,
+} from "@/utils/donation-draft";
+import type { DonationState } from "@/utils/donation-draft";
 
 interface DonationSectionProps extends StrapiDonationSection {
   global: StrapiGlobal;
   page: StrapiPage;
-}
-
-interface DonationState {
-  amount: number;
-  type: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  idCode: string;
-  bank: string;
-  companyDonation: boolean;
-  companyName: string;
-  companyCode: string;
-  dedicateDonation: boolean;
-  dedicationName: string;
-  dedicationEmail: string;
-  dedicationMessage: string;
-  proportions: Proportions;
-  addTip: boolean;
-  paymentMethod: string;
-  acceptTerms: boolean;
 }
 
 /**
@@ -68,38 +61,67 @@ interface DonationState {
  * browser replaces it with a form that has the link's choices. On a
  * navigation within the site the query is already known, so the form starts
  * out with them.
+ *
+ * The browser's form is also the one that keeps a draft (see
+ * utils/donation-draft) and picks it up again.
  */
 export default function DonationSection(props: DonationSectionProps) {
   return (
     <Suspense
-      fallback={<DonationForm {...props} linkType={null} linkOrg={null} />}
+      fallback={
+        <DonationForm
+          {...props}
+          linkType={null}
+          linkOrg={null}
+          keepsDraft={false}
+        />
+      }
     >
       <DonationFormForLink {...props} />
     </Suspense>
   );
 }
 
+const neverChanges = () => () => {};
+
 function DonationFormForLink(props: DonationSectionProps) {
   const searchParams = useSearchParams();
   const linkType = searchParams.get("type");
   const linkOrg = searchParams.get("org");
+  // False while React hydrates this form from HTML the server rendered, which
+  // can't have the draft kept in the visitor's browser. The form is then made
+  // anew, with the draft. (The cached pages have the fallback instead, so
+  // there this is true from the start.)
+  const inBrowser = useSyncExternalStore(
+    neverChanges,
+    () => true,
+    () => false,
+  );
 
   // a link with other choices starts the form afresh
   return (
     <DonationForm
-      key={`${linkType}/${linkOrg}`}
+      key={`${linkType}/${linkOrg}/${inBrowser}`}
       {...props}
       linkType={linkType}
       linkOrg={linkOrg}
+      keepsDraft={inBrowser}
     />
   );
+}
+
+interface DonationFormProps extends DonationSectionProps {
+  linkType: string | null;
+  linkOrg: string | null;
+  keepsDraft: boolean;
 }
 
 function DonationForm({
   linkType,
   linkOrg,
+  keepsDraft,
   ...props
-}: DonationSectionProps & { linkType: string | null; linkOrg: string | null }) {
+}: DonationFormProps) {
   const router = useRouter();
   const plausible = usePlausible();
 
@@ -123,26 +145,42 @@ function DonationForm({
   // Wrap it to maintain compatibility with components expecting { data: [...] }
   const causes = { data: props.causes || [] };
 
-  const [donation, setDonation] = useState<DonationState>({
-    amount: amountOptions[1]?.value ?? amountOptions[0]?.value ?? 0,
-    type: linkType === "onetime" ? "onetime" : "recurring",
-    firstName: "",
-    lastName: "",
-    email: "",
-    idCode: "",
-    bank: "",
-    companyDonation: false,
-    companyName: "",
-    companyCode: "",
-    dedicateDonation: false,
-    dedicationName: "",
-    dedicationEmail: "",
-    dedicationMessage: "",
-    proportions: Proportions.fromStrapiData(causes.data, linkOrg ?? undefined),
-    addTip: false,
-    paymentMethod: "paymentInitiation",
-    acceptTerms: false,
+  const link = `${linkType}/${linkOrg}`;
+
+  // The form as the visitor left it in this tab, or as the link chooses it.
+  const [initial] = useState(() => {
+    const donation: DonationState = {
+      amount: amountOptions[1]?.value ?? amountOptions[0]?.value ?? 0,
+      type: linkType === "onetime" ? "onetime" : "recurring",
+      firstName: "",
+      lastName: "",
+      email: "",
+      idCode: "",
+      bank: "",
+      companyDonation: false,
+      companyName: "",
+      companyCode: "",
+      dedicateDonation: false,
+      dedicationName: "",
+      dedicationEmail: "",
+      dedicationMessage: "",
+      proportions: Proportions.fromStrapiData(
+        causes.data,
+        linkOrg ?? undefined,
+      ),
+      addTip: false,
+      paymentMethod: "paymentInitiation",
+      acceptTerms: false,
+    };
+    const draft = keepsDraft
+      ? parseDonationDraft(loadDonationDraft(), link, {
+          proportions: donation.proportions,
+          banks: props.banks.map(({ bank }) => bank),
+        })
+      : null;
+    return draft ?? { stage: 0, donation };
   });
+  const [donation, setDonation] = useState(initial.donation);
 
   const [validity, setValidity] = useState<Record<string, boolean>>({});
   const stageValidity: Record<number, boolean> = {
@@ -160,8 +198,20 @@ function DonationForm({
       (donation.type === "recurring" ? !!donation.bank : true),
   };
 
-  const [stage, setStage] = useState(0);
+  const [stage, setStage] = useState(initial.stage);
   const [donated, setDonated] = useState(false);
+
+  // Kept as the visitor goes, but only once they change something: just
+  // opening another link's form leaves the draft of the one they filled in.
+  const keptDraft = useRef<string | null>(null);
+  useEffect(() => {
+    if (!keepsDraft) return;
+    const draft = donationDraftJson(link, stage, donation);
+    if (keptDraft.current !== null && draft !== keptDraft.current) {
+      saveDonationDraft(draft);
+    }
+    keptDraft.current = draft;
+  }, [keepsDraft, link, stage, donation]);
 
   const tipSize = 0.05;
   const tipAmount = donation.addTip
@@ -229,8 +279,11 @@ function DonationForm({
 
     const data = await readStrapiJson<{ redirectURL: string }>(response);
     if (data.redirectURL) {
+      // the draft stays until the thank-you page, in case the payment
+      // doesn't go through
       router.push(data.redirectURL);
     } else {
+      clearDonationDraft();
       setDonated(true);
     }
   };

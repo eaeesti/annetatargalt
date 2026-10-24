@@ -1,6 +1,6 @@
-type ProportionKey = string | number;
+export type ProportionKey = string | number;
 
-interface ProportionEntry {
+export interface ProportionEntry {
   locked: boolean;
   proportion: number;
   toFund?: boolean;

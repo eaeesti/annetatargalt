@@ -42,3 +42,14 @@ export function stringField(object: object, field: string): string | null {
   const value: unknown = Reflect.get(object, field);
   return typeof value === "string" ? value : null;
 }
+
+/**
+ * Whether a value from outside, such as parsed JSON, is a plain object whose
+ * fields can be read and checked.
+ * @example
+ * isRecord({ a: 1 }); // true
+ * isRecord([1]); // false
+ */
+export function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}

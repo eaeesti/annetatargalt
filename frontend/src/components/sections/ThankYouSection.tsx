@@ -16,6 +16,7 @@ import type {
   StrapiThankYouSection,
 } from "@/types/generated/strapi";
 import { localeOf, pagePath } from "@/utils/locale";
+import { clearDonationDraft } from "@/utils/donation-draft";
 
 interface DecodedDonation {
   donor: { firstName: string };
@@ -64,6 +65,11 @@ export default function ThankYouSection({
       router.push(pagePath("/", locale));
     }
   }, [isLoading, decoded, router, locale]);
+
+  // Only a paid donation decodes, so the donation form's draft is done with.
+  useEffect(() => {
+    if (decoded?.donation) clearDonationDraft();
+  }, [decoded]);
 
   if (isLoading || !decoded?.donation) return <LoadingSection />;
 
