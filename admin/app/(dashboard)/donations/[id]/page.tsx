@@ -51,7 +51,6 @@ type DonationDetail = {
   donationTransfer: {
     id: number;
     datetime: string;
-    recipient: string | null;
   } | null;
 };
 
