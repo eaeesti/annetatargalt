@@ -37,6 +37,7 @@
     "@strapi/provider-email-nodemailer": "5.58.0",
     "@strapi/provider-upload-cloudinary": "5.58.0",
     "@strapi/strapi": "5.58.0",
+    "@strapi/utils": "5.58.0",
     "csv-parse": "^7.0.3",
     "drizzle-orm": "0.45.4",
     "jose": "^6.2.12",

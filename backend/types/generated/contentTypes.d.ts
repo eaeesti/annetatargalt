@@ -523,10 +523,10 @@ export interface ApiBlogPostBlogPost extends Struct.CollectionTypeSchema {
           localized: false;
         };
       }>;
-    image: Schema.Attribute.Media<'images'> &
+    image: Schema.Attribute.Component<'elements.image', false> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
-          localized: false;
+          localized: true;
         };
       }>;
     locale: Schema.Attribute.String;
@@ -598,10 +598,10 @@ export interface ApiCauseCause extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    image: Schema.Attribute.Media<'images'> &
+    image: Schema.Attribute.Component<'elements.image', false> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
-          localized: false;
+          localized: true;
         };
       }>;
     introduction: Schema.Attribute.RichText &
@@ -1175,10 +1175,10 @@ export interface ApiOrganizationOrganization
       'oneToMany',
       'api::organization.organization'
     >;
-    logo: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'> &
+    logo: Schema.Attribute.Component<'elements.image', false> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
-          localized: false;
+          localized: true;
         };
       }>;
     metadata: Schema.Attribute.Component<'meta.metadata', false> &

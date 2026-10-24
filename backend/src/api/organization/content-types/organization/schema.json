@@ -84,18 +84,12 @@
       "inversedBy": "organizations"
     },
     "logo": {
-      "type": "media",
-      "multiple": false,
-      "required": false,
-      "allowedTypes": [
-        "images",
-        "files",
-        "videos",
-        "audios"
-      ],
+      "type": "component",
+      "repeatable": false,
+      "component": "elements.image",
       "pluginOptions": {
         "i18n": {
-          "localized": false
+          "localized": true
         }
       }
     },

@@ -1,6 +1,7 @@
 import type { Core } from "@strapi/strapi";
 import { pool } from "./db/client";
 import { BRIDGEABLE_ADMIN_ROLE_CODES } from "./utils/admin-roles";
+import { migrateImageFields, requireImageDescriptions } from "./image-fields";
 import fs from "fs";
 import path from "path";
 
@@ -556,7 +557,9 @@ function warnIfProxyUntrusted(strapi: Core.Strapi): void {
 }
 
 export default {
-  register(/*{ strapi }: { strapi: Core.Strapi }*/) {},
+  register({ strapi }: { strapi: Core.Strapi }) {
+    requireImageDescriptions(strapi);
+  },
 
   async bootstrap({ strapi }: { strapi: Core.Strapi }) {
     // CRITICAL: Prevent data loss from unmigrated Strapi donation tables
@@ -696,6 +699,9 @@ export default {
     }
 
     await safely(strapi, "ensureLocales", () => ensureLocales(strapi));
+    await safely(strapi, "migrateImageFields", () =>
+      migrateImageFields(strapi),
+    );
     await safely(strapi, "grantAllLocales", () => grantAllLocales(strapi));
     await safely(strapi, "bootstrapApiToken", () => bootstrapApiToken(strapi));
     await safely(strapi, "bootstrapDonationPermissions", () =>
