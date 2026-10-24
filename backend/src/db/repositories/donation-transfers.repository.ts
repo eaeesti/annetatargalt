@@ -204,6 +204,8 @@ export class DonationTransfersRepository {
         paidOutCents: paidOut,
         paymentCount: payments,
         adjustmentCents: adjustment,
+        // owed still not accounted for, as on the transfer page
+        residualCents: owed - paidOut - (adjustment ?? 0),
         balanced: assessBalance(owed, paidOut, payments, adjustment),
       };
     });
@@ -308,7 +310,8 @@ export class DonationTransfersRepository {
       })
       .from(bankTransactions)
       .where(eq(bankTransactions.donationTransferId, id))
-      .orderBy(asc(bankTransactions.date));
+      // same-day payments in the bank's order, so saving a note can't reorder them
+      .orderBy(asc(bankTransactions.date), asc(bankTransactions.archivingCode));
 
     const owedCents =
       base.orgTotals.reduce((s, o) => s + Number(o.total), 0) -
