@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { strapiAdmin } from "../../../../lib/api";
@@ -73,6 +74,17 @@ function Field({
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 type Params = Promise<{ internalId: string }>;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Params;
+}): Promise<Metadata> {
+  const { internalId } = await params;
+  // the org list is cached, so this costs the page nothing
+  const org = (await fetchOrgs()).find((o) => o.internalId === internalId);
+  return { title: org?.title ?? internalId };
+}
 
 export default async function OrganizationDetailPage({
   params,

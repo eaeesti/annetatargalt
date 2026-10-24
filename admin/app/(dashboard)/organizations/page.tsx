@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import { strapiAdmin } from "../../../lib/api";
 import { fetchOrgs } from "../../../lib/orgs";
 import {
   OrganizationsTable,
   type OrganizationRow,
 } from "./_components/organizations-table";
+
+export const metadata: Metadata = { title: "Organizations" };
 
 const STRAPI_URL = process.env.STRAPI_URL ?? "http://localhost:1337";
 

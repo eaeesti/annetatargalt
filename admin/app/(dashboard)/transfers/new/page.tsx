@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import { strapiAdmin } from "../../../../lib/api";
 import { fetchOrgs } from "../../../../lib/orgs";
 import { TransferBuilder } from "../_components/transfer-builder";
 import { RememberedLink } from "../../../../components/remembered-link";
+
+export const metadata: Metadata = { title: "New transfer" };
 
 /** Day after the given YYYY-MM-DD, as YYYY-MM-DD. */
 function dayAfter(iso: string): string {

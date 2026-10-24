@@ -1,4 +1,7 @@
+import type { Metadata } from "next";
 import { StatementImport } from "./_components/statement-import";
+
+export const metadata: Metadata = { title: "Statement import" };
 
 export default function StatementPage() {
   return (

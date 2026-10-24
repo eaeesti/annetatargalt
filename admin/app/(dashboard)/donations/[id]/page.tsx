@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { strapiAdmin } from "../../../../lib/api";
 import { fetchOrgNameMap } from "../../../../lib/orgs";
@@ -101,6 +102,16 @@ function Field({
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 type Params = Promise<{ id: string }>;
+
+// The number, not a name: tab titles end up in the browser's history.
+export async function generateMetadata({
+  params,
+}: {
+  params: Params;
+}): Promise<Metadata> {
+  const { id } = await params;
+  return { title: `Donation #${id}` };
+}
 
 export default async function DonationDetailPage({
   params,

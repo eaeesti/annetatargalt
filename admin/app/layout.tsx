@@ -10,7 +10,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Anneta Targalt Admin",
+  title: {
+    default: "Anneta Targalt Admin",
+    // e.g. "Donation #1843 · Anneta Targalt Admin"
+    template: "%s · Anneta Targalt Admin",
+  },
   description: "Donation admin panel",
   robots: { index: false, follow: false },
 };

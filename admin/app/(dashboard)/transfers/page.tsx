@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { strapiAdmin } from "../../../lib/api";
 import { Button } from "../../../components/ui/button";
@@ -6,6 +7,8 @@ import {
   type TransferRow,
   type Pagination,
 } from "./_components/transfers-table";
+
+export const metadata: Metadata = { title: "Transfers" };
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
 const VALID_SORT_COLS = new Set([
