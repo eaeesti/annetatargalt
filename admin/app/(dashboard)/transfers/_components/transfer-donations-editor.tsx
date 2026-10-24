@@ -8,6 +8,7 @@ import { Badge } from "../../../../components/ui/badge";
 import { formatEuros } from "../../../../lib/money";
 import { ReconciledMark } from "./reconciled-mark";
 import { CandidatePicker } from "./candidate-picker";
+import { formatDateTime } from "../../../../lib/dates";
 
 type Row = {
   id: number;
@@ -18,16 +19,6 @@ type Row = {
   processorFeeCents: number | null;
   orgLabel: string;
 };
-
-function fmtDateTime(iso: string): string {
-  return new Date(iso).toLocaleDateString("et-EE", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 /** Shift an ISO date (YYYY-MM-DD...) by a number of days, returning YYYY-MM-DD. */
 function shiftDays(iso: string, days: number): string {
@@ -118,7 +109,7 @@ export function TransferDonationsEditor({
                   #{d.id}
                 </span>
                 <span className="whitespace-nowrap text-muted-foreground">
-                  {fmtDateTime(d.datetime)}
+                  {formatDateTime(d.datetime)}
                 </span>
                 {!d.finalized && (
                   <Badge variant="destructive" className="text-xs">

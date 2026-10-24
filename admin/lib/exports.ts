@@ -4,9 +4,14 @@ import type { RecurringDonationRow } from "../app/(dashboard)/recurring-donation
 import type { BankTransactionRow } from "../app/(dashboard)/transactions/_components/transactions-table";
 import type { TransferRow } from "../app/(dashboard)/transfers/_components/transfers-table";
 import { strapiAdmin } from "./api";
-import { type CsvColumn, day, euros, minute, toCsv } from "./csv";
+import { type CsvColumn, euros, toCsv } from "./csv";
+import { isoDay, isoMinute } from "./dates";
 import { donationStatus } from "./donation-status";
 import { fetchOrgNameMap, fetchOrgs } from "./orgs";
+
+const isoDayOf = (iso: string | null | undefined) => (iso ? isoDay(iso) : null);
+const isoMinuteOf = (iso: string | null | undefined) =>
+  iso ? isoMinute(iso) : null;
 
 /*
  * What each table's "Export CSV" button downloads: every row matching the
@@ -88,7 +93,7 @@ async function donations(params: URLSearchParams): Promise<Exported> {
   ]);
   return csvOf(rows, [
     { header: "ID", value: (d) => d.id },
-    { header: "Date", value: (d) => minute(d.datetime) },
+    { header: "Date", value: (d) => isoMinuteOf(d.datetime) },
     { header: "Amount (€)", value: (d) => euros(d.amount) },
     {
       header: "Status",
@@ -130,7 +135,7 @@ async function donors(params: URLSearchParams): Promise<Exported> {
     { header: "Recurring", value: (d) => d.recurringDonor },
     { header: "Total donated (€)", value: (d) => euros(d.totalDonated) },
     { header: "Donations", value: (d) => d.donationCount },
-    { header: "Last donation", value: (d) => day(d.lastDonationDate) },
+    { header: "Last donation", value: (d) => isoDayOf(d.lastDonationDate) },
   ]);
 }
 
@@ -148,10 +153,10 @@ async function recurringDonations(params: URLSearchParams): Promise<Exported> {
     { header: "Email", value: (r) => r.donorEmail },
     { header: "Company", value: (r) => r.companyName },
     { header: "Amount per month (€)", value: (r) => euros(r.amount) },
-    { header: "Started", value: (r) => day(r.datetime) },
+    { header: "Started", value: (r) => isoDayOf(r.datetime) },
     { header: "Status", value: (r) => STATUS_LABELS[r.status] },
     { header: "Donations", value: (r) => r.donationCount },
-    { header: "Last donation", value: (r) => day(r.lastDonationDate) },
+    { header: "Last donation", value: (r) => isoDayOf(r.lastDonationDate) },
   ]);
 }
 
@@ -163,7 +168,7 @@ async function transfers(params: URLSearchParams): Promise<Exported> {
   );
   return csvOf(rows, [
     { header: "ID", value: (t) => t.id },
-    { header: "Date", value: (t) => day(t.datetime) },
+    { header: "Date", value: (t) => isoDayOf(t.datetime) },
     { header: "Notes", value: (t) => t.notes },
     { header: "Donations", value: (t) => t.donationCount },
     { header: "Total (€)", value: (t) => euros(t.totalAmount) },
@@ -271,7 +276,7 @@ async function organizations(): Promise<Exported> {
         { header: "Donations", value: (o) => o.stat?.donationCount },
         {
           header: "Last donation",
-          value: (o) => day(o.stat?.lastDonationDate),
+          value: (o) => isoDayOf(o.stat?.lastDonationDate),
         },
       ],
       rows,

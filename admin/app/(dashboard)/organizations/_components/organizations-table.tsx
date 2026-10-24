@@ -23,6 +23,7 @@ import {
   TableRow,
 } from "../../../../components/ui/table";
 import { ExportCsvButton } from "../../../../components/export-csv-button";
+import { formatDate } from "../../../../lib/dates";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -53,14 +54,6 @@ export type OrganizationRow = {
 
 function formatAmount(cents: number): string {
   return `€${(cents / 100).toFixed(2)}`;
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("et-EE", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
 }
 
 // Tailwind background + text color pairs for the initial avatar

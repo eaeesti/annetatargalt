@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { strapiAdmin } from "../../../../lib/api";
 import { fetchOrgs } from "../../../../lib/orgs";
 import { Badge } from "../../../../components/ui/badge";
+import { formatDate } from "../../../../lib/dates";
 
 const STRAPI_URL = process.env.STRAPI_URL ?? "http://localhost:1337";
 
@@ -28,15 +29,6 @@ type DonationRow = {
 
 function formatAmount(cents: number): string {
   return `€${(cents / 100).toFixed(2)}`;
-}
-
-function formatDate(iso: string, includeTime = false): string {
-  return new Date(iso).toLocaleDateString("et-EE", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    ...(includeTime ? { hour: "2-digit", minute: "2-digit" } : {}),
-  });
 }
 
 function logoUrl(url: string): string {

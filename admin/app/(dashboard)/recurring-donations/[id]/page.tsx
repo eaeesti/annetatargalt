@@ -9,6 +9,7 @@ import {
   type RecurringDonationStatus,
 } from "../../../../components/recurring-status-badge";
 import { organizationHref } from "../../../../lib/entity-links";
+import { formatDate } from "../../../../lib/dates";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -52,15 +53,6 @@ type RecurringDonationDetail = {
 
 function formatAmount(cents: number): string {
   return `€${(cents / 100).toFixed(2)}`;
-}
-
-function formatDate(iso: string, includeTime = false): string {
-  return new Date(iso).toLocaleDateString("et-EE", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    ...(includeTime ? { hour: "2-digit", minute: "2-digit" } : {}),
-  });
 }
 
 function formatMonth(ym: string): string {

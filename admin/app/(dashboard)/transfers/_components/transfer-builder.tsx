@@ -6,8 +6,7 @@ import { Button } from "../../../../components/ui/button";
 import { Input } from "../../../../components/ui/input";
 import { formatEuros } from "../../../../lib/money";
 import { CandidatePicker, type Candidate } from "./candidate-picker";
-
-const today = () => new Date().toISOString().slice(0, 10);
+import { currentDay } from "../../../../lib/dates";
 
 function perOrgTotals(chosen: Candidate[]): [string, number][] {
   const m = new Map<string, number>();
@@ -27,7 +26,7 @@ export function TransferBuilder({
   const router = useRouter();
 
   const [chosen, setChosen] = useState<Candidate[]>([]);
-  const [transferDate, setTransferDate] = useState(today());
+  const [transferDate, setTransferDate] = useState(currentDay());
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -66,7 +65,7 @@ export function TransferBuilder({
         </h2>
         <CandidatePicker
           defaultFrom={defaultFrom}
-          defaultTo={today()}
+          defaultTo={currentDay()}
           preselectAll
           onChange={setChosen}
           // the round is conventionally dated at the end of the period it covers

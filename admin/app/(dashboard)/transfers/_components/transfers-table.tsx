@@ -27,6 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "../../../../components/ui/table";
+import { formatDate } from "../../../../lib/dates";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -66,14 +67,6 @@ function formatAmount(cents: number | null): string {
 /** An amount that can go either way, with a proper minus sign. */
 function formatSigned(cents: number): string {
   return `${cents < 0 ? "−" : ""}€${(Math.abs(cents) / 100).toFixed(2)}`;
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("et-EE", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────

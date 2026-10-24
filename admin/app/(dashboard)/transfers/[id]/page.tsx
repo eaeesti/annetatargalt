@@ -7,6 +7,7 @@ import { TransferReconciliation } from "../_components/transfer-reconciliation";
 import { TransferMetaEditor } from "../_components/transfer-meta-editor";
 import { TransferDonationsEditor } from "../_components/transfer-donations-editor";
 import { CardFeeSwitch } from "../_components/card-fee-switch";
+import { formatDate } from "../../../../lib/dates";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -63,15 +64,6 @@ type TransferDetail = {
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-function formatDate(iso: string, includeTime = false): string {
-  return new Date(iso).toLocaleDateString("et-EE", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    ...(includeTime ? { hour: "2-digit", minute: "2-digit" } : {}),
-  });
-}
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
