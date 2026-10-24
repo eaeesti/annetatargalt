@@ -124,7 +124,7 @@ export async function fetchAPI(
     console.error(`Failed to fetch ${path}:`, error);
     throw new Error(
       `Could not reach Strapi at ${getStrapiURL()} for GET /api${path}. ` +
-        "Check that the backend is running (pnpm develop) and NEXT_PUBLIC_STRAPI_API_URL is set.",
+        "Check that the backend is running (pnpm dev) and NEXT_PUBLIC_STRAPI_API_URL is set.",
     );
   }
 }

@@ -3,7 +3,7 @@
 Next.js (App Router) + TypeScript. Source in `src/`.
 
 ```bash
-pnpm develop    # Next.js dev server on port 3000
+pnpm dev        # Next.js dev server on port 3000
 pnpm build      # production build
 pnpm lint       # oxlint
 pnpm type-check # tsc --noEmit (once tsconfig.json exists)

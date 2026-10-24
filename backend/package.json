@@ -10,9 +10,9 @@
   "scripts": {
     "generate-types": "node ../scripts/generate-strapi-types.mjs",
     "prebuild": "pnpm generate-types",
-    "predevelop": "pnpm generate-types",
+    "predev": "pnpm generate-types",
     "build": "rm -rf dist && strapi build",
-    "develop": "strapi develop",
+    "dev": "strapi develop",
     "start": "strapi start",
     "strapi": "strapi",
     "montonio-payouts-check": "dotenv -e .env -- node dist/src/scripts/montonio-payouts-check.js",

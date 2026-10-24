@@ -5,9 +5,9 @@ Estonian donation platform. Monorepo: Next.js frontend (`frontend/`) + Strapi v5
 Ports: Strapi **1337**, Next.js **3000**.
 
 ```bash
-pnpm develop          # starts all three concurrently (from repo root)
-cd frontend && pnpm develop
-cd backend && pnpm develop
+pnpm dev              # starts all three concurrently (from repo root)
+cd frontend && pnpm dev
+cd backend && pnpm dev
 cd admin && pnpm dev
 pnpm format           # oxfmt, every app at once (from repo root)
 ```
