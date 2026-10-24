@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import LoadingSection from "./sections/LoadingSection";
 
 // The sections (and the map) that run in the browser, each in a bundle of its
 // own, so a page loads the code of the ones it shows and no others. Imported
@@ -26,7 +27,12 @@ export const RedirectSection = dynamic(
   () => import("./sections/RedirectSection"),
 );
 export const StatsSection = dynamic(() => import("./sections/StatsSection"));
+// The section reads the payment's token from the link, which a cached page
+// doesn't have, so the cached page shows the loading state instead: the one the
+// section shows while it fetches the donation. Passing `loading` is what puts
+// the Suspense boundary around it that this needs.
 export const ThankYouSection = dynamic(
   () => import("./sections/ThankYouSection"),
+  { loading: () => <LoadingSection /> },
 );
 export const Map = dynamic(() => import("./elements/Map"));
