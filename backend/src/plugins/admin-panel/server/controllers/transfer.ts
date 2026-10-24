@@ -2,6 +2,7 @@ import type { Core } from "@strapi/strapi";
 import type { Context } from "koa";
 import { donationTransfersRepository } from "../../../../db/repositories/donation-transfers.repository";
 import { createTransferService } from "../services/transfer";
+import { tipOrganizationInternalId } from "../utils/tip-organization";
 import { auditLog } from "../utils/audit-log";
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
@@ -68,6 +69,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
         sortDir,
         dateFrom: isoDate(q.dateFrom),
         dateTo: isoDate(q.dateTo),
+        tipOrganizationInternalId: await tipOrganizationInternalId(strapi),
       });
 
       await auditLog(ctx, "transfers.list");
@@ -187,8 +189,16 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
         }
       }
 
+      if (
+        body.deductCardFees !== undefined &&
+        typeof body.deductCardFees !== "boolean"
+      ) {
+        return ctx.badRequest("deductCardFees must be true or false");
+      }
+
       const input = {
         datetime,
+        deductCardFees: body.deductCardFees,
         notes:
           body.notes === undefined
             ? undefined
@@ -223,6 +233,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
                   ? "cleared"
                   : input.reconciliationAdjustmentCents
               }`
+            : "") +
+          (input.deductCardFees !== undefined
+            ? `, deductCardFees=${input.deductCardFees}`
             : ""),
       );
       return ctx.send({ ok: true });

@@ -44,6 +44,29 @@ function assessBalance(
   return Math.abs(residual) <= transferBalanceToleranceCents(owedCents);
 }
 
+/**
+ * What a round takes off the tip organization's share for card fees, as SQL:
+ * the card fees of its finalized donations, if the round deducts them, but
+ * never more than that organization's share. `round` is the SQL name of the
+ * donation_transfers row. The transfer page works out the same figure in
+ * `findByIdWithReconciliation`; keep the two in step.
+ */
+export function cardFeeDeductionSql(
+  round: string,
+  tipOrganizationInternalId: string | null,
+) {
+  if (!tipOrganizationInternalId) return sql`0`;
+  const r = sql.raw(round);
+  return sql`(CASE WHEN ${r}.deduct_card_fees THEN least(
+    (SELECT coalesce(sum(fd.processor_fee_cents), 0) FROM donations fd
+      WHERE fd.donation_transfer_id = ${r}.id AND fd.finalized = true),
+    (SELECT coalesce(sum(tod.amount), 0) FROM organization_donations tod
+      JOIN donations td ON td.id = tod.donation_id
+      WHERE td.donation_transfer_id = ${r}.id AND td.finalized = true
+        AND tod.organization_internal_id = ${tipOrganizationInternalId})
+  ) ELSE 0 END)`;
+}
+
 export class DonationTransfersRepository {
   constructor(private database: Database = db) {}
 
@@ -57,6 +80,8 @@ export class DonationTransfersRepository {
     sortDir?: "asc" | "desc";
     dateFrom?: string;
     dateTo?: string;
+    /** whose share a round's card fees come off; null deducts nothing */
+    tipOrganizationInternalId?: string | null;
   }) {
     const { page, pageSize, sortBy = "datetime", sortDir = "desc" } = options;
     const offset = (page - 1) * pageSize;
@@ -142,6 +167,13 @@ export class DonationTransfersRepository {
           paidOutCents: paidSq.paidOut,
           paymentCount: paidSq.paymentCount,
           adjustmentCents: donationTransfers.reconciliationAdjustmentCents,
+          deductCardFees: donationTransfers.deductCardFees,
+          cardFeeCents: sql<number>`(SELECT cast(coalesce(sum(fd.processor_fee_cents), 0) as int) FROM donations fd
+            WHERE fd.donation_transfer_id = "donation_transfers"."id" AND fd.finalized = true)`,
+          cardFeeDeductionCents: sql<number>`cast(${cardFeeDeductionSql(
+            '"donation_transfers"',
+            options.tipOrganizationInternalId ?? null,
+          )} as int)`,
         })
         .from(donationTransfers)
         .leftJoin(statsSq, eq(donationTransfers.id, statsSq.transferId))
@@ -158,7 +190,8 @@ export class DonationTransfersRepository {
     ]);
 
     const data = rows.map((r) => {
-      const owed = Number(r.owedCents ?? 0);
+      const deduction = Number(r.cardFeeDeductionCents ?? 0);
+      const owed = Number(r.owedCents ?? 0) - deduction;
       const paidOut = Number(r.paidOutCents ?? 0);
       const payments = Number(r.paymentCount ?? 0);
       const adjustment =
@@ -166,6 +199,8 @@ export class DonationTransfersRepository {
       return {
         ...r,
         owedCents: owed,
+        cardFeeCents: Number(r.cardFeeCents ?? 0),
+        cardFeeDeductionCents: deduction,
         paidOutCents: paidOut,
         paymentCount: payments,
         adjustmentCents: adjustment,
@@ -225,9 +260,42 @@ export class DonationTransfersRepository {
    * round and a reconciliation summary: `owed` (Σ per-org totals) vs `paidOut`
    * (Σ linked outgoing debits).
    */
-  async findByIdWithReconciliation(id: number) {
+  async findByIdWithReconciliation(
+    id: number,
+    tipOrganizationInternalId: string | null = null,
+  ) {
     const base = await this.findByIdWithPerOrgTotals(id);
     if (!base) return undefined;
+
+    // Card fees, and what comes off the tip organization's share for them:
+    // the same rule as `cardFeeDeductionSql`.
+    const finalized = base.donations.filter((d) => d.finalized);
+    const cardFeeCents = finalized.reduce(
+      (s, d) => s + (d.processorFeeCents ?? 0),
+      0,
+    );
+    const tipShareCents = Number(
+      base.orgTotals.find(
+        (o) => o.organizationInternalId === tipOrganizationInternalId,
+      )?.total ?? 0,
+    );
+    const cardFeeDeductionCents =
+      base.deductCardFees && tipOrganizationInternalId
+        ? Math.min(cardFeeCents, tipShareCents)
+        : 0;
+    // Donations paid out by a card processor whose fee isn't known yet: the
+    // deduction is short by their fees until a statement import fills them in.
+    const [unknown] = await this.database
+      .select({ n: count() })
+      .from(donations)
+      .innerJoin(
+        bankTransactions,
+        eq(bankTransactions.archivingCode, donations.transactionId),
+      )
+      .where(
+        sql`${donations.donationTransferId} = ${id} and ${donations.finalized} = true
+          and ${bankTransactions.category} = 'card-payout' and ${donations.processorFeeCents} is null`,
+      );
 
     const linkedBankTransactions = await this.database
       .select({
@@ -242,7 +310,9 @@ export class DonationTransfersRepository {
       .where(eq(bankTransactions.donationTransferId, id))
       .orderBy(asc(bankTransactions.date));
 
-    const owedCents = base.orgTotals.reduce((s, o) => s + Number(o.total), 0);
+    const owedCents =
+      base.orgTotals.reduce((s, o) => s + Number(o.total), 0) -
+      cardFeeDeductionCents;
     const paidOutCents = linkedBankTransactions.reduce(
       (s, r) => s + Math.abs(Number(r.amountCents ?? 0)),
       0,
@@ -260,6 +330,13 @@ export class DonationTransfersRepository {
       ...base,
       linkedBankTransactions,
       owedCents,
+      tipOrganizationInternalId,
+      cardFeeCents,
+      cardFeeDeductionCents,
+      cardFeesNotDeductedCents: base.deductCardFees
+        ? cardFeeCents - cardFeeDeductionCents
+        : 0,
+      donationsWithUnknownFee: Number(unknown?.n ?? 0),
       paidOutCents,
       differenceCents,
       adjustmentCents,
@@ -396,6 +473,7 @@ export class DonationTransfersRepository {
             : data.datetime.toISOString().split("T")[0], // Convert Date to YYYY-MM-DD
         recipient: data.recipient || null,
         notes: data.notes || null,
+        deductCardFees: data.deductCardFees ?? false,
       })
       .returning();
     if (!transfer) throw new Error("Failed to insert donation transfer");
@@ -423,6 +501,8 @@ export class DonationTransfersRepository {
         data.reconciliationAdjustmentCents;
     if (data.reconciliationNote !== undefined)
       updateData.reconciliationNote = data.reconciliationNote;
+    if (data.deductCardFees !== undefined)
+      updateData.deductCardFees = data.deductCardFees;
 
     if (data.datetime) {
       updateData.datetime =

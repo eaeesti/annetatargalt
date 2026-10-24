@@ -8,6 +8,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { donationTransfersRepository } from "../donation-transfers.repository";
 import { donationsRepository } from "../donations.repository";
+import { bankTransactionsRepository } from "../bank-transactions.repository";
 import {
   cleanDatabase,
   createTestDonor,
@@ -644,6 +645,147 @@ describe("DonationTransfersRepository", () => {
       expect(row.owedCents).toBe(detail!.owedCents);
       expect(row.balanced).toBe(true); // paid 9000 == owed 9000
       expect(detail!.balanced).toBe(true);
+    });
+  });
+
+  // ── card fees off the tip organization's share ──────────────────────────────
+
+  describe("card fee deduction", () => {
+    const TIP = "TIP";
+
+    /** A round with a €100 card donation (€2.50 fee, €5 of it to TIP) and a €50 bank one. */
+    async function roundWithCardFees(deductCardFees: boolean, feeCents = 250) {
+      const transfer = await createTestDonationTransfer({
+        datetime: "2026-03-01",
+        deductCardFees,
+      });
+      const payout = `PAYOUT${transfer.id}`;
+      await createTestBankTransaction({
+        archivingCode: payout,
+        category: "card-payout",
+        amount: 10000 - feeCents,
+      });
+      const card = await createTestDonation({
+        amount: 10000,
+        donationTransferId: transfer.id,
+        transactionId: payout,
+        processorFeeCents: feeCents,
+      });
+      await createTestOrganizationDonation({
+        donationId: card.id,
+        organizationInternalId: "ORG_A",
+        amount: 9500,
+      });
+      await createTestOrganizationDonation({
+        donationId: card.id,
+        organizationInternalId: TIP,
+        amount: 500,
+      });
+      const bank = await createTestDonation({
+        amount: 5000,
+        donationTransferId: transfer.id,
+      });
+      await createTestOrganizationDonation({
+        donationId: bank.id,
+        organizationInternalId: "ORG_A",
+        amount: 5000,
+      });
+      return transfer;
+    }
+
+    const listRow = async (id: number) =>
+      (
+        await donationTransfersRepository.findPaginated({
+          page: 1,
+          pageSize: 25,
+          tipOrganizationInternalId: TIP,
+        })
+      ).data.find((r) => r.id === id)!;
+
+    it("takes the round's card fees off the tip organization's share", async () => {
+      const transfer = await roundWithCardFees(true);
+      const detail =
+        await donationTransfersRepository.findByIdWithReconciliation(
+          transfer.id,
+          TIP,
+        );
+
+      expect(detail!.cardFeeCents).toBe(250);
+      expect(detail!.cardFeeDeductionCents).toBe(250);
+      expect(detail!.owedCents).toBe(15000 - 250);
+      expect(detail!.cardFeesNotDeductedCents).toBe(0);
+
+      const row = await listRow(transfer.id);
+      expect(row.cardFeeCents).toBe(250);
+      expect(row.cardFeeDeductionCents).toBe(250);
+      expect(row.owedCents).toBe(detail!.owedCents);
+    });
+
+    it("deducts nothing when the round's box is off, or without a tip organization", async () => {
+      const off = await roundWithCardFees(false);
+      const detail =
+        await donationTransfersRepository.findByIdWithReconciliation(
+          off.id,
+          TIP,
+        );
+      expect(detail!.cardFeeCents).toBe(250);
+      expect(detail!.cardFeeDeductionCents).toBe(0);
+      expect(detail!.owedCents).toBe(15000);
+      expect((await listRow(off.id)).owedCents).toBe(15000);
+
+      const on = await roundWithCardFees(true);
+      const noTip =
+        await donationTransfersRepository.findByIdWithReconciliation(on.id);
+      expect(noTip!.owedCents).toBe(15000);
+    });
+
+    it("never takes more than the tip organization's share", async () => {
+      const transfer = await roundWithCardFees(true, 800);
+      const detail =
+        await donationTransfersRepository.findByIdWithReconciliation(
+          transfer.id,
+          TIP,
+        );
+      expect(detail!.cardFeeDeductionCents).toBe(500);
+      expect(detail!.cardFeesNotDeductedCents).toBe(300);
+      expect(detail!.owedCents).toBe(15000 - 500);
+      expect((await listRow(transfer.id)).owedCents).toBe(15000 - 500);
+    });
+
+    it("counts card donations whose fee isn't known yet", async () => {
+      const transfer = await roundWithCardFees(true);
+      await createTestBankTransaction({
+        archivingCode: "PAYOUT_UNPRICED",
+        category: "card-payout",
+        amount: 2000,
+      });
+      await createTestDonation({
+        amount: 2000,
+        donationTransferId: transfer.id,
+        transactionId: "PAYOUT_UNPRICED",
+      });
+      const detail =
+        await donationTransfersRepository.findByIdWithReconciliation(
+          transfer.id,
+          TIP,
+        );
+      expect(detail!.donationsWithUnknownFee).toBe(1);
+    });
+
+    it("the money-flow gap uses the same owed figure", async () => {
+      const transfer = await roundWithCardFees(true);
+      // paid out exactly what's owed after the deduction
+      await createTestBankTransaction({
+        archivingCode: "OUT_NET",
+        category: "outgoing",
+        amount: 15000 - 250,
+        donationTransferId: transfer.id,
+      });
+      const withTip = await bankTransactionsRepository.moneyFlow({
+        tipOrganizationInternalId: TIP,
+      });
+      expect(withTip.transferGap).toBe(0);
+      expect((await listRow(transfer.id)).balanced).toBe(true);
     });
   });
 
