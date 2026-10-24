@@ -256,12 +256,14 @@ function DonationForm({
       donationData.dedicationMessage = donation.dedicationMessage;
     }
 
-    const showError = (description: string) =>
+    const showError = (description: string) => {
+      plausible("donation-error");
       showModal({
         icon: "error",
         title: props.global.errorText ?? "Error",
         description,
       });
+    };
 
     let response;
     try {
@@ -283,6 +285,9 @@ function DonationForm({
       // doesn't go through
       router.push(data.redirectURL);
     } else {
+      // monthly: the donation is saved and the donor gets the standing
+      // order's details
+      plausible("donation-recurring-created");
       clearDonationDraft();
       setDonated(true);
     }

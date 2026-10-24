@@ -2,6 +2,7 @@ import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
 import Button from "@/components/elements/Button";
 import Markdown from "@/components/elements/Markdown";
+import NotFoundEvent from "@/components/NotFoundEvent";
 import { getGlobal } from "@/utils/strapi";
 import type { Locale } from "@/utils/locale";
 
@@ -11,6 +12,7 @@ export default async function NotFoundPage({ locale }: { locale: Locale }) {
   if (!global?.notFoundPage) {
     return (
       <main className="grid h-full grow place-items-center px-6 py-24">
+        <NotFoundEvent />
         <div className="text-center">
           <p className="text-base font-semibold text-primary-600 sm:text-2xl">
             404
@@ -29,6 +31,7 @@ export default async function NotFoundPage({ locale }: { locale: Locale }) {
     <>
       <Navbar global={global} />
       <main className="grid h-full grow place-items-center bg-white px-6 py-24 sm:py-48 lg:px-8">
+        <NotFoundEvent />
         <div className="text-center">
           <p className="text-base font-semibold text-primary-600 sm:text-2xl">
             404

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePlausible } from "next-plausible";
 import { fetcher } from "@/utils/react";
 import Markdown from "../elements/Markdown";
 import { useSearchParams } from "next/navigation";
@@ -19,6 +20,7 @@ import { localeOf, pagePath } from "@/utils/locale";
 import { clearDonationDraft } from "@/utils/donation-draft";
 
 interface DecodedDonation {
+  id: number;
   donor: { firstName: string };
   amount: number;
   organizationDonations: Array<{
@@ -35,6 +37,24 @@ interface ThankYouSectionProps extends StrapiThankYouSection {
   global: StrapiGlobal;
 }
 
+const COUNTED_DONATION_KEY = "countedDonation";
+
+/**
+ * Whether this tab is yet to count the donation as paid, which it then has:
+ * a refresh of the thank-you page isn't another donation.
+ */
+function notCountedYet(donationId: number): boolean {
+  try {
+    if (sessionStorage.getItem(COUNTED_DONATION_KEY) === String(donationId)) {
+      return false;
+    }
+    sessionStorage.setItem(COUNTED_DONATION_KEY, String(donationId));
+  } catch {
+    // without the tab's storage, a refresh counts it again
+  }
+  return true;
+}
+
 export default function ThankYouSection({
   title,
   text1,
@@ -43,6 +63,7 @@ export default function ThankYouSection({
   global,
 }: ThankYouSectionProps) {
   const router = useRouter();
+  const plausible = usePlausible();
   const locale = localeOf(global);
 
   const searchParams = useSearchParams();
@@ -66,10 +87,13 @@ export default function ThankYouSection({
     }
   }, [isLoading, decoded, router, locale]);
 
-  // Only a paid donation decodes, so the donation form's draft is done with.
+  // Only a paid donation decodes: the donation form's draft is done with, and
+  // the donation is counted (one-off ones, from either donation form).
   useEffect(() => {
-    if (decoded?.donation) clearDonationDraft();
-  }, [decoded]);
+    if (!decoded?.donation) return;
+    clearDonationDraft();
+    if (notCountedYet(decoded.donation.id)) plausible("donation-paid");
+  }, [decoded, plausible]);
 
   if (isLoading || !decoded?.donation) return <LoadingSection />;
 
