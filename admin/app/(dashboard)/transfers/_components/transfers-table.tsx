@@ -32,6 +32,7 @@ import { LinkedTableRow } from "../../../../components/linked-row";
 import { EntityLink } from "../../../../components/entity-link";
 import { transferHref } from "../../../../lib/entity-links";
 import { useRememberListUrl } from "../../../../components/remembered-link";
+import { ariaSort } from "../../../../lib/aria-sort";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -371,6 +372,7 @@ export function TransfersTable({
                 {hg.headers.map((header) => (
                   <TableHead
                     key={header.id}
+                    aria-sort={ariaSort(header.column.id, sortBy, sortDir)}
                     className={header.column.columnDef.meta?.className}
                   >
                     {header.isPlaceholder

@@ -24,7 +24,12 @@ const chartConfig = {
 export function ActiveDonorsChart({ data }: { data: ActiveDonorsRow[] }) {
   return (
     <ChartContainer config={chartConfig} className="h-[220px] w-full">
-      <LineChart data={data} margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
+      <LineChart
+        title="Active donors per month, rolling 12 months"
+        desc="Use the arrow keys to go through it."
+        data={data}
+        margin={{ top: 4, right: 8, left: 8, bottom: 0 }}
+      >
         <CartesianGrid vertical={false} strokeDasharray="3 3" />
         <XAxis
           dataKey="month"

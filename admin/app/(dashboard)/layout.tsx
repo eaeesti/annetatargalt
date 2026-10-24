@@ -35,6 +35,13 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider className="h-svh overflow-hidden">
+      {/* For keyboard users: the first Tab offers to skip the sidebar. */}
+      <a
+        href="#content"
+        className="sr-only rounded-md bg-background text-sm font-medium shadow-md focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-3 focus:py-2"
+      >
+        Skip to content
+      </a>
       <AppSidebar user={user} />
       <SidebarInset className="overflow-auto">
         <header className="flex items-center gap-2 border-b bg-background px-4 py-3 md:hidden">
@@ -43,7 +50,9 @@ export default async function DashboardLayout({
           <span className="text-sm font-semibold">Anneta Targalt Admin</span>
         </header>
         <div className="min-w-0 flex-1 bg-muted/40">
-          <div className="px-6 py-8">{children}</div>
+          <div id="content" tabIndex={-1} className="px-6 py-8 outline-none">
+            {children}
+          </div>
         </div>
       </SidebarInset>
     </SidebarProvider>

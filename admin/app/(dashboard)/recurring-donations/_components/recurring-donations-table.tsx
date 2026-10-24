@@ -29,6 +29,7 @@ import {
 import { formatDate } from "../../../../lib/dates";
 import { LinkedTableRow } from "../../../../components/linked-row";
 import { useRememberListUrl } from "../../../../components/remembered-link";
+import { ariaSort } from "../../../../lib/aria-sort";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -244,7 +245,10 @@ export function RecurringDonationsTable({
             {table.getHeaderGroups().map((hg) => (
               <TableRow key={hg.id}>
                 {hg.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead
+                    key={header.id}
+                    aria-sort={ariaSort(header.column.id, sortBy, sortDir)}
+                  >
                     {header.isPlaceholder
                       ? null
                       : flexRender(

@@ -22,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "../../../../components/ui/table";
+import { ariaSort } from "../../../../lib/aria-sort";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -300,7 +301,7 @@ export function TransactionsTable({
           <TableHeader>
             <TableRow>
               <TableHead className="w-6" />
-              <TableHead>
+              <TableHead aria-sort={ariaSort("date", sortBy, sortDir)}>
                 <button
                   className="inline-flex items-center"
                   onClick={() => handleSort("date")}
@@ -308,7 +309,9 @@ export function TransactionsTable({
                   Date <SortIcon col="date" sortBy={sortBy} sortDir={sortDir} />
                 </button>
               </TableHead>
-              <TableHead>
+              <TableHead
+                aria-sort={ariaSort("counterpartyName", sortBy, sortDir)}
+              >
                 <button
                   className="inline-flex items-center"
                   onClick={() => handleSort("counterpartyName")}
@@ -321,7 +324,10 @@ export function TransactionsTable({
                   />
                 </button>
               </TableHead>
-              <TableHead className="text-right">
+              <TableHead
+                className="text-right"
+                aria-sort={ariaSort("amount", sortBy, sortDir)}
+              >
                 <button
                   className="inline-flex items-center"
                   onClick={() => handleSort("amount")}
@@ -330,7 +336,7 @@ export function TransactionsTable({
                   <SortIcon col="amount" sortBy={sortBy} sortDir={sortDir} />
                 </button>
               </TableHead>
-              <TableHead>
+              <TableHead aria-sort={ariaSort("category", sortBy, sortDir)}>
                 <button
                   className="inline-flex items-center"
                   onClick={() => handleSort("category")}

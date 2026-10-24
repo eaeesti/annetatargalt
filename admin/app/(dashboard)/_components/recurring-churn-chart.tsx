@@ -35,6 +35,8 @@ export function RecurringChurnChart({ data }: { data: RecurringChurnRow[] }) {
   return (
     <ChartContainer config={chartConfig} className="h-[220px] w-full">
       <ComposedChart
+        title="Recurring donors, new and churned, each month"
+        desc="Use the arrow keys to go through it."
         data={data}
         margin={{ top: 4, right: 8, left: 8, bottom: 0 }}
       >

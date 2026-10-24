@@ -30,6 +30,7 @@ import { LinkedTableRow } from "../../../../components/linked-row";
 import { EntityLink } from "../../../../components/entity-link";
 import { donorHref } from "../../../../lib/entity-links";
 import { useRememberListUrl } from "../../../../components/remembered-link";
+import { ariaSort } from "../../../../lib/aria-sort";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -273,7 +274,10 @@ export function DonorsTable({
             {table.getHeaderGroups().map((hg) => (
               <TableRow key={hg.id}>
                 {hg.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead
+                    key={header.id}
+                    aria-sort={ariaSort(header.column.id, sortBy, sortDir)}
+                  >
                     {header.isPlaceholder
                       ? null
                       : flexRender(

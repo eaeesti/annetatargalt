@@ -33,9 +33,11 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+// Changed from the generated div: card titles head the page's sections, so
+// screen readers can jump between them.
+function CardTitle({ className, ...props }: React.ComponentProps<"h2">) {
   return (
-    <div
+    <h2
       data-slot="card-title"
       className={cn(
         "text-base leading-snug font-medium group-data-[size=sm]/card:text-sm",
