@@ -126,24 +126,31 @@
   html {
     @apply font-sans;
   }
-  /* Tailwind 4 gives buttons the default cursor; anything clickable points. */
+  /* Tailwind 4 gives buttons the default cursor; anything clickable points,
+     including a whole label around a checkbox and a date field's calendar. */
   button,
   [role="button"],
+  [role="option"],
+  [role^="menuitem"],
   a,
   select,
   summary,
   label[for],
+  label:has([type="checkbox"], [type="radio"]),
   [type="checkbox"],
   [type="radio"],
   [type="submit"],
   [type="button"],
   [type="reset"],
-  ::file-selector-button {
+  ::file-selector-button,
+  ::-webkit-calendar-picker-indicator {
     cursor: pointer;
   }
 
   :disabled,
-  [aria-disabled="true"] {
+  [aria-disabled="true"],
+  [data-disabled],
+  label:has(:disabled) {
     cursor: default;
   }
 }
