@@ -25,5 +25,6 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  // icon.svg is the favicon, which the sign-in page needs too
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon.svg).*)"],
 };

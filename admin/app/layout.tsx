@@ -5,12 +5,14 @@ import { Providers } from "./providers";
 
 const inter = Inter({
   variable: "--font-sans",
-  subsets: ["latin"],
+  // latin-ext has letters like š, ž and õ in donor names
+  subsets: ["latin", "latin-ext"],
 });
 
 export const metadata: Metadata = {
   title: "Anneta Targalt Admin",
   description: "Donation admin panel",
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({

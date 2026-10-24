@@ -51,5 +51,6 @@ export const GOOGLE_ERRORS = {
 export type GoogleErrorCode = keyof typeof GOOGLE_ERRORS;
 
 export function isGoogleErrorCode(code: unknown): code is GoogleErrorCode {
-  return typeof code === "string" && code in GOOGLE_ERRORS;
+  // hasOwn, not `in`: `in` also accepts inherited names like "__proto__"
+  return typeof code === "string" && Object.hasOwn(GOOGLE_ERRORS, code);
 }
