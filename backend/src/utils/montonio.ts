@@ -9,12 +9,13 @@ export interface MontonioPayload {
 
 export interface MontonioDecodedToken {
   accessKey: string;
-  iat: number;
-  exp: number;
-  paymentStatus?: string;
-  merchant_reference?: string;
-  customer_iban?: string;
-  payment_method_name?: string;
+  iat?: number | null;
+  exp?: number | null;
+  paymentStatus?: string | null;
+  merchant_reference?: string | null;
+  // a card payment has no IBAN
+  customer_iban?: string | null;
+  payment_method_name?: string | null;
   [key: string]: unknown;
 }
 
@@ -165,37 +166,41 @@ const montonio = {
 
 export interface MontonioPayout {
   uuid: string;
-  status?: string;
-  currency?: string;
-  settlementType?: string;
+  status?: string | null;
+  currency?: string | null;
+  settlementType?: string | null;
   /** major units, e.g. "673.10" — Montonio calls this `totalAmount` */
-  totalAmount?: string | number;
-  createdAt?: string;
+  totalAmount?: string | number | null;
+  createdAt?: string | null;
   [key: string]: unknown;
 }
 
 export interface MontonioPayoutOrder {
-  merchantReference?: string;
-  merchant_reference?: string;
+  merchantReference?: string | null;
+  merchant_reference?: string | null;
   /** order gross — Montonio's exact key varies by export version */
-  grandTotal?: string | number;
-  grand_total?: string | number;
-  amount?: string | number;
-  total?: string | number;
+  grandTotal?: string | number | null;
+  grand_total?: string | number | null;
+  amount?: string | number | null;
+  total?: string | number | null;
   [key: string]: unknown;
 }
 
+// Montonio leaves a field out or sends null when it has no value.
 const isOptional = (value: unknown, type: "string" | "number") =>
-  value === undefined || typeof value === type;
+  value === undefined || value === null || typeof value === type;
 const isOptionalAmount = (value: unknown) =>
-  value === undefined || typeof value === "string" || typeof value === "number";
+  value === undefined ||
+  value === null ||
+  typeof value === "string" ||
+  typeof value === "number";
 
 function isDecodedToken(value: unknown): value is MontonioDecodedToken {
   return (
     isRecord(value) &&
     typeof value.accessKey === "string" &&
-    typeof value.iat === "number" &&
-    typeof value.exp === "number" &&
+    isOptional(value.iat, "number") &&
+    isOptional(value.exp, "number") &&
     isOptional(value.paymentStatus, "string") &&
     isOptional(value.merchant_reference, "string") &&
     isOptional(value.customer_iban, "string") &&
