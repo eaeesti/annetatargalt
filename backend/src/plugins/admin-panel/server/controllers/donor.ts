@@ -5,6 +5,7 @@ import {
   type RecurringStatus,
 } from "../../../../db/repositories/donors.repository";
 import { auditLog } from "../utils/audit-log";
+import { oneOf } from "../../../../utils/narrow";
 import { EXPORT_ROW_LIMIT, isExport } from "../utils/export";
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
@@ -17,18 +18,16 @@ const VALID_SORT_COLS = new Set([
   "donationCount",
   "lastDonationDate",
 ]);
-const VALID_RECURRING_STATUSES = new Set([
+const RECURRING_STATUSES: readonly RecurringStatus[] = [
   "new",
   "retained",
   "churned",
   "churnedAllTime",
-]);
+];
 
 /** One of "new"/"retained"/"churned"/"churnedAllTime", or undefined otherwise. */
 function parseRecurringStatus(v: unknown): RecurringStatus | undefined {
-  return typeof v === "string" && VALID_RECURRING_STATUSES.has(v)
-    ? (v as RecurringStatus)
-    : undefined;
+  return oneOf(v, RECURRING_STATUSES);
 }
 
 export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({

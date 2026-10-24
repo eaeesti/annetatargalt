@@ -81,6 +81,11 @@ export class FixedWindowLimiter {
     return true;
   }
 
+  /** The keys it's counting now, for tests. */
+  trackedKeys(): string[] {
+    return [...this.buckets.keys()];
+  }
+
   private prune(now: number): void {
     for (const [key, bucket] of this.buckets) {
       if (now > bucket.resetAt) this.buckets.delete(key);

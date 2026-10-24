@@ -1,4 +1,6 @@
 import type { Core } from "@strapi/strapi";
+import { issueUserJwt, strapiTable } from "../../../strapi-internals";
+import { isRecord } from "../../../utils/narrow";
 import type { Context } from "koa";
 import crypto from "node:crypto";
 import { BRIDGEABLE_ADMIN_ROLE_CODES } from "../../../utils/admin-roles";
@@ -67,10 +69,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       );
     }
 
-    const { email, password } = ctx.request.body as {
-      email?: string;
-      password?: string;
-    };
+    const body = isRecord(ctx.request.body) ? ctx.request.body : {};
+    const email = typeof body.email === "string" ? body.email : "";
+    const password = typeof body.password === "string" ? body.password : "";
 
     if (!email || !password) {
       return ctx.badRequest("Email and password are required");
@@ -141,10 +142,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     const settings = googleSettings();
     if (!settings) return ctx.notFound("Google sign-in is not configured");
 
-    const { idToken, nonce } = ctx.request.body as {
-      idToken?: string;
-      nonce?: string;
-    };
+    const body = isRecord(ctx.request.body) ? ctx.request.body : {};
+    const idToken = typeof body.idToken === "string" ? body.idToken : "";
+    const nonce = typeof body.nonce === "string" ? body.nonce : "";
     if (!idToken || !nonce) {
       return ctx.badRequest("idToken and nonce are required");
     }
@@ -162,9 +162,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
     // The password path gets this from /admin/login, which refuses inactive
     // admins. Nothing here has checked it yet.
-    const adminUser = (await strapi.db.query("admin::user").findOne({
-      where: { email: identity.email },
-    })) as { isActive?: boolean; blocked?: boolean | null } | null;
+    const adminUser = await strapiTable<{
+      isActive?: boolean;
+      blocked?: boolean | null;
+    }>(strapi, "admin::user").findOne({ where: { email: identity.email } });
     if (!adminUser || adminUser.isActive !== true || adminUser.blocked) {
       return ctx.forbidden("There is no active admin account for this email");
     }
@@ -194,10 +195,13 @@ async function bridge(
   // blockOrphanedDonationAdmins already uses, and already proven live
   // against this exact database).
   type AdminUserRow = { roles?: Array<{ code: string }> };
-  const adminUser = (await strapi.db.query("admin::user").findOne({
+  const adminUser = await strapiTable<AdminUserRow>(
+    strapi,
+    "admin::user",
+  ).findOne({
     where: { email },
     populate: ["roles"],
-  })) as AdminUserRow | null;
+  });
   const isBridgeable = (adminUser?.roles ?? []).some((r) =>
     BRIDGEABLE_ADMIN_ROLE_CODES.has(r.code),
   );
@@ -210,17 +214,24 @@ async function bridge(
   }
 
   // Step 2: Find or create users-permissions user with the same email
-  let user = (await strapi.db.query("plugin::users-permissions.user").findOne({
+  let user = await strapiTable<UserPermissionsUser>(
+    strapi,
+    "plugin::users-permissions.user",
+  ).findOne({
     where: { email },
-  })) as UserPermissionsUser | null;
+  });
 
   if (!user) {
     // Assign the DonationAdmin role — not "authenticated", which public registrants also get
-    const adminRole = (await strapi.db
-      .query("plugin::users-permissions.role")
-      .findOne({ where: { name: "DonationAdmin" } })) as Role | null;
+    const adminRole = await strapiTable<Role>(
+      strapi,
+      "plugin::users-permissions.role",
+    ).findOne({ where: { name: "DonationAdmin" } });
 
-    user = (await strapi.db.query("plugin::users-permissions.user").create({
+    user = await strapiTable<UserPermissionsUser>(
+      strapi,
+      "plugin::users-permissions.user",
+    ).create({
       data: {
         email,
         username: email,
@@ -230,15 +241,11 @@ async function bridge(
         provider: "local",
         role: adminRole?.id,
       },
-    })) as UserPermissionsUser;
+    });
   }
 
   // Step 3: Issue a users-permissions JWT
-  const token = await (
-    strapi.plugin("users-permissions").service("jwt") as {
-      issue: (payload: Record<string, unknown>) => Promise<string>;
-    }
-  ).issue({ id: user.id });
+  const token = await issueUserJwt(strapi, user.id);
 
   return { ok: true, jwt: token, user: { id: user.id, email: user.email } };
 }

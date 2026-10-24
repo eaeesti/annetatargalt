@@ -28,7 +28,7 @@ const CATEGORY_PRECEDENCE: Record<string, number> = {
 const prec = (c: string) => CATEGORY_PRECEDENCE[c] ?? 0;
 
 const trunc = (v: string | null | undefined, n: number) =>
-  v == null ? null : v.slice(0, n);
+  v === null || v === undefined ? null : v.slice(0, n);
 
 /** ~12 bind params per inserted row; 1 per code in a SELECT ... IN (...). */
 const INSERT_CHUNK = 1000;
@@ -130,10 +130,41 @@ interface FindPaginatedOptions {
 }
 
 const num = (v: unknown) => Number(v ?? 0);
+const numOrNull = (v: unknown) =>
+  v === null || v === undefined ? null : Number(v);
 
-function mapRow(r: Record<string, unknown>): BankTransactionRow {
-  const amount = r.amount == null ? null : num(r.amount);
-  const feeAmount = r.fee_amount == null ? null : num(r.fee_amount);
+/**
+ * A ledger row as `findPaginated`'s query returns it: snake_case columns,
+ * with counts and sums as pg sends them (a bigint or numeric arrives as a
+ * string, so they go through `num`).
+ */
+type LedgerRow = {
+  archiving_code: string;
+  date: string | null;
+  amount: number | null;
+  direction: string | null;
+  description: string | null;
+  counterparty_name: string | null;
+  counterparty_account: string | null;
+  sender_code: string | null;
+  category: string;
+  gross_amount: number | null;
+  fee_amount: number | null;
+  note: string | null;
+  donation_transfer_id: number | null;
+  imported_at: Date;
+  imported_by: string | null;
+  created_at: Date;
+  updated_at: Date;
+  linked_donation_count: unknown;
+  pending_donation_count: unknown;
+  linked_gross_cents: unknown;
+  allocated_cents: unknown;
+};
+
+function mapRow(r: LedgerRow): BankTransactionRow {
+  const amount = numOrNull(r.amount);
+  const feeAmount = numOrNull(r.fee_amount);
   const linkedDonationCount = num(r.linked_donation_count);
   const pendingDonationCount = num(r.pending_donation_count);
   const linkedGrossCents = num(r.linked_gross_cents);
@@ -141,29 +172,28 @@ function mapRow(r: Record<string, unknown>): BankTransactionRow {
   // null = not assessable yet: no linked donations, bank line not imported, or a
   // linked donation isn't finalized (its amount can still change)
   const balanced =
-    linkedDonationCount === 0 || amount == null || pendingDonationCount > 0
+    linkedDonationCount === 0 || amount === null || pendingDonationCount > 0
       ? null
       : Math.abs(amount - expectedNet) <= Math.max(1, linkedDonationCount);
 
   return {
-    archivingCode: r.archiving_code as string,
-    date: r.date as string | null,
+    archivingCode: r.archiving_code,
+    date: r.date ?? null,
     amount,
-    direction: (r.direction as string | null) ?? null,
-    description: (r.description as string | null) ?? null,
-    counterpartyName: (r.counterparty_name as string | null) ?? null,
-    counterpartyAccount: (r.counterparty_account as string | null) ?? null,
-    senderCode: (r.sender_code as string | null) ?? null,
-    category: r.category as string,
-    grossAmount: r.gross_amount == null ? null : num(r.gross_amount),
+    direction: r.direction ?? null,
+    description: r.description ?? null,
+    counterpartyName: r.counterparty_name ?? null,
+    counterpartyAccount: r.counterparty_account ?? null,
+    senderCode: r.sender_code ?? null,
+    category: r.category,
+    grossAmount: numOrNull(r.gross_amount),
     feeAmount,
-    note: (r.note as string | null) ?? null,
-    donationTransferId:
-      r.donation_transfer_id == null ? null : num(r.donation_transfer_id),
-    importedAt: r.imported_at as Date,
-    importedBy: (r.imported_by as string | null) ?? null,
-    createdAt: r.created_at as Date,
-    updatedAt: r.updated_at as Date,
+    note: r.note ?? null,
+    donationTransferId: numOrNull(r.donation_transfer_id),
+    importedAt: r.imported_at,
+    importedBy: r.imported_by ?? null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
     linkedDonationCount,
     allocatedCents: num(r.allocated_cents),
     linkedGrossCents,
@@ -360,10 +390,12 @@ export class BankTransactionsRepository {
   ): Promise<{ ok: boolean; reason?: "not-found" | "has-donations" }> {
     if (category !== "donation" && category !== "card-payout") {
       const [linked] = await this.database
-        .execute(
+        .execute<{
+          n: number;
+        }>(
           sql`SELECT cast(count(*) as int) as n FROM donations WHERE transaction_id = ${code}`,
         )
-        .then((r) => r.rows as { n: number }[]);
+        .then((r) => r.rows);
       if (num(linked?.n) > 0) return { ok: false, reason: "has-donations" };
     }
     const updated = await this.database
@@ -453,10 +485,10 @@ export class BankTransactionsRepository {
       return { ok: false, reason: "not-outgoing" };
     // linking (not unlinking): don't silently steal a payment from another round
     if (
-      transferId != null &&
+      transferId !== null &&
       rows.some(
         (r) =>
-          r.donationTransferId != null && r.donationTransferId !== transferId,
+          r.donationTransferId !== null && r.donationTransferId !== transferId,
       )
     ) {
       return { ok: false, reason: "already-linked" };
@@ -487,20 +519,26 @@ export class BankTransactionsRepository {
         sql`(counterparty_name ilike ${like} or description ilike ${like} or archiving_code ilike ${like})`,
       );
     }
-    const res = await this.database.execute(sql`
+    const res = await this.database.execute<{
+      archiving_code: string;
+      date: string | null;
+      amount: number | null;
+      counterparty_name: string | null;
+      description: string | null;
+      donation_transfer_id: number | null;
+    }>(sql`
       SELECT archiving_code, date, amount, counterparty_name, description, donation_transfer_id
       FROM bank_transactions
       WHERE ${sql.join(conds, sql` and `)}
       ORDER BY date asc, archiving_code asc
     `);
-    return (res.rows as Record<string, unknown>[]).map((r) => ({
-      archivingCode: r.archiving_code as string,
-      date: r.date as string | null,
-      amountCents: r.amount == null ? null : num(r.amount),
-      counterpartyName: (r.counterparty_name as string | null) ?? null,
-      description: (r.description as string | null) ?? null,
-      donationTransferId:
-        r.donation_transfer_id == null ? null : num(r.donation_transfer_id),
+    return res.rows.map((r) => ({
+      archivingCode: r.archiving_code,
+      date: r.date ?? null,
+      amountCents: numOrNull(r.amount),
+      counterpartyName: r.counterparty_name ?? null,
+      description: r.description ?? null,
+      donationTransferId: numOrNull(r.donation_transfer_id),
     }));
   }
 
@@ -572,20 +610,20 @@ export class BankTransactionsRepository {
       FROM bank_transactions bt
       WHERE ${where}`;
 
-    const rowsRes = await this.database.execute(sql`
+    const rowsRes = await this.database.execute<LedgerRow>(sql`
       SELECT q.* FROM (${scored}) q
       WHERE 1 = 1 ${balancedWhere}
       ORDER BY ${sortCol} ${dir} NULLS LAST, q.archiving_code ${dir}
       ${limitClause}
     `);
-    const countRes = await this.database.execute(sql`
+    const countRes = await this.database.execute<{ total: number }>(sql`
       SELECT cast(count(*) as int) as total FROM (${scored}) q
       WHERE 1 = 1 ${balancedWhere}
     `);
 
     return {
-      data: (rowsRes.rows as Record<string, unknown>[]).map(mapRow),
-      total: num((countRes.rows[0] as { total?: number })?.total),
+      data: rowsRes.rows.map(mapRow),
+      total: num(countRes.rows[0]?.total),
     };
   }
 
@@ -640,7 +678,7 @@ export class BankTransactionsRepository {
         cast(coalesce(sum(amount) filter (where has_pending and category in ('donation', 'card-payout')), 0) as int) as pending_linked_total
       FROM bt_scope
     `)
-    ).rows as Record<string, unknown>[];
+    ).rows;
 
     const [alloc] = (
       await this.database.execute(sql`
@@ -653,7 +691,7 @@ export class BankTransactionsRepository {
       WHERE bt.category IN ('donation', 'card-payout')
         AND bt.amount IS NOT NULL ${btDateClause}
     `)
-    ).rows as Record<string, unknown>[];
+    ).rows;
 
     const [feeAgg] = (
       await this.database.execute(sql`
@@ -662,7 +700,7 @@ export class BankTransactionsRepository {
       JOIN bank_transactions bt ON bt.archiving_code = d.transaction_id
       WHERE bt.category = 'card-payout' AND d.finalized = true ${btDateClause}
     `)
-    ).rows as Record<string, unknown>[];
+    ).rows;
 
     const [unlinked] = (
       await this.database.execute(sql`
@@ -670,14 +708,14 @@ export class BankTransactionsRepository {
       FROM donations
       WHERE finalized = true AND transaction_id IS NULL
     `)
-    ).rows as Record<string, unknown>[];
+    ).rows;
 
     const [stubs] = (
       await this.database.execute(sql`
       SELECT cast(count(*) as int) as cnt
       FROM bank_transactions WHERE category = 'unimported'
     `)
-    ).rows as Record<string, unknown>[];
+    ).rows;
 
     // Standing "money in flight" figures — not date-filtered.
     const [notYet] = (
@@ -687,7 +725,7 @@ export class BankTransactionsRepository {
       JOIN donations d ON d.id = od.donation_id AND d.finalized = true
       WHERE d.donation_transfer_id IS NULL AND d.transaction_id IS NOT NULL
     `)
-    ).rows as Record<string, unknown>[];
+    ).rows;
 
     // Σ of the ABSOLUTE owed↔paidOut↔adjustment residual over rounds that have
     // started reconciling (a linked payment or an operator adjustment) but
@@ -719,7 +757,7 @@ export class BankTransactionsRepository {
       ), 0) as int) as gap
       FROM per_transfer
     `)
-    ).rows as Record<string, unknown>[];
+    ).rows;
 
     const received = num(bank?.received);
     const cardPayoutNet = num(bank?.card_payout_net);

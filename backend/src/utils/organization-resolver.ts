@@ -1,4 +1,4 @@
-import type { Core } from "@strapi/strapi";
+import type { Core, Modules } from "@strapi/strapi";
 
 /**
  * OrganizationResolver - Utility for fetching organization data from Strapi
@@ -13,15 +13,9 @@ import type { Core } from "@strapi/strapi";
  * - Error handling for missing organizations
  */
 
-// Basic organization type - extend as needed
-export interface Organization {
-  id: string;
-  documentId: string;
-  internalId: string;
-  active: boolean;
-  name?: string;
-  [key: string]: unknown;
-}
+/** An organization as Strapi's document service returns it. */
+export type Organization =
+  Modules.Documents.Document<"api::organization.organization">;
 
 export class OrganizationResolver {
   private cache: Record<string, Organization> = {};
@@ -48,11 +42,11 @@ export class OrganizationResolver {
         limit: 1,
       });
 
-    if (organizations.length === 0) {
+    const organization = organizations[0];
+    if (!organization) {
       return null;
     }
 
-    const organization = organizations[0] as Organization;
     this.cache[internalId] = organization;
     return organization;
   }
@@ -85,7 +79,9 @@ export class OrganizationResolver {
         });
 
       // Add to cache and result
-      for (const organization of organizations as Organization[]) {
+      for (const organization of organizations) {
+        // the filter asked for internal ids, so one without is no match
+        if (!organization.internalId) continue;
         this.cache[organization.internalId] = organization;
         result.set(organization.internalId, organization);
       }

@@ -281,7 +281,13 @@ export class RecurringDonationsRepository {
     recentCutoff.setDate(
       recentCutoff.getDate() - RECURRING_ACTIVITY_WINDOW_DAYS,
     );
-    const result = await this.database.execute(sql`
+    const result = await this.database.execute<{
+      donorId: number;
+      donorName: string;
+      startMonth: string;
+      monthAmounts: Record<string, number> | null;
+      recurringActive: boolean;
+    }>(sql`
       WITH monthly AS (
         SELECT
           don.donor_id,
@@ -309,11 +315,11 @@ export class RecurringDonationsRepository {
       GROUP BY d.id
       ORDER BY d.last_name, d.first_name, d.id
     `);
-    return (result.rows as Array<Record<string, unknown>>).map((r) => ({
+    return result.rows.map((r) => ({
       donorId: Number(r.donorId),
       donorName: String(r.donorName),
       startMonth: String(r.startMonth),
-      monthAmounts: (r.monthAmounts as Record<string, number>) ?? {},
+      monthAmounts: r.monthAmounts ?? {},
       recurringActive: r.recurringActive === true,
     }));
   }

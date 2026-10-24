@@ -2,10 +2,13 @@ import type { Core } from "@strapi/strapi";
 import type { Context } from "koa";
 import { createBankTransactionService } from "../services/bank-transaction";
 import { auditLog } from "../utils/audit-log";
+import { currentUser } from "../utils/current-user";
+import { isRecord, oneOf } from "../../../../utils/narrow";
+import type { BalancedFilter } from "../../../../db/repositories/bank-transactions.repository";
 import { EXPORT_ROW_LIMIT, isExport } from "../utils/export";
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
-const VALID_BALANCED = new Set(["ok", "not-ok", "unknown"]);
+const BALANCED_STATES: readonly BalancedFilter[] = ["ok", "not-ok", "unknown"];
 const VALID_SORT_COLS = new Set([
   "date",
   "amount",
@@ -72,9 +75,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
         search: q.search ? String(q.search).slice(0, 128) : undefined,
         amountMin: eurosToCents(q.amountMin),
         amountMax: eurosToCents(q.amountMax),
-        balanced: VALID_BALANCED.has(String(q.balanced))
-          ? (String(q.balanced) as "ok" | "not-ok" | "unknown")
-          : undefined,
+        balanced: oneOf(q.balanced, BALANCED_STATES),
       });
 
       await auditLog(
@@ -119,15 +120,14 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
       const code = String(ctx.params.code ?? "").trim();
       if (!code) return ctx.badRequest("Missing archiving code");
 
-      const body = (ctx.request.body ?? {}) as {
-        category?: unknown;
-        note?: unknown;
-      };
+      const body = isRecord(ctx.request.body) ? ctx.request.body : {};
       const category = String(body.category ?? "");
       const note =
-        body.note == null ? null : String(body.note).slice(0, 512) || null;
+        body.note === null || body.note === undefined
+          ? null
+          : String(body.note).slice(0, 512) || null;
 
-      const user = ctx.state.user as { email?: string } | undefined;
+      const user = currentUser(ctx);
 
       // note-only edit (no category in the body) — e.g. documenting a payout
       // from the transfer view. Skips the reclassify / donation-link checks.

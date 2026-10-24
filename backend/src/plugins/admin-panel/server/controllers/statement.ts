@@ -3,17 +3,15 @@ import type { Context } from "koa";
 import { readFileSync } from "node:fs";
 import { createStatementService } from "../services/statement";
 import { auditLog } from "../utils/audit-log";
+import { currentUser } from "../utils/current-user";
 
-type UploadedFile = { filepath?: string; path?: string; size?: number };
-
-function firstFile(ctx: Context): UploadedFile | null {
-  const files = (
-    ctx.request as { files?: Record<string, UploadedFile | UploadedFile[]> }
-  ).files;
+/** Where the uploaded statement was saved, if a file came with the request. */
+function uploadedPath(ctx: Context): string | null {
+  const files = ctx.request.files;
   if (!files) return null;
   const entry = Object.values(files)[0];
   const file = Array.isArray(entry) ? entry[0] : entry;
-  return file ?? null;
+  return file?.filepath ?? null;
 }
 
 export default ({ strapi }: { strapi: Core.Strapi }) => {
@@ -21,8 +19,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
 
   return {
     async preview(ctx: Context) {
-      const file = firstFile(ctx);
-      const path = file?.filepath ?? file?.path;
+      const path = uploadedPath(ctx);
       if (!path) {
         return ctx.badRequest("Upload the LHV statement CSV as a file");
       }
@@ -39,37 +36,13 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
     },
 
     async apply(ctx: Context) {
-      const body = ctx.request.body as Partial<{
-        reconcile: unknown[];
-        recurringImports: unknown[];
-        manualRecurring: unknown[];
-        rememberSenders: unknown[];
-        cardPayoutAssignments: unknown[];
-        cardPayouts: unknown[];
-        ignore: unknown[];
-        allCredits: unknown[];
-        allDebits: unknown[];
-      }>;
+      const user = currentUser(ctx);
 
-      const arr = (v: unknown) => (Array.isArray(v) ? v : []);
-      const payload = {
-        reconcile: arr(body.reconcile),
-        recurringImports: arr(body.recurringImports),
-        manualRecurring: arr(body.manualRecurring),
-        rememberSenders: arr(body.rememberSenders),
-        cardPayoutAssignments: arr(body.cardPayoutAssignments),
-        cardPayouts: arr(body.cardPayouts),
-        ignore: arr(body.ignore),
-        allCredits: arr(body.allCredits),
-        allDebits: arr(body.allDebits),
-      };
-
-      const user = ctx.state.user as { email?: string } | undefined;
-
+      // the service checks the request's shape, and a malformed one throws
       let summary;
       try {
         summary = await service.apply(
-          payload as never,
+          ctx.request.body,
           user?.email ?? "unknown",
         );
       } catch (err) {

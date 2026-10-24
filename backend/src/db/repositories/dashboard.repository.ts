@@ -144,7 +144,7 @@ export class DashboardRepository {
           AND d.datetime >= now() - interval '60 days'
       )
     `);
-    return Number((result.rows[0] as Record<string, unknown>)?.total ?? 0);
+    return Number(result.rows[0]?.total ?? 0);
   }
 
   /** Sum + count of finalized donations within [from, to). */
@@ -178,8 +178,8 @@ export class DashboardRepository {
       GROUP BY to_char(datetime, 'YYYY-MM')
       ORDER BY month ASC
     `);
-    return (result.rows as Array<Record<string, unknown>>).map((r) => ({
-      month: r.month as string,
+    return result.rows.map((r) => ({
+      month: String(r.month),
       total: Number(r.total),
       count: Number(r.count),
       avgAmount: Number(r.avg_amount),
@@ -211,8 +211,8 @@ export class DashboardRepository {
       GROUP BY m.month
       ORDER BY m.month ASC
     `);
-    return (result.rows as Array<Record<string, unknown>>).map((r) => ({
-      month: r.month as string,
+    return result.rows.map((r) => ({
+      month: String(r.month),
       activeDonors: Number(r.active_donors),
     }));
   }
@@ -268,8 +268,8 @@ export class DashboardRepository {
       FROM months m
       ORDER BY m.month ASC
     `);
-    return (result.rows as Array<Record<string, unknown>>).map((r) => ({
-      month: r.month as string,
+    return result.rows.map((r) => ({
+      month: String(r.month),
       active: Number(r.active),
       newDonors: Number(r.new_donors),
       churned: Number(r.churned),

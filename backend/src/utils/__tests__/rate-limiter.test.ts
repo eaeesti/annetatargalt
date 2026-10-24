@@ -97,10 +97,7 @@ describe("FixedWindowLimiter", () => {
     // The next write is what triggers the sweep.
     limiter.record("fresh");
 
-    const buckets = (limiter as unknown as { buckets: Map<string, unknown> })
-      .buckets;
-    expect(buckets.size).toBe(1);
-    expect(buckets.has("fresh")).toBe(true);
+    expect(limiter.trackedKeys()).toEqual(["fresh"]);
   });
 
   it("keeps live buckets when pruning", () => {
@@ -113,10 +110,6 @@ describe("FixedWindowLimiter", () => {
 
     limiter.record("fresh");
 
-    const buckets = (limiter as unknown as { buckets: Map<string, unknown> })
-      .buckets;
-    expect(buckets.has("half-way")).toBe(true);
-    expect(buckets.has("fresh")).toBe(true);
-    expect(buckets.size).toBe(2);
+    expect(limiter.trackedKeys().sort()).toEqual(["fresh", "half-way"]);
   });
 });

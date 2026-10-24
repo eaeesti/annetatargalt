@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { isRecord } from "./narrow";
 
 const montonioUrl = process.env.MONTONIO_URL;
 
@@ -43,7 +44,10 @@ const montonio = {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: token }),
       });
-      const data = (await response.json()) as { paymentUrl: string };
+      const data: unknown = await response.json();
+      if (!isRecord(data) || typeof data.paymentUrl !== "string") {
+        throw new Error("No payment URL in Montonio's reply");
+      }
       return data.paymentUrl;
     } catch {
       throw new Error("Failed to fetch redirect URL");
@@ -69,16 +73,14 @@ const montonio = {
    * Decode and verify a Montonio order token.
    */
   decodeOrderToken: (orderToken: string): MontonioDecodedToken => {
-    const decoded = jwt.verify(
-      orderToken,
-      getPrivateKey(),
-    ) as MontonioDecodedToken;
-
-    if (decoded.accessKey === getPublicKey()) {
-      return decoded;
-    } else {
+    const decoded = jwt.verify(orderToken, getPrivateKey());
+    if (!isDecodedToken(decoded)) {
+      throw new Error("Invalid order token");
+    }
+    if (decoded.accessKey !== getPublicKey()) {
       throw new Error("Invalid public key");
     }
+    return decoded;
   },
 
   // ─── Payouts (statement reconciliation) ────────────────────────────────────
@@ -112,12 +114,13 @@ const montonio = {
         { headers: { Authorization: `Bearer ${montonio.createAuthToken()}` } },
       );
       if (!res.ok) return [];
-      const body = (await res.json()) as
-        | MontonioPayout[]
-        | { payouts?: MontonioPayout[]; data?: MontonioPayout[] };
-      const rows = Array.isArray(body)
+      const body: unknown = await res.json();
+      const listed = Array.isArray(body)
         ? body
-        : (body.payouts ?? body.data ?? []);
+        : isRecord(body)
+          ? (body.payouts ?? body.data)
+          : undefined;
+      const rows = Array.isArray(listed) ? listed.filter(isPayout) : [];
       // Montonio ignores `order=DESC`; sort newest-first ourselves.
       return rows.sort(
         (a, b) => Date.parse(b.createdAt ?? "") - Date.parse(a.createdAt ?? ""),
@@ -142,18 +145,18 @@ const montonio = {
         { headers: { Authorization: `Bearer ${montonio.createAuthToken()}` } },
       );
       if (!res.ok) return null;
-      const first = (await res.json()) as
-        | { url?: string }
-        | MontonioPayoutOrder[];
+      const first: unknown = await res.json();
       // Response is either the rows directly or a URL to a JSON file of rows.
-      if (Array.isArray(first)) return first;
-      if (!first.url) return null;
+      if (Array.isArray(first)) return ordersIn(first);
+      if (!isRecord(first) || typeof first.url !== "string" || !first.url) {
+        return null;
+      }
       const fileRes = await fetch(first.url);
       if (!fileRes.ok) return null;
-      const rows = (await fileRes.json()) as
-        | MontonioPayoutOrder[]
-        | { orders?: MontonioPayoutOrder[] };
-      return Array.isArray(rows) ? rows : (rows.orders ?? null);
+      const rows: unknown = await fileRes.json();
+      return ordersIn(
+        Array.isArray(rows) ? rows : isRecord(rows) ? rows.orders : undefined,
+      );
     } catch {
       return null;
     }
@@ -180,6 +183,57 @@ export interface MontonioPayoutOrder {
   amount?: string | number;
   total?: string | number;
   [key: string]: unknown;
+}
+
+const isOptional = (value: unknown, type: "string" | "number") =>
+  value === undefined || typeof value === type;
+const isOptionalAmount = (value: unknown) =>
+  value === undefined || typeof value === "string" || typeof value === "number";
+
+function isDecodedToken(value: unknown): value is MontonioDecodedToken {
+  return (
+    isRecord(value) &&
+    typeof value.accessKey === "string" &&
+    typeof value.iat === "number" &&
+    typeof value.exp === "number" &&
+    isOptional(value.paymentStatus, "string") &&
+    isOptional(value.merchant_reference, "string") &&
+    isOptional(value.customer_iban, "string") &&
+    isOptional(value.payment_method_name, "string")
+  );
+}
+
+function isPayout(value: unknown): value is MontonioPayout {
+  return (
+    isRecord(value) &&
+    typeof value.uuid === "string" &&
+    isOptional(value.status, "string") &&
+    isOptional(value.currency, "string") &&
+    isOptional(value.settlementType, "string") &&
+    isOptionalAmount(value.totalAmount) &&
+    isOptional(value.createdAt, "string")
+  );
+}
+
+function isPayoutOrder(value: unknown): value is MontonioPayoutOrder {
+  return (
+    isRecord(value) &&
+    isOptional(value.merchantReference, "string") &&
+    isOptional(value.merchant_reference, "string") &&
+    isOptionalAmount(value.grandTotal) &&
+    isOptionalAmount(value.grand_total) &&
+    isOptionalAmount(value.amount) &&
+    isOptionalAmount(value.total)
+  );
+}
+
+/**
+ * A payout's orders, or null when the list isn't one: a payout's fee is
+ * worked out from all of its orders, so one unreadable order makes the whole
+ * list unusable rather than quietly left out.
+ */
+function ordersIn(list: unknown): MontonioPayoutOrder[] | null {
+  return Array.isArray(list) && list.every(isPayoutOrder) ? list : null;
 }
 
 export default montonio;

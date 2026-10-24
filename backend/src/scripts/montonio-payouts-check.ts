@@ -8,6 +8,7 @@
  * order export, so a wrong base path / store UUID / auth is obvious.
  */
 import montonio from "../utils/montonio";
+import { isRecord } from "../utils/narrow";
 
 const base = process.env.MONTONIO_URL;
 const storeUuid = process.env.MONTONIO_STORE_UUID;
@@ -67,34 +68,36 @@ async function main() {
     return;
   }
 
-  const b = list.body as unknown[] | { payouts?: unknown[]; data?: unknown[] };
-  const rows = (Array.isArray(b) ? b : (b.payouts ?? b.data ?? [])) as {
-    uuid?: string;
-    totalAmount?: string;
-    createdAt?: string;
-    settlementType?: string;
-  }[];
+  const text = (v: unknown) => (typeof v === "string" ? v : undefined);
+  const body: unknown = list.body;
+  const listed = Array.isArray(body)
+    ? body
+    : isRecord(body)
+      ? (body.payouts ?? body.data)
+      : undefined;
+  const rows = (Array.isArray(listed) ? listed : []).filter(isRecord);
   rows.sort(
-    (x, y) => Date.parse(y.createdAt ?? "") - Date.parse(x.createdAt ?? ""),
+    (x, y) =>
+      Date.parse(text(y.createdAt) ?? "") - Date.parse(text(x.createdAt) ?? ""),
   );
   console.log(`\n${rows.length} payouts. Newest 8:`);
   for (const p of rows.slice(0, 8)) {
     console.log(
-      `  ${p.createdAt?.slice(0, 10)}  ${String(p.totalAmount).padStart(9)}  ${p.settlementType}  ${p.uuid}`,
+      `  ${text(p.createdAt)?.slice(0, 10)}  ${String(p.totalAmount).padStart(9)}  ${String(p.settlementType)}  ${String(p.uuid)}`,
     );
   }
-  const first = rows[0];
-  if (!first?.uuid) {
+  const firstUuid = rows[0] ? text(rows[0].uuid) : undefined;
+  if (!firstUuid) {
     console.log("\nNo payouts returned — nothing more to check.");
     return;
   }
 
-  const exportUrl = `${base}/stores/${storeUuid}/payouts/${first.uuid}/export-json`;
+  const exportUrl = `${base}/stores/${storeUuid}/payouts/${firstUuid}/export-json`;
   console.log(`\nGET ${exportUrl}`);
   const exp = await hit(exportUrl);
   console.log("  status:", exp.status, exp.ok ? "OK" : "FAIL");
 
-  const file = (exp.body as { url?: string })?.url;
+  const file = isRecord(exp.body) ? text(exp.body.url) : undefined;
   if (file) {
     const fres = await fetch(file);
     const ftext = await fres.text();
@@ -104,9 +107,12 @@ async function main() {
     } catch {
       /* text */
     }
+    const orders = isRecord(fbody) ? fbody.orders : undefined;
     const orderRows = Array.isArray(fbody)
       ? fbody
-      : ((fbody as { orders?: unknown[] })?.orders ?? []);
+      : Array.isArray(orders)
+        ? orders
+        : [];
     console.log(`  → file ${fres.status}, ${orderRows.length} order rows`);
     console.log(
       "  first 2:",

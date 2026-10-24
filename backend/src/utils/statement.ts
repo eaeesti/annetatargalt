@@ -291,7 +291,7 @@ export function classifyCreditLine(ctx: {
   alreadyLinked: boolean;
   /** current bank_transactions category, if any */
   existingCategory: string | undefined;
-}): { category: BankRowCategory; reclassify: boolean } {
+}): { category: BankRowCategory | "outgoing"; reclassify: boolean } {
   if (ctx.ignoredNow) return { category: "ignored", reclassify: true };
 
   if (ctx.explicitDonation || ctx.cardAssignedNow || ctx.alreadyLinked) {
@@ -311,19 +311,19 @@ export function classifyCreditLine(ctx: {
     };
   }
 
-  const e = ctx.existingCategory;
-  if (e && e !== "unimported" && e !== "undecided") {
-    // a settled decision must not be reclassified by a heuristic on re-upload
-    return { category: e as BankRowCategory, reclassify: false };
-  }
+  // a settled decision must not be reclassified by a heuristic on re-upload
+  const settled = SETTLED_CATEGORIES.find(
+    (c) => c === ctx.existingCategory && c !== "undecided",
+  );
+  if (settled) return { category: settled, reclassify: false };
   return {
     category: ctx.isCardPayout ? "card-payout" : "undecided",
     reclassify: false,
   };
 }
 
-/** Categories a debit line keeps when a statement is imported again. */
-const KEPT_DEBIT_CATEGORIES: (BankRowCategory | "outgoing")[] = [
+/** Categories a line keeps when a statement is imported again. */
+const SETTLED_CATEGORIES: (BankRowCategory | "outgoing")[] = [
   "outgoing",
   "ignored",
   "undecided",
@@ -339,9 +339,7 @@ const KEPT_DEBIT_CATEGORIES: (BankRowCategory | "outgoing")[] = [
 export function classifyDebitLine(
   existingCategory: string | undefined,
 ): BankRowCategory | "outgoing" {
-  return (
-    KEPT_DEBIT_CATEGORIES.find((c) => c === existingCategory) ?? "outgoing"
-  );
+  return SETTLED_CATEGORIES.find((c) => c === existingCategory) ?? "outgoing";
 }
 
 // ─── Categoriser ─────────────────────────────────────────────────────────────

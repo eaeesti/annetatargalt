@@ -29,6 +29,8 @@ vi.mock("@strapi/strapi", () => ({
 const { default: controllerFactory } = await import("../contact-submission");
 
 function fakeCtx(body: Record<string, unknown>) {
+  // A test double for Koa's context, which can't be built whole in a test.
+  // oxlint-disable-next-line typescript/consistent-type-assertions
   return {
     request: { body, ip: "203.0.113.7" },
     send: vi.fn((data: unknown, status?: number) => ({ data, status })),

@@ -22,7 +22,7 @@ These apply to all three apps.
 
 - Never use `any` or `as any` — use `unknown` and narrow the type, or define a proper interface.
 - Never use `!` (non-null assertion) — always handle nulls explicitly with a guard or fallback.
-- Don't use `== null` to check for null/undefined — use truthiness or `typeof x === "number"` etc.
+- Don't use `== null` (or any `==`/`!=`) to check for null/undefined — use truthiness or `typeof x === "number"` etc. oxlint's `eqeqeq` enforces it.
 - Use camelCase for variable names.
 - **Let TypeScript infer types** — avoid explicit type annotations where the type is already inferrable. Arrow function parameters especially should not have explicit types when inferable from context:
   ```ts
@@ -32,5 +32,7 @@ These apply to all three apps.
   people.every((p: Person) => p.name === name);
   ```
 - If you find yourself needing to annotate a callback parameter, that's a signal the source data structure lacks proper typing — fix the source type instead.
-- Avoid `as SomeType` assertions broadly, not just `as any` — they silence the compiler the same way. Prefer type guards or narrowing.
+- No `as SomeType` assertions, not just `as any` — they silence the compiler the same way. Prefer type guards or narrowing. oxlint enforces this (`as const` is fine; generated shadcn components are exempt).
+- Data from outside — request bodies, query strings, other services' replies, browser storage — is read as `unknown` and checked before use (`backend/src/utils/narrow.ts` has `isRecord` and `oneOf`).
+- Data from our own systems is typed in one place per app, instead of a cast at every call: `readJson` (admin, for our backend's JSON), `fetchAPI` / `readStrapiJson` (frontend, for Strapi), and in the backend Drizzle's `execute<Row>()` for raw SQL and `src/strapi-internals.ts` for Strapi's own tables and services.
 - `Object.keys(obj)` returns `string[]`, not `(keyof typeof obj)[]` — cast explicitly or restructure to avoid the issue.

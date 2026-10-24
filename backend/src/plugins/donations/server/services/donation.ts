@@ -4,7 +4,8 @@ import {
   validateEmail,
   validateAmount,
 } from "../../../../utils/donation";
-import { createRecurringPaymentLink, type Bank } from "../../../../utils/banks";
+import { BANKS, createRecurringPaymentLink } from "../../../../utils/banks";
+import { oneOf } from "../../../../utils/narrow";
 import montonio from "../../../../utils/montonio";
 import { formatAmount, withCurrency } from "../../../../utils/money";
 import {
@@ -69,24 +70,16 @@ type EmailTemplate = {
   html?: string | null;
 };
 
+/** The email plugin, which Strapi types loosely, with the one method used here. */
 function emailService(strapi: Core.Strapi) {
-  return (
-    strapi as unknown as {
-      plugins: {
-        email: {
-          services: {
-            email: {
-              sendTemplatedEmail(
-                recipient: EmailRecipient,
-                template: EmailTemplate,
-                data: Record<string, unknown>,
-              ): Promise<void>;
-            };
-          };
-        };
-      };
-    }
-  ).plugins.email.services.email;
+  const service = strapi.plugin("email").service("email");
+  return {
+    sendTemplatedEmail: (
+      recipient: EmailRecipient,
+      template: EmailTemplate,
+      data: Record<string, unknown>,
+    ): Promise<void> => service.sendTemplatedEmail(recipient, template, data),
+  };
 }
 
 /**
@@ -523,18 +516,19 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         ? donationInfo.externalRecurringPaymentComment
         : donationInfo.recurringPaymentComment) ?? "";
 
-    const recurringPaymentLink =
-      donation.bank === "other" || !donation.bank
-        ? ""
-        : createRecurringPaymentLink(
-            donation.bank as Bank,
-            {
-              iban: donationInfo.iban ?? "",
-              recipient: donationInfo.recipient ?? "",
-              description,
-            },
-            donation.amount / 100,
-          );
+    // "other", or no bank, has no standing-order link
+    const bank = oneOf(donation.bank, BANKS);
+    const recurringPaymentLink = !bank
+      ? ""
+      : createRecurringPaymentLink(
+          bank,
+          {
+            iban: donationInfo.iban ?? "",
+            recipient: donationInfo.recipient ?? "",
+            description,
+          },
+          donation.amount / 100,
+        );
 
     setTimeout(
       () => {
@@ -820,9 +814,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       })
     ).map((organization) => ({
       ...organization,
-      cause: organization.cause
-        ? (organization.cause as { id: number }).id
-        : null,
+      cause: organization.cause ? organization.cause.id : null,
     }));
 
     const donors = await donorsRepository.findAll();
@@ -860,15 +852,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     }));
 
     const donationTransfers = (
-      await donationTransfersRepository.findAll({ withDonations: true })
+      await donationTransfersRepository.findAllWithDonations()
     ).map((donationTransfer) => ({
       ...donationTransfer,
-      donations:
-        (
-          donationTransfer as typeof donationTransfer & {
-            donations?: Array<{ id: number }>;
-          }
-        ).donations?.map((donation) => donation.id) || [],
+      donations: donationTransfer.donations.map((donation) => donation.id),
     }));
 
     return {

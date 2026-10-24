@@ -1,5 +1,6 @@
 import { eq, sql } from "drizzle-orm";
 import { db } from "../../../../db/client";
+import { strapiTable } from "../../../../strapi-internals";
 import {
   organizationDonations,
   organizationRecurringDonations,
@@ -39,32 +40,31 @@ interface LifecycleEvent {
   params: { where: Record<string, unknown> };
 }
 
+/**
+ * The organization rows a delete is about to remove. A lifecycle's `where`
+ * is the database's own (usually a row id), so the rows are looked up in the
+ * database too.
+ */
+function organizationsBeingDeleted(event: LifecycleEvent) {
+  return strapiTable<{ internalId: string | null }>(
+    strapi,
+    "api::organization.organization",
+  ).findMany({ where: event.params.where, select: ["internalId"] });
+}
+
 export default {
   async beforeDelete(event: LifecycleEvent) {
-    const organization = await strapi
-      .documents("api::organization.organization")
-      .findOne({
-        documentId: (event.params.where.documentId ||
-          event.params.where.id) as string,
-        fields: ["internalId"],
-      });
-
-    if (organization?.internalId) {
-      await guardAgainstDelete(organization.internalId);
+    for (const organization of await organizationsBeingDeleted(event)) {
+      if (organization.internalId) {
+        await guardAgainstDelete(organization.internalId);
+      }
     }
   },
 
   async beforeDeleteMany(event: LifecycleEvent) {
-    const organizations = await strapi
-      .documents("api::organization.organization")
-      .findMany({
-        filters: event.params.where as Record<string, unknown>,
-        fields: ["internalId"],
-      });
-
-    for (const org of organizations) {
-      if (org.internalId) {
-        await guardAgainstDelete(org.internalId);
+    for (const organization of await organizationsBeingDeleted(event)) {
+      if (organization.internalId) {
+        await guardAgainstDelete(organization.internalId);
       }
     }
   },

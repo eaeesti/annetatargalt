@@ -25,8 +25,10 @@ import {
 import {
   parseLhvCsv,
   type BankTransaction,
+  type MatchSource,
   type ReconcilableDonation,
 } from "../../../../utils/reconciliation";
+import { isRecord, oneOf } from "../../../../utils/narrow";
 import {
   categorizeStatement,
   parsePayoutUuidPrefix,
@@ -137,8 +139,17 @@ async function resolveCardPayouts(
 }
 
 export interface ApplyPayload {
-  reconcile: { donationId: number; archivingCode: string; source: string }[];
-  recurringImports: RecurringImport[];
+  reconcile: {
+    donationId: number;
+    archivingCode: string;
+    source: MatchSource;
+  }[];
+  /** a preview's recurring import: apply plans it again from the database */
+  recurringImports: {
+    transaction: BankTransaction;
+    donorId: number;
+    templateId?: number;
+  }[];
   /** operator pointed a "needs a decision" line at a donor → create from template */
   manualRecurring: { transaction: BankTransaction; donorId: number }[];
   /** persist "this sender code is this donor" so future imports auto-resolve */
@@ -149,16 +160,160 @@ export interface ApplyPayload {
   }[];
   cardPayoutAssignments: { donationId: number; archivingCode: string }[];
   /** per card-payout code: totals echoed from preview (or a manual fee) */
-  cardPayouts?: {
+  cardPayouts: {
     archivingCode: string;
-    grossCents?: number | null;
-    feeCents?: number | null;
+    grossCents: number | null;
+    feeCents: number | null;
   }[];
   ignore: { archivingCode: string; reason?: string | null }[];
   /** every credit line in the statement — persisted as bank_transactions rows */
   allCredits: BankTransaction[];
   /** every debit line — persisted as `outgoing` bank_transactions rows */
-  allDebits?: BankTransaction[];
+  allDebits: BankTransaction[];
+}
+
+// ── reading the apply request ───────────────────────────────────────────────
+// Apply trusts nothing the browser sends back from the preview: each part is
+// checked here, and a malformed one throws, which the controller answers with
+// a 400 that says what was wrong.
+
+const CODE_RE = /^[A-Za-z0-9_-]{1,20}$/;
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}/;
+const MATCH_SOURCES: readonly MatchSource[] = [
+  "selgitus-id",
+  "idcode-amount-date",
+  "manual",
+  "recurring-import",
+  "card-payout",
+];
+
+const text = (v: unknown) => (typeof v === "string" ? v : "");
+
+/**
+ * A statement line as the browser echoes it back. Apply trusts the client
+ * for the bank-row metadata (date/amount/…) but not for which codes belong
+ * to the statement, and every string field is coerced so downstream code
+ * (looksLikeCardPayout, .slice) can't throw.
+ */
+function parseLine(t: unknown): BankTransaction {
+  const r: Record<string, unknown> = isRecord(t) ? t : {};
+  const code = text(r.archivingCode);
+  if (!CODE_RE.test(code)) {
+    throw new Error(
+      `Malformed statement line: bad archiving code ${JSON.stringify(r.archivingCode)}`,
+    );
+  }
+  const amountCents = r.amountCents;
+  if (typeof amountCents !== "number" || !Number.isFinite(amountCents)) {
+    throw new Error(
+      `Malformed statement line ${code}: non-numeric amount — re-analyse the statement and try again`,
+    );
+  }
+  const date = text(r.date);
+  if (date !== "" && !ISO_DATE_RE.test(date)) {
+    throw new Error(`Malformed statement line ${code}: bad date`);
+  }
+  return {
+    archivingCode: code,
+    entryReference: text(r.entryReference),
+    amountCents,
+    date: date.slice(0, 10),
+    description: text(r.description),
+    counterpartyName: text(r.counterpartyName),
+    counterpartyAccount: text(r.counterpartyAccount),
+    idOrRegCode: text(r.idOrRegCode),
+    direction: r.direction === "D" ? "D" : "C",
+  };
+}
+
+/** The objects in the request's list `key`; none if it's left out. */
+function items(
+  body: Record<string, unknown>,
+  key: string,
+): Record<string, unknown>[] {
+  const value = body[key];
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value) || !value.every(isRecord)) {
+    throw new Error(`Malformed request: ${key} must be a list of objects`);
+  }
+  return value;
+}
+
+/** A whole number the request must give, like a donation id. */
+function wholeNumber(
+  item: Record<string, unknown>,
+  key: string,
+  list: string,
+): number {
+  const value = item[key];
+  if (typeof value !== "number" || !Number.isInteger(value)) {
+    throw new Error(
+      `Malformed request: each of ${list} needs a whole-number ${key}`,
+    );
+  }
+  return value;
+}
+
+const numberOrNull = (v: unknown) =>
+  typeof v === "number" && Number.isFinite(v) ? v : null;
+
+/** The apply request, checked. */
+export function parseApplyPayload(raw: unknown): ApplyPayload {
+  const body: Record<string, unknown> = isRecord(raw) ? raw : {};
+  const lines = (key: string) => {
+    const value = body[key];
+    if (value === undefined || value === null) return [];
+    if (!Array.isArray(value)) {
+      throw new Error(`Malformed request: ${key} must be a list`);
+    }
+    return value.map(parseLine);
+  };
+  return {
+    reconcile: items(body, "reconcile").map((r) => ({
+      donationId: wholeNumber(r, "donationId", "reconcile"),
+      archivingCode: text(r.archivingCode),
+      source: oneOf(r.source, MATCH_SOURCES) ?? "manual",
+    })),
+    recurringImports: items(body, "recurringImports").map((i) => ({
+      transaction: parseLine(i.transaction),
+      donorId: wholeNumber(i, "donorId", "recurringImports"),
+      templateId: typeof i.templateId === "number" ? i.templateId : undefined,
+    })),
+    manualRecurring: items(body, "manualRecurring").map((m) => ({
+      transaction: parseLine(m.transaction),
+      donorId: wholeNumber(m, "donorId", "manualRecurring"),
+    })),
+    // one that can't be remembered is left out, not an error
+    rememberSenders: items(body, "rememberSenders").flatMap((s) =>
+      typeof s.senderCode === "string" &&
+      s.senderCode !== "" &&
+      typeof s.donorId === "number" &&
+      Number.isInteger(s.donorId)
+        ? [
+            {
+              senderCode: s.senderCode,
+              donorId: s.donorId,
+              note: typeof s.note === "string" ? s.note : null,
+            },
+          ]
+        : [],
+    ),
+    cardPayoutAssignments: items(body, "cardPayoutAssignments").map((a) => ({
+      donationId: wholeNumber(a, "donationId", "cardPayoutAssignments"),
+      archivingCode: text(a.archivingCode),
+    })),
+    cardPayouts: items(body, "cardPayouts").map((c) => ({
+      archivingCode: text(c.archivingCode),
+      grossCents: numberOrNull(c.grossCents),
+      feeCents: numberOrNull(c.feeCents),
+    })),
+    ignore: items(body, "ignore").map((i) => ({
+      archivingCode: text(i.archivingCode),
+      reason: typeof i.reason === "string" ? i.reason : null,
+    })),
+    allCredits: lines("allCredits"),
+    allDebits: lines("allDebits"),
+  };
 }
 
 interface DonorTemplateIndex {
@@ -251,11 +406,11 @@ function planFromTemplateIndex(
   // honour the client's template choice only if it's this donor's AND it also
   // predates the payment; otherwise fall back to the date-selected one
   const preferred =
-    preferredTemplateId != null
+    preferredTemplateId !== undefined
       ? templates.find(
           (t) =>
             t.id === preferredTemplateId &&
-            dated != null &&
+            dated !== null &&
             Date.parse(t.datetime) <= Date.parse(dated.datetime) + 1,
         )
       : undefined;
@@ -277,10 +432,7 @@ export function createStatementService(strapi: Core.Strapi) {
     await Promise.all(
       unique.map(async (id) => {
         const org = await orgResolver.findByInternalId(id);
-        out[id] =
-          (org as { title?: string; name?: string } | null)?.title ??
-          (org as { name?: string } | null)?.name ??
-          id;
+        out[id] = org?.title ?? id;
       }),
     );
     return out;
@@ -365,7 +517,8 @@ export function createStatementService(strapi: Core.Strapi) {
       };
     },
 
-    async apply(payload: ApplyPayload, userEmail: string) {
+    async apply(request: unknown, userEmail: string) {
+      const payload = parseApplyPayload(request);
       const summary = {
         reconciled: 0,
         created: 0,
@@ -375,43 +528,8 @@ export function createStatementService(strapi: Core.Strapi) {
         payoutFeesDerived: 0,
       };
 
-      // ── validate + normalize the echoed statement lines ─────────────────
-      // apply trusts the client for the bank-row metadata (date/amount/…) but
-      // not for which codes belong to the statement, and every string field is
-      // coerced so downstream code (looksLikeCardPayout, .slice) can't throw.
-      const CODE_RE = /^[A-Za-z0-9_-]{1,20}$/;
-      const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}/;
-      const normalizeLine = (t: unknown): BankTransaction => {
-        const r = (t ?? {}) as Record<string, unknown>;
-        const str = (v: unknown) => (typeof v === "string" ? v : "");
-        const code = str(r.archivingCode);
-        if (!CODE_RE.test(code)) {
-          throw new Error(
-            `Malformed statement line: bad archiving code ${JSON.stringify(r.archivingCode)}`,
-          );
-        }
-        if (!Number.isFinite(r.amountCents)) {
-          throw new Error(
-            `Malformed statement line ${code}: non-numeric amount — re-analyse the statement and try again`,
-          );
-        }
-        if (str(r.date) !== "" && !ISO_DATE_RE.test(str(r.date))) {
-          throw new Error(`Malformed statement line ${code}: bad date`);
-        }
-        return {
-          archivingCode: code,
-          entryReference: str(r.entryReference),
-          amountCents: r.amountCents as number,
-          date: str(r.date).slice(0, 10),
-          description: str(r.description),
-          counterpartyName: str(r.counterpartyName),
-          counterpartyAccount: str(r.counterpartyAccount),
-          idOrRegCode: str(r.idOrRegCode),
-          direction: r.direction === "D" ? "D" : "C",
-        };
-      };
-      const creditLines = (payload.allCredits ?? []).map(normalizeLine);
-      const debitLines = (payload.allDebits ?? []).map(normalizeLine);
+      const creditLines = payload.allCredits;
+      const debitLines = payload.allDebits;
       const statementCodes = new Set(
         [...creditLines, ...debitLines].map((t) => t.archivingCode),
       );
@@ -419,17 +537,13 @@ export function createStatementService(strapi: Core.Strapi) {
         ...(payload.reconcile ?? []).map((r) => r.archivingCode),
         ...(payload.cardPayoutAssignments ?? []).map((a) => a.archivingCode),
         ...(payload.ignore ?? []).map((i) => i.archivingCode),
-        ...(payload.recurringImports ?? []).map(
-          (i) => i.transaction?.archivingCode,
-        ),
-        ...(payload.manualRecurring ?? []).map(
-          (m) => m.transaction?.archivingCode,
-        ),
+        ...payload.recurringImports.map((i) => i.transaction.archivingCode),
+        ...payload.manualRecurring.map((m) => m.transaction.archivingCode),
       ];
       for (const code of actionCodes) {
         if (!code || !statementCodes.has(code)) {
           throw new Error(
-            `Code ${code ?? "(missing)"} is not a line in the uploaded statement — re-analyse and try again`,
+            `Code ${code || "(missing)"} is not a line in the uploaded statement — re-analyse and try again`,
           );
         }
       }
@@ -517,7 +631,7 @@ export function createStatementService(strapi: Core.Strapi) {
         const grossAmountCents =
           category === "card-payout"
             ? (cp?.grossCents ??
-              (feeAmountCents != null
+              (feeAmountCents !== null
                 ? txn.amountCents + feeAmountCents
                 : null))
             : null;
@@ -592,7 +706,7 @@ export function createStatementService(strapi: Core.Strapi) {
         );
         for (const [code, donationIds] of assignmentsByCode) {
           const feeCents = persistedFeeByCode.get(code);
-          if (feeCents == null || feeCents === 0) continue;
+          if (!feeCents) continue;
           const payoutGross = persistedGrossByCode.get(code);
           const grossByThisDonation = donationIds.map(
             (id) => grossById.get(id) ?? 0,
@@ -654,7 +768,7 @@ export function createStatementService(strapi: Core.Strapi) {
           const ok = await donationsRepo.setTransactionId(
             r.donationId,
             r.archivingCode,
-            (r.source as never) || "manual",
+            r.source,
           );
           if (!ok) throw new Error(`Donation #${r.donationId} not found`);
           summary.reconciled++;
@@ -667,7 +781,7 @@ export function createStatementService(strapi: Core.Strapi) {
           );
           if (!ok) throw new Error(`Donation #${a.donationId} not found`);
           const fee = donationFee.get(a.donationId);
-          if (fee != null)
+          if (fee !== undefined)
             await donationsRepo.setProcessorFee(a.donationId, fee);
           summary.reconciled++;
         }
@@ -701,14 +815,12 @@ export function createStatementService(strapi: Core.Strapi) {
         }
 
         await aliasRepo.add(
-          (payload.rememberSenders ?? [])
-            .filter((s) => s.senderCode && Number.isInteger(s.donorId))
-            .map((s) => ({
-              senderCode: s.senderCode,
-              donorId: s.donorId,
-              note: s.note ?? null,
-              createdBy: userEmail,
-            })),
+          payload.rememberSenders.map((s) => ({
+            senderCode: s.senderCode,
+            donorId: s.donorId,
+            note: s.note ?? null,
+            createdBy: userEmail,
+          })),
         );
       });
 
