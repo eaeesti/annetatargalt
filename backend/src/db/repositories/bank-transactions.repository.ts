@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, ne, sql } from "drizzle-orm";
 import { db, type Database } from "../client";
 import { bankTransactions, type BankTransaction } from "../schema";
 import { cardFeeDeductionSql } from "./donation-transfers.repository";
@@ -197,6 +197,24 @@ export class BankTransactionsRepository {
       .select({ code: bankTransactions.archivingCode })
       .from(bankTransactions)
       .where(eq(bankTransactions.category, "unimported"));
+    return new Set(rows.map((r) => r.code));
+  }
+
+  /**
+   * Codes recorded before lines kept whether money came in or went out, so an
+   * import of their statement fills it in. Migration stubs are left out: an
+   * import records those in full anyway.
+   */
+  async undirectedCodes(): Promise<Set<string>> {
+    const rows = await this.database
+      .select({ code: bankTransactions.archivingCode })
+      .from(bankTransactions)
+      .where(
+        and(
+          isNull(bankTransactions.direction),
+          ne(bankTransactions.category, "unimported"),
+        ),
+      );
     return new Set(rows.map((r) => r.code));
   }
 

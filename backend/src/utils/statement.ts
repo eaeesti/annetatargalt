@@ -51,6 +51,8 @@ export interface StatementInput {
   recordedCodes?: Set<string>;
   /** codes still `category = 'unimported'` (migration stubs to be overwritten) */
   unimportedCodes?: Set<string>;
+  /** codes recorded before lines kept whether money came in or went out */
+  undirectedCodes?: Set<string>;
   /** idCode OR company code → that donor and their templates (newest first) */
   donorsByCode: Map<string, DonorTemplates>;
 }
@@ -101,7 +103,7 @@ export interface StatementReport {
   notImported: { transaction: BankTransaction; reason: string }[];
   /** every credit line with an archiving code, deduped — persisted as bank_transactions rows on apply */
   allCredits: BankTransaction[];
-  /** every debit line with an archiving code, deduped — persisted as `outgoing` rows on apply */
+  /** every debit line with an archiving code, deduped — persisted on apply, as `outgoing` when new */
   allDebits: BankTransaction[];
   counts: {
     creditTransactions: number;
@@ -109,7 +111,9 @@ export interface StatementReport {
     ignored: number;
     /** credit + debit lines whose code is not yet in bank_transactions (recorded on apply) */
     unrecorded: number;
-    /** debit lines with a code (all recorded as `outgoing`) */
+    /** recorded lines with no direction yet — apply fills it in */
+    undirected: number;
+    /** debit lines with a code */
     outgoing: number;
     /** CSV lines that can't be placed (codeless credits, no D/C marker) */
     notImported: number;
@@ -318,6 +322,28 @@ export function classifyCreditLine(ctx: {
   };
 }
 
+/** Categories a debit line keeps when a statement is imported again. */
+const KEPT_DEBIT_CATEGORIES: (BankRowCategory | "outgoing")[] = [
+  "outgoing",
+  "ignored",
+  "undecided",
+  "donation",
+  "card-payout",
+];
+
+/**
+ * Decide the `bank_transactions` category for one debit line on apply. A new
+ * line (or a migration stub) is `outgoing`; a line someone already gave a
+ * category keeps it, so importing a statement again never undoes a decision.
+ */
+export function classifyDebitLine(
+  existingCategory: string | undefined,
+): BankRowCategory | "outgoing" {
+  return (
+    KEPT_DEBIT_CATEGORIES.find((c) => c === existingCategory) ?? "outgoing"
+  );
+}
+
 // ─── Categoriser ─────────────────────────────────────────────────────────────
 
 export function categorizeStatement(input: StatementInput): StatementReport {
@@ -365,6 +391,7 @@ export function categorizeStatement(input: StatementInput): StatementReport {
 
   const recordedCodes = input.recordedCodes ?? new Set<string>();
   const unimportedCodes = input.unimportedCodes ?? new Set<string>();
+  const undirectedCodes = input.undirectedCodes ?? new Set<string>();
 
   const report: StatementReport = {
     reconcile: [],
@@ -385,6 +412,12 @@ export function categorizeStatement(input: StatementInput): StatementReport {
         (t) =>
           !recordedCodes.has(t.archivingCode) ||
           unimportedCodes.has(t.archivingCode),
+      ).length,
+      // already recorded, and written again only to say money in or out
+      undirected: [...allCredits, ...allDebits].filter(
+        (t) =>
+          undirectedCodes.has(t.archivingCode) &&
+          !unimportedCodes.has(t.archivingCode),
       ).length,
       outgoing: allDebits.length,
       notImported: notImported.length,
