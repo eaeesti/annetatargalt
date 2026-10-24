@@ -2,18 +2,27 @@ import Button from "../elements/Button";
 import Image from "../elements/Image";
 import type { StrapiHeroSection } from "@/types/generated/strapi";
 
+/** Which part of the image stays in view when the hero crops it. */
+const POSITIONS = {
+  top: "object-top",
+  upper: "object-[center_25%]",
+  center: "object-center",
+  lower: "object-[center_75%]",
+  bottom: "object-bottom",
+} as const;
+
 export default function HeroSection({
   title,
   subtitle,
   buttons,
   image,
-  mobileImage,
+  imagePosition,
 }: StrapiHeroSection) {
   return (
     <header className="relative h-224 max-h-[90vh] min-h-160 xl:h-[90vh] xl:max-h-384 xl:min-h-176">
       <Image
         data={image}
-        className="absolute inset-0 -z-10 h-full w-full object-cover object-[center_75%]"
+        className={`absolute inset-0 -z-10 h-full w-full object-cover ${POSITIONS[imagePosition ?? "lower"]}`}
         priority
       />
       <div className="absolute inset-0 -z-10 h-full bg-primary-950/70"></div>
