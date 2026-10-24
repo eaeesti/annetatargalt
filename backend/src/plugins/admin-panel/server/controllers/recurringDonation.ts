@@ -2,6 +2,7 @@ import type { Core } from "@strapi/strapi";
 import type { Context } from "koa";
 import { recurringDonationsRepository } from "../../../../db/repositories/recurring-donations.repository";
 import { auditLog } from "../utils/audit-log";
+import { EXPORT_ROW_LIMIT, isExport } from "../utils/export";
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
 const VALID_SORT_COLS = new Set([
@@ -17,10 +18,15 @@ const VALID_SORT_COLS = new Set([
 export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
   async list(ctx: Context) {
     const q = ctx.request.query;
+    const exporting = isExport(q);
 
-    const page = Math.max(1, Number(q.page ?? 1));
+    const page = exporting ? 1 : Math.max(1, Number(q.page ?? 1));
     const pageSizeRaw = Number(q.pageSize ?? 50);
-    const pageSize = VALID_PAGE_SIZES.includes(pageSizeRaw) ? pageSizeRaw : 50;
+    const pageSize = exporting
+      ? EXPORT_ROW_LIMIT
+      : VALID_PAGE_SIZES.includes(pageSizeRaw)
+        ? pageSizeRaw
+        : 50;
     const sortByRaw = String(q.sortBy ?? "id");
     const sortBy = VALID_SORT_COLS.has(sortByRaw) ? sortByRaw : "id";
     const sortDir = q.sortDir === "desc" ? ("desc" as const) : ("asc" as const);
@@ -32,7 +38,11 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
       sortDir,
     });
 
-    await auditLog(ctx, "recurringDonations.list");
+    await auditLog(
+      ctx,
+      exporting ? "recurringDonations.export" : "recurringDonations.list",
+      exporting ? `${data.length} rows` : undefined,
+    );
 
     return ctx.send({
       data,
