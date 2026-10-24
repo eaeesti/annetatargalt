@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Fragment, useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { ExportCsvButton } from "../../../../components/export-csv-button";
 import { Button } from "../../../../components/ui/button";
 import { Badge } from "../../../../components/ui/badge";
 import { Input } from "../../../../components/ui/input";
@@ -287,6 +288,11 @@ export function TransactionsTable({
         <p className="ml-auto text-sm text-muted-foreground">
           {pagination.total.toLocaleString()} lines
         </p>
+        <ExportCsvButton
+          table="transactions"
+          sortBy={sortBy}
+          sortDir={sortDir}
+        />
       </div>
 
       <div className="overflow-hidden rounded-md border bg-background">

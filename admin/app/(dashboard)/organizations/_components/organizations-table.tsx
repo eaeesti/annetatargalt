@@ -22,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "../../../../components/ui/table";
+import { ExportCsvButton } from "../../../../components/export-csv-button";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -301,6 +302,9 @@ export function OrganizationsTable({ data }: { data: OrganizationRow[] }) {
         <p className="text-sm text-muted-foreground">
           {data.length.toLocaleString()} organizations
         </p>
+        <div className="ml-auto">
+          <ExportCsvButton table="organizations" />
+        </div>
       </div>
 
       {/* Table */}

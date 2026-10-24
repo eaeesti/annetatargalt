@@ -14,6 +14,7 @@ import {
   RecurringStatusBadge,
   type RecurringDonationStatus,
 } from "../../../../components/recurring-status-badge";
+import { ExportCsvButton } from "../../../../components/export-csv-button";
 import { Button } from "../../../../components/ui/button";
 import { EntityLink } from "../../../../components/entity-link";
 import { donorHref } from "../../../../lib/entity-links";
@@ -226,9 +227,16 @@ export function RecurringDonationsTable({
   return (
     <div className="space-y-4">
       {/* Toolbar */}
-      <p className="text-sm text-muted-foreground">
-        {pagination.total.toLocaleString()} recurring donations
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground">
+          {pagination.total.toLocaleString()} recurring donations
+        </p>
+        <ExportCsvButton
+          table="recurring-donations"
+          sortBy={sortBy}
+          sortDir={sortDir}
+        />
+      </div>
 
       {/* Table */}
       <div className="overflow-hidden rounded-md border bg-background">
