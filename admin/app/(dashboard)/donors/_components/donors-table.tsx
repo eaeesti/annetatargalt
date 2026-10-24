@@ -11,6 +11,7 @@ import {
 } from "@tanstack/react-table";
 import { SortIcon } from "../../../../components/sort-icon";
 import { Badge } from "../../../../components/ui/badge";
+import { ExportCsvButton } from "../../../../components/export-csv-button";
 import { Button } from "../../../../components/ui/button";
 import {
   FilterBuilder,
@@ -259,6 +260,9 @@ export function DonorsTable({
           params={filterParams}
           onChange={pushUrl}
         />
+        <div className="ml-auto">
+          <ExportCsvButton table="donors" sortBy={sortBy} sortDir={sortDir} />
+        </div>
       </div>
 
       {/* Table */}

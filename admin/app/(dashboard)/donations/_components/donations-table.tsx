@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   type ColumnDef,
   type SortingState,
@@ -10,8 +10,10 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { Columns3 } from "lucide-react";
+import { ColumnPicker } from "../../../../components/column-picker";
+import { ExportCsvButton } from "../../../../components/export-csv-button";
 import { SortIcon } from "../../../../components/sort-icon";
+import { useSavedColumnVisibility } from "../../../../hooks/use-saved-column-visibility";
 import { Badge } from "../../../../components/ui/badge";
 import { Button } from "../../../../components/ui/button";
 import { donationStatus } from "../../../../lib/donation-status";
@@ -25,15 +27,6 @@ import {
   FilterBuilder,
   type FilterDef,
 } from "../../../../components/filter-builder";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "../../../../components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -117,6 +110,15 @@ interface DonationsTableProps {
 
 const PAGE_SIZES = [25, 50, 100, 250] as const;
 
+const DEFAULT_COLUMNS: VisibilityState = {
+  organizations: false,
+  paymentMethod: false,
+  companyName: false,
+  companyCode: false,
+  transactionId: false,
+  donationTransfer: false,
+};
+
 export function DonationsTable({
   data,
   pagination,
@@ -128,14 +130,12 @@ export function DonationsTable({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
-    organizations: false,
-    paymentMethod: false,
-    companyName: false,
-    companyCode: false,
-    transactionId: false,
-    donationTransfer: false,
-  });
+  const {
+    columnVisibility,
+    onColumnVisibilityChange,
+    resetColumnVisibility,
+    isDefault,
+  } = useSavedColumnVisibility("donations", DEFAULT_COLUMNS);
 
   function pushUrl(updates: Record<string, string | undefined>) {
     const sp = new URLSearchParams(window.location.search);
@@ -366,7 +366,7 @@ export function DonationsTable({
     manualSorting: true,
     pageCount: pagination.pageCount,
     state: { sorting, columnVisibility },
-    onColumnVisibilityChange: setColumnVisibility,
+    onColumnVisibilityChange,
   });
 
   const columnLabels: Record<string, string> = {
@@ -474,31 +474,19 @@ export function DonationsTable({
             onChange={pushUrl}
           />
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button variant="outline" size="sm">
-                <Columns3 className="mr-1.5 h-4 w-4" />
-                Columns
-              </Button>
-            }
+        <div className="flex flex-wrap items-center gap-2">
+          <ExportCsvButton
+            table="donations"
+            sortBy={sortBy}
+            sortDir={sortDir}
           />
-          <DropdownMenuContent align="end" className="w-44">
-            <DropdownMenuGroup>
-              <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {table.getAllColumns().map((col) => (
-                <DropdownMenuCheckboxItem
-                  key={col.id}
-                  checked={col.getIsVisible()}
-                  onCheckedChange={(val) => col.toggleVisibility(!!val)}
-                >
-                  {columnLabels[col.id] ?? col.id}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          <ColumnPicker
+            table={table}
+            labels={columnLabels}
+            isDefault={isDefault}
+            onReset={resetColumnVisibility}
+          />
+        </div>
       </div>
 
       {/* Table */}
