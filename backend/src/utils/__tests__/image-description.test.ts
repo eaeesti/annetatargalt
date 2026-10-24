@@ -6,6 +6,7 @@ const SCHEMAS: Record<string, Schema> = {
     attributes: {
       title: { type: "string" },
       image: { type: "component", component: "elements.image" },
+      metadata: { type: "component", component: "meta.metadata" },
       sections: {
         type: "dynamiczone",
         components: ["sections.power-section", "sections.text-section"],
@@ -28,6 +29,12 @@ const SCHEMAS: Record<string, Schema> = {
     },
   },
   "sections.text-section": { attributes: { text: { type: "richtext" } } },
+  "meta.metadata": {
+    attributes: {
+      title: { type: "string" },
+      shareImage: { type: "component", component: "elements.image" },
+    },
+  },
   "elements.image": {
     attributes: {
       file: { type: "media" },
@@ -77,6 +84,12 @@ describe("undescribedImages", () => {
         ],
       }),
     ).toEqual(["sections.1.columns.1.image"]);
+  });
+
+  it("lets a share image go without a description", () => {
+    expect(check({ metadata: { shareImage: { file: 3, alt: "" } } })).toEqual(
+      [],
+    );
   });
 
   it("only checks what the save contains", () => {

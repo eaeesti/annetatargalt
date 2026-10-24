@@ -8,6 +8,12 @@
 
 export const IMAGE_COMPONENT = "elements.image";
 
+/**
+ * Image fields whose description may stay empty. A share image's description
+ * only becomes the link preview's alt text, which most sites ignore.
+ */
+const DESCRIPTION_OPTIONAL = new Set(["meta.metadata.shareImage"]);
+
 export interface SchemaAttribute {
   type: string;
   component?: string;
@@ -44,10 +50,16 @@ export function undescribedImages(
   if (!schema || !isRecord(data)) return [];
 
   const found: string[] = [];
-  const visit = (componentUid: string, value: unknown, at: string[]) => {
+  const visit = (
+    componentUid: string,
+    value: unknown,
+    at: string[],
+    field: string,
+  ) => {
     if (!isRecord(value)) return;
     if (componentUid === IMAGE_COMPONENT) {
-      if (needsDescription(value)) found.push(at.join("."));
+      const optional = DESCRIPTION_OPTIONAL.has(`${uid}.${field}`);
+      if (!optional && needsDescription(value)) found.push(at.join("."));
     } else {
       found.push(...undescribedImages(schemaOf, componentUid, value, at));
     }
@@ -61,15 +73,15 @@ export function undescribedImages(
       const componentUid = attribute.component;
       if (Array.isArray(value)) {
         value.forEach((item, i) =>
-          visit(componentUid, item, [...path, name, String(i)]),
+          visit(componentUid, item, [...path, name, String(i)], name),
         );
       } else {
-        visit(componentUid, value, [...path, name]);
+        visit(componentUid, value, [...path, name], name);
       }
     } else if (attribute.type === "dynamiczone" && Array.isArray(value)) {
       value.forEach((item, i) => {
         if (isRecord(item) && typeof item.__component === "string") {
-          visit(item.__component, item, [...path, name, String(i)]);
+          visit(item.__component, item, [...path, name, String(i)], name);
         }
       });
     }
