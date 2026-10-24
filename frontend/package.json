@@ -8,7 +8,7 @@
     "name": "Andri Soone"
   },
   "scripts": {
-    "develop": "next dev",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "oxlint",

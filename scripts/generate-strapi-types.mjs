@@ -6,7 +6,7 @@
  * interfaces to frontend/src/types/generated/strapi.ts.
  *
  * Run manually:  node scripts/generate-strapi-types.mjs
- * Auto-runs via: predevelop / prebuild hooks in backend/package.json
+ * Auto-runs via: predev / prebuild hooks in backend/package.json
  */
 
 import { readFileSync, writeFileSync, readdirSync, mkdirSync } from "node:fs";

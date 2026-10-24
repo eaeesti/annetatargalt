@@ -69,7 +69,7 @@ Fill in your Postgres connection details in `.env`.
 
 ```
 pnpm build
-pnpm develop
+pnpm dev
 ```
 
 5\. Open `127.0.0.1:1337` and create your admin user.
@@ -93,7 +93,7 @@ The `frontend/.env` file is created automatically by the Strapi bootstrap on fir
 
 ### Admin panel
 
-The admin panel at `/admin` is a separate Next.js app running on port 3001. It is included in `pnpm develop` and requires no additional setup.
+The admin panel at `/admin` is a separate Next.js app running on port 3001. It is included in `pnpm dev` and requires no additional setup.
 
 Log in using your Strapi admin credentials. On first login, a users-permissions account is automatically provisioned for you.
 
@@ -102,7 +102,7 @@ Log in using your Strapi admin credentials. On first login, a users-permissions 
 From the repository root:
 
 ```
-pnpm develop
+pnpm dev
 ```
 
 This starts the frontend (port 3000), backend (port 1337), and admin panel (port 3001) concurrently.

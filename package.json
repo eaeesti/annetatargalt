@@ -8,7 +8,7 @@
   },
   "scripts": {
     "clear": "cd frontend && rm -rf .next && rm -rf cache",
-    "develop": "pnpm run clear && concurrently \"cd frontend && pnpm develop\" \"cd backend && pnpm develop\" \"cd admin && pnpm dev\"",
+    "dev": "pnpm run clear && concurrently \"cd frontend && pnpm dev\" \"cd backend && pnpm dev\" \"cd admin && pnpm dev\"",
     "install:frontend": "cd frontend && pnpm install",
     "install:backend": "cd backend && pnpm install",
     "install:admin": "cd admin && pnpm install",
