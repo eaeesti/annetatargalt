@@ -24,6 +24,15 @@ const isoDate = (v: unknown): string | undefined => {
     : s;
 };
 
+/** A euro amount from the query string, in cents; anything else is ignored. */
+function eurosToCents(value: unknown): number | undefined {
+  if (value === undefined || value === "") return undefined;
+  const euros = Number(value);
+  return Number.isFinite(euros) && euros >= 0
+    ? Math.round(euros * 100)
+    : undefined;
+}
+
 export default ({ strapi }: { strapi: Core.Strapi }) => {
   const service = createBankTransactionService(strapi);
 
@@ -57,6 +66,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
         dateFrom: isoDate(q.dateFrom),
         dateTo: isoDate(q.dateTo),
         search: q.search ? String(q.search).slice(0, 128) : undefined,
+        amountMin: eurosToCents(q.amountMin),
+        amountMax: eurosToCents(q.amountMax),
         balanced: VALID_BALANCED.has(String(q.balanced))
           ? (String(q.balanced) as "ok" | "not-ok" | "unknown")
           : undefined,
