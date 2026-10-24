@@ -2,9 +2,21 @@
 
 import { ThemeProvider } from "next-themes";
 
-export function Providers({ children }: { children: React.ReactNode }) {
+/** `nonce` lets the theme's inline script run under the CSP. */
+export function Providers({
+  nonce,
+  children,
+}: {
+  nonce: string | undefined;
+  children: React.ReactNode;
+}) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      nonce={nonce}
+    >
       {children}
     </ThemeProvider>
   );
