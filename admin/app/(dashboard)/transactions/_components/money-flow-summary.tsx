@@ -93,7 +93,7 @@ export function MoneyFlowSummary({ summary: s }: { summary: MoneyFlow }) {
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           <Figure label="Received (bank transfers)" value={eur(s.received)} />
           <Figure
-            label="Card payouts (net)"
+            label="Montonio payouts (net)"
             value={eur(s.cardPayoutNet)}
             hint={`gross ${eur(s.cardPayoutGross)}`}
           />

@@ -117,6 +117,7 @@ export function StatementImport() {
     reconciled: number;
     ignored: number;
     recorded: number;
+    payoutFeesDerived: number;
   } | null>(null);
 
   // selections
@@ -339,7 +340,14 @@ export function StatementImport() {
           Applied: <strong>{result.created}</strong> donations created,{" "}
           <strong>{result.reconciled}</strong> reconciled,{" "}
           <strong>{result.ignored}</strong> ignored,{" "}
-          <strong>{result.recorded}</strong> bank rows recorded.
+          <strong>{result.recorded}</strong> bank rows recorded
+          {result.payoutFeesDerived > 0 && (
+            <>
+              , and the fees of <strong>{result.payoutFeesDerived}</strong>{" "}
+              Montonio payouts worked out from their donations
+            </>
+          )}
+          .
         </div>
       )}
 
@@ -462,7 +470,7 @@ export function StatementImport() {
             </Table>
           </Section>
 
-          <Section title="Card payouts" count={preview.cardPayouts.length}>
+          <Section title="Montonio payouts" count={preview.cardPayouts.length}>
             <Table>
               <TableHeader>
                 <TableRow>
