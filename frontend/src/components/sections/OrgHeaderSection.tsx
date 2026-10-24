@@ -44,7 +44,7 @@ export default function OrgHeaderSection({
           <Breadcrumbs
             breadcrumbs={breadcrumbsWithCause}
             title={entity.title}
-            backWord={global.backWord}
+            global={global}
           />
         </div>
       </div>
