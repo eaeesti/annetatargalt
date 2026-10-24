@@ -2,6 +2,9 @@ import { urlWithParams } from "./string";
 
 export type Bank = "swedbank" | "lhv" | "seb";
 
+/** Every bank a standing-order link can be made for. */
+export const BANKS: readonly Bank[] = ["swedbank", "lhv", "seb"];
+
 export interface PaymentInfo {
   iban: string;
   recipient: string;

@@ -192,13 +192,13 @@ function donation(o: Partial<ReconcilableDonation>): ReconcilableDonation {
 }
 
 describe("classifyCreditLine", () => {
-  const base = {
+  const base: Parameters<typeof classifyCreditLine>[0] = {
     isCardPayout: false,
     ignoredNow: false,
     explicitDonation: false,
     cardAssignedNow: false,
     alreadyLinked: false,
-    existingCategory: undefined as string | undefined,
+    existingCategory: undefined,
   };
 
   it("an already-reconciled code re-imported with no action → donation (not undecided)", () => {

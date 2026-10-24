@@ -4,6 +4,7 @@ import { donationTransfersRepository } from "../../../../db/repositories/donatio
 import { createTransferService } from "../services/transfer";
 import { tipOrganizationInternalId } from "../utils/tip-organization";
 import { auditLog } from "../utils/audit-log";
+import { isRecord } from "../../../../utils/narrow";
 import { EXPORT_ROW_LIMIT, isExport } from "../utils/export";
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
@@ -127,11 +128,13 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
     },
 
     async create(ctx: Context) {
-      const body = (ctx.request.body ?? {}) as Record<string, unknown>;
+      const body = isRecord(ctx.request.body) ? ctx.request.body : {};
       const datetime = isoDate(body.datetime);
       if (!datetime) return ctx.badRequest("datetime (YYYY-MM-DD) is required");
       const notes =
-        body.notes == null ? null : String(body.notes).slice(0, 2000) || null;
+        body.notes === null || body.notes === undefined
+          ? null
+          : String(body.notes).slice(0, 2000) || null;
       const donationIds = intArray(body.donationIds);
 
       const transfer = await service.create({ datetime, notes, donationIds });
@@ -147,7 +150,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
       const id = Number(ctx.params.id);
       if (!id || isNaN(id)) return ctx.badRequest("Invalid transfer ID");
 
-      const body = (ctx.request.body ?? {}) as Record<string, unknown>;
+      const body = isRecord(ctx.request.body) ? ctx.request.body : {};
 
       // a datetime that's present but unparseable is an error, not a silent skip
       let datetime: string | undefined;
@@ -210,7 +213,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
         notes:
           body.notes === undefined
             ? undefined
-            : body.notes == null
+            : body.notes === null
               ? null
               : String(body.notes).slice(0, 2000) || null,
         reconciliationAdjustmentCents,

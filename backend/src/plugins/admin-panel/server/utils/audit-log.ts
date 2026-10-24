@@ -1,5 +1,6 @@
 import type { Context } from "koa";
 import { adminAuditLogRepository } from "../../../../db/repositories/adminAuditLog.repository";
+import { currentUser } from "./current-user";
 
 export async function auditLog(
   ctx: Context,
@@ -7,7 +8,7 @@ export async function auditLog(
   recordId?: string,
 ): Promise<void> {
   try {
-    const user = ctx.state.user as { id: number; email: string } | undefined;
+    const user = currentUser(ctx);
     if (!user) return;
     const ip = ctx.ip || null;
     await adminAuditLogRepository.log({

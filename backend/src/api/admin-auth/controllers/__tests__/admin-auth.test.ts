@@ -37,6 +37,8 @@ function fakeStrapi(admin: FakeAdmin | null) {
     db: { query: (uid: string) => queries[uid] },
     plugin: () => ({ service: () => ({ issue }) }),
   };
+  // A test double for Strapi, which can't be built whole in a test.
+  // oxlint-disable-next-line typescript/consistent-type-assertions
   return { strapi: strapi as unknown as Core.Strapi, createUser, issue };
 }
 
@@ -56,6 +58,8 @@ function fakeCtx(body: Record<string, unknown>) {
     forbidden: answer("forbidden"),
     send: vi.fn((data: unknown) => ({ kind: "send", data })),
   };
+  // A test double for Koa's context, which can't be built whole in a test.
+  // oxlint-disable-next-line typescript/consistent-type-assertions
   return ctx as unknown as Context;
 }
 

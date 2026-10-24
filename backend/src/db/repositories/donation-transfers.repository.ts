@@ -9,10 +9,6 @@ import {
   type NewDonationTransfer,
 } from "../schema";
 
-interface FindAllOptions {
-  withDonations?: boolean;
-}
-
 /**
  * How far `paid out` may drift from `owed` before a transfer round is flagged:
  * the larger of €10 or 0.5% of the owed total. Card-fee absorption and the
@@ -195,7 +191,7 @@ export class DonationTransfersRepository {
       const paidOut = Number(r.paidOutCents ?? 0);
       const payments = Number(r.paymentCount ?? 0);
       const adjustment =
-        r.adjustmentCents == null ? null : Number(r.adjustmentCents);
+        r.adjustmentCents === null ? null : Number(r.adjustmentCents);
       return {
         ...r,
         owedCents: owed,
@@ -322,7 +318,7 @@ export class DonationTransfersRepository {
     );
     const differenceCents = owedCents - paidOutCents;
     const adjustmentCents =
-      base.reconciliationAdjustmentCents == null
+      base.reconciliationAdjustmentCents === null
         ? null
         : Number(base.reconciliationAdjustmentCents);
     // owed still not accounted for after linked payments AND the operator's
@@ -383,7 +379,7 @@ export class DonationTransfersRepository {
       datetime: d.datetime,
       amountCents: d.amount,
       transactionId: d.transactionId,
-      reconciled: d.transactionId != null,
+      reconciled: d.transactionId !== null,
       donorName: d.donor
         ? [d.donor.firstName, d.donor.lastName].filter(Boolean).join(" ") ||
           `#${d.donor.id}`
@@ -409,7 +405,7 @@ export class DonationTransfersRepository {
       FROM donation_transfers dt
       ORDER BY dt.datetime asc
     `);
-    return (res.rows as Record<string, unknown>[]).map((r) => ({
+    return res.rows.map((r) => ({
       id: Number(r.id),
       datetime: String(r.datetime),
       owedCents: Number(r.owed),
@@ -454,10 +450,17 @@ export class DonationTransfersRepository {
   /**
    * Get all donation transfers, ordered by date (newest first)
    */
-  async findAll(options?: FindAllOptions) {
+  async findAll() {
     return this.database.query.donationTransfers.findMany({
       orderBy: [desc(donationTransfers.datetime)],
-      with: options?.withDonations ? { donations: true } : undefined,
+    });
+  }
+
+  /** Every transfer, newest first, with its donations. */
+  async findAllWithDonations() {
+    return this.database.query.donationTransfers.findMany({
+      orderBy: [desc(donationTransfers.datetime)],
+      with: { donations: true },
     });
   }
 
@@ -545,7 +548,7 @@ export class DonationTransfersRepository {
         err &&
         typeof err === "object" &&
         "code" in err &&
-        (err as { code?: string }).code === "23503"
+        err.code === "23503"
       ) {
         return { ok: false, reason: "has-links" };
       }

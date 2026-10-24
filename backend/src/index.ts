@@ -2,6 +2,13 @@ import type { Core } from "@strapi/strapi";
 import { pool } from "./db/client";
 import { BRIDGEABLE_ADMIN_ROLE_CODES } from "./utils/admin-roles";
 import { migrateImageFields, requireImageDescriptions } from "./image-fields";
+import {
+  apiTokens,
+  i18nLocales,
+  isLocalizedContentType,
+  strapiTable,
+} from "./strapi-internals";
+import { isRecord } from "./utils/narrow";
 import fs from "fs";
 import path from "path";
 
@@ -68,13 +75,7 @@ const LOCALES = [
  * either: Strapi deletes every non-default-locale entry when that happens.
  */
 async function ensureLocales(strapi: Core.Strapi): Promise<void> {
-  type LocalesService = {
-    find(): Promise<{ code: string }[]>;
-    create(locale: { code: string; name: string }): Promise<unknown>;
-    getDefaultLocale(): Promise<string | null>;
-    setDefaultLocale(params: { code: string }): Promise<unknown>;
-  };
-  const locales = strapi.plugin("i18n").service("locales") as LocalesService;
+  const locales = i18nLocales(strapi);
 
   const existing = new Set((await locales.find()).map((locale) => locale.code));
   for (const locale of LOCALES) {
@@ -94,14 +95,12 @@ async function ensureLocales(strapi: Core.Strapi): Promise<void> {
   // entries labelled English already, before this ran. English entries only
   // ever exist as translations of Estonian ones, so a localized type with
   // English entries but not a single Estonian one is exactly that case.
-  const { isLocalizedContentType } = strapi
-    .plugin("i18n")
-    .service("content-types") as {
-    isLocalizedContentType(contentType: unknown): boolean;
-  };
   for (const contentType of Object.values(strapi.contentTypes)) {
     const { uid } = contentType;
-    if (!uid.startsWith("api::") || !isLocalizedContentType(contentType)) {
+    if (
+      !uid.startsWith("api::") ||
+      !isLocalizedContentType(strapi, contentType)
+    ) {
       continue;
     }
     const query = strapi.db.query(uid);
@@ -133,9 +132,12 @@ async function grantAllLocales(strapi: Core.Strapi): Promise<void> {
   };
 
   const codes = LOCALES.map((locale) => locale.code);
-  const permissions = (await strapi.db.query("admin::permission").findMany({
+  const permissions = await strapiTable<Permission>(
+    strapi,
+    "admin::permission",
+  ).findMany({
     where: { action: { $startsWith: "plugin::content-manager.explorer." } },
-  })) as Permission[];
+  });
 
   const toWiden = permissions.filter((permission) => {
     const locales = permission.properties?.locales;
@@ -189,15 +191,14 @@ async function bootstrapApiToken(strapi: Core.Strapi): Promise<void> {
   ];
 
   type ApiTokenRow = { id: number };
-  type ApiTokenService = {
-    create(data: Record<string, unknown>): Promise<{ accessKey: string }>;
-    update(id: number, data: Record<string, unknown>): Promise<unknown>;
-  };
-  const tokenService = strapi.service("admin::api-token") as ApiTokenService;
+  const tokenService = apiTokens(strapi);
 
-  const existing = (await strapi.db.query("admin::api-token").findOne({
+  const existing = await strapiTable<ApiTokenRow>(
+    strapi,
+    "admin::api-token",
+  ).findOne({
     where: { name: TOKEN_NAME },
-  })) as ApiTokenRow | null;
+  });
 
   if (existing) {
     // update() diffs against the token's current permissions — adds
@@ -309,32 +310,35 @@ async function bootstrapDonationPermissions(
   ];
 
   // Find or create the dedicated DonationAdmin role
-  let adminRole = (await strapi.db
-    .query("plugin::users-permissions.role")
-    .findOne({
-      where: { name: ROLE_NAME },
-    })) as Role | null;
+  let adminRole = await strapiTable<Role>(
+    strapi,
+    "plugin::users-permissions.role",
+  ).findOne({
+    where: { name: ROLE_NAME },
+  });
 
   if (!adminRole) {
-    adminRole = (await strapi.db
-      .query("plugin::users-permissions.role")
-      .create({
-        data: {
-          name: ROLE_NAME,
-          description:
-            "Donation admin panel access (read-only, plus bank-statement import and transfer-round management)",
-          type: "donation_admin",
-        },
-      })) as Role;
+    adminRole = await strapiTable<Role>(
+      strapi,
+      "plugin::users-permissions.role",
+    ).create({
+      data: {
+        name: ROLE_NAME,
+        description:
+          "Donation admin panel access (read-only, plus bank-statement import and transfer-round management)",
+        type: "donation_admin",
+      },
+    });
     strapi.log.info(`✅ Created '${ROLE_NAME}' users-permissions role`);
   }
 
   // Grant any missing allowed permissions to DonationAdmin
-  const existing = (await strapi.db
-    .query("plugin::users-permissions.permission")
-    .findMany({
-      where: { role: adminRole.id, action: { $in: allowedActions } },
-    })) as Permission[];
+  const existing = await strapiTable<Permission>(
+    strapi,
+    "plugin::users-permissions.permission",
+  ).findMany({
+    where: { role: adminRole.id, action: { $in: allowedActions } },
+  });
 
   const existingSet = new Set(existing.map((p) => p.action));
   const missing = allowedActions.filter((a) => !existingSet.has(a));
@@ -355,11 +359,12 @@ async function bootstrapDonationPermissions(
   }
 
   // Revoke previously-granted write permissions from DonationAdmin
-  const writePermsOnAdmin = (await strapi.db
-    .query("plugin::users-permissions.permission")
-    .findMany({
-      where: { role: adminRole.id, action: { $in: revokedActions } },
-    })) as Permission[];
+  const writePermsOnAdmin = await strapiTable<Permission>(
+    strapi,
+    "plugin::users-permissions.permission",
+  ).findMany({
+    where: { role: adminRole.id, action: { $in: revokedActions } },
+  });
 
   if (writePermsOnAdmin.length > 0) {
     await Promise.all(
@@ -375,19 +380,21 @@ async function bootstrapDonationPermissions(
   }
 
   // Revoke all donation admin permissions from 'authenticated' if previously granted
-  const authenticatedRole = (await strapi.db
-    .query("plugin::users-permissions.role")
-    .findOne({
-      where: { type: "authenticated" },
-    })) as Role | null;
+  const authenticatedRole = await strapiTable<Role>(
+    strapi,
+    "plugin::users-permissions.role",
+  ).findOne({
+    where: { type: "authenticated" },
+  });
 
   if (authenticatedRole) {
     const allActions = [...allowedActions, ...revokedActions];
-    const stalePerms = (await strapi.db
-      .query("plugin::users-permissions.permission")
-      .findMany({
-        where: { role: authenticatedRole.id, action: { $in: allActions } },
-      })) as Permission[];
+    const stalePerms = await strapiTable<Permission>(
+      strapi,
+      "plugin::users-permissions.permission",
+    ).findMany({
+      where: { role: authenticatedRole.id, action: { $in: allActions } },
+    });
 
     if (stalePerms.length > 0) {
       await Promise.all(
@@ -430,16 +437,18 @@ async function hardenPublicAuth(strapi: Core.Strapi): Promise<void> {
     "plugin::users-permissions.auth.logout",
   ];
 
-  const publicRole = (await strapi.db
-    .query("plugin::users-permissions.role")
-    .findOne({ where: { type: "public" } })) as Role | null;
+  const publicRole = await strapiTable<Role>(
+    strapi,
+    "plugin::users-permissions.role",
+  ).findOne({ where: { type: "public" } });
 
   if (publicRole) {
-    const stalePerms = (await strapi.db
-      .query("plugin::users-permissions.permission")
-      .findMany({
-        where: { role: publicRole.id, action: { $in: blockedAuthActions } },
-      })) as Permission[];
+    const stalePerms = await strapiTable<Permission>(
+      strapi,
+      "plugin::users-permissions.permission",
+    ).findMany({
+      where: { role: publicRole.id, action: { $in: blockedAuthActions } },
+    });
 
     if (stalePerms.length > 0) {
       await Promise.all(
@@ -463,10 +472,7 @@ async function hardenPublicAuth(strapi: Core.Strapi): Promise<void> {
     name: "users-permissions",
   });
   const advancedRaw = await pluginStore.get({ key: "advanced" });
-  const advanced =
-    advancedRaw && typeof advancedRaw === "object"
-      ? (advancedRaw as Record<string, unknown>)
-      : null;
+  const advanced = isRecord(advancedRaw) ? advancedRaw : null;
 
   if (advanced && advanced.allow_register !== false) {
     await pluginStore.set({
@@ -499,13 +505,11 @@ async function blockOrphanedDonationAdmins(strapi: Core.Strapi): Promise<void> {
   type AdminUser = { email: string; roles?: Array<{ code: string }> };
 
   const [bridgedUsers, admins] = await Promise.all([
-    strapi.db.query("plugin::users-permissions.user").findMany({}) as Promise<
-      UpUser[]
-    >,
-    strapi.db.query("admin::user").findMany({
+    strapiTable<UpUser>(strapi, "plugin::users-permissions.user").findMany({}),
+    strapiTable<AdminUser>(strapi, "admin::user").findMany({
       where: { isActive: true },
       populate: ["roles"],
-    }) as Promise<AdminUser[]>,
+    }),
   ]);
 
   // Mirrors the allowlist admin-auth.ts uses to decide who gets bridged in —
@@ -566,13 +570,7 @@ export default {
     // Check if Strapi database still contains donation data that hasn't been migrated
     try {
       // Connect to Strapi database to check for legacy donation data
-      // strapi.db.connection is an internal Knex instance not exposed in Strapi's public types
-      type KnexConn = {
-        raw: (sql: string) => Promise<{ rows: Array<Record<string, string>> }>;
-      };
-      const strapiDbConnection = (
-        strapi.db as unknown as { connection: KnexConn }
-      ).connection;
+      const strapiDbConnection = strapi.db.connection;
 
       // Check if Strapi still has donation tables with data
       // First check if table exists

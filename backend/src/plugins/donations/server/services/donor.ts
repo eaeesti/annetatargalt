@@ -9,9 +9,6 @@ interface DonorInput {
 }
 
 // Knex connection type for raw queries on the Strapi DB
-interface KnexConnection {
-  raw: (sql: string) => Promise<{ rows: Array<Record<string, string>> }>;
-}
 
 const donorsRepo = new DonorsRepository();
 const recurringDonationsRepo = new RecurringDonationsRepository();
@@ -76,8 +73,7 @@ export default () => ({
   },
 
   async donorsWithFinalizedDonationCount() {
-    const connection = (strapi.db as unknown as { connection: KnexConnection })
-      .connection;
+    const connection = strapi.db.connection;
     const result = await connection.raw(
       `SELECT COUNT(DISTINCT donations_donor_links.donor_id)
        FROM donations

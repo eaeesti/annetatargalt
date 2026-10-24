@@ -2,6 +2,7 @@ import type { Core } from "@strapi/strapi";
 import type { Context } from "koa";
 import { donationsRepository } from "../../../../db/repositories/donations.repository";
 import { auditLog } from "../utils/audit-log";
+import { isRecord } from "../../../../utils/narrow";
 import { EXPORT_ROW_LIMIT, isExport } from "../utils/export";
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
@@ -129,7 +130,7 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
     const id = Number(ctx.params.id);
     if (!id || isNaN(id)) return ctx.badRequest("Invalid donation ID");
 
-    const body = (ctx.request.body ?? {}) as Record<string, unknown>;
+    const body = isRecord(ctx.request.body) ? ctx.request.body : {};
     if (!("donationTransferId" in body)) {
       return ctx.badRequest("Nothing to update");
     }

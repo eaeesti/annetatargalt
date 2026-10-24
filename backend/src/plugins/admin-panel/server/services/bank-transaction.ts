@@ -10,6 +10,7 @@ import {
 } from "../../../../db/repositories";
 import { createOrganizationResolver } from "../../../../utils/organization-resolver";
 import { tipOrganizationInternalId } from "../utils/tip-organization";
+import { oneOf } from "../../../../utils/narrow";
 
 /** categories a row can be filtered by */
 const FILTER_CATEGORIES: string[] = [
@@ -74,10 +75,7 @@ export function createBankTransactionService(strapi: Core.Strapi) {
       await Promise.all(
         [...orgIds].map(async (id) => {
           const org = await orgResolver.findByInternalId(id);
-          orgNames[id] =
-            (org as { title?: string; name?: string } | null)?.title ??
-            (org as { name?: string } | null)?.name ??
-            id;
+          orgNames[id] = org?.title ?? id;
         }),
       );
 
@@ -111,15 +109,11 @@ export function createBankTransactionService(strapi: Core.Strapi) {
       note: string | null,
       by: string | null,
     ) {
-      if (!RECLASSIFY_CATEGORIES.includes(category as never)) {
+      const known = oneOf(category, RECLASSIFY_CATEGORIES);
+      if (!known) {
         return { ok: false as const, reason: "bad-category" as const };
       }
-      return bankTransactionsRepository.setCategory(
-        code,
-        category as BankTransactionCategory,
-        note,
-        by,
-      );
+      return bankTransactionsRepository.setCategory(code, known, note, by);
     },
 
     /** Note-only edit — no category change, no donation-link guard. */

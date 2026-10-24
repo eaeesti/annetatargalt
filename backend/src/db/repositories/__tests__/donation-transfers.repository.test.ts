@@ -48,8 +48,8 @@ describe("DonationTransfersRepository", () => {
       expect(data).toHaveLength(2);
       // donationCount and totalAmount should be null/0 when no donations
       for (const row of data) {
-        expect(row.donationCount == null || row.donationCount === 0).toBe(true);
-        expect(row.totalAmount == null || row.totalAmount === 0).toBe(true);
+        expect(row.donationCount ?? 0).toBe(0);
+        expect(row.totalAmount ?? 0).toBe(0);
       }
     });
 
