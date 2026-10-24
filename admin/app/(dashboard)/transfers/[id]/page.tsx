@@ -39,7 +39,6 @@ type LinkedPayment = {
 type TransferDetail = {
   id: number;
   datetime: string;
-  recipient: string | null;
   notes: string | null;
   createdAt: string;
   donations: LinkedDonation[];
@@ -166,9 +165,6 @@ export default async function TransferDetailPage({
       {/* Metadata */}
       <Section title="Details">
         <Field label="Date">{formatDate(transfer.datetime)}</Field>
-        {transfer.recipient && (
-          <Field label="Recipient">{transfer.recipient}</Field>
-        )}
         {transfer.notes && <Field label="Notes">{transfer.notes}</Field>}
         <Field label="Donations">
           <span>

@@ -1,16 +1,27 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   type ColumnDef,
   type SortingState,
+  type VisibilityState,
   flexRender,
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { Columns3 } from "lucide-react";
 import { SortIcon } from "../../../../components/sort-icon";
 import { Button } from "../../../../components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../../../../components/ui/dropdown-menu";
 import {
   FilterBuilder,
   type FilterDef,
@@ -91,6 +102,8 @@ export function TransfersTable({
 }: TransfersTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
   function pushUrl(updates: Record<string, string | undefined>) {
     const sp = new URLSearchParams(window.location.search);
@@ -287,8 +300,22 @@ export function TransfersTable({
     manualPagination: true,
     manualSorting: true,
     pageCount: pagination.pageCount,
-    state: { sorting },
+    state: { sorting, columnVisibility },
+    onColumnVisibilityChange: setColumnVisibility,
   });
+
+  const columnLabels: Record<string, string> = {
+    id: "ID",
+    datetime: "Date",
+    notes: "Notes",
+    donationCount: "Donations",
+    totalAmount: "Total",
+    cardFees: "Card fees",
+    paidOut: "Paid out",
+    adjustment: "Adjustment",
+    residual: "Residual",
+    ok: "OK",
+  };
 
   const FILTER_DEFS: FilterDef[] = [
     {
@@ -308,15 +335,43 @@ export function TransfersTable({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <p className="text-sm text-muted-foreground">
-          {pagination.total.toLocaleString()} transfers
-        </p>
-        <FilterBuilder
-          filters={FILTER_DEFS}
-          params={filterParams}
-          onChange={pushUrl}
-        />
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm text-muted-foreground">
+            {pagination.total.toLocaleString()} transfers
+          </p>
+          <FilterBuilder
+            filters={FILTER_DEFS}
+            params={filterParams}
+            onChange={pushUrl}
+          />
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button variant="outline" size="sm">
+                <Columns3 className="mr-1.5 h-4 w-4" />
+                Columns
+              </Button>
+            }
+          />
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {table.getAllColumns().map((col) => (
+                <DropdownMenuCheckboxItem
+                  key={col.id}
+                  checked={col.getIsVisible()}
+                  onCheckedChange={(val) => col.toggleVisibility(!!val)}
+                >
+                  {columnLabels[col.id] ?? col.id}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="overflow-hidden rounded-md border bg-background">
