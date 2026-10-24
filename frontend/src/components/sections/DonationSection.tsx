@@ -16,6 +16,7 @@ import { describeErrorResponse, readStrapiJson } from "@/utils/strapi";
 import { useRouter, useSearchParams } from "next/navigation";
 import BankChooser from "../elements/forms/BankChooser";
 import Markdown from "../elements/Markdown";
+import TintedImage from "../elements/TintedImage";
 import { format } from "@/utils/string";
 import OrganizationChooser from "../elements/forms/OrganizationChooser";
 import Proportions from "@/utils/proportions";
@@ -449,6 +450,23 @@ export default function DonationSection(props: DonationSectionProps) {
                 buttonType="submit"
                 className="mt-4"
               />
+              {donation.type === "onetime" &&
+                (props.paymentProviderText ||
+                  props.paymentProviderLogo?.file) && (
+                  <div className="flex flex-wrap items-center justify-center gap-2 text-center">
+                    {props.paymentProviderText && (
+                      <p className="text-sm text-slate-500">
+                        {props.paymentProviderText}
+                      </p>
+                    )}
+                    {props.paymentProviderLogo?.file && (
+                      <TintedImage
+                        data={props.paymentProviderLogo}
+                        className="h-4 bg-slate-400"
+                      />
+                    )}
+                  </div>
+                )}
             </form>
           )}
         </div>

@@ -219,6 +219,8 @@ export interface StrapiDonationSection {
   backButtonText: string | null;
   detailsText: string | null;
   confirmText: string | null;
+  paymentProviderText: string | null;
+  paymentProviderLogo: StrapiImage | null;
   banks: StrapiBankIcon[];
   bankText: string | null;
   otherBankText: string | null;
