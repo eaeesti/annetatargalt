@@ -15,6 +15,7 @@ import { localeOf } from "@/utils/locale";
 import Modal from "../Modal";
 import type { ModalData } from "../Modal";
 import { useRouter } from "next/navigation";
+import { usePlausible } from "next-plausible";
 import type {
   StrapiGlobal,
   StrapiForeignDonationSection,
@@ -28,6 +29,7 @@ export default function ForeignDonationSection(
   props: ForeignDonationSectionProps,
 ) {
   const router = useRouter();
+  const plausible = usePlausible();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState<ModalData>({});
 
@@ -67,12 +69,14 @@ export default function ForeignDonationSection(
     };
     donationData.amount = donation.amount * 100;
 
-    const showError = (description: string) =>
+    const showError = (description: string) => {
+      plausible("foreign-donation-error");
       showModal({
         icon: "error",
         title: props.global.errorText ?? "Error",
         description,
       });
+    };
 
     let response;
     try {
@@ -145,7 +149,10 @@ export default function ForeignDonationSection(
             text={props.donateButtonText}
             type="primary"
             size="lg"
-            onClick={donate}
+            onClick={() => {
+              plausible("foreign-donation-clicked");
+              donate();
+            }}
             buttonType="submit"
             disabled={!isValid}
           />
