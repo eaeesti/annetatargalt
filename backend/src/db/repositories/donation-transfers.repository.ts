@@ -8,6 +8,7 @@ import {
   type DonationTransfer,
   type NewDonationTransfer,
 } from "../schema";
+import { BankTransactionFilesRepository } from "./bank-transaction-files.repository";
 
 /**
  * How far `paid out` may drift from `owed` before a transfer round is flagged:
@@ -295,7 +296,7 @@ export class DonationTransfersRepository {
           and ${bankTransactions.category} = 'card-payout' and ${donations.processorFeeCents} is null`,
       );
 
-    const linkedBankTransactions = await this.database
+    const linkedPayments = await this.database
       .select({
         archivingCode: bankTransactions.archivingCode,
         date: bankTransactions.date,
@@ -308,6 +309,13 @@ export class DonationTransfersRepository {
       .where(eq(bankTransactions.donationTransferId, id))
       // same-day payments in the bank's order, so saving a note can't reorder them
       .orderBy(asc(bankTransactions.date), asc(bankTransactions.archivingCode));
+    const files = await new BankTransactionFilesRepository(
+      this.database,
+    ).findForCodes(linkedPayments.map((p) => p.archivingCode));
+    const linkedBankTransactions = linkedPayments.map((p) => ({
+      ...p,
+      file: files.get(p.archivingCode) ?? null,
+    }));
 
     const owedCents =
       base.orgTotals.reduce((s, o) => s + Number(o.total), 0) -
