@@ -592,6 +592,7 @@ describe("DonationTransfersRepository", () => {
         })
       ).data.find((r) => r.id === transfer.id)!;
       expect(rowBefore.balanced).toBe(false); // 1500 short
+      expect(rowBefore.residualCents).toBe(1500);
 
       await donationTransfersRepository.update(transfer.id, {
         reconciliationAdjustmentCents: 1500,
@@ -605,6 +606,7 @@ describe("DonationTransfersRepository", () => {
         })
       ).data.find((r) => r.id === transfer.id)!;
       expect(rowAfter.adjustmentCents).toBe(1500);
+      expect(rowAfter.residualCents).toBe(0);
       expect(rowAfter.balanced).toBe(true);
     });
 
@@ -643,6 +645,7 @@ describe("DonationTransfersRepository", () => {
 
       expect(row.owedCents).toBe(9000);
       expect(row.owedCents).toBe(detail!.owedCents);
+      expect(row.residualCents).toBe(detail?.residualCents);
       expect(row.balanced).toBe(true); // paid 9000 == owed 9000
       expect(detail!.balanced).toBe(true);
     });
