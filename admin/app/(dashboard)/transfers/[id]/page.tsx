@@ -6,6 +6,7 @@ import { formatEuros } from "../../../../lib/money";
 import { TransferReconciliation } from "../_components/transfer-reconciliation";
 import { TransferMetaEditor } from "../_components/transfer-meta-editor";
 import { TransferDonationsEditor } from "../_components/transfer-donations-editor";
+import { CardFeeSwitch } from "../_components/card-fee-switch";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -43,7 +44,17 @@ type TransferDetail = {
   createdAt: string;
   donations: LinkedDonation[];
   orgTotals: OrgTotal[];
+  /** owed to orgs, after the card fee deduction */
   owedCents: number;
+  deductCardFees: boolean;
+  tipOrganizationInternalId: string | null;
+  cardFeeCents: number;
+  /** what comes off the tip organization's share for card fees */
+  cardFeeDeductionCents: number;
+  /** card fees beyond the tip organization's share, left undeducted */
+  cardFeesNotDeductedCents: number;
+  /** card donations whose payout fee isn't known yet */
+  donationsWithUnknownFee: number;
   paidOutCents: number;
   adjustmentCents: number | null;
   reconciliationNote: string | null;
@@ -117,7 +128,15 @@ export default async function TransferDetailPage({
 
   const { data: transfer } = (await res.json()) as { data: TransferDetail };
 
-  const grandTotal = transfer.orgTotals.reduce((s, o) => s + o.total, 0);
+  // What goes out: the organizations' shares, less the card fees taken off
+  // the tip organization's share when the round deducts them.
+  const tipId = transfer.tipOrganizationInternalId;
+  const tipName = tipId ? (orgNames.get(tipId) ?? tipId) : null;
+  const deductionOf = (internalId: string) =>
+    internalId === tipId ? transfer.cardFeeDeductionCents : 0;
+  const grandTotal =
+    transfer.orgTotals.reduce((s, o) => s + o.total, 0) -
+    transfer.cardFeeDeductionCents;
   const finalizedDonations = transfer.donations.filter((d) => d.finalized);
   const reconciledCount = transfer.donations.filter(
     (d) => d.transactionId,
@@ -166,16 +185,39 @@ export default async function TransferDetailPage({
           <span className="font-medium">{formatEuros(grandTotal)}</span>
         </Field>
         <Field label="Card fees">
-          {fees.length > 0 ? (
-            <span>
-              {formatEuros(feeTotal)}
-              <span className="ml-2 text-muted-foreground">
-                (from {fees.length} donation{fees.length !== 1 ? "s" : ""})
+          <span className="block space-y-1">
+            {fees.length > 0 ? (
+              <span className="block">
+                {formatEuros(feeTotal)}
+                <span className="ml-2 text-muted-foreground">
+                  (from {fees.length} donation{fees.length !== 1 ? "s" : ""})
+                </span>
               </span>
-            </span>
-          ) : (
-            <span className="text-muted-foreground">None recorded</span>
-          )}
+            ) : (
+              <span className="block text-muted-foreground">None recorded</span>
+            )}
+            {tipName && (
+              <CardFeeSwitch
+                transferId={transfer.id}
+                deductCardFees={transfer.deductCardFees}
+                tipOrganizationName={tipName}
+              />
+            )}
+            {transfer.cardFeesNotDeductedCents > 0 && (
+              <span className="block text-xs text-destructive">
+                {formatEuros(transfer.cardFeesNotDeductedCents)} of the fees is
+                more than {tipName}&apos;s share, so it isn&apos;t deducted.
+              </span>
+            )}
+            {transfer.donationsWithUnknownFee > 0 && (
+              <span className="block text-xs text-amber-700 dark:text-amber-400">
+                {transfer.donationsWithUnknownFee} card donation
+                {transfer.donationsWithUnknownFee !== 1 ? "s" : ""} came in a
+                Montonio payout whose fee isn&apos;t known yet. The next
+                statement import works it out.
+              </span>
+            )}
+          </span>
         </Field>
         <div className="pt-1">
           <TransferMetaEditor
@@ -209,9 +251,11 @@ export default async function TransferDetailPage({
               const name =
                 orgNames.get(o.organizationInternalId) ??
                 o.organizationInternalId;
+              const deduction = deductionOf(o.organizationInternalId);
+              const total = o.total - deduction;
               const pct =
                 grandTotal > 0
-                  ? ((o.total / grandTotal) * 100).toFixed(1)
+                  ? ((total / grandTotal) * 100).toFixed(1)
                   : "0.0";
               return (
                 <div key={o.organizationInternalId} className="space-y-1">
@@ -229,8 +273,16 @@ export default async function TransferDetailPage({
                         {o.donationCount} donation
                         {o.donationCount !== 1 ? "s" : ""}
                       </span>
-                      <span className="font-semibold tabular-nums">
-                        {formatEuros(o.total)}
+                      <span className="text-right">
+                        <span className="block font-semibold tabular-nums">
+                          {formatEuros(total)}
+                        </span>
+                        {deduction > 0 && (
+                          <span className="block text-xs text-muted-foreground tabular-nums">
+                            {formatEuros(o.total)} − {formatEuros(deduction)}{" "}
+                            card fees
+                          </span>
+                        )}
                       </span>
                       <span className="w-10 text-right text-xs text-muted-foreground">
                         {pct}%
