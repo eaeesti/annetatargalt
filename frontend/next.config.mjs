@@ -93,7 +93,22 @@ const nextConfig = {
   // Enable React Compiler for automatic memoization
   reactCompiler: true,
 
+  experimental: {
+    // The stylesheet goes into each page's <head> instead of being linked.
+    // A linked one holds back the first paint until it has downloaded, a
+    // round trip that cost the landing page over a second on a slow phone
+    // connection. Tailwind keeps the whole site's CSS small enough to repeat
+    // in every page, which is the case this is meant for.
+    inlineCss: true,
+  },
+
   images: {
+    // AVIF where the browser takes it: about half the size of WebP for the
+    // same photo.
+    formats: ["image/avif", "image/webp"],
+    // Next serves only the qualities listed. 60 is for photos under the dark
+    // overlays of the hero and blog headers.
+    qualities: [60, 75],
     remotePatterns: [
       {
         protocol: "https",

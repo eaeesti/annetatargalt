@@ -20,10 +20,18 @@ export default function HeroSection({
 }: StrapiHeroSection) {
   return (
     <header className="relative h-224 max-h-[90vh] min-h-160 xl:h-[90vh] xl:max-h-384 xl:min-h-176">
+      {/* The page's largest image, so it's fetched first. `sizes` is the
+          viewport width even though a phone crops the image to cover the
+          hero and shows it wider than that: a sharper copy would weigh
+          several times more, and the dark overlay hides the difference. The
+          overlay is also why a lower quality than the default will do. */}
       <Image
         data={image}
         className={`absolute inset-0 -z-10 h-full w-full object-cover ${POSITIONS[imagePosition ?? "lower"]}`}
-        priority
+        preload
+        fetchPriority="high"
+        sizes="100vw"
+        quality={60}
       />
       <div className="absolute inset-0 -z-10 h-full bg-primary-950/70"></div>
       <div className="mx-auto flex h-full max-w-6xl flex-col items-center justify-center xl:items-start">
