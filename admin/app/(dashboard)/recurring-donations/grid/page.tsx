@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { strapiAdmin } from "../../../../lib/api";
+import { RememberedLink } from "../../../../components/remembered-link";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -149,12 +150,12 @@ export default async function RecurringGridPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-0.5">
           <div className="flex items-center gap-3">
-            <Link
+            <RememberedLink
               href="/recurring-donations"
               className="text-sm text-muted-foreground hover:text-foreground"
             >
               ← List view
-            </Link>
+            </RememberedLink>
             <h1 className="text-2xl font-bold">Recurring Grid</h1>
           </div>
           <p className="text-sm text-muted-foreground">

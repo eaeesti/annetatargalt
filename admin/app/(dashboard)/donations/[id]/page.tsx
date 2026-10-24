@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { strapiAdmin } from "../../../../lib/api";
 import { fetchOrgNameMap } from "../../../../lib/orgs";
@@ -14,6 +13,7 @@ import {
   recurringDonationHref,
 } from "../../../../lib/entity-links";
 import { formatDateTime } from "../../../../lib/dates";
+import { RememberedLink } from "../../../../components/remembered-link";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -125,12 +125,12 @@ export default async function DonationDetailPage({
     <div className="max-w-2xl space-y-6">
       {/* Header */}
       <div className="space-y-1">
-        <Link
+        <RememberedLink
           href="/donations"
           className="text-sm text-muted-foreground hover:text-foreground"
         >
           ← Donations
-        </Link>
+        </RememberedLink>
         <h1 className="text-2xl font-bold">Donation #{donation.id}</h1>
       </div>
 

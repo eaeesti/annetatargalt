@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
   type ColumnDef,
@@ -24,6 +23,7 @@ import {
 } from "../../../../components/ui/table";
 import { ExportCsvButton } from "../../../../components/export-csv-button";
 import { formatDate } from "../../../../lib/dates";
+import { LinkedTableRow } from "../../../../components/linked-row";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -121,7 +121,6 @@ function SortableHeader({
  * The header controls behave and look the same either way.
  */
 export function OrganizationsTable({ data }: { data: OrganizationRow[] }) {
-  const router = useRouter();
   const [sorting, setSorting] = useState<SortingState>([
     { id: "totalDonated", desc: true },
   ]);
@@ -334,12 +333,9 @@ export function OrganizationsTable({ data }: { data: OrganizationRow[] }) {
               </TableRow>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <TableRow
+                <LinkedTableRow
                   key={row.id}
-                  className="cursor-pointer"
-                  onClick={() =>
-                    router.push(organizationHref(row.original.internalId))
-                  }
+                  href={organizationHref(row.original.internalId)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
@@ -352,7 +348,7 @@ export function OrganizationsTable({ data }: { data: OrganizationRow[] }) {
                       )}
                     </TableCell>
                   ))}
-                </TableRow>
+                </LinkedTableRow>
               ))
             )}
           </TableBody>

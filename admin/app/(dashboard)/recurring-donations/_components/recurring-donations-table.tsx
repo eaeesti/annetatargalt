@@ -17,7 +17,7 @@ import {
 import { ExportCsvButton } from "../../../../components/export-csv-button";
 import { Button } from "../../../../components/ui/button";
 import { EntityLink } from "../../../../components/entity-link";
-import { donorHref } from "../../../../lib/entity-links";
+import { donorHref, recurringDonationHref } from "../../../../lib/entity-links";
 import {
   Table,
   TableBody,
@@ -27,6 +27,8 @@ import {
   TableRow,
 } from "../../../../components/ui/table";
 import { formatDate } from "../../../../lib/dates";
+import { LinkedTableRow } from "../../../../components/linked-row";
+import { useRememberListUrl } from "../../../../components/remembered-link";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -83,6 +85,7 @@ export function RecurringDonationsTable({
   sortDir,
 }: RecurringDonationsTableProps) {
   const router = useRouter();
+  useRememberListUrl("/recurring-donations");
 
   function pushUrl(updates: Record<string, string | undefined>) {
     const sp = new URLSearchParams(window.location.search);
@@ -128,9 +131,12 @@ export function RecurringDonationsTable({
         accessorKey: "id",
         header: () => <SortableHeader col="id">ID</SortableHeader>,
         cell: ({ row }) => (
-          <span className="font-mono text-xs text-muted-foreground">
+          <EntityLink
+            href={recurringDonationHref(row.original.id)}
+            className="font-mono text-xs text-muted-foreground hover:text-foreground hover:underline"
+          >
             #{row.original.id}
-          </span>
+          </EntityLink>
         ),
       },
       {
@@ -262,12 +268,9 @@ export function RecurringDonationsTable({
               </TableRow>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <TableRow
+                <LinkedTableRow
                   key={row.id}
-                  className="cursor-pointer"
-                  onClick={() =>
-                    router.push(`/recurring-donations/${row.original.id}`)
-                  }
+                  href={recurringDonationHref(row.original.id)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
@@ -277,7 +280,7 @@ export function RecurringDonationsTable({
                       )}
                     </TableCell>
                   ))}
-                </TableRow>
+                </LinkedTableRow>
               ))
             )}
           </TableBody>

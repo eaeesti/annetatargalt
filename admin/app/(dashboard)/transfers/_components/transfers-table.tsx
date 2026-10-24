@@ -28,6 +28,10 @@ import {
   TableRow,
 } from "../../../../components/ui/table";
 import { formatDate } from "../../../../lib/dates";
+import { LinkedTableRow } from "../../../../components/linked-row";
+import { EntityLink } from "../../../../components/entity-link";
+import { transferHref } from "../../../../lib/entity-links";
+import { useRememberListUrl } from "../../../../components/remembered-link";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -90,6 +94,7 @@ export function TransfersTable({
 }: TransfersTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  useRememberListUrl("/transfers");
 
   const {
     columnVisibility,
@@ -148,9 +153,12 @@ export function TransfersTable({
         accessorKey: "id",
         header: () => <SortableHeader col="id">ID</SortableHeader>,
         cell: ({ row }) => (
-          <span className="font-mono text-xs text-muted-foreground">
+          <EntityLink
+            href={transferHref(row.original.id)}
+            className="font-mono text-xs text-muted-foreground hover:text-foreground hover:underline"
+          >
             #{row.original.id}
-          </span>
+          </EntityLink>
         ),
       },
       {
@@ -388,10 +396,9 @@ export function TransfersTable({
               </TableRow>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <TableRow
+                <LinkedTableRow
                   key={row.id}
-                  className="cursor-pointer"
-                  onClick={() => router.push(`/transfers/${row.original.id}`)}
+                  href={transferHref(row.original.id)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
@@ -404,7 +411,7 @@ export function TransfersTable({
                       )}
                     </TableCell>
                   ))}
-                </TableRow>
+                </LinkedTableRow>
               ))
             )}
           </TableBody>
