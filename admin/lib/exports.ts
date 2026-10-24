@@ -8,6 +8,7 @@ import { type CsvColumn, euros, toCsv } from "./csv";
 import { isoDay, isoMinute } from "./dates";
 import { donationStatus } from "./donation-status";
 import { fetchOrgNameMap, fetchOrgs } from "./orgs";
+import { readJson } from "./read-json";
 
 const isoDayOf = (iso: string | null | undefined) => (iso ? isoDay(iso) : null);
 const isoMinuteOf = (iso: string | null | undefined) =>
@@ -46,10 +47,10 @@ async function listRows<Row>(
       message: "Couldn't load the rows to export. Try again in a moment.",
     };
   }
-  const { data, pagination } = (await res.json()) as {
+  const { data, pagination } = await readJson<{
     data: Row[];
     pagination: { total: number };
-  };
+  }>(res);
   if (pagination.total > data.length) {
     return {
       ok: false,
@@ -253,7 +254,7 @@ async function organizations(): Promise<Exported> {
       message: "Couldn't load the organizations. Try again in a moment.",
     };
   }
-  const { data } = (await statsRes.json()) as { data: OrgStat[] };
+  const { data } = await readJson<{ data: OrgStat[] }>(statsRes);
   const stats = new Map(data.map((s) => [s.organizationInternalId, s]));
   // the table's own order: most donated first, those without donations last
   const rows = orgs

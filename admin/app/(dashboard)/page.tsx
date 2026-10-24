@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { strapiAdmin } from "../../lib/api";
+import { readJson } from "../../lib/read-json";
 import { ChartSkeleton, StatCardsSkeleton } from "./_components/skeletons";
 import { EntityLink } from "../../components/entity-link";
 import {
@@ -185,7 +186,7 @@ async function StatsSection() {
     );
   }
 
-  const { data }: { data: DashboardStats } = await statsRes.json();
+  const { data } = await readJson<{ data: DashboardStats }>(statsRes);
   const {
     totalDonations,
     totalDonors,
@@ -267,7 +268,7 @@ async function ChartsSection() {
     cache: "no-store",
   });
   if (!chartsRes.ok) return null;
-  const charts = ((await chartsRes.json()) as { data: DashboardCharts }).data;
+  const { data: charts } = await readJson<{ data: DashboardCharts }>(chartsRes);
 
   return (
     <>

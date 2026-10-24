@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { strapiAdmin } from "../../../../lib/api";
 import { fetchOrgs } from "../../../../lib/orgs";
+import { readJson } from "../../../../lib/read-json";
 import { Badge } from "../../../../components/ui/badge";
 import { formatDate } from "../../../../lib/dates";
 import { RememberedLink } from "../../../../components/remembered-link";
@@ -109,17 +110,17 @@ export default async function OrganizationDetailPage({
 
   let stat: OrgStat | undefined;
   if (statsRes.ok) {
-    const { data } = (await statsRes.json()) as { data: OrgStat[] };
+    const { data } = await readJson<{ data: OrgStat[] }>(statsRes);
     stat = data.find((s) => s.organizationInternalId === internalId);
   }
 
   let donations: DonationRow[] = [];
   let totalDonations = 0;
   if (donationsRes.ok) {
-    const json = (await donationsRes.json()) as {
+    const json = await readJson<{
       data: DonationRow[];
       pagination: { total: number };
-    };
+    }>(donationsRes);
     donations = json.data;
     totalDonations = json.pagination.total;
   }

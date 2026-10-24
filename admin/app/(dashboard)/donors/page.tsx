@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { strapiAdmin } from "../../../lib/api";
+import { readJson } from "../../../lib/read-json";
 import {
   DonorsTable,
   type DonorRow,
@@ -81,7 +82,7 @@ export default async function DonorsPage({
     );
   }
 
-  const { data, pagination } = (await res.json()) as ListResponse;
+  const { data, pagination } = await readJson<ListResponse>(res);
 
   return (
     <div className="space-y-6">

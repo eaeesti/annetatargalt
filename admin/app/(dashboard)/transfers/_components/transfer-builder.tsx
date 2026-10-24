@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "../../../../components/ui/button";
 import { Input } from "../../../../components/ui/input";
 import { formatEuros } from "../../../../lib/money";
+import { readJson } from "../../../../lib/read-json";
 import { CandidatePicker, type Candidate } from "./candidate-picker";
 import { currentDay } from "../../../../lib/dates";
 import {
@@ -53,8 +54,8 @@ export function TransferBuilder({
         setError(await failureMessage(res, "Couldn't create the transfer."));
         return;
       }
-      const json = await res.json();
-      router.push(`/transfers/${json.data.id}`);
+      const { data } = await readJson<{ data: { id: number } }>(res);
+      router.push(`/transfers/${data.id}`);
     } catch {
       setError(CONNECTION_FAILED);
     } finally {

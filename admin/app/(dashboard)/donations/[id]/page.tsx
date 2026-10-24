@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { strapiAdmin } from "../../../../lib/api";
+import { readJson } from "../../../../lib/read-json";
 import { fetchOrgNameMap } from "../../../../lib/orgs";
 import { formatEuros } from "../../../../lib/money";
 import { donationStatus } from "../../../../lib/donation-status";
@@ -130,7 +131,7 @@ export default async function DonationDetailPage({
   if (res.status === 404 || res.status === 400) notFound();
   if (!res.ok) throw new Error(`Couldn't load the donation (${res.status})`);
 
-  const { data: donation } = (await res.json()) as { data: DonationDetail };
+  const { data: donation } = await readJson<{ data: DonationDetail }>(res);
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -193,7 +194,7 @@ export default async function DonationDetailPage({
             <span className="text-muted-foreground">Not reconciled</span>
           )}
         </Field>
-        {donation.processorFeeCents != null && (
+        {typeof donation.processorFeeCents === "number" && (
           <Field label="Card fee">
             {formatEuros(donation.processorFeeCents)}
             <span className="ml-2 text-muted-foreground">

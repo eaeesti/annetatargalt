@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { strapiAdmin } from "../../../lib/api";
+import { readJson } from "../../../lib/read-json";
 import {
   RecurringDonationsTable,
   type RecurringDonationRow,
@@ -69,7 +70,7 @@ export default async function RecurringDonationsPage({
     );
   }
 
-  const { data, pagination } = (await res.json()) as ListResponse;
+  const { data, pagination } = await readJson<ListResponse>(res);
 
   return (
     <div className="space-y-6">

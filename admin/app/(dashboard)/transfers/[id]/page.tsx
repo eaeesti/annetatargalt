@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { strapiAdmin } from "../../../../lib/api";
+import { readJson } from "../../../../lib/read-json";
 import { fetchOrgNameMap } from "../../../../lib/orgs";
 import { formatEuros } from "../../../../lib/money";
 import { TransferReconciliation } from "../_components/transfer-reconciliation";
@@ -131,7 +132,7 @@ export default async function TransferDetailPage({
   if (res.status === 404 || res.status === 400) notFound();
   if (!res.ok) throw new Error(`Couldn't load the transfer (${res.status})`);
 
-  const { data: transfer } = (await res.json()) as { data: TransferDetail };
+  const { data: transfer } = await readJson<{ data: TransferDetail }>(res);
 
   // What goes out: the organizations' shares, less the card fees taken off
   // the tip organization's share when the round deducts them.

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { strapiAdmin } from "../../../../lib/api";
+import { readJson } from "../../../../lib/read-json";
 import { fetchOrgs } from "../../../../lib/orgs";
 import { TransferBuilder } from "../_components/transfer-builder";
 import { RememberedLink } from "../../../../components/remembered-link";
@@ -25,7 +26,7 @@ export default async function NewTransferPage() {
     fetchOrgs(),
   ]);
   if (res.ok) {
-    const { data } = (await res.json()) as { data: { datetime: string }[] };
+    const { data } = await readJson<{ data: { datetime: string }[] }>(res);
     if (data[0]?.datetime) defaultFrom = dayAfter(data[0].datetime);
   }
   const orgNames: Record<string, string> = Object.fromEntries(

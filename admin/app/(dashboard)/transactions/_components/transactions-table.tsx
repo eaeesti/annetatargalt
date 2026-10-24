@@ -23,6 +23,7 @@ import {
   TableRow,
 } from "../../../../components/ui/table";
 import { ariaSort } from "../../../../lib/aria-sort";
+import { readJson } from "../../../../lib/read-json";
 import {
   CONNECTION_FAILED,
   failureMessage,
@@ -91,7 +92,7 @@ const BALANCED_FILTERS = [
 ] as const;
 
 const eur = (cents: number | null) =>
-  cents == null ? "—" : `€${(cents / 100).toFixed(2)}`;
+  typeof cents === "number" ? `€${(cents / 100).toFixed(2)}` : "—";
 
 function fmtDate(iso: string | null): string {
   return iso ? iso.slice(0, 10) : "—";
@@ -181,10 +182,12 @@ export function TransactionsTable({
           `/api/transactions/${encodeURIComponent(code)}`,
         );
         if (!res.ok) throw new Error();
-        const json = await res.json();
+        const { data } = await readJson<{
+          data: { donations: LinkedDonation[] };
+        }>(res);
         setDetail((d) => ({
           ...d,
-          [code]: { donations: json.data.donations },
+          [code]: { donations: data.donations },
         }));
       } catch {
         setDetail((d) => ({ ...d, [code]: "error" }));
@@ -399,7 +402,7 @@ export function TransactionsTable({
                         {row.direction === "D" && "−"}
                         {eur(row.amount)}
                         {row.category === "card-payout" &&
-                          row.feeAmount != null && (
+                          typeof row.feeAmount === "number" && (
                             <span className="block text-xs text-muted-foreground">
                               fee {eur(row.feeAmount)}
                             </span>
@@ -431,7 +434,7 @@ export function TransactionsTable({
                         )}
                       </TableCell>
                       <TableCell className="text-center">
-                        {row.balanced == null ? (
+                        {typeof row.balanced !== "boolean" ? (
                           <span className="text-muted-foreground">·</span>
                         ) : row.balanced ? (
                           <span className="text-emerald-600">✓</span>
@@ -508,7 +511,7 @@ export function TransactionsTable({
                               <span className="text-xs text-muted-foreground">
                                 code {row.archivingCode} · sender{" "}
                                 {row.senderCode ?? "—"}
-                                {row.grossAmount != null &&
+                                {typeof row.grossAmount === "number" &&
                                   ` · gross ${eur(row.grossAmount)}`}
                               </span>
                             </div>
@@ -588,9 +591,7 @@ export function TransactionsTable({
                                           {eur(dn.amount)}
                                         </td>
                                         <td className="py-1 pr-3 text-right tabular-nums">
-                                          {dn.processorFeeCents != null
-                                            ? eur(dn.processorFeeCents)
-                                            : "—"}
+                                          {eur(dn.processorFeeCents)}
                                         </td>
                                         <td className="py-1 pr-3">
                                           {dn.orgDonations

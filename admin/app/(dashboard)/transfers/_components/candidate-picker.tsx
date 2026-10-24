@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "../../../../components/ui/button";
 import { Input } from "../../../../components/ui/input";
 import { formatEuros } from "../../../../lib/money";
+import { readJson } from "../../../../lib/read-json";
 
 export type Candidate = {
   id: number;
@@ -83,8 +84,7 @@ export function CandidatePicker({
         `/api/transfers/preview?dateFrom=${dateFrom}&dateTo=${dateTo}`,
       );
       if (!res.ok) throw new Error();
-      const json = await res.json();
-      const rows = json.data as Candidate[];
+      const { data: rows } = await readJson<{ data: Candidate[] }>(res);
       setCandidates(rows);
       setSelected(preselectAll ? new Set(rows.map((r) => r.id)) : new Set());
       onLoad?.({ from: dateFrom, to: dateTo });

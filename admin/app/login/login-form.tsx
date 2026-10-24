@@ -7,6 +7,7 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Card, CardContent, CardHeader } from "../../components/ui/card";
 import { BrandLogo } from "../../components/brand-logo";
+import { readJson } from "../../lib/read-json";
 
 interface LoginFormProps {
   googleEnabled: boolean;
@@ -76,7 +77,7 @@ function PasswordForm() {
     if (res.ok) {
       router.push("/");
     } else {
-      const body = (await res.json()) as { error?: string };
+      const body = await readJson<{ error?: string }>(res);
       setError(body.error ?? "Login failed");
     }
 

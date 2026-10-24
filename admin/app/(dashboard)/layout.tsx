@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { strapiAdmin } from "../../lib/api";
+import { readJson } from "../../lib/read-json";
 import { AppSidebar } from "./_components/app-sidebar";
 import { BrandLogo } from "../../components/brand-logo";
 import {
@@ -16,7 +17,7 @@ async function getCurrentUser(): Promise<StrapiUser | null> {
   try {
     const res = await strapiAdmin("/api/users/me");
     if (!res.ok) return null;
-    return (await res.json()) as StrapiUser;
+    return await readJson<StrapiUser>(res);
   } catch {
     return null;
   }
