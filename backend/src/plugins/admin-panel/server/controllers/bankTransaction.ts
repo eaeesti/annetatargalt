@@ -2,6 +2,7 @@ import type { Core } from "@strapi/strapi";
 import type { Context } from "koa";
 import { createBankTransactionService } from "../services/bank-transaction";
 import { auditLog } from "../utils/audit-log";
+import { EXPORT_ROW_LIMIT, isExport } from "../utils/export";
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
 const VALID_BALANCED = new Set(["ok", "not-ok", "unknown"]);
@@ -39,15 +40,18 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
   return {
     async list(ctx: Context) {
       const q = ctx.request.query;
+      const exporting = isExport(q);
 
       const pageRaw = Number(q.page ?? 1);
-      const page = Number.isFinite(pageRaw)
-        ? Math.max(1, Math.floor(pageRaw))
-        : 1;
+      const page =
+        !exporting && Number.isFinite(pageRaw)
+          ? Math.max(1, Math.floor(pageRaw))
+          : 1;
       // pageSize=all → 0 (repo returns every row)
       const pageSizeNum = Number(q.pageSize ?? 50);
-      const pageSize =
-        String(q.pageSize) === "all"
+      const pageSize = exporting
+        ? EXPORT_ROW_LIMIT
+        : String(q.pageSize) === "all"
           ? 0
           : VALID_PAGE_SIZES.includes(pageSizeNum)
             ? pageSizeNum
@@ -73,7 +77,11 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
           : undefined,
       });
 
-      await auditLog(ctx, "bankTransactions.list");
+      await auditLog(
+        ctx,
+        exporting ? "bankTransactions.export" : "bankTransactions.list",
+        exporting ? `${data.length} rows` : undefined,
+      );
 
       return ctx.send({
         data,

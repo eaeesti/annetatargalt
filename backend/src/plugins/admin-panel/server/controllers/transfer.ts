@@ -4,6 +4,7 @@ import { donationTransfersRepository } from "../../../../db/repositories/donatio
 import { createTransferService } from "../services/transfer";
 import { tipOrganizationInternalId } from "../utils/tip-organization";
 import { auditLog } from "../utils/audit-log";
+import { EXPORT_ROW_LIMIT, isExport } from "../utils/export";
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
 const VALID_SORT_COLS = new Set([
@@ -51,12 +52,15 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
   return {
     async list(ctx: Context) {
       const q = ctx.request.query;
+      const exporting = isExport(q);
 
-      const page = Math.max(1, Number(q.page ?? 1) || 1);
+      const page = exporting ? 1 : Math.max(1, Number(q.page ?? 1) || 1);
       const pageSizeRaw = Number(q.pageSize ?? 50);
-      const pageSize = VALID_PAGE_SIZES.includes(pageSizeRaw)
-        ? pageSizeRaw
-        : 50;
+      const pageSize = exporting
+        ? EXPORT_ROW_LIMIT
+        : VALID_PAGE_SIZES.includes(pageSizeRaw)
+          ? pageSizeRaw
+          : 50;
       const sortByRaw = String(q.sortBy ?? "datetime");
       const sortBy = VALID_SORT_COLS.has(sortByRaw) ? sortByRaw : "datetime";
       const sortDir =
@@ -72,7 +76,11 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
         tipOrganizationInternalId: await tipOrganizationInternalId(strapi),
       });
 
-      await auditLog(ctx, "transfers.list");
+      await auditLog(
+        ctx,
+        exporting ? "transfers.export" : "transfers.list",
+        exporting ? `${data.length} rows` : undefined,
+      );
 
       return ctx.send({
         data,
