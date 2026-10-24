@@ -1,31 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Admin Panel
+
+Internal dashboard for looking at Anneta Targalt donation data. Built with
+Next.js (App Router), TypeScript and Tailwind 4. Data comes from the Strapi
+backend in `../backend`.
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
 pnpm install
-pnpm dev
+pnpm dev        # http://localhost:3001
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+You need the backend running as well. Running `pnpm dev` from the repo root
+starts the frontend, backend and admin in one go.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create `.env.local`:
 
-## Learn More
+| Variable                  | Purpose                                                     |
+| ------------------------- | ----------------------------------------------------------- |
+| `STRAPI_URL`              | Strapi backend URL, e.g. `http://localhost:1337`            |
+| `GOOGLE_CLIENT_ID`        | Google OAuth client ID for sign-in                          |
+| `GOOGLE_CLIENT_SECRET`    | Google OAuth client secret                                  |
+| `GOOGLE_WORKSPACE_DOMAIN` | Only accounts from this Google Workspace domain can sign in |
 
-To learn more about Next.js, take a look at the following resources:
+## Layout
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+app/
+  login/          Google sign-in page
+  api/            route handlers (auth, exports, calls to Strapi)
+  (dashboard)/    pages behind sign-in, sharing one layout and sidebar
+    page.tsx      overview with summary cards and charts
+    donations/  donors/  recurring-donations/  organizations/
+    transfers/  transactions/  statement/
+components/       shared components (shadcn primitives are in ui/)
+lib/              Strapi client (api.ts), auth, formatting helpers
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Conventions
 
-## Deploy on Vercel
+This app is set up a bit differently from `../frontend`: there's no `src/`
+folder, and file names are kebab-case (`filter-builder.tsx`). If a component is
+only used by one route, put it in that route's `_components/` folder. The shared
+TypeScript rules are in the root [AGENTS.md](../AGENTS.md).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The `@/*` alias points at the app root, but most of the code uses relative
+imports. Match whatever the file you're editing already does.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+pnpm lint       # oxlint
+pnpm build      # production build
+```
