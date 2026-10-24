@@ -25,7 +25,10 @@ export default function BlogHeaderSection({
       <Image
         data={entity.image}
         className="absolute inset-0 -z-10 h-full w-full object-cover object-[center_75%] saturate-50"
-        priority
+        preload
+        fetchPriority="high"
+        sizes="100vw"
+        quality={60}
       />
       <div className="absolute inset-0 -z-10 h-full bg-primary-950/70"></div>
       <div className="mx-auto max-w-3xl py-24 md:py-56">

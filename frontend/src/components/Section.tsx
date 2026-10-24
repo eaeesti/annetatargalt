@@ -1,14 +1,9 @@
 import BlogHeaderSection from "./sections/BlogHeaderSection";
 import BlogPostsSection from "./sections/BlogPostsSection";
-import CampaignSection from "./sections/CampaignSection";
 import CauseOrganizationsSection from "./sections/CauseOrganizationsSection";
 import CausesSection from "./sections/CausesSection";
-import ContactSection from "./sections/ContactSection";
 import CtaSection from "./sections/CtaSection";
-import DonationSection from "./sections/DonationSection";
 import EntityTextSection from "./sections/EntityTextSection";
-import FAQSection from "./sections/FaqSection";
-import ForeignDonationSection from "./sections/ForeignDonationSection";
 import HeaderSection from "./sections/HeaderSection";
 import HeroSection from "./sections/HeroSection";
 import MapSection from "./sections/MapSection";
@@ -17,13 +12,21 @@ import OrganizationCtaSection from "./sections/OrganizationCtaSection";
 import OrganizationsSection from "./sections/OrganizationsSection";
 import PartnerSection from "./sections/PartnerSection";
 import PowerSection from "./sections/PowerSection";
-import RedirectSection from "./sections/RedirectSection";
 import SpecialHeaderSection from "./sections/SpecialHeaderSection";
-import StatsSection from "./sections/StatsSection";
 import TeamSection from "./sections/TeamSection";
 import TestimonialsSection from "./sections/TestimonialsSection";
 import TextSection from "./sections/TextSection";
-import ThankYouSection from "./sections/ThankYouSection";
+// the sections that run in the browser, loaded only on pages that show them
+import {
+  CampaignSection,
+  ContactSection,
+  DonationSection,
+  FAQSection,
+  ForeignDonationSection,
+  RedirectSection,
+  StatsSection,
+  ThankYouSection,
+} from "./lazy";
 import type {
   StrapiSection,
   StrapiGlobal,

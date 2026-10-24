@@ -1,5 +1,6 @@
 import { StrapiMapSection } from "@/types/generated/strapi";
-import Map from "../elements/Map";
+// in a bundle of its own: only this section needs the map library
+import { Map } from "../lazy";
 
 export default function MapSection({
   title,

@@ -41,7 +41,11 @@ export default function Navbar({ global, languageSwitchHref }: NavbarProps) {
               className="-m-1.5 rounded-md p-1.5 hover:opacity-70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 focus-visible:outline-solid"
             >
               <span className="sr-only">{title}</span>
-              <Image className="h-8 w-auto" data={navbar.logo} priority />
+              <Image
+                className="h-8 w-auto"
+                data={navbar.logo}
+                loading="eager"
+              />
             </Anchor>
           </div>
           <div className="hidden gap-x-4 lg:flex">
@@ -102,11 +106,7 @@ export default function Navbar({ global, languageSwitchHref }: NavbarProps) {
           <div className="flex items-center gap-x-6">
             <Anchor href={home} className="-m-1.5 grow p-1.5 hover:opacity-80">
               <span className="sr-only">{title}</span>
-              <Image
-                className="h-8 w-auto sm:hidden"
-                data={navbar.logo}
-                priority
-              />
+              <Image className="h-8 w-auto sm:hidden" data={navbar.logo} />
             </Anchor>
             {navbar.ctaButton && (
               <Button
