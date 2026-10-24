@@ -1,9 +1,9 @@
 import NextImage from "next/image";
-import type { StrapiImage, StrapiMedia } from "@/types/generated/strapi";
+import type { StrapiImage } from "@/types/generated/strapi";
 import { imageSource } from "@/utils/image";
 
 interface ImageProps {
-  data: StrapiImage | StrapiMedia | null;
+  data: StrapiImage | null;
   className?: string;
   fill?: boolean;
   priority?: boolean;
