@@ -8,6 +8,8 @@ import { Input } from "../../../../components/ui/input";
 import { EntityLink } from "../../../../components/entity-link";
 import { donationHref, donorHref } from "../../../../lib/entity-links";
 import { euroInputToCents } from "../../../../lib/money";
+import { failureMessage } from "../../../../lib/failure-message";
+import { readJson } from "../../../../lib/read-json";
 import {
   Table,
   TableBody,
@@ -80,10 +82,19 @@ type Preview = {
   orgNames: Record<string, string>;
 };
 
+type ApplyResult = {
+  created: number;
+  reconciled: number;
+  ignored: number;
+  recorded: number;
+  directionsFilled: number;
+  payoutFeesDerived: number;
+};
+
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 const eur = (cents: number | null) =>
-  cents == null ? "—" : `€${(cents / 100).toFixed(2)}`;
+  typeof cents === "number" ? `€${(cents / 100).toFixed(2)}` : "—";
 
 function Section({
   title,
@@ -113,14 +124,7 @@ export function StatementImport() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
-  const [result, setResult] = useState<{
-    created: number;
-    reconciled: number;
-    ignored: number;
-    recorded: number;
-    directionsFilled: number;
-    payoutFeesDerived: number;
-  } | null>(null);
+  const [result, setResult] = useState<ApplyResult | null>(null);
 
   // selections
   const [importSel, setImportSel] = useState<Set<string>>(new Set());
@@ -148,10 +152,8 @@ export function StatementImport() {
         method: "POST",
         body: form,
       });
-      const json = await res.json();
-      if (!res.ok)
-        throw new Error(json.error?.message ?? json.error ?? "Failed");
-      const p = json as Preview;
+      if (!res.ok) throw new Error(await failureMessage(res, "Failed"));
+      const p = await readJson<Preview>(res);
       setPreview(p);
       setImportSel(new Set(p.recurringImports.map((i) => i.archivingCode)));
       setReconcileSel(new Set(p.reconcile.map((r) => r.donationId)));
@@ -201,14 +203,14 @@ export function StatementImport() {
   }, [manualAssign]);
 
   const manualRecurring = useMemo(() => {
-    if (!preview) return [] as { transaction: BankTxn; donorId: number }[];
+    const out: { transaction: BankTxn; donorId: number }[] = [];
+    if (!preview) return out;
     const byCode = new Map(
       preview.needsDecision.map((n) => [
         n.transaction.archivingCode,
         n.transaction,
       ]),
     );
-    const out: { transaction: BankTxn; donorId: number }[] = [];
     for (const [code, raw] of Object.entries(manualDonor)) {
       const donorId = Number(raw.replace(/[^0-9]/g, ""));
       const txn = byCode.get(code);
@@ -297,10 +299,8 @@ export function StatementImport() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const json = await res.json();
-      if (!res.ok)
-        throw new Error(json.error?.message ?? json.error ?? "Failed");
-      setResult(json);
+      if (!res.ok) throw new Error(await failureMessage(res, "Failed"));
+      setResult(await readJson<ApplyResult>(res));
       setPreview(null);
       setFile(null);
       router.refresh();
@@ -508,7 +508,7 @@ export function StatementImport() {
                       {eur(c.transaction.amountCents)}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
-                      {c.feeCents != null ? (
+                      {typeof c.feeCents === "number" ? (
                         <span className="text-sm">{eur(c.feeCents)}</span>
                       ) : (
                         <Input

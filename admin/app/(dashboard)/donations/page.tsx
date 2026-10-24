@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { strapiAdmin } from "../../../lib/api";
+import { readJson } from "../../../lib/read-json";
 import { fetchOrgNameMap } from "../../../lib/orgs";
 import {
   DonationsTable,
@@ -93,7 +94,7 @@ export default async function DonationsPage({
     );
   }
 
-  const { data, pagination, totals } = (await res.json()) as ListResponse;
+  const { data, pagination, totals } = await readJson<ListResponse>(res);
 
   const orgNames = Object.fromEntries(orgNamesMap);
 

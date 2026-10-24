@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { strapiAdmin } from "./api";
+import { readJson } from "./read-json";
 
 export type StrapiOrg = {
   id: number;
@@ -42,7 +43,7 @@ export const fetchOrgs = cache(async (): Promise<StrapiOrg[]> => {
     { next: { revalidate: ORGS_REVALIDATE_SECONDS } },
   );
   if (!res.ok) return [];
-  const json = (await res.json()) as StrapiOrgsResponse;
+  const json = await readJson<StrapiOrgsResponse>(res);
   return json.data ?? [];
 });
 

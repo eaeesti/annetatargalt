@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { strapiAdmin } from "../../../lib/api";
+import { readJson } from "../../../lib/read-json";
 import {
   TransactionsTable,
   type BankTransactionRow,
@@ -115,10 +116,8 @@ export default async function TransactionsPage({
     );
   }
 
-  const { data, pagination } = (await listRes.json()) as ListResponse;
-  const summary = summaryRes.ok
-    ? ((await summaryRes.json()) as MoneyFlow)
-    : null;
+  const { data, pagination } = await readJson<ListResponse>(listRes);
+  const summary = summaryRes.ok ? await readJson<MoneyFlow>(summaryRes) : null;
 
   return (
     <div className="space-y-6">
@@ -136,7 +135,7 @@ export default async function TransactionsPage({
         data={data}
         pagination={pagination}
         sortBy={sortBy}
-        sortDir={sortDir as "asc" | "desc"}
+        sortDir={sortDir}
         category={category ?? null}
         balanced={balanced ?? null}
       />

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { strapiAdmin } from "../../../lib/api";
 import { fetchOrgs } from "../../../lib/orgs";
+import { readJson } from "../../../lib/read-json";
 import {
   OrganizationsTable,
   type OrganizationRow,
@@ -31,7 +32,7 @@ export default async function OrganizationsPage() {
 
   const statsMap = new Map<string, OrgStat>();
   if (statsRes.ok) {
-    const { data } = (await statsRes.json()) as { data: OrgStat[] };
+    const { data } = await readJson<{ data: OrgStat[] }>(statsRes);
     for (const s of data) statsMap.set(s.organizationInternalId, s);
   }
 

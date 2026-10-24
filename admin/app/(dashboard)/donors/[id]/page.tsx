@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { strapiAdmin } from "../../../../lib/api";
+import { readJson } from "../../../../lib/read-json";
 import { fetchOrgNameMap } from "../../../../lib/orgs";
 import { Badge } from "../../../../components/ui/badge";
 import { EntityLink } from "../../../../components/entity-link";
@@ -122,7 +123,7 @@ export default async function DonorDetailPage({ params }: { params: Params }) {
   if (res.status === 404 || res.status === 400) notFound();
   if (!res.ok) throw new Error(`Couldn't load the donor (${res.status})`);
 
-  const { data: donor } = (await res.json()) as { data: DonorDetail };
+  const { data: donor } = await readJson<{ data: DonorDetail }>(res);
 
   return (
     <div className="max-w-3xl space-y-6">

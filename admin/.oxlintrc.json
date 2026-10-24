@@ -13,6 +13,13 @@
   "rules": {
     "typescript/no-explicit-any": "error",
     "typescript/no-non-null-assertion": "error",
+    // No `as` casts either (AGENTS.md): narrow with a guard instead. `as const`
+    // is still allowed. And no `==`, which hides what it matches.
+    "typescript/consistent-type-assertions": [
+      "error",
+      { "assertionStyle": "never" }
+    ],
+    "eqeqeq": "error",
     "no-array-constructor": "error",
     "no-unused-expressions": "warn",
     "no-unused-vars": "warn",
@@ -133,6 +140,15 @@
         "prefer-const": "error",
         "prefer-rest-params": "error",
         "prefer-spread": "error"
+      }
+    },
+    {
+      // The shadcn/ui components are kept as generated, so they can be
+      // updated from upstream, casts and all.
+      "files": ["components/ui/**"],
+      "rules": {
+        "typescript/consistent-type-assertions": "off",
+        "eqeqeq": "off"
       }
     }
   ]

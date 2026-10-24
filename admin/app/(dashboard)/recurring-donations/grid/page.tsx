@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { strapiAdmin } from "../../../../lib/api";
+import { readJson } from "../../../../lib/read-json";
 import { RememberedLink } from "../../../../components/remembered-link";
 
 export const metadata: Metadata = { title: "Recurring donations by month" };
@@ -96,7 +97,7 @@ export default async function RecurringGridPage({
     );
   }
 
-  const { data: rows }: { data: GridRow[] } = await res.json();
+  const { data: rows } = await readJson<{ data: GridRow[] }>(res);
 
   // For "all": span from the earliest startMonth across all rows to now
   // An async server component renders once per request, so reading the clock

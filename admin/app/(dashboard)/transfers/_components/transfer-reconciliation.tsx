@@ -8,6 +8,7 @@ import { Textarea } from "../../../../components/ui/textarea";
 import { EntityLink } from "../../../../components/entity-link";
 import { bankTransactionHref } from "../../../../lib/entity-links";
 import { euroInputToCents } from "../../../../lib/money";
+import { readJson } from "../../../../lib/read-json";
 import {
   CONNECTION_FAILED,
   failureMessage,
@@ -23,7 +24,7 @@ type LinkedPayment = {
 };
 
 const eur = (c: number | null) =>
-  c == null ? "—" : `€${(Math.abs(c) / 100).toFixed(2)}`;
+  typeof c === "number" ? `€${(Math.abs(c) / 100).toFixed(2)}` : "—";
 
 const fmtDate = (iso: string | null) => (iso ? iso.slice(0, 10) : "—");
 
@@ -170,8 +171,8 @@ export function TransferReconciliation({
     try {
       const res = await fetch(`/api/transfers/unlinked-outgoing?${qs}`);
       if (!res.ok) throw new Error();
-      const json = await res.json();
-      setCandidates(json.data as LinkedPayment[]);
+      const { data } = await readJson<{ data: LinkedPayment[] }>(res);
+      setCandidates(data);
     } catch {
       setCandidates("error");
     }
@@ -209,7 +210,9 @@ export function TransferReconciliation({
   function toggleEditAdj() {
     if (!editAdj) {
       setAdjEuros(
-        adjustmentCents == null ? "" : (adjustmentCents / 100).toFixed(2),
+        typeof adjustmentCents === "number"
+          ? (adjustmentCents / 100).toFixed(2)
+          : "",
       );
       setAdjNote(reconciliationNote ?? "");
     }

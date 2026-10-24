@@ -65,7 +65,7 @@ export type Pagination = {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatAmount(cents: number | null): string {
-  if (cents == null) return "—";
+  if (typeof cents !== "number") return "—";
   return `€${(cents / 100).toFixed(2)}`;
 }
 
@@ -251,9 +251,9 @@ export function TransfersTable({
         header: "Adjustment",
         cell: ({ row }) => (
           <span className="text-sm whitespace-nowrap text-muted-foreground tabular-nums">
-            {row.original.adjustmentCents == null
-              ? "—"
-              : formatSigned(row.original.adjustmentCents)}
+            {typeof row.original.adjustmentCents === "number"
+              ? formatSigned(row.original.adjustmentCents)
+              : "—"}
           </span>
         ),
       },
@@ -263,7 +263,10 @@ export function TransfersTable({
         cell: ({ row }) => {
           const { residualCents, balanced } = row.original;
           // nothing paid out or adjusted yet, so there's nothing to compare
-          if (balanced == null || residualCents == null) {
+          if (
+            typeof balanced !== "boolean" ||
+            typeof residualCents !== "number"
+          ) {
             return <span className="text-sm text-muted-foreground">—</span>;
           }
           return (
@@ -280,7 +283,7 @@ export function TransfersTable({
         header: () => <span className="block text-center">OK</span>,
         cell: ({ row }) => (
           <span className="block text-center">
-            {row.original.balanced == null ? (
+            {typeof row.original.balanced !== "boolean" ? (
               <span className="text-muted-foreground">·</span>
             ) : row.original.balanced ? (
               <span className="text-emerald-600">✓</span>
