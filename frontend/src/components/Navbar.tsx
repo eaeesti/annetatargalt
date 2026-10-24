@@ -8,6 +8,7 @@ import Button from "./elements/Button";
 import Image from "./elements/Image";
 import type { StrapiGlobal } from "@/types/generated/strapi";
 import { localeOf, otherLocale, pagePath } from "@/utils/locale";
+import { uiText } from "@/utils/ui-text";
 
 interface NavbarProps {
   global: StrapiGlobal;
@@ -84,7 +85,7 @@ export default function Navbar({ global, languageSwitchHref }: NavbarProps) {
               className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-slate-700"
               onClick={() => setMobileMenuOpen(true)}
             >
-              <span className="sr-only">Open main menu</span>
+              <span className="sr-only">{uiText(locale).openMenu}</span>
               <Bars3Icon className="h-6 w-6" aria-hidden="true" />
             </button>
           </div>
@@ -123,7 +124,7 @@ export default function Navbar({ global, languageSwitchHref }: NavbarProps) {
               className="-m-2.5 rounded-md p-2.5 text-slate-700"
               onClick={() => setMobileMenuOpen(false)}
             >
-              <span className="sr-only">Close menu</span>
+              <span className="sr-only">{uiText(locale).closeMenu}</span>
               <XMarkIcon className="h-6 w-6" aria-hidden="true" />
             </button>
           </div>

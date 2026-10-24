@@ -1,7 +1,9 @@
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
 import Button from "../elements/Button";
 import { classes } from "@/utils/react";
-import type { StrapiBreadcrumb } from "@/types/generated/strapi";
+import type { StrapiBreadcrumb, StrapiGlobal } from "@/types/generated/strapi";
+import { localeOf } from "@/utils/locale";
+import { uiText } from "@/utils/ui-text";
 
 interface BackButtonProps {
   href: string;
@@ -55,27 +57,32 @@ function BreadcrumbItem({ index, title, href }: BreadcrumbItemProps) {
 interface BreadcrumbsProps {
   breadcrumbs: StrapiBreadcrumb[];
   title: string | null;
-  backWord: string | null;
+  global: StrapiGlobal;
   className?: string;
 }
 
 export default function Breadcrumbs({
   breadcrumbs,
   title,
-  backWord,
+  global,
   className = "",
 }: BreadcrumbsProps) {
   if (!breadcrumbs || !breadcrumbs.length) return;
 
+  const { backWord } = global;
+
   return (
     <div className={classes("text-sm text-slate-600", className)}>
-      <nav className="flex md:hidden" aria-label="Back">
+      <nav className="flex md:hidden" aria-label={backWord ?? undefined}>
         <BackButton
           href={breadcrumbs[breadcrumbs.length - 1].href ?? "/"}
           backWord={backWord}
         />
       </nav>
-      <nav className="hidden md:flex" aria-label="Breadcrumbs">
+      <nav
+        className="hidden md:flex"
+        aria-label={uiText(localeOf(global)).breadcrumbs}
+      >
         <ol role="list" className="flex flex-wrap items-center gap-4">
           {breadcrumbs
             .concat([{ id: -1, title: title, href: null }])

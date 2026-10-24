@@ -22,7 +22,7 @@ export default function HeaderSection({
           <Breadcrumbs
             breadcrumbs={breadcrumbs}
             title={title}
-            backWord={global.backWord}
+            global={global}
           />
           <h1 className="text-4xl font-bold tracking-tight text-primary-700 sm:text-5xl">
             {title}

@@ -9,6 +9,7 @@ import CheckboxInput from "../elements/forms/CheckboxInput";
 import Markdown from "../elements/Markdown";
 import Button from "../elements/Button";
 import { makeForeignDonationRequest } from "@/utils/donation";
+import { describeErrorResponse } from "@/utils/strapi";
 import { withCurrency } from "@/utils/money";
 import { localeOf } from "@/utils/locale";
 import Modal from "../Modal";
@@ -66,24 +67,29 @@ export default function ForeignDonationSection(
     };
     donationData.amount = donation.amount * 100;
 
-    const response = await makeForeignDonationRequest(donationData);
-    const data = await response.json();
+    const showError = (description: string) =>
+      showModal({
+        icon: "error",
+        title: props.global.errorText ?? "Error",
+        description,
+      });
 
-    if (response.ok && data.redirectURL) {
-      router.push(data.redirectURL);
-    } else if (data.error) {
-      showModal({
-        icon: "error",
-        title: "Error",
-        description: `${data.error.name}: ${data.error.message}`,
-      });
-    } else {
-      showModal({
-        icon: "error",
-        title: "Error",
-        description: `There has been an unknown error.`,
-      });
+    let response;
+    try {
+      response = await makeForeignDonationRequest(donationData);
+    } catch (error) {
+      // Offline, or the request never got an answer.
+      showError(String(error));
+      return;
     }
+
+    if (!response.ok) {
+      showError(await describeErrorResponse(response));
+      return;
+    }
+
+    const data = await response.json();
+    router.push(data.redirectURL);
   };
 
   return (
@@ -149,7 +155,7 @@ export default function ForeignDonationSection(
         open={modalOpen}
         data={modalData}
         setOpen={setModalOpen}
-        closeText="Close"
+        closeText={props.global.closeText ?? ""}
       />
     </section>
   );
