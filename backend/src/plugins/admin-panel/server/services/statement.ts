@@ -48,13 +48,13 @@ import { createOrganizationResolver } from "../../../../utils/organization-resol
 import montonio from "../../../../utils/montonio";
 
 /** Trailing donation id in a Montonio merchant reference (`<prefix> <id>`). */
-function refToDonationId(ref: string | undefined): number | null {
+function refToDonationId(ref: string | null | undefined): number | null {
   if (!ref) return null;
   const m = /(\d+)\s*$/.exec(ref);
   return m ? Number(m[1]) : null;
 }
 
-const toCents = (v: string | number | undefined) =>
+const toCents = (v: string | number | null | undefined) =>
   v === undefined || v === null ? NaN : Math.round(Number(v) * 100);
 
 export interface ResolvedCardPayout {
