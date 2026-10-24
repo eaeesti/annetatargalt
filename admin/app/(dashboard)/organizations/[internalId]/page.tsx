@@ -132,11 +132,11 @@ export default async function OrganizationDetailPage({
           ← Organizations
         </Link>
         <div className="flex items-center gap-3">
-          {org.logo ? (
+          {org.logo?.file ? (
             // oxlint-disable-next-line @next/next/no-img-element
             <img
-              src={logoUrl(org.logo.url)}
-              alt={org.logo.alternativeText ?? displayName}
+              src={logoUrl(org.logo.file.url)}
+              alt={org.logo.alt ?? displayName}
               className="h-10 w-10 rounded object-contain"
             />
           ) : null}
