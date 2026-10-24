@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { at } from "@/utils/object";
 import AmountChooser from "../elements/forms/AmountChooser";
 import DonationTypeChooser from "../elements/forms/DonationTypeChooser";
@@ -59,10 +59,48 @@ interface DonationState {
   acceptTerms: boolean;
 }
 
+/**
+ * The donation form. A link can choose one-off giving (?type=onetime) and an
+ * organization to give to (?org=). Pages are served from a cache, so the
+ * server that renders them never sees a visitor's query string: the cached
+ * page has the form with its defaults, which is the fallback here, and the
+ * browser replaces it with a form that has the link's choices. On a
+ * navigation within the site the query is already known, so the form starts
+ * out with them.
+ */
 export default function DonationSection(props: DonationSectionProps) {
+  return (
+    <Suspense
+      fallback={<DonationForm {...props} linkType={null} linkOrg={null} />}
+    >
+      <DonationFormForLink {...props} />
+    </Suspense>
+  );
+}
+
+function DonationFormForLink(props: DonationSectionProps) {
+  const searchParams = useSearchParams();
+  const linkType = searchParams.get("type");
+  const linkOrg = searchParams.get("org");
+
+  // a link with other choices starts the form afresh
+  return (
+    <DonationForm
+      key={`${linkType}/${linkOrg}`}
+      {...props}
+      linkType={linkType}
+      linkOrg={linkOrg}
+    />
+  );
+}
+
+function DonationForm({
+  linkType,
+  linkOrg,
+  ...props
+}: DonationSectionProps & { linkType: string | null; linkOrg: string | null }) {
   const router = useRouter();
   const plausible = usePlausible();
-  const searchParams = useSearchParams();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState<ModalData>({});
@@ -80,16 +118,13 @@ export default function DonationSection(props: DonationSectionProps) {
       value: amount,
       label: withCurrency(amount, props.global.currency, locale),
     }));
-  const typeParam = searchParams.get("type");
-  const orgParam = searchParams.get("org");
-
   // In Strapi v5 without v4 compatibility, relations are returned as arrays directly
   // Wrap it to maintain compatibility with components expecting { data: [...] }
   const causes = { data: props.causes || [] };
 
   const [donation, setDonation] = useState<DonationState>({
     amount: amountOptions[1]?.value ?? amountOptions[0]?.value ?? 0,
-    type: typeParam === "onetime" ? "onetime" : "recurring",
+    type: linkType === "onetime" ? "onetime" : "recurring",
     firstName: "",
     lastName: "",
     email: "",
@@ -102,7 +137,7 @@ export default function DonationSection(props: DonationSectionProps) {
     dedicationName: "",
     dedicationEmail: "",
     dedicationMessage: "",
-    proportions: Proportions.fromStrapiData(causes.data, orgParam ?? undefined),
+    proportions: Proportions.fromStrapiData(causes.data, linkOrg ?? undefined),
     addTip: false,
     paymentMethod: "paymentInitiation",
     acceptTerms: false,
