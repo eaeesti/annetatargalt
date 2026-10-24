@@ -15,7 +15,9 @@
     "install:all": "pnpm install && pnpm install:frontend && pnpm install:backend && pnpm install:admin",
     "generate-types": "node scripts/generate-strapi-types.mjs",
     "format": "oxfmt",
-    "format:check": "oxfmt --check"
+    "format:check": "oxfmt --check",
+    "prepare": "git config core.hooksPath .githooks || true",
+    "check": "oxfmt --check && pnpm --dir admin check && pnpm --dir backend check && pnpm --dir frontend check"
   },
   "devDependencies": {
     "concurrently": "^10.0.6",
