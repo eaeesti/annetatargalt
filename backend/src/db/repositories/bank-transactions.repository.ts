@@ -120,6 +120,9 @@ interface FindPaginatedOptions {
   dateFrom?: string;
   dateTo?: string;
   search?: string;
+  /** bounds on the amount in cents, which is stored positive for every line */
+  amountMin?: number;
+  amountMax?: number;
   /** filter on the computed "OK" state */
   balanced?: BalancedFilter;
 }
@@ -487,6 +490,10 @@ export class BankTransactionsRepository {
     if (opts.category) conds.push(sql`bt.category = ${opts.category}`);
     if (opts.dateFrom) conds.push(sql`bt.date >= ${opts.dateFrom}`);
     if (opts.dateTo) conds.push(sql`bt.date <= ${opts.dateTo}`);
+    if (opts.amountMin !== undefined)
+      conds.push(sql`bt.amount >= ${opts.amountMin}`);
+    if (opts.amountMax !== undefined)
+      conds.push(sql`bt.amount <= ${opts.amountMax}`);
     if (opts.search) {
       const like = `%${opts.search}%`;
       conds.push(

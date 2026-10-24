@@ -41,6 +41,8 @@ export function createBankTransactionService(strapi: Core.Strapi) {
       dateFrom?: string;
       dateTo?: string;
       search?: string;
+      amountMin?: number;
+      amountMax?: number;
       balanced?: "ok" | "not-ok" | "unknown";
     }) {
       const category =
