@@ -8,6 +8,10 @@ import { Textarea } from "../../../../components/ui/textarea";
 import { EntityLink } from "../../../../components/entity-link";
 import { bankTransactionHref } from "../../../../lib/entity-links";
 import { euroInputToCents } from "../../../../lib/money";
+import {
+  CONNECTION_FAILED,
+  failureMessage,
+} from "../../../../lib/failure-message";
 
 type LinkedPayment = {
   archivingCode: string;
@@ -59,6 +63,8 @@ export function TransferReconciliation({
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  // linking or unlinking payments
+  const [linkError, setLinkError] = useState<string | null>(null);
   const [picker, setPicker] = useState(false);
   const [candidates, setCandidates] = useState<
     LinkedPayment[] | "loading" | "error"
@@ -74,6 +80,7 @@ export function TransferReconciliation({
 
   async function patch(body: Record<string, unknown>) {
     setBusy(true);
+    setLinkError(null);
     try {
       const res = await fetch(`/api/transfers/${transferId}`, {
         method: "PATCH",
@@ -81,15 +88,14 @@ export function TransferReconciliation({
         body: JSON.stringify(body),
       });
       if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        alert(j.error?.message ?? "Request failed");
+        setLinkError(await failureMessage(res, "Couldn't save the change."));
         return;
       }
       setPicker(false);
       setSelected(new Set());
       router.refresh();
     } catch {
-      alert("Request failed — check your connection and try again");
+      setLinkError(CONNECTION_FAILED);
     } finally {
       setBusy(false);
     }
@@ -101,6 +107,11 @@ export function TransferReconciliation({
   );
   const [notes, setNotes] = useState<Record<string, string>>(serverNotes);
   const [savingNote, setSavingNote] = useState<string | null>(null);
+  const [noteErrors, setNoteErrors] = useState<Record<string, string>>({});
+  const setNoteError = (code: string, error: string | null) =>
+    setNoteErrors(({ [code]: _old, ...rest }) =>
+      error ? { ...rest, [code]: error } : rest,
+    );
   const seenServerNotes = useRef<Record<string, string>>(serverNotes);
 
   // After a refresh (link / unlink / save), adopt the server's notes for rows
@@ -128,6 +139,7 @@ export function TransferReconciliation({
     const value = (notes[code] ?? "").trim();
     if (value === (original ?? "").trim()) return;
     setSavingNote(code);
+    setNoteError(code, null);
     try {
       const res = await fetch(`/api/transactions/${encodeURIComponent(code)}`, {
         method: "PATCH",
@@ -135,13 +147,15 @@ export function TransferReconciliation({
         body: JSON.stringify({ note: value || null }),
       });
       if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        alert(j.error?.message ?? "Could not save the note");
+        setNoteError(
+          code,
+          await failureMessage(res, "Couldn't save the note."),
+        );
       } else {
         router.refresh();
       }
     } catch {
-      alert("Could not save the note — check your connection and try again");
+      setNoteError(code, CONNECTION_FAILED);
     } finally {
       setSavingNote(null);
     }
@@ -185,6 +199,7 @@ export function TransferReconciliation({
   const [adjEuros, setAdjEuros] = useState("");
   const [adjNote, setAdjNote] = useState("");
   const [savingAdj, setSavingAdj] = useState(false);
+  const [adjError, setAdjError] = useState<string | null>(null);
   const assessed = hasPayments || adjustmentCents !== null;
 
   const signed = (cents: number) => `${cents < 0 ? "−" : ""}${eur(cents)}`;
@@ -203,10 +218,11 @@ export function TransferReconciliation({
 
   async function saveAdjustment(clear = false) {
     let cents: number | null = null;
+    setAdjError(null);
     if (!clear) {
       cents = euroInputToCents(adjEuros);
       if (cents === null) {
-        alert("Enter an amount — e.g. -1234.56, or 0 for none");
+        setAdjError("Enter an amount, e.g. -1234.56, or 0 for none.");
         return;
       }
     }
@@ -221,14 +237,13 @@ export function TransferReconciliation({
         }),
       });
       if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        alert(j.error?.message ?? "Could not save the adjustment");
+        setAdjError(await failureMessage(res, "Couldn't save the adjustment."));
         return;
       }
       setEditAdj(false);
       router.refresh();
     } catch {
-      alert("Could not save — check your connection and try again");
+      setAdjError(CONNECTION_FAILED);
     } finally {
       setSavingAdj(false);
     }
@@ -338,6 +353,11 @@ export function TransferReconciliation({
               </Button>
             )}
           </div>
+          {adjError && (
+            <p role="alert" className="text-xs text-destructive">
+              {adjError}
+            </p>
+          )}
         </div>
       )}
 
@@ -393,6 +413,11 @@ export function TransferReconciliation({
                     aria-label={`Note on the ${eur(p.amountCents)} payment of ${fmtDate(p.date)}`}
                     className="rounded-md px-1.5 py-px text-xs"
                   />
+                  {noteErrors[p.archivingCode] && (
+                    <p role="alert" className="mt-1 text-destructive">
+                      {noteErrors[p.archivingCode]}
+                    </p>
+                  )}
                 </td>
                 <td className="pt-2 pb-1 text-right">
                   <button
@@ -411,6 +436,12 @@ export function TransferReconciliation({
       ) : (
         <p className="text-xs text-muted-foreground">
           No bank payments linked yet.
+        </p>
+      )}
+
+      {linkError && (
+        <p role="alert" className="text-xs text-destructive">
+          {linkError}
         </p>
       )}
 

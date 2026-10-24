@@ -23,6 +23,10 @@ import {
   TableRow,
 } from "../../../../components/ui/table";
 import { ariaSort } from "../../../../lib/aria-sort";
+import {
+  CONNECTION_FAILED,
+  failureMessage,
+} from "../../../../lib/failure-message";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -141,6 +145,7 @@ export function TransactionsTable({
     null,
   );
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   function pushUrl(updates: Record<string, string | undefined>) {
     const sp = new URLSearchParams(window.location.search);
@@ -161,6 +166,7 @@ export function TransactionsTable({
 
   async function toggleRow(row: BankTransactionRow) {
     const code = row.archivingCode;
+    setSaveError(null);
     if (expanded === code) {
       setExpanded(null);
       setEdit(null);
@@ -189,6 +195,7 @@ export function TransactionsTable({
   async function saveEdit(code: string) {
     if (!edit) return;
     setSaving(true);
+    setSaveError(null);
     try {
       const res = await fetch(`/api/transactions/${encodeURIComponent(code)}`, {
         method: "PATCH",
@@ -199,15 +206,14 @@ export function TransactionsTable({
         }),
       });
       if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        alert(j.error?.message ?? "Failed to reclassify");
+        setSaveError(await failureMessage(res, "Couldn't save the change."));
         return;
       }
       setExpanded(null);
       setEdit(null);
       router.refresh();
     } catch {
-      alert("Failed to reclassify — check your connection and try again");
+      setSaveError(CONNECTION_FAILED);
     } finally {
       setSaving(false);
     }
@@ -491,6 +497,14 @@ export function TransactionsTable({
                               >
                                 {saving ? "Saving…" : "Save"}
                               </Button>
+                              {saveError && (
+                                <span
+                                  role="alert"
+                                  className="text-xs text-destructive"
+                                >
+                                  {saveError}
+                                </span>
+                              )}
                               <span className="text-xs text-muted-foreground">
                                 code {row.archivingCode} · sender{" "}
                                 {row.senderCode ?? "—"}

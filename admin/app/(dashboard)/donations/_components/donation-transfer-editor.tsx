@@ -6,6 +6,10 @@ import { Button } from "../../../../components/ui/button";
 import { Input } from "../../../../components/ui/input";
 import { EntityLink } from "../../../../components/entity-link";
 import { transferHref } from "../../../../lib/entity-links";
+import {
+  CONNECTION_FAILED,
+  failureMessage,
+} from "../../../../lib/failure-message";
 
 /**
  * The "Transfer" field on a donation — shows the round it's on and lets an
@@ -25,9 +29,11 @@ export function DonationTransferEditor({
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(transferId ? String(transferId) : "");
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function save(next: number | null) {
     setBusy(true);
+    setError(null);
     try {
       const res = await fetch(`/api/donations/${donationId}`, {
         method: "PATCH",
@@ -35,14 +41,13 @@ export function DonationTransferEditor({
         body: JSON.stringify({ donationTransferId: next }),
       });
       if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        alert(j.error?.message ?? "Failed to save");
+        setError(await failureMessage(res, "Couldn't save the change."));
         return;
       }
       setEditing(false);
       router.refresh();
     } catch {
-      alert("Failed to save — check your connection and try again");
+      setError(CONNECTION_FAILED);
     } finally {
       setBusy(false);
     }
@@ -108,10 +113,18 @@ export function DonationTransferEditor({
         size="sm"
         variant="outline"
         disabled={busy}
-        onClick={() => setEditing(false)}
+        onClick={() => {
+          setEditing(false);
+          setError(null);
+        }}
       >
         Cancel
       </Button>
+      {error && (
+        <span role="alert" className="text-xs text-destructive">
+          {error}
+        </span>
+      )}
       {!finalized && (
         <span className="text-xs text-amber-600">
           Not finalized — can only be cleared, not added to a round

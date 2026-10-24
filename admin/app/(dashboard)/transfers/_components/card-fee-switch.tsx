@@ -2,6 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import {
+  CONNECTION_FAILED,
+  failureMessage,
+} from "../../../../lib/failure-message";
 
 /**
  * Whether this round's card fees come off the tip organization's share.
@@ -18,9 +22,11 @@ export function CardFeeSwitch({
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function toggle(next: boolean) {
     setBusy(true);
+    setError(null);
     try {
       const res = await fetch(`/api/transfers/${transferId}`, {
         method: "PATCH",
@@ -28,28 +34,34 @@ export function CardFeeSwitch({
         body: JSON.stringify({ deductCardFees: next }),
       });
       if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        alert(j.error?.message ?? "Failed to save");
+        setError(await failureMessage(res, "Couldn't save the change."));
         return;
       }
       router.refresh();
     } catch {
-      alert("Failed to save — check your connection and try again");
+      setError(CONNECTION_FAILED);
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <label className="inline-flex cursor-pointer items-center gap-2">
-      <input
-        type="checkbox"
-        className="h-4 w-4 accent-primary"
-        checked={deductCardFees}
-        disabled={busy}
-        onChange={(e) => toggle(e.target.checked)}
-      />
-      <span>Take them off {tipOrganizationName}&apos;s share</span>
-    </label>
+    <span className="block">
+      <label className="inline-flex cursor-pointer items-center gap-2">
+        <input
+          type="checkbox"
+          className="h-4 w-4 accent-primary"
+          checked={deductCardFees}
+          disabled={busy}
+          onChange={(e) => toggle(e.target.checked)}
+        />
+        <span>Take them off {tipOrganizationName}&apos;s share</span>
+      </label>
+      {error && (
+        <span role="alert" className="block text-xs text-destructive">
+          {error}
+        </span>
+      )}
+    </span>
   );
 }
