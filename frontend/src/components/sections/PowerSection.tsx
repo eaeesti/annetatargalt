@@ -35,7 +35,7 @@ export default function PowerSection({
                   <Image data={column.image} className="h-full w-full" />
                 </div>
                 <div className="flex flex-col gap-8">
-                  <Markdown className="prose prose-sm -mt-5 mb-3 max-w-full text-right text-xs prose-primary [&>p>a>svg]:-mt-1">
+                  <Markdown className="prose prose-sm -mt-5 mb-3 max-w-full text-right text-xs prose-primary [&>p>a_svg]:-mt-1">
                     {column.source}
                   </Markdown>
                   <Markdown className="prose prose-primary">
