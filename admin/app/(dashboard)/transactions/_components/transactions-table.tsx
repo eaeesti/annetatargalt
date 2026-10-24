@@ -212,8 +212,21 @@ export function TransactionsTable({
   const FILTER_DEFS: FilterDef[] = [
     { type: "date-range", label: "Date", fromKey: "dateFrom", toKey: "dateTo" },
     { type: "text", label: "Search", key: "search" },
+    {
+      type: "number-range",
+      label: "Amount",
+      fromKey: "amountMin",
+      toKey: "amountMax",
+      unit: "€",
+    },
   ];
-  const FILTER_KEYS = ["dateFrom", "dateTo", "search"];
+  const FILTER_KEYS = [
+    "dateFrom",
+    "dateTo",
+    "search",
+    "amountMin",
+    "amountMax",
+  ];
   const filterParams: Record<string, string> = {};
   for (const k of FILTER_KEYS) {
     const value = searchParams.get(k);
@@ -225,7 +238,7 @@ export function TransactionsTable({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-1">
           <Button
             variant={!category ? "default" : "outline"}
             size="sm"
@@ -246,7 +259,7 @@ export function TransactionsTable({
             </Button>
           ))}
         </div>
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-1">
           {BALANCED_FILTERS.map((b) => (
             <Button
               key={b.value}
@@ -363,6 +376,7 @@ export function TransactionsTable({
                         </span>
                       </TableCell>
                       <TableCell className="text-right whitespace-nowrap tabular-nums">
+                        {row.category === "outgoing" && "−"}
                         {eur(row.amount)}
                         {row.category === "card-payout" &&
                           row.feeAmount != null && (
@@ -589,7 +603,7 @@ export function TransactionsTable({
         </Table>
       </div>
 
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>Rows per page:</span>
           <div className="flex gap-1">

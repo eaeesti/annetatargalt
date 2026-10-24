@@ -312,10 +312,7 @@ export function OrganizationsTable({ data }: { data: OrganizationRow[] }) {
                 {hg.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className={
-                      (header.column.columnDef.meta as { className?: string })
-                        ?.className
-                    }
+                    className={header.column.columnDef.meta?.className}
                   >
                     {header.isPlaceholder
                       ? null
@@ -350,10 +347,7 @@ export function OrganizationsTable({ data }: { data: OrganizationRow[] }) {
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
-                      className={
-                        (cell.column.columnDef.meta as { className?: string })
-                          ?.className
-                      }
+                      className={cell.column.columnDef.meta?.className}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
