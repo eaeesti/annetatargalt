@@ -8,7 +8,7 @@ export interface ElementsBankIcon extends Struct.ComponentSchema {
   };
   attributes: {
     bank: Schema.Attribute.String;
-    icon: Schema.Attribute.Media<'images'>;
+    icon: Schema.Attribute.Component<'elements.image', false>;
   };
 }
 
@@ -55,6 +55,19 @@ export interface ElementsFooterColumn extends Struct.ComponentSchema {
   };
 }
 
+export interface ElementsImage extends Struct.ComponentSchema {
+  collectionName: 'components_elements_images';
+  info: {
+    description: "An image and a description of it for people who can't see it";
+    displayName: 'Image';
+  };
+  attributes: {
+    alt: Schema.Attribute.Text;
+    decorative: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    file: Schema.Attribute.Media<'images'> & Schema.Attribute.Required;
+  };
+}
+
 export interface ElementsLink extends Struct.ComponentSchema {
   collectionName: 'components_elements_links';
   info: {
@@ -88,7 +101,7 @@ export interface ElementsPerson extends Struct.ComponentSchema {
     displayName: 'Person';
   };
   attributes: {
-    image: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    image: Schema.Attribute.Component<'elements.image', false>;
     name: Schema.Attribute.String;
     role: Schema.Attribute.String;
     text: Schema.Attribute.RichText;
@@ -104,7 +117,7 @@ export interface ElementsPowerColumn extends Struct.ComponentSchema {
   attributes: {
     button: Schema.Attribute.Component<'elements.button', false>;
     description: Schema.Attribute.RichText;
-    image: Schema.Attribute.Media<'images'>;
+    image: Schema.Attribute.Component<'elements.image', false>;
     source: Schema.Attribute.String;
     title: Schema.Attribute.String;
   };
@@ -153,7 +166,7 @@ export interface ElementsTeamMember extends Struct.ComponentSchema {
   attributes: {
     bio: Schema.Attribute.RichText;
     email: Schema.Attribute.String;
-    image: Schema.Attribute.Media<'images'>;
+    image: Schema.Attribute.Component<'elements.image', false>;
     name: Schema.Attribute.String & Schema.Attribute.Required;
     role: Schema.Attribute.String;
     socialMediaLinks: Schema.Attribute.Component<
@@ -171,7 +184,7 @@ export interface MetaFooter extends Struct.ComponentSchema {
   };
   attributes: {
     columns: Schema.Attribute.Component<'elements.footer-column', true>;
-    logo: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    logo: Schema.Attribute.Component<'elements.image', false>;
     socialMediaLinks: Schema.Attribute.Component<
       'elements.social-media-link',
       true
@@ -188,7 +201,7 @@ export interface MetaMetadata extends Struct.ComponentSchema {
   };
   attributes: {
     description: Schema.Attribute.Text;
-    shareImage: Schema.Attribute.Media<'images'>;
+    shareImage: Schema.Attribute.Component<'elements.image', false>;
     title: Schema.Attribute.String;
   };
 }
@@ -202,7 +215,7 @@ export interface MetaNavbar extends Struct.ComponentSchema {
   attributes: {
     ctaButton: Schema.Attribute.Component<'elements.button', false>;
     links: Schema.Attribute.Component<'elements.link', true>;
-    logo: Schema.Attribute.Media<'images'>;
+    logo: Schema.Attribute.Component<'elements.image', false>;
   };
 }
 
@@ -421,8 +434,11 @@ export interface SectionsHeroSection extends Struct.ComponentSchema {
   };
   attributes: {
     buttons: Schema.Attribute.Component<'elements.button', true>;
-    image: Schema.Attribute.Media<'images'>;
-    mobileImage: Schema.Attribute.Media<'images'>;
+    image: Schema.Attribute.Component<'elements.image', false>;
+    imagePosition: Schema.Attribute.Enumeration<
+      ['top', 'upper', 'center', 'lower', 'bottom']
+    > &
+      Schema.Attribute.DefaultTo<'lower'>;
     subtitle: Schema.Attribute.Text;
     title: Schema.Attribute.String;
   };
@@ -459,7 +475,7 @@ export interface SectionsPartnerSection extends Struct.ComponentSchema {
     displayName: 'PartnerSection';
   };
   attributes: {
-    image: Schema.Attribute.Media<'images'>;
+    image: Schema.Attribute.Component<'elements.image', false>;
     text: Schema.Attribute.RichText;
   };
 }
@@ -638,6 +654,7 @@ declare module '@strapi/strapi' {
       'elements.breadcrumb': ElementsBreadcrumb;
       'elements.button': ElementsButton;
       'elements.footer-column': ElementsFooterColumn;
+      'elements.image': ElementsImage;
       'elements.link': ElementsLink;
       'elements.partner-organisation': ElementsPartnerOrganisation;
       'elements.person': ElementsPerson;

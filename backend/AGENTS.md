@@ -74,6 +74,8 @@ See root [AGENTS.md](../AGENTS.md) for shared conventions. Backend-specific addi
 - Content type UIDs: `api::content-type.content-type` (e.g. `api::organization.organization`). Plugin types: `plugin::name.type`.
 - In controllers, use `ctx.badRequest()`, `ctx.notFound()`, `ctx.unauthorized()` for error responses — throwing errors produces 500s.
 - Lifecycle hooks can trigger themselves if they write back to the same content type — guard with a flag or check if relevant fields actually changed.
+- An image on the site is an `elements.image` component (file, `alt`, `decorative`), not a bare `media` field: its description belongs to where it's used, in that language. Saving one with a file but no description and no `decorative` tick is refused (`src/image-fields.ts`). Bare media is only for things nobody reads, like favicons.
+- Every field of a localized content type needs its own `pluginOptions.i18n.localized` (`true`, or `false` for a field shared between languages). Strapi treats an unmarked field as shared and copies it onto every language on save.
 
 ## Drizzle Conventions
 

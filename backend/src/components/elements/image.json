@@ -1,0 +1,23 @@
+{
+  "collectionName": "components_elements_images",
+  "info": {
+    "displayName": "Image",
+    "description": "An image and a description of it for people who can't see it"
+  },
+  "options": {},
+  "attributes": {
+    "file": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": ["images"]
+    },
+    "alt": {
+      "type": "text"
+    },
+    "decorative": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}
