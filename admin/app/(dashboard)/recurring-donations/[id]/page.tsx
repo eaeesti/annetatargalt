@@ -10,6 +10,7 @@ import {
 } from "../../../../components/recurring-status-badge";
 import { organizationHref } from "../../../../lib/entity-links";
 import { formatDate } from "../../../../lib/dates";
+import { RememberedLink } from "../../../../components/remembered-link";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -135,12 +136,12 @@ export default async function RecurringDonationDetailPage({
     <div className="max-w-3xl space-y-6">
       {/* Header */}
       <div className="space-y-1">
-        <Link
+        <RememberedLink
           href="/recurring-donations"
           className="text-sm text-muted-foreground hover:text-foreground"
         >
           ← Recurring Donations
-        </Link>
+        </RememberedLink>
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">
             Recurring #{rd.id} — {donorName(rd.donor)}

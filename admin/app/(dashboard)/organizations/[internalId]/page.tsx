@@ -4,6 +4,7 @@ import { strapiAdmin } from "../../../../lib/api";
 import { fetchOrgs } from "../../../../lib/orgs";
 import { Badge } from "../../../../components/ui/badge";
 import { formatDate } from "../../../../lib/dates";
+import { RememberedLink } from "../../../../components/remembered-link";
 
 const STRAPI_URL = process.env.STRAPI_URL ?? "http://localhost:1337";
 
@@ -117,12 +118,12 @@ export default async function OrganizationDetailPage({
     <div className="max-w-3xl space-y-6">
       {/* Header */}
       <div className="space-y-1">
-        <Link
+        <RememberedLink
           href="/organizations"
           className="text-sm text-muted-foreground hover:text-foreground"
         >
           ← Organizations
-        </Link>
+        </RememberedLink>
         <div className="flex items-center gap-3">
           {org.logo?.file ? (
             // oxlint-disable-next-line @next/next/no-img-element

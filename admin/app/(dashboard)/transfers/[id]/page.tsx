@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { strapiAdmin } from "../../../../lib/api";
 import { fetchOrgNameMap } from "../../../../lib/orgs";
@@ -8,6 +7,7 @@ import { TransferMetaEditor } from "../_components/transfer-meta-editor";
 import { TransferDonationsEditor } from "../_components/transfer-donations-editor";
 import { CardFeeSwitch } from "../_components/card-fee-switch";
 import { formatDate } from "../../../../lib/dates";
+import { RememberedLink } from "../../../../components/remembered-link";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -146,12 +146,12 @@ export default async function TransferDetailPage({
     <div className="max-w-3xl space-y-6">
       {/* Header */}
       <div className="space-y-1">
-        <Link
+        <RememberedLink
           href="/transfers"
           className="text-sm text-muted-foreground hover:text-foreground"
         >
           ← Transfers
-        </Link>
+        </RememberedLink>
         <h1 className="text-2xl font-bold">
           Transfer #{transfer.id} — {formatDate(transfer.datetime)}
         </h1>

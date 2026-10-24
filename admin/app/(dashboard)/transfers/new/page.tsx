@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { strapiAdmin } from "../../../../lib/api";
 import { fetchOrgs } from "../../../../lib/orgs";
 import { TransferBuilder } from "../_components/transfer-builder";
+import { RememberedLink } from "../../../../components/remembered-link";
 
 /** Day after the given YYYY-MM-DD, as YYYY-MM-DD. */
 function dayAfter(iso: string): string {
@@ -32,12 +32,12 @@ export default async function NewTransferPage() {
   return (
     <div className="max-w-3xl space-y-6">
       <div className="space-y-1">
-        <Link
+        <RememberedLink
           href="/transfers"
           className="text-sm text-muted-foreground hover:text-foreground"
         >
           ← Transfers
-        </Link>
+        </RememberedLink>
         <h1 className="text-2xl font-bold">New transfer round</h1>
         <p className="text-sm text-muted-foreground">
           Pick a date range to seed the list of finalized, not-yet-transferred

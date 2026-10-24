@@ -19,6 +19,7 @@ import { Button } from "../../../../components/ui/button";
 import { donationStatus } from "../../../../lib/donation-status";
 import { EntityLink } from "../../../../components/entity-link";
 import {
+  donationHref,
   donorHref,
   organizationHref,
   transferHref,
@@ -36,6 +37,8 @@ import {
   TableRow,
 } from "../../../../components/ui/table";
 import { formatDateTime } from "../../../../lib/dates";
+import { LinkedTableRow } from "../../../../components/linked-row";
+import { useRememberListUrl } from "../../../../components/remembered-link";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -120,6 +123,7 @@ export function DonationsTable({
 }: DonationsTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  useRememberListUrl("/donations");
 
   const {
     columnVisibility,
@@ -173,9 +177,12 @@ export function DonationsTable({
         enableSorting: true,
         header: () => <SortableHeader col="id">ID</SortableHeader>,
         cell: ({ row }) => (
-          <span className="font-mono text-xs text-muted-foreground">
+          <EntityLink
+            href={donationHref(row.original.id)}
+            className="font-mono text-xs text-muted-foreground hover:text-foreground hover:underline"
+          >
             #{row.original.id}
-          </span>
+          </EntityLink>
         ),
       },
       {
@@ -511,10 +518,9 @@ export function DonationsTable({
               </TableRow>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <TableRow
+                <LinkedTableRow
                   key={row.id}
-                  className="cursor-pointer"
-                  onClick={() => router.push(`/donations/${row.original.id}`)}
+                  href={donationHref(row.original.id)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
@@ -524,7 +530,7 @@ export function DonationsTable({
                       )}
                     </TableCell>
                   ))}
-                </TableRow>
+                </LinkedTableRow>
               ))
             )}
           </TableBody>
