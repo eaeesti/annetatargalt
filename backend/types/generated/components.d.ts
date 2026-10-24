@@ -358,6 +358,8 @@ export interface SectionsDonationSection extends Struct.ComponentSchema {
       Schema.Attribute.DefaultTo<'Pangalink'>;
     paymentMethodText: Schema.Attribute.String &
       Schema.Attribute.DefaultTo<'Makseviis'>;
+    paymentProviderLogo: Schema.Attribute.Component<'elements.image', false>;
+    paymentProviderText: Schema.Attribute.String;
     recurringDonationGuide: Schema.Attribute.RichText;
     recurringDonationSummary: Schema.Attribute.RichText;
     recurringDonationText: Schema.Attribute.String;
