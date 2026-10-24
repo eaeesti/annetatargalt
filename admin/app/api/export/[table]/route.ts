@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { COOKIE_NAME } from "../../../../lib/auth";
 import { EXPORTS } from "../../../../lib/exports";
-import { day } from "../../../../lib/csv";
+import { currentDay } from "../../../../lib/dates";
 
 /** A table's rows as a CSV download, e.g. /api/export/donations?sortBy=…&dateFrom=… */
 export async function GET(
@@ -27,7 +27,7 @@ export async function GET(
     );
   }
 
-  const today = day(new Date().toISOString());
+  const today = currentDay();
   return new NextResponse(result.csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",

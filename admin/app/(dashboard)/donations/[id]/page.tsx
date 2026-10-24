@@ -13,6 +13,7 @@ import {
   organizationHref,
   recurringDonationHref,
 } from "../../../../lib/entity-links";
+import { formatDateTime } from "../../../../lib/dates";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -55,16 +56,6 @@ type DonationDetail = {
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("et-EE", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 function donorName(donor: DonationDetail["donor"]): string | null {
   if (!donor) return null;
@@ -143,7 +134,7 @@ export default async function DonationDetailPage({
       {/* Key details */}
       <Section title="Details">
         <Field label="Amount">{formatEuros(donation.amount)}</Field>
-        <Field label="Date">{formatDate(donation.datetime)}</Field>
+        <Field label="Date">{formatDateTime(donation.datetime)}</Field>
         <Field label="Status">
           {(() => {
             const status = donationStatus(

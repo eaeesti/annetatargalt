@@ -35,6 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "../../../../components/ui/table";
+import { formatDateTime } from "../../../../lib/dates";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -78,16 +79,6 @@ export type Totals = {
 
 function formatAmount(cents: number): string {
   return `€${(cents / 100).toFixed(2)}`;
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("et-EE", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }
 
 function donorLabel(row: DonationRow): string | null {
@@ -194,7 +185,7 @@ export function DonationsTable({
         header: () => <SortableHeader col="datetime">Date</SortableHeader>,
         cell: ({ row }) => (
           <span className="text-sm whitespace-nowrap">
-            {formatDate(row.original.datetime)}
+            {formatDateTime(row.original.datetime)}
           </span>
         ),
       },
