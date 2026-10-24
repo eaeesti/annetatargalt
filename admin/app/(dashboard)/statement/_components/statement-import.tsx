@@ -63,6 +63,7 @@ type Preview = {
     alreadyReconciled: number;
     ignored: number;
     unrecorded: number;
+    undirected: number;
     outgoing: number;
     notImported: number;
   };
@@ -117,6 +118,7 @@ export function StatementImport() {
     reconciled: number;
     ignored: number;
     recorded: number;
+    directionsFilled: number;
     payoutFeesDerived: number;
   } | null>(null);
 
@@ -241,7 +243,9 @@ export function StatementImport() {
     manualRecurring.length;
   // bank_transactions rows that would be written even with nothing selected
   const rowsToRecord = preview?.counts.unrecorded ?? 0;
-  const totalChanges = selectionChanges + rowsToRecord;
+  // recorded rows from before lines kept whether money came in or went out
+  const rowsToUpdate = preview?.counts.undirected ?? 0;
+  const totalChanges = selectionChanges + rowsToRecord + rowsToUpdate;
 
   async function apply() {
     if (!preview) return;
@@ -341,6 +345,13 @@ export function StatementImport() {
           <strong>{result.reconciled}</strong> reconciled,{" "}
           <strong>{result.ignored}</strong> ignored,{" "}
           <strong>{result.recorded}</strong> bank rows recorded
+          {result.directionsFilled > 0 && (
+            <>
+              , <strong>{result.directionsFilled}</strong> earlier bank row
+              {result.directionsFilled === 1 ? "" : "s"} marked as money in or
+              out
+            </>
+          )}
           {result.payoutFeesDerived > 0 && (
             <>
               , and the fees of <strong>{result.payoutFeesDerived}</strong>{" "}
@@ -361,6 +372,12 @@ export function StatementImport() {
               <span className="text-foreground">
                 {preview.counts.unrecorded} new bank row
                 {preview.counts.unrecorded === 1 ? "" : "s"} will be recorded
+              </span>
+            )}
+            {rowsToUpdate > 0 && (
+              <span className="text-foreground">
+                {rowsToUpdate} earlier bank row{rowsToUpdate === 1 ? "" : "s"}{" "}
+                will be marked as money in or out
               </span>
             )}
             {preview.counts.outgoing > 0 && (
@@ -781,13 +798,16 @@ export function StatementImport() {
                 ? "Applying…"
                 : selectionChanges === 0 && rowsToRecord > 0
                   ? `Record ${rowsToRecord} bank row${rowsToRecord === 1 ? "" : "s"}`
-                  : `Apply ${selectionChanges} change${selectionChanges === 1 ? "" : "s"}`}
+                  : selectionChanges === 0 && rowsToUpdate > 0
+                    ? `Update ${rowsToUpdate} bank row${rowsToUpdate === 1 ? "" : "s"}`
+                    : `Apply ${selectionChanges} change${selectionChanges === 1 ? "" : "s"}`}
             </Button>
             <span className="text-xs text-muted-foreground">
               {importSel.size + manualRecurring.length} create ·{" "}
               {reconcileSel.size + manualAssignments.length} reconcile ·{" "}
               {cardPayoutAssignments.length} card · {ignoreSel.size} ignore
               {rowsToRecord > 0 && <> · {rowsToRecord} bank rows</>}
+              {rowsToUpdate > 0 && <> · {rowsToUpdate} updated</>}
             </span>
           </div>
         </>
