@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { strapiAdmin } from "../../../lib/api";
 import { fetchOrgNameMap } from "../../../lib/orgs";
 import {
@@ -6,6 +7,8 @@ import {
   type Pagination,
   type Totals,
 } from "./_components/donations-table";
+
+export const metadata: Metadata = { title: "Donations" };
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
 const VALID_SORT_COLS = new Set([

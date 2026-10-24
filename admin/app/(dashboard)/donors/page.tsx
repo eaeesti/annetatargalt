@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import { strapiAdmin } from "../../../lib/api";
 import {
   DonorsTable,
   type DonorRow,
   type Pagination,
 } from "./_components/donors-table";
+
+export const metadata: Metadata = { title: "Donors" };
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
 const VALID_SORT_COLS = new Set([

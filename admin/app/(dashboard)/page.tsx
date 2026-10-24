@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { strapiAdmin } from "../../lib/api";
 import { ChartSkeleton, StatCardsSkeleton } from "./_components/skeletons";
@@ -11,6 +12,8 @@ import { RecurringChurnChart } from "./_components/recurring-churn-chart";
 import { TrendBadge } from "./_components/trend-badge";
 import { InfoTooltip } from "./_components/info-tooltip";
 import type { DashboardStats, DashboardCharts } from "./types";
+
+export const metadata: Metadata = { title: "Dashboard" };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

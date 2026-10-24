@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { strapiAdmin } from "../../../../lib/api";
 import { RememberedLink } from "../../../../components/remembered-link";
+
+export const metadata: Metadata = { title: "Recurring donations by month" };
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

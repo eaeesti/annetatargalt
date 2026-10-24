@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { strapiAdmin } from "../../../lib/api";
 import {
@@ -5,6 +6,8 @@ import {
   type RecurringDonationRow,
   type Pagination,
 } from "./_components/recurring-donations-table";
+
+export const metadata: Metadata = { title: "Recurring donations" };
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
 const VALID_SORT_COLS = new Set([

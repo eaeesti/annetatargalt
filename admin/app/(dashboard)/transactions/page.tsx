@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { strapiAdmin } from "../../../lib/api";
 import {
   TransactionsTable,
@@ -8,6 +9,8 @@ import {
   MoneyFlowSummary,
   type MoneyFlow,
 } from "./_components/money-flow-summary";
+
+export const metadata: Metadata = { title: "Transactions" };
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
 const VALID_SORT_COLS = new Set([
