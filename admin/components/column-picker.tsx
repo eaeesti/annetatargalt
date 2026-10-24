@@ -14,16 +14,29 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
+export type PickerColumn = { id: string; label: string; visible: boolean };
+
+/** A TanStack table's columns for the picker, named by `labels`. */
+export function tableColumns<Row>(
+  table: Table<Row>,
+  labels: Record<string, string>,
+): PickerColumn[] {
+  return table.getAllColumns().map((col) => ({
+    id: col.id,
+    label: labels[col.id] ?? col.id,
+    visible: col.getIsVisible(),
+  }));
+}
+
 /** The "Columns" menu above a table: show or hide each column, or go back to the defaults. */
-export function ColumnPicker<Row>({
-  table,
-  labels,
+export function ColumnPicker({
+  columns,
+  onToggle,
   isDefault,
   onReset,
 }: {
-  table: Table<Row>;
-  /** column id → name in the menu */
-  labels: Record<string, string>;
+  columns: PickerColumn[];
+  onToggle: (id: string, visible: boolean) => void;
   isDefault: boolean;
   onReset: () => void;
 }) {
@@ -41,13 +54,13 @@ export function ColumnPicker<Row>({
         <DropdownMenuGroup>
           <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {table.getAllColumns().map((col) => (
+          {columns.map((col) => (
             <DropdownMenuCheckboxItem
               key={col.id}
-              checked={col.getIsVisible()}
-              onCheckedChange={(val) => col.toggleVisibility(val)}
+              checked={col.visible}
+              onCheckedChange={(visible) => onToggle(col.id, visible)}
             >
-              {labels[col.id] ?? col.id}
+              {col.label}
             </DropdownMenuCheckboxItem>
           ))}
         </DropdownMenuGroup>

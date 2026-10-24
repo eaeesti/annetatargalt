@@ -7,6 +7,7 @@ import {
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
+  type VisibilityState,
   useReactTable,
 } from "@tanstack/react-table";
 import { Badge } from "../../../../components/ui/badge";
@@ -25,6 +26,11 @@ import { ExportCsvButton } from "../../../../components/export-csv-button";
 import { formatDate } from "../../../../lib/dates";
 import { LinkedTableRow } from "../../../../components/linked-row";
 import { ariaSort } from "../../../../lib/aria-sort";
+import {
+  ColumnPicker,
+  tableColumns,
+} from "../../../../components/column-picker";
+import { useSavedColumnVisibility } from "../../../../hooks/use-saved-column-visibility";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -121,10 +127,42 @@ function SortableHeader({
  * to page and a server round trip per header click would only add latency.
  * The header controls behave and look the same either way.
  */
+// Every column starts shown on a wider screen.
+const NO_HIDDEN_COLUMNS: VisibilityState = {};
+
+const COLUMN_LABELS: Record<string, string> = {
+  logo: "Logo",
+  title: "Name",
+  fund: "Type",
+  active: "Status",
+  totalDonated: "Total donated",
+  donationCount: "Donations",
+  lastDonationDate: "Last donation",
+};
+
+// A phone shows each organization, whether it's active and what it got.
+const PHONE_HIDDEN: VisibilityState = {
+  logo: false,
+  fund: false,
+  donationCount: false,
+  lastDonationDate: false,
+};
+
 export function OrganizationsTable({ data }: { data: OrganizationRow[] }) {
   const [sorting, setSorting] = useState<SortingState>([
     { id: "totalDonated", desc: true },
   ]);
+  const {
+    columnVisibility,
+    onColumnVisibilityChange,
+    setColumnVisible,
+    resetColumnVisibility,
+    isDefault,
+  } = useSavedColumnVisibility(
+    "organizations",
+    NO_HIDDEN_COLUMNS,
+    PHONE_HIDDEN,
+  );
 
   const sortBy = sorting[0]?.id ?? "";
   const sortDir: "asc" | "desc" = sorting[0]?.desc ? "desc" : "asc";
@@ -282,8 +320,9 @@ export function OrganizationsTable({ data }: { data: OrganizationRow[] }) {
   const table = useReactTable({
     data,
     columns,
-    state: { sorting },
+    state: { sorting, columnVisibility },
     onSortingChange: setSorting,
+    onColumnVisibilityChange,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
@@ -295,8 +334,14 @@ export function OrganizationsTable({ data }: { data: OrganizationRow[] }) {
         <p className="text-sm text-muted-foreground">
           {data.length.toLocaleString()} organizations
         </p>
-        <div className="ml-auto">
+        <div className="ml-auto flex flex-wrap items-center gap-2">
           <ExportCsvButton table="organizations" />
+          <ColumnPicker
+            columns={tableColumns(table, COLUMN_LABELS)}
+            onToggle={setColumnVisible}
+            isDefault={isDefault}
+            onReset={resetColumnVisibility}
+          />
         </div>
       </div>
 

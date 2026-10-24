@@ -10,7 +10,10 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ColumnPicker } from "../../../../components/column-picker";
+import {
+  ColumnPicker,
+  tableColumns,
+} from "../../../../components/column-picker";
 import { ExportCsvButton } from "../../../../components/export-csv-button";
 import { SortIcon } from "../../../../components/sort-icon";
 import { useSavedColumnVisibility } from "../../../../hooks/use-saved-column-visibility";
@@ -87,6 +90,16 @@ const PAGE_SIZES = [25, 50, 100, 250] as const;
 
 const DEFAULT_COLUMNS: VisibilityState = {};
 
+// A phone shows each round's date, total and whether it ties out.
+const PHONE_HIDDEN: VisibilityState = {
+  notes: false,
+  donationCount: false,
+  cardFees: false,
+  paidOut: false,
+  adjustment: false,
+  residual: false,
+};
+
 export function TransfersTable({
   data,
   pagination,
@@ -100,9 +113,10 @@ export function TransfersTable({
   const {
     columnVisibility,
     onColumnVisibilityChange,
+    setColumnVisible,
     resetColumnVisibility,
     isDefault,
-  } = useSavedColumnVisibility("transfers", DEFAULT_COLUMNS);
+  } = useSavedColumnVisibility("transfers", DEFAULT_COLUMNS, PHONE_HIDDEN);
 
   function pushUrl(updates: Record<string, string | undefined>) {
     const sp = new URLSearchParams(window.location.search);
@@ -359,8 +373,8 @@ export function TransfersTable({
             sortDir={sortDir}
           />
           <ColumnPicker
-            table={table}
-            labels={columnLabels}
+            columns={tableColumns(table, columnLabels)}
+            onToggle={setColumnVisible}
             isDefault={isDefault}
             onReset={resetColumnVisibility}
           />

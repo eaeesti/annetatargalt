@@ -7,6 +7,7 @@ import {
   type SortingState,
   flexRender,
   getCoreRowModel,
+  type VisibilityState,
   useReactTable,
 } from "@tanstack/react-table";
 import { SortIcon } from "../../../../components/sort-icon";
@@ -30,6 +31,11 @@ import { formatDate } from "../../../../lib/dates";
 import { LinkedTableRow } from "../../../../components/linked-row";
 import { useRememberListUrl } from "../../../../components/remembered-link";
 import { ariaSort } from "../../../../lib/aria-sort";
+import {
+  ColumnPicker,
+  tableColumns,
+} from "../../../../components/column-picker";
+import { useSavedColumnVisibility } from "../../../../hooks/use-saved-column-visibility";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -79,6 +85,27 @@ interface RecurringDonationsTableProps {
 
 const PAGE_SIZES = [25, 50, 100, 250] as const;
 
+// Every column starts shown on a wider screen.
+const NO_HIDDEN_COLUMNS: VisibilityState = {};
+
+const COLUMN_LABELS: Record<string, string> = {
+  id: "ID",
+  donorLastName: "Donor",
+  amount: "Amount/mo",
+  datetime: "Started",
+  status: "Status",
+  donationCount: "Donations",
+  lastDonationDate: "Last donation",
+};
+
+// A phone shows who, how much a month, and whether it's still going.
+const PHONE_HIDDEN: VisibilityState = {
+  id: false,
+  datetime: false,
+  donationCount: false,
+  lastDonationDate: false,
+};
+
 export function RecurringDonationsTable({
   data,
   pagination,
@@ -87,6 +114,17 @@ export function RecurringDonationsTable({
 }: RecurringDonationsTableProps) {
   const router = useRouter();
   useRememberListUrl("/recurring-donations");
+  const {
+    columnVisibility,
+    onColumnVisibilityChange,
+    setColumnVisible,
+    resetColumnVisibility,
+    isDefault,
+  } = useSavedColumnVisibility(
+    "recurring-donations",
+    NO_HIDDEN_COLUMNS,
+    PHONE_HIDDEN,
+  );
 
   function pushUrl(updates: Record<string, string | undefined>) {
     const sp = new URLSearchParams(window.location.search);
@@ -221,7 +259,8 @@ export function RecurringDonationsTable({
     manualPagination: true,
     manualSorting: true,
     pageCount: pagination.pageCount,
-    state: { sorting },
+    state: { sorting, columnVisibility },
+    onColumnVisibilityChange,
   });
 
   return (
@@ -231,11 +270,19 @@ export function RecurringDonationsTable({
         <p className="text-sm text-muted-foreground">
           {pagination.total.toLocaleString()} recurring donations
         </p>
-        <ExportCsvButton
-          table="recurring-donations"
-          sortBy={sortBy}
-          sortDir={sortDir}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <ExportCsvButton
+            table="recurring-donations"
+            sortBy={sortBy}
+            sortDir={sortDir}
+          />
+          <ColumnPicker
+            columns={tableColumns(table, COLUMN_LABELS)}
+            onToggle={setColumnVisible}
+            isDefault={isDefault}
+            onReset={resetColumnVisibility}
+          />
+        </div>
       </div>
 
       {/* Table */}

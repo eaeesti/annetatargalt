@@ -2,10 +2,13 @@
 
 import { useMemo, useSyncExternalStore } from "react";
 import type { OnChangeFn, VisibilityState } from "@tanstack/react-table";
+import { useIsMobile } from "./use-mobile";
 
 /*
- * Which columns a table shows, remembered in this browser: whatever someone
- * picks becomes their default for that table, until they reset it.
+ * Which columns a table shows. A phone starts with fewer than a wider
+ * screen; a column someone shows or hides stays that way in this browser,
+ * whatever the width, until they reset it. Columns they never touched keep
+ * following the screen's defaults.
  */
 
 // The browser announces a change only to other tabs, so this tab's own
@@ -62,15 +65,18 @@ function parse(saved: string | null): VisibilityState {
 }
 
 /**
- * Column visibility for the table called `table`, starting from `defaults`
- * (columns left out are shown). Keep `defaults` a constant outside the
- * component, so it stays the same object between renders.
+ * Column visibility for the table called `table`. `defaults` are for a wider
+ * screen and `phoneDefaults` what a phone hides on top (columns left out of
+ * both are shown). Keep both constants outside the component, so they stay
+ * the same objects between renders.
  */
 export function useSavedColumnVisibility(
   table: string,
   defaults: VisibilityState,
+  phoneDefaults: VisibilityState = {},
 ) {
   const key = `columns:${table}`;
+  const isPhone = useIsMobile();
   // The server can't see localStorage, so it renders the defaults and the
   // browser swaps in the saved choice.
   const saved = useSyncExternalStore(
@@ -78,29 +84,29 @@ export function useSavedColumnVisibility(
     () => stored(key),
     () => null,
   );
+  const choices = useMemo(() => parse(saved), [saved]);
   const columnVisibility = useMemo(
-    () => ({ ...defaults, ...parse(saved) }),
-    [defaults, saved],
+    () => ({ ...defaults, ...(isPhone ? phoneDefaults : {}), ...choices }),
+    [defaults, phoneDefaults, isPhone, choices],
   );
 
   const onColumnVisibilityChange: OnChangeFn<VisibilityState> = (updater) => {
     const next =
       typeof updater === "function" ? updater(columnVisibility) : updater;
-    store(key, JSON.stringify(next));
+    // only the columns that changed become choices
+    const changed = Object.entries(next).filter(
+      ([id, visible]) => (columnVisibility[id] ?? true) !== visible,
+    );
+    store(key, JSON.stringify({ ...choices, ...Object.fromEntries(changed) }));
   };
-
-  const columns = new Set([
-    ...Object.keys(defaults),
-    ...Object.keys(columnVisibility),
-  ]);
-  const isDefault = [...columns].every(
-    (id) => (columnVisibility[id] ?? true) === (defaults[id] ?? true),
-  );
 
   return {
     columnVisibility,
     onColumnVisibilityChange,
+    /** Shows or hides one column. */
+    setColumnVisible: (id: string, visible: boolean) =>
+      onColumnVisibilityChange((current) => ({ ...current, [id]: visible })),
     resetColumnVisibility: () => store(key, null),
-    isDefault,
+    isDefault: Object.keys(choices).length === 0,
   };
 }
