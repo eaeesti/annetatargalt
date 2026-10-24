@@ -9,7 +9,12 @@ export type StrapiOrg = {
   homepage: string | null;
   active: boolean;
   fund: boolean;
-  logo: { url: string; alternativeText: string | null } | null;
+  /** An Image component: the logo file and its description. */
+  logo: {
+    file: { url: string } | null;
+    alt: string | null;
+    decorative: boolean | null;
+  } | null;
 };
 
 type StrapiOrgsResponse = {
@@ -33,7 +38,7 @@ const ORGS_REVALIDATE_SECONDS = 300;
 
 export const fetchOrgs = cache(async (): Promise<StrapiOrg[]> => {
   const res = await strapiAdmin(
-    "/api/organizations?populate=logo&pagination[pageSize]=500",
+    "/api/organizations?populate[logo][populate]=file&pagination[pageSize]=500",
     { next: { revalidate: ORGS_REVALIDATE_SECONDS } },
   );
   if (!res.ok) return [];

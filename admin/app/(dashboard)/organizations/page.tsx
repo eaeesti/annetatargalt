@@ -42,8 +42,8 @@ export default async function OrganizationsPage() {
       title: org.title,
       active: org.active,
       fund: org.fund,
-      logoUrl: org.logo ? logoUrl(org.logo.url) : null,
-      logoAlt: org.logo?.alternativeText ?? null,
+      logoUrl: org.logo?.file ? logoUrl(org.logo.file.url) : null,
+      logoAlt: org.logo?.alt ?? null,
       ...(stat && {
         totalDonated: stat.totalDonated,
         donationCount: stat.donationCount,
