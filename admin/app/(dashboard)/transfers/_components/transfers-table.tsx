@@ -33,6 +33,10 @@ export type TransferRow = {
   donationCount: number | null;
   totalAmount: number | null;
   owedCents: number | null;
+  /** the round's card fees, and how much of them comes off the tip organization's share */
+  cardFeeCents: number | null;
+  cardFeeDeductionCents: number | null;
+  deductCardFees: boolean;
   paidOutCents: number | null;
   paymentCount: number | null;
   adjustmentCents: number | null;
@@ -183,6 +187,31 @@ export function TransfersTable({
             {formatAmount(row.original.totalAmount)}
           </span>
         ),
+      },
+      {
+        id: "cardFees",
+        header: "Card fees",
+        cell: ({ row }) => {
+          const { cardFeeCents, cardFeeDeductionCents } = row.original;
+          if (!cardFeeCents) {
+            return <span className="text-sm text-muted-foreground">—</span>;
+          }
+          return (
+            <span
+              className="text-sm whitespace-nowrap text-muted-foreground tabular-nums"
+              title={
+                cardFeeDeductionCents
+                  ? `${formatAmount(cardFeeDeductionCents)} taken off the tip organization's share`
+                  : "Not deducted from anyone's share"
+              }
+            >
+              {formatAmount(cardFeeCents)}
+              {cardFeeDeductionCents ? (
+                <span className="ml-1 text-xs">deducted</span>
+              ) : null}
+            </span>
+          );
+        },
       },
       {
         id: "paidOut",

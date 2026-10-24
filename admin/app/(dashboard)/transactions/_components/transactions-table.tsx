@@ -32,6 +32,8 @@ export type BankTransactionRow = {
   counterpartyName: string | null;
   senderCode: string | null;
   category: string;
+  /** "C" money in, "D" money out; null until a statement import says */
+  direction: string | null;
   grossAmount: number | null;
   feeAmount: number | null;
   note: string | null;
@@ -376,7 +378,7 @@ export function TransactionsTable({
                         </span>
                       </TableCell>
                       <TableCell className="text-right whitespace-nowrap tabular-nums">
-                        {row.category === "outgoing" && "−"}
+                        {row.direction === "D" && "−"}
                         {eur(row.amount)}
                         {row.category === "card-payout" &&
                           row.feeAmount != null && (
