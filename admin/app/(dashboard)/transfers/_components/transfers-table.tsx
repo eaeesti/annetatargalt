@@ -40,6 +40,8 @@ export type TransferRow = {
   paidOutCents: number | null;
   paymentCount: number | null;
   adjustmentCents: number | null;
+  /** owed still not accounted for by the linked payments and the adjustment */
+  residualCents: number | null;
   balanced: boolean | null;
 };
 
@@ -55,6 +57,11 @@ export type Pagination = {
 function formatAmount(cents: number | null): string {
   if (cents == null) return "—";
   return `€${(cents / 100).toFixed(2)}`;
+}
+
+/** An amount that can go either way, with a proper minus sign. */
+function formatSigned(cents: number): string {
+  return `${cents < 0 ? "−" : ""}€${(Math.abs(cents) / 100).toFixed(2)}`;
 }
 
 function formatDate(iso: string): string {
@@ -223,6 +230,35 @@ export function TransfersTable({
               : "—"}
           </span>
         ),
+      },
+      {
+        id: "adjustment",
+        header: "Adjustment",
+        cell: ({ row }) => (
+          <span className="text-sm whitespace-nowrap text-muted-foreground tabular-nums">
+            {row.original.adjustmentCents == null
+              ? "—"
+              : formatSigned(row.original.adjustmentCents)}
+          </span>
+        ),
+      },
+      {
+        id: "residual",
+        header: "Residual",
+        cell: ({ row }) => {
+          const { residualCents, balanced } = row.original;
+          // nothing paid out or adjusted yet, so there's nothing to compare
+          if (balanced == null || residualCents == null) {
+            return <span className="text-sm text-muted-foreground">—</span>;
+          }
+          return (
+            <span
+              className={`text-sm whitespace-nowrap tabular-nums ${balanced ? "text-muted-foreground" : "text-amber-600"}`}
+            >
+              {formatSigned(residualCents)}
+            </span>
+          );
+        },
       },
       {
         id: "ok",
