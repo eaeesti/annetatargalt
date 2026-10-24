@@ -105,7 +105,10 @@ export default async function DonorDetailPage({ params }: { params: Params }) {
     fetchOrgNameMap(),
   ]);
 
-  if (!res.ok) notFound();
+  // a bad or unknown ID is "not found"; anything else is the error page,
+  // whose Try again fetches it again
+  if (res.status === 404 || res.status === 400) notFound();
+  if (!res.ok) throw new Error(`Couldn't load the donor (${res.status})`);
 
   const { data: donor } = (await res.json()) as { data: DonorDetail };
 
