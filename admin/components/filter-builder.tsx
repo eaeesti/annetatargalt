@@ -124,6 +124,26 @@ function toIsoDate(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+/**
+ * Escape cancels a filter that's being added or changed. Not when the key
+ * came from a popover opened from the row, like the calendar: that closes
+ * itself, and React passes its keys on to the row.
+ */
+function cancelOnEscape(onCancel: () => void) {
+  return (event: React.KeyboardEvent<HTMLElement>) => {
+    if (
+      event.key === "Escape" &&
+      event.target instanceof Node &&
+      event.currentTarget.contains(event.target)
+    ) {
+      onCancel();
+    }
+  };
+}
+
+const ROW_CLASS =
+  "flex flex-wrap items-center gap-1.5 rounded-md border bg-background px-2.5 py-1.5 shadow-sm";
+
 function parseIsoDate(s: string | undefined): Date | undefined {
   if (!s) return undefined;
   const d = new Date(`${s}T12:00:00`);
@@ -209,11 +229,13 @@ function DateRangeForm({
     });
   }
 
-  const rowCls =
-    "flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1.5 shadow-sm";
-
   return (
-    <div className={rowCls}>
+    <div
+      role="group"
+      aria-label={filter.label}
+      className={ROW_CLASS}
+      onKeyDown={cancelOnEscape(onCancel)}
+    >
       <span className="mr-0.5 text-sm text-muted-foreground">
         {filter.label}:
       </span>
@@ -224,6 +246,7 @@ function DateRangeForm({
               variant="outline"
               size="sm"
               className="h-6 gap-1.5 px-2.5 text-xs"
+              autoFocus
             >
               <CalendarIcon className="h-3 w-3" />
               {rangeLabel()}
@@ -276,7 +299,7 @@ function DateRangeForm({
       <button
         onClick={onCancel}
         className="ml-0.5 text-muted-foreground transition-colors hover:text-foreground"
-        aria-label="Cancel"
+        aria-label={`Cancel the ${filter.label} filter`}
       >
         <X className="h-3.5 w-3.5" />
       </button>
@@ -302,12 +325,11 @@ function NumberRangeForm({
   const [from, setFrom] = useState(initialFrom ?? "");
   const [to, setTo] = useState(initialTo ?? "");
 
-  const rowCls =
-    "flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1.5 shadow-sm";
-
   return (
     <form
-      className={rowCls}
+      aria-label={filter.label}
+      className={ROW_CLASS}
+      onKeyDown={cancelOnEscape(onCancel)}
       onSubmit={(e) => {
         e.preventDefault();
         if (!from && !to) return;
@@ -330,6 +352,7 @@ function NumberRangeForm({
         value={from}
         onChange={(e) => setFrom(e.target.value)}
         placeholder="Min"
+        aria-label={`${filter.label} from`}
         className="h-6 w-20 px-1.5 text-xs"
         autoFocus
       />
@@ -341,6 +364,7 @@ function NumberRangeForm({
         value={to}
         onChange={(e) => setTo(e.target.value)}
         placeholder="Max"
+        aria-label={`${filter.label} to`}
         className="h-6 w-20 px-1.5 text-xs"
       />
       <Button size="sm" type="submit" className="h-6 px-2.5 text-xs">
@@ -350,7 +374,7 @@ function NumberRangeForm({
         type="button"
         onClick={onCancel}
         className="text-muted-foreground transition-colors hover:text-foreground"
-        aria-label="Cancel"
+        aria-label={`Cancel the ${filter.label} filter`}
       >
         <X className="h-3.5 w-3.5" />
       </button>
@@ -375,52 +399,34 @@ function AddFilterForm({
     filter.type === "text" ? (initialValues?.[filter.key] ?? "") : "",
   );
 
-  const rowCls =
-    "flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1.5 shadow-sm";
-
-  if (filter.type === "boolean") {
+  if (filter.type === "boolean" || filter.type === "select") {
+    const options =
+      filter.type === "boolean"
+        ? [
+            { value: "true", label: filter.trueLabel },
+            { value: "false", label: filter.falseLabel },
+          ]
+        : filter.options;
+    // the current choice, when changing a filter that's already set
+    const current = initialValues?.[filter.key];
     return (
-      <div className={rowCls}>
+      <div
+        role="group"
+        aria-label={filter.label}
+        className={ROW_CLASS}
+        onKeyDown={cancelOnEscape(onCancel)}
+      >
         <span className="mr-0.5 text-sm text-muted-foreground">
           {filter.label}:
         </span>
-        <Button
-          size="sm"
-          className="h-6 px-2.5 text-xs"
-          onClick={() => onApply({ [filter.key]: "true" })}
-        >
-          {filter.trueLabel}
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-6 px-2.5 text-xs"
-          onClick={() => onApply({ [filter.key]: "false" })}
-        >
-          {filter.falseLabel}
-        </Button>
-        <button
-          onClick={onCancel}
-          className="ml-0.5 text-muted-foreground transition-colors hover:text-foreground"
-          aria-label="Cancel"
-        >
-          <X className="h-3.5 w-3.5" />
-        </button>
-      </div>
-    );
-  }
-
-  if (filter.type === "select") {
-    return (
-      <div className={rowCls}>
-        <span className="mr-0.5 text-sm text-muted-foreground">
-          {filter.label}:
-        </span>
-        {filter.options.map((opt) => (
+        {options.map((opt, i) => (
           <Button
             key={opt.value}
             size="sm"
-            variant="outline"
+            variant={opt.value === current ? "default" : "outline"}
+            aria-pressed={opt.value === current}
+            // focus starts on the current choice, or the first one
+            autoFocus={current ? opt.value === current : i === 0}
             className="h-6 px-2.5 text-xs"
             onClick={() => onApply({ [filter.key]: opt.value })}
           >
@@ -430,7 +436,7 @@ function AddFilterForm({
         <button
           onClick={onCancel}
           className="ml-0.5 text-muted-foreground transition-colors hover:text-foreground"
-          aria-label="Cancel"
+          aria-label={`Cancel the ${filter.label} filter`}
         >
           <X className="h-3.5 w-3.5" />
         </button>
@@ -465,7 +471,9 @@ function AddFilterForm({
   // text
   return (
     <form
-      className={rowCls}
+      aria-label={filter.label}
+      className={ROW_CLASS}
+      onKeyDown={cancelOnEscape(onCancel)}
       onSubmit={(e) => {
         e.preventDefault();
         if (!text.trim()) return;
@@ -479,6 +487,7 @@ function AddFilterForm({
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder={filter.placeholder ?? "Type to filter…"}
+        aria-label={filter.label}
         className="h-6 w-44 px-2 text-xs"
         autoFocus
       />
@@ -489,7 +498,7 @@ function AddFilterForm({
         type="button"
         onClick={onCancel}
         className="text-muted-foreground transition-colors hover:text-foreground"
-        aria-label="Cancel"
+        aria-label={`Cancel the ${filter.label} filter`}
       >
         <X className="h-3.5 w-3.5" />
       </button>
@@ -528,8 +537,7 @@ export function FilterBuilder({
       if (params[f.toKey]) vals[f.toKey] = params[f.toKey];
       return vals;
     }
-    if (f.type !== "boolean" && params[f.key])
-      return { [f.key]: params[f.key] };
+    if (params[f.key]) return { [f.key]: params[f.key] };
     return {};
   }
 
@@ -564,13 +572,14 @@ export function FilterBuilder({
                 setEditing(f);
               }}
               className="transition-colors hover:text-foreground"
+              aria-label={`Change the filter ${activeLabel(f, params)}`}
             >
               {activeLabel(f, params)}
             </button>
             <button
               onClick={() => handleRemove(f)}
               className="ml-0.5 rounded transition-colors hover:bg-muted"
-              aria-label="Remove filter"
+              aria-label={`Remove the ${f.label} filter`}
             >
               <X className="h-3 w-3" />
             </button>
