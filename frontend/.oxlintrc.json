@@ -18,7 +18,16 @@
   // non-null assertions. Narrow the type instead.
   "rules": {
     "typescript/no-explicit-any": "error",
-    "typescript/no-non-null-assertion": "error"
+    "typescript/no-non-null-assertion": "error",
+    // AGENTS.md also says no `as`: an assertion silences the compiler the
+    // same way `any` does, so narrow with a guard instead. `as const` stays
+    // allowed, since it only makes a type narrower.
+    "typescript/consistent-type-assertions": [
+      "error",
+      { "assertionStyle": "never" }
+    ],
+    // `==` hides which values it lets through, so spell the check out.
+    "eqeqeq": "error"
   },
   "overrides": [
     {

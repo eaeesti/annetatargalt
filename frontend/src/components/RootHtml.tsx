@@ -6,6 +6,14 @@ import "@fontsource-variable/inter/opsz.css";
 import "@fontsource-variable/inter/opsz-italic.css";
 import type { Locale } from "@/utils/locale";
 
+// The script reads where to send events from data-api. React's types for a
+// script's props have no data-* attributes, so this is a variable: written
+// inline, the object would be rejected for having a property they don't know.
+const plausibleScriptProps = {
+  src: "/js/script.js",
+  "data-api": "/api/event",
+};
+
 /** The document shell both languages' root layouts share. */
 export default function RootHtml({
   locale,
@@ -24,12 +32,7 @@ export default function RootHtml({
         <head>
           <PlausibleProvider
             domain={plausibleDomain}
-            scriptProps={
-              {
-                src: "/js/script.js",
-                "data-api": "/api/event",
-              } as React.ComponentPropsWithoutRef<"script">
-            }
+            scriptProps={plausibleScriptProps}
           />
         </head>
       )}

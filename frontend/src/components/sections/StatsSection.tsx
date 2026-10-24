@@ -38,16 +38,16 @@ export default function StatsSection({
   transactionFeeValue,
   global,
 }: StrapiStatsSection & { global: StrapiGlobal }) {
-  const { data, error, isLoading } = useSWR(
+  const { data, error, isLoading } = useSWR<{ donationSum: number }>(
     getStrapiURL("/api/stats"),
     fetcher,
   );
 
   if (isLoading) return <LoadingSection />;
 
-  if (error) return;
+  if (error || !data) return;
 
-  const { donationSum } = data as { donationSum: number };
+  const { donationSum } = data;
 
   const donationAmount = Math.floor(donationSum / 100);
 

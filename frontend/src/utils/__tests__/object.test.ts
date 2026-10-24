@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { at, pick } from "../object";
+import { at, pick, stringField } from "../object";
 
 describe("at", () => {
   it("returns values for the specified keys", () => {
@@ -30,5 +30,20 @@ describe("pick", () => {
 
   it("returns an empty object when no keys match", () => {
     expect(pick({ a: 1 }, ["x"])).toEqual({});
+  });
+});
+
+describe("stringField", () => {
+  it("returns the string in the named field", () => {
+    expect(stringField({ a: "x", b: "y" }, "b")).toBe("y");
+  });
+
+  it("returns null for a field that isn't a string", () => {
+    expect(stringField({ a: 1, b: null }, "a")).toBeNull();
+    expect(stringField({ a: 1, b: null }, "b")).toBeNull();
+  });
+
+  it("returns null for a field the object doesn't have", () => {
+    expect(stringField({ a: "x" }, "z")).toBeNull();
   });
 });

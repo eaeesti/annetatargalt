@@ -1,11 +1,15 @@
 import HeaderSection from "./HeaderSection";
+import { stringField } from "@/utils/object";
 import type {
+  StrapiBlogPost,
+  StrapiCause,
   StrapiGlobal,
+  StrapiOrganization,
   StrapiSpecialHeaderSection,
 } from "@/types/generated/strapi";
 
 interface SpecialHeaderSectionProps extends StrapiSpecialHeaderSection {
-  entity: Record<string, unknown>;
+  entity: StrapiCause | StrapiOrganization | StrapiBlogPost;
   global: StrapiGlobal;
 }
 
@@ -17,8 +21,8 @@ export default function SpecialHeaderSection({
 }: SpecialHeaderSectionProps) {
   return (
     <HeaderSection
-      title={entity.title as string}
-      subtitle={descriptionField ? (entity[descriptionField] as string) : null}
+      title={entity.title}
+      subtitle={descriptionField ? stringField(entity, descriptionField) : null}
       breadcrumbs={breadcrumbs}
       global={global}
     />

@@ -33,12 +33,10 @@ function languageMetadata({ locale, paths, launched }: Languages): Metadata {
 
 export function buildMetadata(
   global: StrapiGlobal,
-  pageMetadata: Partial<StrapiMetadata> | null | undefined,
+  pageMetadata: Partial<StrapiMetadata>,
   languages?: Languages,
 ): Metadata {
   const globalMetadata = global.metadata;
-
-  if (!pageMetadata) return globalMetadata as Metadata;
 
   let title = globalMetadata?.title ?? null;
   if (pageMetadata.title) title = `${pageMetadata.title} • ${title}`;

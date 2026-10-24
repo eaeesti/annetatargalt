@@ -53,9 +53,11 @@ export default function ThankYouSection({
       )
     : null;
 
-  const { data, isLoading } = useSWR(decodeURL, fetcher);
-
-  const decoded = data as { donation?: DecodedDonation } | null;
+  // A token that doesn't decode gets Strapi's error body, with no donation.
+  const { data: decoded, isLoading } = useSWR<{ donation?: DecodedDonation }>(
+    decodeURL,
+    fetcher,
+  );
 
   useEffect(() => {
     if (!isLoading && !decoded?.donation) {

@@ -1,14 +1,20 @@
 import TextSection from "./TextSection";
-import type { StrapiEntityTextSection } from "@/types/generated/strapi";
+import { stringField } from "@/utils/object";
+import type {
+  StrapiBlogPost,
+  StrapiCause,
+  StrapiEntityTextSection,
+  StrapiOrganization,
+} from "@/types/generated/strapi";
 
 interface EntityTextSectionProps extends StrapiEntityTextSection {
-  entity: Record<string, unknown>;
+  entity: StrapiCause | StrapiOrganization | StrapiBlogPost;
 }
 
 export default function EntityTextSection({
   field,
   entity,
 }: EntityTextSectionProps) {
-  const text = field ? (entity[field] as string) : null;
+  const text = field ? stringField(entity, field) : null;
   return <TextSection text={text} />;
 }

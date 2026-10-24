@@ -6,7 +6,6 @@ import remarkRehype from "remark-rehype";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
 import { toHtml } from "hast-util-to-html";
-import type { Root } from "hast";
 import { schema } from "../../components/elements/Markdown";
 
 /**
@@ -27,7 +26,7 @@ function render(markdown: string): string {
     .use(rehypeRaw)
     .use(rehypeSanitize, schema);
 
-  return toHtml(processor.runSync(processor.parse(markdown)) as Root);
+  return toHtml(processor.runSync(processor.parse(markdown)));
 }
 
 describe("Markdown sanitisation", () => {

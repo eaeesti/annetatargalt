@@ -12,7 +12,7 @@ import IdCodeInput from "../elements/forms/IdCodeInput";
 import { formatAmount, withCurrency } from "@/utils/money";
 import CheckboxInput from "../elements/forms/CheckboxInput";
 import { makeDonationRequest } from "@/utils/donation";
-import { describeErrorResponse } from "@/utils/strapi";
+import { describeErrorResponse, readStrapiJson } from "@/utils/strapi";
 import { useRouter, useSearchParams } from "next/navigation";
 import BankChooser from "../elements/forms/BankChooser";
 import Markdown from "../elements/Markdown";
@@ -191,7 +191,7 @@ export default function DonationSection(props: DonationSectionProps) {
       return;
     }
 
-    const data = await response.json();
+    const data = await readStrapiJson<{ redirectURL: string }>(response);
     if (data.redirectURL) {
       router.push(data.redirectURL);
     } else {
