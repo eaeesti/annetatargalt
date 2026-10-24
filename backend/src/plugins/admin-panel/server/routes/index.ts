@@ -6,6 +6,7 @@ import organization from "./organization";
 import dashboard from "./dashboard";
 import statement from "./statement";
 import bankTransaction from "./bankTransaction";
+import bankTransactionFile from "./bankTransactionFile";
 
 export default {
   "statement-router": {
@@ -15,6 +16,10 @@ export default {
   "bank-transaction-router": {
     type: "content-api",
     routes: bankTransaction.routes,
+  },
+  "bank-transaction-file-router": {
+    type: "content-api",
+    routes: bankTransactionFile.routes,
   },
   "donation-router": {
     type: "content-api",

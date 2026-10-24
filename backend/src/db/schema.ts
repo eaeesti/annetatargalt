@@ -321,6 +321,37 @@ export const bankTransactionsRelations = relations(
       fields: [bankTransactions.donationTransferId],
       references: [donationTransfers.id],
     }),
+    file: one(bankTransactionFiles),
+  }),
+);
+
+// The PDF attached to a bank line, such as a recipient's receipt for a
+// transfer payment; a line has at most one. The file itself is on the
+// server's disk (src/utils/file-storage.ts) under `storage_key`; this row is
+// all the database knows about it.
+export const bankTransactionFiles = pgTable("bank_transaction_files", {
+  id: serial("id").primaryKey(),
+  archivingCode: varchar("archiving_code", { length: 20 })
+    .references(() => bankTransactions.archivingCode)
+    .notNull()
+    .unique(),
+  storageKey: varchar("storage_key", { length: 64 }).notNull().unique(),
+  fileName: varchar("file_name", { length: 255 }).notNull(), // as uploaded
+  sizeBytes: integer("size_bytes").notNull(),
+  uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+  uploadedBy: varchar("uploaded_by", { length: 256 }),
+});
+
+export type BankTransactionFile = typeof bankTransactionFiles.$inferSelect;
+export type NewBankTransactionFile = typeof bankTransactionFiles.$inferInsert;
+
+export const bankTransactionFilesRelations = relations(
+  bankTransactionFiles,
+  ({ one }) => ({
+    bankTransaction: one(bankTransactions, {
+      fields: [bankTransactionFiles.archivingCode],
+      references: [bankTransactions.archivingCode],
+    }),
   }),
 );
 

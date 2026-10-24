@@ -70,6 +70,8 @@ export interface OutgoingRow {
   counterpartyName: string | null;
   description: string | null;
   donationTransferId: number | null;
+  /** has a PDF attached, which stays with it while it's unlinked */
+  hasFile: boolean;
 }
 
 export interface MoneyFlow {
@@ -526,8 +528,11 @@ export class BankTransactionsRepository {
       counterparty_name: string | null;
       description: string | null;
       donation_transfer_id: number | null;
+      has_file: boolean;
     }>(sql`
-      SELECT archiving_code, date, amount, counterparty_name, description, donation_transfer_id
+      SELECT archiving_code, date, amount, counterparty_name, description, donation_transfer_id,
+        EXISTS (SELECT 1 FROM bank_transaction_files f
+          WHERE f.archiving_code = bank_transactions.archiving_code) AS has_file
       FROM bank_transactions
       WHERE ${sql.join(conds, sql` and `)}
       ORDER BY date asc, archiving_code asc
@@ -539,6 +544,7 @@ export class BankTransactionsRepository {
       counterpartyName: r.counterparty_name ?? null,
       description: r.description ?? null,
       donationTransferId: numOrNull(r.donation_transfer_id),
+      hasFile: r.has_file === true,
     }));
   }
 

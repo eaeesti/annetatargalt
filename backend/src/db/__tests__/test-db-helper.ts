@@ -14,6 +14,7 @@ import {
   organizationRecurringDonations,
   donationTransfers,
   bankTransactions,
+  bankTransactionFiles,
   senderDonorAliases,
   type Donor,
   type NewDonor,
@@ -40,6 +41,7 @@ export async function cleanDatabase(): Promise<void> {
   // Delete in correct order to respect foreign key constraints
   await db.delete(organizationDonations);
   await db.delete(donations); // FK → bank_transactions, donors, ...
+  await db.delete(bankTransactionFiles); // FK → bank_transactions
   await db.delete(bankTransactions);
   await db.delete(senderDonorAliases);
   await db.delete(organizationRecurringDonations);

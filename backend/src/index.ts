@@ -291,6 +291,9 @@ async function bootstrapDonationPermissions(
     "plugin::admin-panel.bankTransaction.summary",
     "plugin::admin-panel.bankTransaction.findOne",
     "plugin::admin-panel.bankTransaction.update", // write path — reclassify a bank line
+    "plugin::admin-panel.bankTransactionFile.upload", // write path — attach a PDF to a payment
+    "plugin::admin-panel.bankTransactionFile.download",
+    "plugin::admin-panel.bankTransactionFile.remove", // write path — remove an attached PDF
   ];
 
   // Defensive backstop for DonationAdmin. For an action whose *controller

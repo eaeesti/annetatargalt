@@ -28,6 +28,11 @@ export {
   type MoneyFlow,
 } from "./bank-transactions.repository";
 export {
+  bankTransactionFilesRepository,
+  BankTransactionFilesRepository,
+  type FileSummary,
+} from "./bank-transaction-files.repository";
+export {
   senderDonorAliasesRepository,
   SenderDonorAliasesRepository,
 } from "./sender-donor-aliases.repository";
