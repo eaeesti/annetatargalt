@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { at, pick, stringField } from "../object";
+import { at, isRecord, pick, stringField } from "../object";
 
 describe("at", () => {
   it("returns values for the specified keys", () => {
@@ -45,5 +45,20 @@ describe("stringField", () => {
 
   it("returns null for a field the object doesn't have", () => {
     expect(stringField({ a: "x" }, "z")).toBeNull();
+  });
+});
+
+describe("isRecord", () => {
+  it("accepts plain objects", () => {
+    expect(isRecord({})).toBe(true);
+    expect(isRecord({ a: 1 })).toBe(true);
+  });
+
+  it("rejects null, arrays and other values", () => {
+    expect(isRecord(null)).toBe(false);
+    expect(isRecord([1])).toBe(false);
+    expect(isRecord("a")).toBe(false);
+    expect(isRecord(1)).toBe(false);
+    expect(isRecord(undefined)).toBe(false);
   });
 });
