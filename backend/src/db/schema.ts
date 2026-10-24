@@ -56,6 +56,10 @@ export const donationTransfers = pgTable("donation_transfers", {
   // negative when a linked debit over-covers this round. NULL = not assessed.
   reconciliationAdjustmentCents: integer("reconciliation_adjustment_cents"),
   reconciliationNote: text("reconciliation_note"),
+  // Card processors keep their fee from each payout, so the round's card fees
+  // come off the tip organization's share instead of everyone's: everyone
+  // else receives their full amount. Off for rounds from before the rule.
+  deductCardFees: boolean("deduct_card_fees").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -271,7 +275,11 @@ export const bankTransactions = pgTable(
     // Kuupäev — null until a real statement line is seen (e.g. an ignore added
     // before the line showed up in an export).
     date: date("date"),
-    amount: integer("amount"), // cents, credit as it hit the bank
+    amount: integer("amount"), // cents, always positive: see direction
+    // 'C' money in, 'D' money out, from the statement's Deebet/Kreedit column.
+    // Null for a row no import has filled in yet: the category of a reclassified
+    // line doesn't say which way its money went.
+    direction: varchar("direction", { length: 1 }),
     description: text("description"), // Selgitus
     counterpartyName: varchar("counterparty_name", { length: 256 }),
     counterpartyAccount: varchar("counterparty_account", { length: 64 }),

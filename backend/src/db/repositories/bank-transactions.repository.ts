@@ -1,6 +1,7 @@
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db, type Database } from "../client";
 import { bankTransactions, type BankTransaction } from "../schema";
+import { cardFeeDeductionSql } from "./donation-transfers.repository";
 
 export type BankTransactionCategory =
   | "donation"
@@ -37,6 +38,7 @@ export interface BankTransactionUpsert {
   archivingCode: string;
   date?: string | null; // YYYY-MM-DD
   amountCents?: number | null;
+  direction?: "C" | "D" | null;
   description?: string | null;
   counterpartyName?: string | null;
   counterpartyAccount?: string | null;
@@ -147,6 +149,7 @@ function mapRow(r: Record<string, unknown>): BankTransactionRow {
     archivingCode: r.archiving_code as string,
     date: r.date as string | null,
     amount,
+    direction: (r.direction as string | null) ?? null,
     description: (r.description as string | null) ?? null,
     counterpartyName: (r.counterparty_name as string | null) ?? null,
     counterpartyAccount: (r.counterparty_account as string | null) ?? null,
@@ -278,6 +281,7 @@ export class BankTransactionsRepository {
               archivingCode: r.archivingCode,
               date: r.date ?? null,
               amount: r.amountCents ?? null,
+              direction: r.direction ?? null,
               description: r.description ?? null,
               counterpartyName: trunc(r.counterpartyName, 256),
               counterpartyAccount: trunc(r.counterpartyAccount, 64),
@@ -299,6 +303,7 @@ export class BankTransactionsRepository {
               // correction (e.g. a foreign-currency amount).
               date: sql`coalesce(${bankTransactions.date}, excluded."date")`,
               amount: sql`coalesce(${bankTransactions.amount}, excluded."amount")`,
+              direction: sql`coalesce(${bankTransactions.direction}, excluded."direction")`,
               description: sql`coalesce(${bankTransactions.description}, excluded."description")`,
               counterpartyName: sql`coalesce(${bankTransactions.counterpartyName}, excluded."counterparty_name")`,
               counterpartyAccount: sql`coalesce(${bankTransactions.counterpartyAccount}, excluded."counterparty_account")`,
@@ -580,6 +585,8 @@ export class BankTransactionsRepository {
   async moneyFlow(opts: {
     dateFrom?: string | null;
     dateTo?: string | null;
+    /** whose share a round's card fees come off; null deducts nothing */
+    tipOrganizationInternalId?: string | null;
   }): Promise<MoneyFlow> {
     const dateFrom = opts.dateFrom ?? null;
     const dateTo = opts.dateTo ?? null;
@@ -680,7 +687,8 @@ export class BankTransactionsRepository {
           dt.reconciliation_adjustment_cents IS NOT NULL AS has_adj,
           (SELECT coalesce(sum(od.amount), 0) FROM organization_donations od
              JOIN donations d ON d.id = od.donation_id
-             WHERE d.donation_transfer_id = dt.id AND d.finalized = true) AS owed,
+             WHERE d.donation_transfer_id = dt.id AND d.finalized = true)
+            - ${cardFeeDeductionSql("dt", opts.tipOrganizationInternalId ?? null)} AS owed,
           (SELECT coalesce(sum(abs(bt.amount)), 0) FROM bank_transactions bt
              WHERE bt.donation_transfer_id = dt.id) AS paid_out,
           (SELECT count(*) FROM bank_transactions bt

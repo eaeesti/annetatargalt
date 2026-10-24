@@ -1,0 +1,1 @@
+ALTER TABLE "donation_transfers" ADD COLUMN "deduct_card_fees" boolean DEFAULT false NOT NULL;

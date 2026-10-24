@@ -92,6 +92,20 @@
       "when": 1792701192558,
       "tag": "0012_donation_locale",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792842610106,
+      "tag": "0013_bank_transaction_direction",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792842720533,
+      "tag": "0014_transfer_deduct_card_fees",
+      "breakpoints": true
     }
   ]
 }

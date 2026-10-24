@@ -12,6 +12,7 @@ import {
   BankTransactionsRepository,
   bankTransactionsRepository,
 } from "../../../../db/repositories";
+import { tipOrganizationInternalId } from "../utils/tip-organization";
 
 export interface CreateTransferInput {
   datetime: string; // YYYY-MM-DD
@@ -24,13 +25,14 @@ export interface UpdateTransferInput {
   notes?: string | null;
   reconciliationAdjustmentCents?: number | null;
   reconciliationNote?: string | null;
+  deductCardFees?: boolean;
   addDonationIds?: number[];
   removeDonationIds?: number[];
   linkCodes?: string[];
   unlinkCodes?: string[];
 }
 
-export function createTransferService(_strapi: Core.Strapi) {
+export function createTransferService(strapi: Core.Strapi) {
   return {
     /** Finalized, not-yet-assigned donations in a date window. */
     async preview(dateFrom: string, dateTo: string) {
@@ -45,6 +47,7 @@ export function createTransferService(_strapi: Core.Strapi) {
           datetime: input.datetime,
           notes: input.notes ?? null,
           recipient: null,
+          deductCardFees: true,
         });
         if (input.donationIds.length > 0) {
           const r = await donationsRepo.assignToTransfer(
@@ -75,7 +78,8 @@ export function createTransferService(_strapi: Core.Strapi) {
           input.datetime !== undefined ||
           input.notes !== undefined ||
           input.reconciliationAdjustmentCents !== undefined ||
-          input.reconciliationNote !== undefined
+          input.reconciliationNote !== undefined ||
+          input.deductCardFees !== undefined
         ) {
           await transfersRepo.update(id, {
             ...(input.datetime !== undefined && { datetime: input.datetime }),
@@ -86,6 +90,9 @@ export function createTransferService(_strapi: Core.Strapi) {
             }),
             ...(input.reconciliationNote !== undefined && {
               reconciliationNote: input.reconciliationNote,
+            }),
+            ...(input.deductCardFees !== undefined && {
+              deductCardFees: input.deductCardFees,
             }),
           });
         }
@@ -128,7 +135,10 @@ export function createTransferService(_strapi: Core.Strapi) {
     },
 
     async getOne(id: number) {
-      return donationTransfersRepository.findByIdWithReconciliation(id);
+      return donationTransfersRepository.findByIdWithReconciliation(
+        id,
+        await tipOrganizationInternalId(strapi),
+      );
     },
 
     async unlinkedOutgoing(opts: {

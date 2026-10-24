@@ -9,6 +9,7 @@ import {
   type BankTransactionCategory,
 } from "../../../../db/repositories";
 import { createOrganizationResolver } from "../../../../utils/organization-resolver";
+import { tipOrganizationInternalId } from "../utils/tip-organization";
 
 /** categories a row can be filtered by */
 const FILTER_CATEGORIES: string[] = [
@@ -53,7 +54,10 @@ export function createBankTransactionService(strapi: Core.Strapi) {
     },
 
     async summary(opts: { dateFrom?: string | null; dateTo?: string | null }) {
-      return bankTransactionsRepository.moneyFlow(opts);
+      return bankTransactionsRepository.moneyFlow({
+        ...opts,
+        tipOrganizationInternalId: await tipOrganizationInternalId(strapi),
+      });
     },
 
     async findOne(code: string) {

@@ -115,6 +115,8 @@ export async function createTestDonation(
         data.externalDonation !== undefined ? data.externalDonation : false,
       recurringDonationId: data.recurringDonationId ?? null,
       donationTransferId: data.donationTransferId ?? null,
+      transactionId: data.transactionId ?? null,
+      processorFeeCents: data.processorFeeCents ?? null,
     })
     .returning();
   if (!donation) throw new Error("Failed to insert test donation");
@@ -222,6 +224,7 @@ export async function createTestDonationTransfer(
       datetime: data.datetime ?? new Date().toISOString().split("T")[0],
       recipient: data.recipient ?? "Test Recipient",
       notes: data.notes ?? null,
+      deductCardFees: data.deductCardFees ?? false,
     })
     .returning();
   if (!transfer) throw new Error("Failed to insert test donation transfer");
