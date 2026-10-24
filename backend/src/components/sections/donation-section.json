@@ -75,6 +75,14 @@
     "confirmText": {
       "type": "string"
     },
+    "paymentProviderText": {
+      "type": "string"
+    },
+    "paymentProviderLogo": {
+      "type": "component",
+      "repeatable": false,
+      "component": "elements.image"
+    },
     "banks": {
       "type": "component",
       "repeatable": true,
