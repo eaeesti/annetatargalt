@@ -1,8 +1,8 @@
 # Anneta Targalt — Agent Guide
 
-Estonian donation platform. Monorepo: Next.js frontend (`frontend/`) + Strapi v5 backend (`backend/`).
+Estonian donation platform. Monorepo with three apps: the public Next.js site (`frontend/`), the Strapi v5 backend (`backend/`) and the Next.js admin panel (`admin/`).
 
-Ports: Strapi **1337**, Next.js **3000**.
+Ports: Strapi **1337**, frontend **3000**, admin **3001**.
 
 ```bash
 pnpm dev              # starts all three concurrently (from repo root)
@@ -14,11 +14,11 @@ pnpm format           # oxfmt, every app at once (from repo root)
 
 Each app has `pnpm lint` (oxlint), which enforces the `any` and `!` rules below.
 
-See [backend/AGENTS.md](backend/AGENTS.md) and [frontend/AGENTS.md](frontend/AGENTS.md) for subsystem-specific guidance.
+See [backend/AGENTS.md](backend/AGENTS.md) and [frontend/AGENTS.md](frontend/AGENTS.md) for subsystem-specific guidance. `admin/` doesn't have its own guide yet, see [admin/README.md](admin/README.md). Unlike `frontend/`, it has no `src/` folder (routes are in `app/`) and file names are kebab-case.
 
 ## TypeScript Conventions
 
-These apply to both frontend and backend.
+These apply to all three apps.
 
 - Never use `any` or `as any` — use `unknown` and narrow the type, or define a proper interface.
 - Never use `!` (non-null assertion) — always handle nulls explicitly with a guard or fallback.
