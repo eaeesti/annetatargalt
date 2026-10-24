@@ -390,6 +390,7 @@ export function TransferReconciliation({
                     }
                     onBlur={() => saveNote(p.archivingCode, p.note ?? "")}
                     disabled={savingNote === p.archivingCode}
+                    aria-label={`Note on the ${eur(p.amountCents)} payment of ${fmtDate(p.date)}`}
                     className="rounded-md px-1.5 py-px text-xs"
                   />
                 </td>
@@ -398,6 +399,7 @@ export function TransferReconciliation({
                     className="text-muted-foreground hover:text-destructive disabled:opacity-50"
                     disabled={busy}
                     onClick={() => patch({ unlinkCodes: [p.archivingCode] })}
+                    aria-label={`Unlink the ${eur(p.amountCents)} payment of ${fmtDate(p.date)}`}
                   >
                     Unlink
                   </button>

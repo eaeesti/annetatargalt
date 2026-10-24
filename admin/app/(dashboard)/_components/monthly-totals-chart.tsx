@@ -132,6 +132,9 @@ export function MonthlyTotalsChart({ data }: { data: MonthlyTotalsRow[] }) {
       </div>
       <ChartContainer config={barConfig} className="h-[220px] w-full">
         <BarChart
+          // read out by screen readers, which can't see the heading above
+          title={`${TITLE[granularity]} (${WINDOW_LABEL[granularity]})`}
+          desc="Use the arrow keys to go through it."
           data={chartData}
           margin={{ top: 4, right: 8, left: 8, bottom: 0 }}
         >
@@ -189,6 +192,8 @@ export function CumulativeChart({ data }: { data: MonthlyTotalsRow[] }) {
   return (
     <ChartContainer config={areaConfig} className="h-[220px] w-full">
       <AreaChart
+        title="Cumulative donations, all time"
+        desc="Use the arrow keys to go through it."
         data={cumulative}
         margin={{ top: 4, right: 8, left: 8, bottom: 0 }}
       >

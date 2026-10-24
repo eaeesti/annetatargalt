@@ -62,7 +62,8 @@
   --muted-foreground: oklch(0.556 0 0);
   --accent: #eef8f2;
   --accent-foreground: #064e3b;
-  --destructive: oklch(0.58 0.22 27);
+  /* Dark enough for small red text on its own tint, like Remove buttons. */
+  --destructive: oklch(0.52 0.21 27);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: #1aab7c;
@@ -152,5 +153,12 @@
   [data-disabled],
   label:has(:disabled) {
     cursor: default;
+  }
+
+  /* A clear outline for keyboard focus wherever a component doesn't draw
+     its own ring, like links and checkboxes; theirs replace it. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 }

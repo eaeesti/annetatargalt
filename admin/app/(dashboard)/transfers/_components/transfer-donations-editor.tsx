@@ -138,6 +138,7 @@ export function TransferDonationsEditor({
                   className="text-xs text-muted-foreground hover:text-destructive disabled:opacity-50"
                   disabled={busy === d.id}
                   onClick={() => removeDonation(d.id)}
+                  aria-label={`Remove donation #${d.id} from this transfer`}
                 >
                   {busy === d.id ? "…" : "Remove"}
                 </button>

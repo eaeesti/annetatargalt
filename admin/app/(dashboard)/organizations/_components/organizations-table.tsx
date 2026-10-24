@@ -24,6 +24,7 @@ import {
 import { ExportCsvButton } from "../../../../components/export-csv-button";
 import { formatDate } from "../../../../lib/dates";
 import { LinkedTableRow } from "../../../../components/linked-row";
+import { ariaSort } from "../../../../lib/aria-sort";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -308,6 +309,7 @@ export function OrganizationsTable({ data }: { data: OrganizationRow[] }) {
                 {hg.headers.map((header) => (
                   <TableHead
                     key={header.id}
+                    aria-sort={ariaSort(header.column.id, sortBy, sortDir)}
                     className={header.column.columnDef.meta?.className}
                   >
                     {header.isPlaceholder

@@ -5,12 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../../components/ui/card";
+import { Card, CardContent, CardHeader } from "../../components/ui/card";
 import { BrandLogo } from "../../components/brand-logo";
 
 interface LoginFormProps {
@@ -27,7 +22,9 @@ export function LoginForm({ googleEnabled, initialError }: LoginFormProps) {
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center gap-3 text-center">
           <BrandLogo className="mx-auto h-12 text-primary" />
-          <CardTitle>Anneta Targalt admin</CardTitle>
+          <h1 className="text-base leading-snug font-medium">
+            Anneta Targalt admin
+          </h1>
         </CardHeader>
         <CardContent className="space-y-4">
           {googleEnabled ? (
