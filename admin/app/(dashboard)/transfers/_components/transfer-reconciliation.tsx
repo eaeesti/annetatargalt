@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../../../components/ui/button";
 import { Input } from "../../../../components/ui/input";
+import { Textarea } from "../../../../components/ui/textarea";
 import { EntityLink } from "../../../../components/entity-link";
 import { bankTransactionHref } from "../../../../lib/entity-links";
 import { euroInputToCents } from "../../../../lib/money";
@@ -361,8 +362,12 @@ export function TransferReconciliation({
           </thead>
           <tbody>
             {linked.map((p) => (
-              <tr key={p.archivingCode} className="border-t border-border/50">
-                <td className="py-1 pr-3 whitespace-nowrap">
+              // top-aligned, so a note that grows keeps the row's first line level
+              <tr
+                key={p.archivingCode}
+                className="border-t border-border/50 align-top"
+              >
+                <td className="pt-2 pr-3 pb-1 whitespace-nowrap">
                   <EntityLink
                     href={bankTransactionHref(p.archivingCode)}
                     newTab
@@ -370,12 +375,12 @@ export function TransferReconciliation({
                     {fmtDate(p.date)}
                   </EntityLink>
                 </td>
-                <td className="py-1 pr-3">{p.counterpartyName ?? "—"}</td>
-                <td className="py-1 pr-3 text-right tabular-nums">
+                <td className="pt-2 pr-3 pb-1">{p.counterpartyName ?? "—"}</td>
+                <td className="pt-2 pr-3 pb-1 text-right tabular-nums">
                   {eur(p.amountCents)}
                 </td>
                 <td className="py-1 pr-3">
-                  <Input
+                  <Textarea
                     value={notes[p.archivingCode] ?? ""}
                     onChange={(e) =>
                       setNotes((n) => ({
@@ -385,10 +390,10 @@ export function TransferReconciliation({
                     }
                     onBlur={() => saveNote(p.archivingCode, p.note ?? "")}
                     disabled={savingNote === p.archivingCode}
-                    className="h-6 rounded-md px-1.5 py-0 text-xs"
+                    className="rounded-md px-1.5 py-px text-xs"
                   />
                 </td>
-                <td className="py-1 text-right">
+                <td className="pt-2 pb-1 text-right">
                   <button
                     className="text-muted-foreground hover:text-destructive disabled:opacity-50"
                     disabled={busy}
