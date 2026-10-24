@@ -1,8 +1,9 @@
 import NextImage from "next/image";
-import type { StrapiMedia } from "@/types/generated/strapi";
+import type { StrapiImage, StrapiMedia } from "@/types/generated/strapi";
+import { imageSource } from "@/utils/image";
 
 interface ImageProps {
-  data: StrapiMedia | null;
+  data: StrapiImage | StrapiMedia | null;
   className?: string;
   fill?: boolean;
   priority?: boolean;
@@ -14,10 +15,9 @@ export default function Image({
   fill = false,
   priority = false,
 }: ImageProps) {
-  // In Strapi v5, media is returned flat (not nested under data.attributes)
-  const image = data;
+  const source = imageSource(data);
 
-  if (!image) {
+  if (!source) {
     return (
       <NextImage
         className={className}
@@ -33,8 +33,8 @@ export default function Image({
     return (
       <NextImage
         className={className}
-        src={image.url}
-        alt={image.alternativeText ?? ""}
+        src={source.file.url}
+        alt={source.alt}
         fill={true}
         priority={priority}
       />
@@ -44,10 +44,10 @@ export default function Image({
   return (
     <NextImage
       className={className}
-      src={image.url}
-      alt={image.alternativeText ?? ""}
-      width={image.width ?? undefined}
-      height={image.height ?? undefined}
+      src={source.file.url}
+      alt={source.alt}
+      width={source.file.width ?? undefined}
+      height={source.file.height ?? undefined}
       priority={priority}
     />
   );

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { StrapiGlobal, StrapiMetadata } from "@/types/generated/strapi";
 import { DEFAULT_LOCALE } from "./locale";
+import { imageSource } from "./image";
 import type { Locale } from "./locale";
 
 interface Languages {
@@ -55,16 +56,18 @@ export function buildMetadata(
     ];
   }
 
-  const ogImage = pageMetadata.shareImage ?? globalMetadata?.shareImage;
+  const ogImage =
+    imageSource(pageMetadata.shareImage) ??
+    imageSource(globalMetadata?.shareImage);
 
   const openGraph: Metadata["openGraph"] = {};
   if (ogImage) {
     openGraph.images = [
       {
-        url: ogImage.url,
-        width: ogImage.width ?? undefined,
-        height: ogImage.height ?? undefined,
-        alt: ogImage.alternativeText ?? undefined,
+        url: ogImage.file.url,
+        width: ogImage.file.width ?? undefined,
+        height: ogImage.file.height ?? undefined,
+        alt: ogImage.alt || undefined,
       },
     ];
   }

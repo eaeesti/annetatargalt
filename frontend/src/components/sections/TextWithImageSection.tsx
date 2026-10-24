@@ -2,12 +2,12 @@ import { classes } from "@/utils/react";
 import Button from "../elements/Button";
 import Image from "../elements/Image";
 import Markdown from "../elements/Markdown";
-import type { StrapiButton, StrapiMedia } from "@/types/generated/strapi";
+import type { StrapiButton, StrapiImage } from "@/types/generated/strapi";
 
 interface TextWithImageSectionProps {
   title: string | null;
   text: string | null;
-  image: StrapiMedia | null;
+  image: StrapiImage | null;
   // className lets a caller style a button beyond what the CMS can set.
   buttons: (StrapiButton & { className?: string })[];
   textOnRight?: boolean;

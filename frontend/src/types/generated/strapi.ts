@@ -25,7 +25,7 @@ export interface StrapiMedia {
 export interface StrapiBankIcon {
   id: number;
   bank: string | null;
-  icon: StrapiMedia | null;
+  icon: StrapiImage | null;
 }
 
 export interface StrapiBreadcrumb {
@@ -51,6 +51,13 @@ export interface StrapiFooterColumn {
   links: StrapiLink[];
 }
 
+export interface StrapiImage {
+  id: number;
+  file: StrapiMedia | null;
+  alt: string | null;
+  decorative: boolean | null;
+}
+
 export interface StrapiLink {
   id: number;
   text: string | null;
@@ -71,13 +78,13 @@ export interface StrapiPerson {
   name: string | null;
   role: string | null;
   text: string | null;
-  image: StrapiMedia | null;
+  image: StrapiImage | null;
 }
 
 export interface StrapiPowerColumn {
   id: number;
   title: string | null;
-  image: StrapiMedia | null;
+  image: StrapiImage | null;
   description: string | null;
   button: StrapiButton | null;
   source: string | null;
@@ -100,7 +107,7 @@ export interface StrapiTeamMember {
   id: number;
   name: string | null;
   role: string | null;
-  image: StrapiMedia | null;
+  image: StrapiImage | null;
   bio: string | null;
   email: string | null;
   socialMediaLinks: StrapiSocialMediaLink[];
@@ -108,7 +115,7 @@ export interface StrapiTeamMember {
 
 export interface StrapiFooter {
   id: number;
-  logo: StrapiMedia | null;
+  logo: StrapiImage | null;
   text: string | null;
   socialMediaLinks: StrapiSocialMediaLink[];
   columns: StrapiFooterColumn[];
@@ -118,12 +125,12 @@ export interface StrapiMetadata {
   id: number;
   title: string | null;
   description: string | null;
-  shareImage: StrapiMedia | null;
+  shareImage: StrapiImage | null;
 }
 
 export interface StrapiNavbar {
   id: number;
-  logo: StrapiMedia | null;
+  logo: StrapiImage | null;
   ctaButton: StrapiButton | null;
   links: StrapiLink[];
 }
@@ -276,8 +283,8 @@ export interface StrapiHeroSection {
   __component: "sections.hero-section";
   title: string | null;
   subtitle: string | null;
-  image: StrapiMedia | null;
-  mobileImage: StrapiMedia | null;
+  image: StrapiImage | null;
+  imagePosition: "top" | "upper" | "center" | "lower" | "bottom" | null;
   buttons: StrapiButton[];
 }
 
@@ -299,7 +306,7 @@ export interface StrapiPartnerSection {
   id: number;
   __component: "sections.partner-section";
   text: string | null;
-  image: StrapiMedia | null;
+  image: StrapiImage | null;
 }
 
 export interface StrapiPowerSection {
@@ -456,7 +463,7 @@ export interface StrapiBlogPost {
   metadata: StrapiMetadata | null;
   author: StrapiBlogAuthor | null;
   date: string | null;
-  image: StrapiMedia | null;
+  image: StrapiImage | null;
   preview: string | null;
   content: string | null;
   locale: string | null;
@@ -475,7 +482,7 @@ export interface StrapiCause {
   introduction: string | null;
   content: string | null;
   organizations: StrapiOrganization[];
-  image: StrapiMedia | null;
+  image: StrapiImage | null;
   active: boolean | null;
   locale: string | null;
   localizations?: { locale: string | null; slug?: string | null }[];
@@ -586,7 +593,7 @@ export interface StrapiOrganization {
   introduction: string | null;
   content: string | null;
   cause: StrapiCause | null;
-  logo: StrapiMedia | null;
+  logo: StrapiImage | null;
   active: boolean | null;
   internalId: string | null;
   locale: string | null;
