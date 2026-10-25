@@ -15,6 +15,8 @@ import {
   cleanDatabase,
   createTestDonor,
   createTestDonation,
+  createTestOrganizationDonation,
+  createTestOrganizationRecurringDonation,
   createTestRecurringDonation,
 } from "../../__tests__/test-db-helper";
 
@@ -237,6 +239,93 @@ describe("DashboardRepository", () => {
       );
       expect(result.count).toBe(2);
       expect(result.total).toBe(3000);
+    });
+  });
+
+  // ── an excluded organization ─────────────────────────────────────────────────
+
+  describe("with an excluded organization", () => {
+    const excluded = ["EXT"];
+
+    /** A finalized donation made now, split between organizations. */
+    async function give(
+      donorId: number,
+      split: Record<string, number>,
+      recurringDonationId?: number,
+    ) {
+      const donation = await createTestDonation({
+        donorId,
+        recurringDonationId,
+        amount: Object.values(split).reduce((sum, amount) => sum + amount, 0),
+      });
+      for (const [organizationInternalId, amount] of Object.entries(split)) {
+        await createTestOrganizationDonation({
+          donationId: donation.id,
+          organizationInternalId,
+          amount,
+        });
+      }
+    }
+
+    /** A monthly donation to one organization, paid once just now. */
+    async function giveMonthly(
+      donorId: number,
+      organizationInternalId: string,
+      amount: number,
+    ) {
+      const recurring = await createTestRecurringDonation({ donorId, amount });
+      await createTestOrganizationRecurringDonation({
+        recurringDonationId: recurring.id,
+        organizationInternalId,
+        amount,
+      });
+      await give(donorId, { [organizationInternalId]: amount }, recurring.id);
+    }
+
+    beforeEach(async () => {
+      const onlyExternal = await createTestDonor({ email: "a@test.com" });
+      const both = await createTestDonor({ email: "b@test.com" });
+      const other = await createTestDonor({ email: "c@test.com" });
+
+      await give(onlyExternal.id, { EXT: 1000 });
+      await giveMonthly(onlyExternal.id, "EXT", 800);
+      await give(both.id, { EXT: 500, ORG: 1500 });
+      await give(other.id, { ORG: 3000 });
+      await giveMonthly(other.id, "ORG", 600);
+    });
+
+    it("leaves out its share of each donation, and donations only to it", async () => {
+      expect(await repo.getTotalDonations(excluded)).toEqual({
+        count: 3,
+        sum: 5100,
+      });
+      expect(await repo.getTotalDonations()).toEqual({ count: 5, sum: 7400 });
+
+      const [from, to] = monthRange(new Date(), 0);
+      expect(await repo.getPeriodStats(from, to, excluded)).toEqual({
+        count: 3,
+        total: 5100,
+      });
+
+      const months = await repo.getMonthlyTotals(excluded);
+      expect(months.at(-1)).toMatchObject({ total: 5100, count: 3 });
+    });
+
+    it("leaves out donors who only gave to it", async () => {
+      expect(await repo.getTotalDonors(excluded)).toBe(2);
+      expect(await repo.getActiveDonors(excluded)).toBe(2);
+      expect(await repo.getTotalDonors()).toBe(3);
+
+      const active = await repo.getActiveDonorsPerMonth(excluded);
+      expect(active.at(-1)?.activeDonors).toBe(2);
+    });
+
+    it("leaves out monthly donations to it", async () => {
+      expect(await repo.getMonthlyRecurringDonations(excluded)).toBe(600);
+      expect(await repo.getMonthlyRecurringDonations()).toBe(1400);
+
+      const churn = await repo.getRecurringChurn(excluded);
+      expect(churn.at(-1)?.active).toBe(1);
     });
   });
 });
