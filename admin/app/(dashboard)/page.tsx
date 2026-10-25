@@ -74,11 +74,14 @@ function StatCard({
   label,
   value,
   sub,
+  note,
   info,
 }: {
   label: string;
   value: string;
   sub?: string;
+  /** A second line under `sub`. */
+  note?: string;
   /** Hover text explaining how the figure is calculated, shown via an (i) icon. */
   info?: string;
 }) {
@@ -94,6 +97,7 @@ function StatCard({
         {value}
       </p>
       {sub && <p className="text-sm text-muted-foreground">{sub}</p>}
+      {note && <p className="text-sm text-muted-foreground">{note}</p>}
     </div>
   );
 }
@@ -189,6 +193,7 @@ async function StatsSection() {
   const { data } = await readJson<{ data: DashboardStats }>(statsRes);
   const {
     totalDonations,
+    support,
     totalDonors,
     activeDonors,
     monthlyRecurringDonations,
@@ -206,6 +211,8 @@ async function StatsSection() {
           label="Total donated"
           value={formatEur(totalDonations.sum)}
           sub={`${formatCount(totalDonations.count)} donations`}
+          note={`+ ${formatEur(support.sum)} support for Anneta Targalt`}
+          info="What finalized donations gave the organizations, the same total as on the homepage. Support for Anneta Targalt is counted apart, and what's given to the external organization isn't counted, here or anywhere on the dashboard: it's only passed on."
         />
         <StatCard label="Total donors" value={formatCount(totalDonors)} />
         <StatCard

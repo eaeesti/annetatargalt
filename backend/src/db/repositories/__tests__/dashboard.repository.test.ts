@@ -320,6 +320,27 @@ describe("DashboardRepository", () => {
       expect(active.at(-1)?.activeDonors).toBe(2);
     });
 
+    it("totals what it was given apart, from finalized donations", async () => {
+      await createTestDonation({ finalized: false, amount: 9999 }).then(
+        (donation) =>
+          createTestOrganizationDonation({
+            donationId: donation.id,
+            organizationInternalId: "EXT",
+            amount: 9999,
+          }),
+      );
+
+      expect(await repo.getOrganizationTotal("EXT")).toEqual({
+        count: 3,
+        sum: 2300,
+      });
+
+      const stats = await repo.getStats(excluded, "EXT");
+      expect(stats.support).toEqual({ count: 3, sum: 2300 });
+      expect(stats.totalDonations).toEqual({ count: 3, sum: 5100 });
+      expect((await repo.getStats()).support).toEqual({ count: 0, sum: 0 });
+    });
+
     it("leaves out monthly donations to it", async () => {
       expect(await repo.getMonthlyRecurringDonations(excluded)).toBe(600);
       expect(await repo.getMonthlyRecurringDonations()).toBe(1400);
