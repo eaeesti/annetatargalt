@@ -524,7 +524,10 @@ export function StatementImport() {
                         />
                       )}
                     </TableCell>
-                    <TableCell className="max-w-xs truncate text-xs">
+                    <TableCell
+                      className="max-w-xs truncate text-xs"
+                      title={c.transaction.description}
+                    >
                       {c.resolved && (
                         <Badge variant="secondary" className="mr-1">
                           Montonio
@@ -580,7 +583,10 @@ export function StatementImport() {
                       </TableCell>
                       <TableCell>
                         {n.transaction.counterpartyName}
-                        <span className="block max-w-xs truncate text-xs text-muted-foreground">
+                        <span
+                          className="block max-w-xs truncate text-xs text-muted-foreground"
+                          title={n.transaction.description}
+                        >
                           {n.transaction.description}
                         </span>
                       </TableCell>
@@ -684,7 +690,10 @@ export function StatementImport() {
                     </TableCell>
                     <TableCell>{t.counterpartyName}</TableCell>
                     <TableCell>{eur(t.amountCents)}</TableCell>
-                    <TableCell className="max-w-xs truncate text-xs">
+                    <TableCell
+                      className="max-w-xs truncate text-xs"
+                      title={t.description}
+                    >
                       {t.description}
                     </TableCell>
                   </TableRow>
@@ -727,7 +736,10 @@ export function StatementImport() {
                           <TableCell className="whitespace-nowrap">
                             {eur(t.amountCents)}
                           </TableCell>
-                          <TableCell className="max-w-xs truncate text-xs">
+                          <TableCell
+                            className="max-w-xs truncate text-xs"
+                            title={t.description}
+                          >
                             {t.description}
                           </TableCell>
                         </TableRow>
@@ -777,7 +789,10 @@ export function StatementImport() {
                           <TableCell className="whitespace-nowrap">
                             {eur(n.transaction.amountCents)}
                           </TableCell>
-                          <TableCell className="max-w-xs truncate text-xs">
+                          <TableCell
+                            className="max-w-xs truncate text-xs"
+                            title={n.transaction.description}
+                          >
                             {n.transaction.description}
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
