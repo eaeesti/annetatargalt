@@ -5,6 +5,8 @@ export type PeriodStats = {
 
 export type DashboardStats = {
   totalDonations: { count: number; sum: number };
+  /** What Anneta Targalt itself was given, which `totalDonations` leaves out. */
+  support: { count: number; sum: number };
   totalDonors: number;
   activeDonors: number;
   monthlyRecurringDonations: number;

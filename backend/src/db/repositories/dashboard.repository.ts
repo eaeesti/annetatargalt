@@ -34,6 +34,12 @@ export type DashboardCharts = {
 export type DashboardStats = {
   /** Count + sum of all finalized donations */
   totalDonations: { count: number; sum: number };
+  /**
+   * What finalized donations gave Anneta Targalt itself (its support
+   * organization): the donations it's in, and the sum. Kept apart from
+   * `totalDonations`, which leaves it out.
+   */
+  support: { count: number; sum: number };
   /** Unique donors with at least one finalized donation */
   totalDonors: number;
   /** Unique donors with a finalized donation in the last 12 months */
@@ -113,12 +119,33 @@ function countedDonations(excluded: string[]): SQL {
 
 /**
  * The numbers on the dashboard. Every method takes the organizations to
- * leave out (`excluded`): the external one, whose donations Anneta Targalt
- * only passes on. Its share of a donation isn't counted, and a donation that
- * went only to it isn't counted at all.
+ * leave out (`excluded`): what's given to them isn't donations passed on by
+ * Anneta Targalt. That's the external one, whose donations it only passes
+ * on, and Anneta Targalt's own support organization, which the dashboard
+ * shows apart. Their share of a donation isn't counted, and a donation that
+ * went only to them isn't counted at all.
  */
 export class DashboardRepository {
   constructor(private database: Database = db) {}
+
+  /** The donations an organization got a share of, and what the shares add up to. */
+  async getOrganizationTotal(
+    organizationInternalId: string,
+  ): Promise<{ count: number; sum: number }> {
+    const result = await this.database.execute<{
+      count: number;
+      sum: number;
+    }>(sql`
+      SELECT cast(count(*) as int) AS count,
+        cast(coalesce(sum(od.amount), 0) as int) AS sum
+      FROM organization_donations od
+      JOIN donations d ON d.id = od.donation_id
+      WHERE d.finalized = true
+        AND od.organization_internal_id = ${organizationInternalId}
+    `);
+    const row = result.rows[0];
+    return { count: row?.count ?? 0, sum: row?.sum ?? 0 };
+  }
 
   /** Count + sum of all finalized donations. */
   async getTotalDonations(
@@ -324,8 +351,14 @@ export class DashboardRepository {
     return { monthlyTotals, activeDonorsPerMonth, recurringChurn };
   }
 
-  /** Fetch all dashboard stats in parallel. */
-  async getStats(excluded: string[] = []): Promise<DashboardStats> {
+  /**
+   * Fetch all dashboard stats in parallel. `supportOrganization` is Anneta
+   * Targalt's own, whose total is given apart; it belongs in `excluded` too.
+   */
+  async getStats(
+    excluded: string[] = [],
+    supportOrganization?: string,
+  ): Promise<DashboardStats> {
     const now = new Date();
 
     const month0Range = monthRange(now, 0);
@@ -340,6 +373,7 @@ export class DashboardRepository {
 
     const [
       totalDonations,
+      support,
       totalDonors,
       activeDonors,
       monthlyRecurringDonations,
@@ -354,6 +388,9 @@ export class DashboardRepository {
       year2,
     ] = await Promise.all([
       this.getTotalDonations(excluded),
+      supportOrganization
+        ? this.getOrganizationTotal(supportOrganization)
+        : { count: 0, sum: 0 },
       this.getTotalDonors(excluded),
       this.getActiveDonors(excluded),
       this.getMonthlyRecurringDonations(excluded),
@@ -370,6 +407,7 @@ export class DashboardRepository {
 
     return {
       totalDonations,
+      support,
       totalDonors,
       activeDonors,
       monthlyRecurringDonations,
