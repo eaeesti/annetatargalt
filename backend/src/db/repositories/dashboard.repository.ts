@@ -44,12 +44,20 @@ export type DashboardStats = {
   totalDonors: number;
   /** Unique donors with a finalized donation in the last 12 months */
   activeDonors: number;
+  /** The same count a year ago: donors in the 12 months before then */
+  activeDonorsYearAgo: number;
+  /** Donors whose first finalized donation was in the last 12 months */
+  newDonors: number;
   /**
    * Sum of active recurring donation amounts (cents/month). Not "MRR" — this
    * money isn't Anneta Targalt's revenue, it's passed on to the recipient
    * organizations.
    */
   monthlyRecurringDonations: number;
+  /** How many recurring donations `monthlyRecurringDonations` adds up */
+  recurringDonationCount: number;
+  /** What those recurring donations add for Anneta Targalt each month */
+  monthlyRecurringSupport: number;
   /**
    * Calendar-aligned period comparisons. Each period's `prior` is the
    * immediately preceding period of the same length (e.g. lastMonth.prior is
@@ -89,11 +97,11 @@ export function yearRange(now: Date, yearsAgo: number): DateRange {
   return [new Date(Date.UTC(y, 0, 1)), new Date(Date.UTC(y + 1, 0, 1))];
 }
 
-/** Whether `column`, an organization's internal ID, is one of `excluded`. */
-function isExcluded(column: SQL, excluded: string[]): SQL {
-  if (excluded.length === 0) return sql`false`;
+/** Whether `column`, an organization's internal ID, is one of `ids`. */
+function isOneOf(column: SQL, ids: string[]): SQL {
+  if (ids.length === 0) return sql`false`;
   return sql`${column} IN (${sql.join(
-    excluded.map((id) => sql`${id}`),
+    ids.map((id) => sql`${id}`),
     sql`, `,
   )})`;
 }
@@ -110,7 +118,7 @@ function countedDonations(excluded: string[]): SQL {
     FROM donations d
     LEFT JOIN organization_donations od
       ON od.donation_id = d.id
-      AND ${isExcluded(sql`od.organization_internal_id`, excluded)}
+      AND ${isOneOf(sql`od.organization_internal_id`, excluded)}
     WHERE d.finalized = true
     GROUP BY d.id
     HAVING d.amount > coalesce(sum(od.amount), 0)
@@ -173,32 +181,72 @@ export class DashboardRepository {
     return result.rows[0]?.count ?? 0;
   }
 
-  /** Count of distinct donors with a finalized donation in the last 12 months. */
-  async getActiveDonors(excluded: string[] = []): Promise<number> {
-    const cutoff = new Date();
-    cutoff.setFullYear(cutoff.getFullYear() - 1);
+  /**
+   * Count of distinct donors with a finalized donation in the 12 months
+   * before `end`: now, or another time to compare with.
+   */
+  async getActiveDonors(
+    excluded: string[] = [],
+    end = new Date(),
+  ): Promise<number> {
+    const start = new Date(end);
+    start.setFullYear(start.getFullYear() - 1);
     const result = await this.database.execute<{ count: number }>(sql`
       SELECT cast(count(distinct c.donor_id) as int) AS count
       FROM ${countedDonations(excluded)} c
       WHERE c.donor_id IS NOT NULL
-        AND c.datetime >= ${cutoff.toISOString()}
+        AND c.datetime >= ${start.toISOString()}
+        AND c.datetime < ${end.toISOString()}
+    `);
+    return result.rows[0]?.count ?? 0;
+  }
+
+  /** Count of donors whose first finalized donation was in the last 12 months. */
+  async getNewDonors(excluded: string[] = []): Promise<number> {
+    const cutoff = new Date();
+    cutoff.setFullYear(cutoff.getFullYear() - 1);
+    const result = await this.database.execute<{ count: number }>(sql`
+      SELECT cast(count(*) as int) AS count
+      FROM (
+        SELECT min(c.datetime) AS first
+        FROM ${countedDonations(excluded)} c
+        WHERE c.donor_id IS NOT NULL
+        GROUP BY c.donor_id
+      ) donors
+      WHERE donors.first >= ${cutoff.toISOString()}
     `);
     return result.rows[0]?.count ?? 0;
   }
 
   /**
-   * Sum of amounts for recurring donations that had a finalized payment in the
-   * last 60 days — see RECURRING_ACTIVITY_WINDOW_DAYS.
+   * The recurring donations that had a finalized payment in the last 60 days
+   * (see RECURRING_ACTIVITY_WINDOW_DAYS): what they give each month
+   * (`total`), how many give anything (`count`), and what they add for
+   * `supportOrganization` (`support`), which belongs in `excluded` too.
    */
-  async getMonthlyRecurringDonations(excluded: string[] = []): Promise<number> {
-    const result = await this.database.execute(sql`
-      SELECT cast(coalesce(sum(r.amount), 0) as int) AS total
+  async getRecurring(
+    excluded: string[] = [],
+    supportOrganization?: string,
+  ): Promise<{ total: number; count: number; support: number }> {
+    const support = supportOrganization ? [supportOrganization] : [];
+    const result = await this.database.execute<{
+      total: number;
+      count: number;
+      support: number;
+    }>(sql`
+      SELECT cast(coalesce(sum(r.amount), 0) as int) AS total,
+        cast(count(*) FILTER (WHERE r.amount > 0) as int) AS count,
+        cast(coalesce(sum(r.support), 0) as int) AS support
       FROM (
-        SELECT rd.amount - coalesce(sum(ord.amount), 0) AS amount
+        SELECT rd.amount - coalesce(sum(ord.amount) FILTER (
+            WHERE ${isOneOf(sql`ord.organization_internal_id`, excluded)}
+          ), 0) AS amount,
+          coalesce(sum(ord.amount) FILTER (
+            WHERE ${isOneOf(sql`ord.organization_internal_id`, support)}
+          ), 0) AS support
         FROM recurring_donations rd
         LEFT JOIN organization_recurring_donations ord
           ON ord.recurring_donation_id = rd.id
-          AND ${isExcluded(sql`ord.organization_internal_id`, excluded)}
         WHERE EXISTS (
           SELECT 1 FROM donations d
           WHERE d.recurring_donation_id = rd.id
@@ -208,7 +256,12 @@ export class DashboardRepository {
         GROUP BY rd.id
       ) r
     `);
-    return Number(result.rows[0]?.total ?? 0);
+    const row = result.rows[0];
+    return {
+      total: row?.total ?? 0,
+      count: row?.count ?? 0,
+      support: row?.support ?? 0,
+    };
   }
 
   /** Sum + count of finalized donations within [from, to). */
@@ -371,12 +424,17 @@ export class DashboardRepository {
     const year1Range = yearRange(now, 1);
     const year2Range = yearRange(now, 2);
 
+    const yearAgo = new Date(now);
+    yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+
     const [
       totalDonations,
       support,
       totalDonors,
       activeDonors,
-      monthlyRecurringDonations,
+      activeDonorsYearAgo,
+      newDonors,
+      recurring,
       month0,
       month1,
       month2,
@@ -392,8 +450,10 @@ export class DashboardRepository {
         ? this.getOrganizationTotal(supportOrganization)
         : { count: 0, sum: 0 },
       this.getTotalDonors(excluded),
-      this.getActiveDonors(excluded),
-      this.getMonthlyRecurringDonations(excluded),
+      this.getActiveDonors(excluded, now),
+      this.getActiveDonors(excluded, yearAgo),
+      this.getNewDonors(excluded),
+      this.getRecurring(excluded, supportOrganization),
       this.getPeriodStats(...month0Range, excluded),
       this.getPeriodStats(...month1Range, excluded),
       this.getPeriodStats(...month2Range, excluded),
@@ -410,7 +470,11 @@ export class DashboardRepository {
       support,
       totalDonors,
       activeDonors,
-      monthlyRecurringDonations,
+      activeDonorsYearAgo,
+      newDonors,
+      monthlyRecurringDonations: recurring.total,
+      recurringDonationCount: recurring.count,
+      monthlyRecurringSupport: recurring.support,
       periods: {
         currentMonth: {
           current: month0,
