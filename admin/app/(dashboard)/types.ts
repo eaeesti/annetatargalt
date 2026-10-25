@@ -9,7 +9,15 @@ export type DashboardStats = {
   support: { count: number; sum: number };
   totalDonors: number;
   activeDonors: number;
+  /** The same count a year ago. */
+  activeDonorsYearAgo: number;
+  /** Donors whose first donation was in the last 12 months. */
+  newDonors: number;
   monthlyRecurringDonations: number;
+  /** How many recurring donations `monthlyRecurringDonations` adds up. */
+  recurringDonationCount: number;
+  /** What they add each month for Anneta Targalt. */
+  monthlyRecurringSupport: number;
   periods: {
     currentMonth: { current: PeriodStats; prior: PeriodStats; from: string };
     lastMonth: { current: PeriodStats; prior: PeriodStats; from: string };

@@ -125,13 +125,54 @@ describe("DashboardRepository", () => {
       const result = await repo.getActiveDonors();
       expect(result).toBe(1);
     });
+
+    it("counts the 12 months before another time, to compare with", async () => {
+      const then = await createTestDonor({ email: "then@test.com" });
+      const now = await createTestDonor({ email: "now@test.com" });
+      const monthsAgo = (months: number) => {
+        const date = new Date();
+        date.setMonth(date.getMonth() - months);
+        return date;
+      };
+      await createTestDonation({ donorId: then.id, datetime: monthsAgo(18) });
+      await createTestDonation({ donorId: now.id, datetime: monthsAgo(2) });
+
+      const yearAgo = new Date();
+      yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+      expect(await repo.getActiveDonors([], yearAgo)).toBe(1);
+      expect(await repo.getActiveDonors()).toBe(1);
+    });
   });
 
-  // ── getMonthlyRecurringDonations ─────────────────────────────────────────────
+  // ── getNewDonors ─────────────────────────────────────────────────────────────
 
-  describe("getMonthlyRecurringDonations", () => {
+  describe("getNewDonors", () => {
+    it("counts donors whose first donation was in the last 12 months", async () => {
+      const returning = await createTestDonor({ email: "returning@test.com" });
+      const fresh = await createTestDonor({ email: "fresh@test.com" });
+      const notYet = await createTestDonor({ email: "notyet@test.com" });
+      const twoYearsAgo = new Date();
+      twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+
+      // gave two years ago and again now: not new
+      await createTestDonation({
+        donorId: returning.id,
+        datetime: twoYearsAgo,
+      });
+      await createTestDonation({ donorId: returning.id });
+      await createTestDonation({ donorId: fresh.id });
+      // only an unfinalized donation: not a donor yet
+      await createTestDonation({ donorId: notYet.id, finalized: false });
+
+      expect(await repo.getNewDonors()).toBe(1);
+    });
+  });
+
+  // ── getRecurring ─────────────────────────────────────────────────────────────
+
+  describe("getRecurring", () => {
     it("returns zero when no active recurring donations exist", async () => {
-      const result = await repo.getMonthlyRecurringDonations();
+      const result = (await repo.getRecurring()).total;
       expect(result).toBe(0);
     });
 
@@ -187,7 +228,7 @@ describe("DashboardRepository", () => {
       // Excluded: never paid at all
       await createTestRecurringDonation({ donorId: donor.id, amount: 3333 });
 
-      const result = await repo.getMonthlyRecurringDonations();
+      const result = (await repo.getRecurring()).total;
       expect(result).toBe(2000);
     });
   });
@@ -341,9 +382,38 @@ describe("DashboardRepository", () => {
       expect((await repo.getStats()).support).toEqual({ count: 0, sum: 0 });
     });
 
+    it("gives what recurring donations add for the support organization", async () => {
+      const supporter = await createTestDonor({ email: "d@test.com" });
+      const recurring = await createTestRecurringDonation({
+        donorId: supporter.id,
+        amount: 1050,
+      });
+      for (const [organizationInternalId, amount] of [
+        ["ORG", 1000],
+        ["SUP", 50],
+      ] as const) {
+        await createTestOrganizationRecurringDonation({
+          recurringDonationId: recurring.id,
+          organizationInternalId,
+          amount,
+        });
+      }
+      await give(supporter.id, { ORG: 1000, SUP: 50 }, recurring.id);
+
+      expect(await repo.getRecurring([...excluded, "SUP"], "SUP")).toEqual({
+        total: 1600,
+        count: 2,
+        support: 50,
+      });
+    });
+
     it("leaves out monthly donations to it", async () => {
-      expect(await repo.getMonthlyRecurringDonations(excluded)).toBe(600);
-      expect(await repo.getMonthlyRecurringDonations()).toBe(1400);
+      expect(await repo.getRecurring(excluded)).toEqual({
+        total: 600,
+        count: 1,
+        support: 0,
+      });
+      expect((await repo.getRecurring()).total).toBe(1400);
 
       const churn = await repo.getRecurringChurn(excluded);
       expect(churn.at(-1)?.active).toBe(1);

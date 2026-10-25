@@ -74,12 +74,15 @@ function StatCard({
   label,
   value,
   sub,
+  badge,
   note,
   info,
 }: {
   label: string;
   value: string;
   sub?: string;
+  /** Shown after `sub`, such as a TrendBadge. */
+  badge?: React.ReactNode;
   /** A second line under `sub`. */
   note?: string;
   /** Hover text explaining how the figure is calculated, shown via an (i) icon. */
@@ -96,7 +99,12 @@ function StatCard({
       <p className="text-lg font-bold tabular-nums @[12rem]:text-2xl">
         {value}
       </p>
-      {sub && <p className="text-sm text-muted-foreground">{sub}</p>}
+      {sub && (
+        <p className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+          {sub}
+          {badge}
+        </p>
+      )}
       {note && <p className="text-sm text-muted-foreground">{note}</p>}
     </div>
   );
@@ -196,7 +204,11 @@ async function StatsSection() {
     support,
     totalDonors,
     activeDonors,
+    activeDonorsYearAgo,
+    newDonors,
     monthlyRecurringDonations,
+    recurringDonationCount,
+    monthlyRecurringSupport,
     periods,
   } = data;
   // Reference year for deciding whether a month/quarter label needs a year
@@ -214,16 +226,31 @@ async function StatsSection() {
           note={`+ ${formatEur(support.sum)} support for Anneta Targalt`}
           info="What finalized donations gave the organizations, the same total as on the homepage. Support for Anneta Targalt is counted apart, and what's given to the external organization isn't counted, here or anywhere on the dashboard: it's only passed on."
         />
-        <StatCard label="Total donors" value={formatCount(totalDonors)} />
+        <StatCard
+          label="Total donors"
+          value={formatCount(totalDonors)}
+          sub={`${formatCount(newDonors)} new in the last 12 months`}
+          info="Distinct donors with at least one finalized donation. New ones made their first in the last 12 months."
+        />
         <StatCard
           label="Active donors"
           value={formatCount(activeDonors)}
-          info="Count of distinct donors with at least one finalized donation in the trailing 12 months from today. Donations without a linked donor record aren't counted."
+          sub={`${formatCount(activeDonorsYearAgo)} a year ago`}
+          badge={
+            <TrendBadge
+              pct={pctChange(activeDonors, activeDonorsYearAgo)}
+              currentLabel={formatCount(activeDonors)}
+              priorLabel={formatCount(activeDonorsYearAgo)}
+            />
+          }
+          info="Count of distinct donors with at least one finalized donation in the trailing 12 months from today, and the same count a year ago. Donations without a linked donor record aren't counted."
         />
         <StatCard
           label="Monthly recurring donations"
           value={formatEur(monthlyRecurringDonations)}
-          info="Sum of recurring donation amounts where at least one payment was finalized in the last 60 days. This money is passed on to the recipient organizations — not revenue for Anneta Targalt."
+          sub={`${formatCount(recurringDonationCount)} standing orders`}
+          note={`+ ${formatEur(monthlyRecurringSupport)} support for Anneta Targalt`}
+          info="Sum of recurring donation amounts where at least one payment was finalized in the last 60 days. This money is passed on to the recipient organizations — not revenue for Anneta Targalt, whose support added to them is shown apart."
         />
       </div>
 
