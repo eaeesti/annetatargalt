@@ -453,11 +453,20 @@ export function TransactionsTable({
                         </TableCell>
                       )}
                       {show("counterparty") && (
-                        <TableCell>
-                          <span className="block max-w-xs truncate">
+                        // Takes whatever width the other columns leave
+                        // (max-w-0 keeps long text from widening it), so
+                        // the text is cut only where the table ends.
+                        <TableCell className="w-full max-w-0 min-w-48">
+                          <span
+                            className="block truncate"
+                            title={row.counterpartyName ?? undefined}
+                          >
                             {row.counterpartyName ?? "—"}
                           </span>
-                          <span className="block max-w-xs truncate text-xs text-muted-foreground">
+                          <span
+                            className="block truncate text-xs text-muted-foreground"
+                            title={row.description ?? undefined}
+                          >
                             {row.description}
                           </span>
                         </TableCell>
