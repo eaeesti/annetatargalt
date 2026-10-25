@@ -15,7 +15,7 @@ import {
   recurringDonationHref,
 } from "../../../../lib/entity-links";
 import { formatDateTime } from "../../../../lib/dates";
-import { RememberedLink } from "../../../../components/remembered-link";
+import { BackLink } from "../../../../components/back-link";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -137,12 +137,7 @@ export default async function DonationDetailPage({
     <div className="max-w-2xl space-y-6">
       {/* Header */}
       <div className="space-y-1">
-        <RememberedLink
-          href="/donations"
-          className="text-sm text-muted-foreground hover:text-foreground"
-        >
-          ← Donations
-        </RememberedLink>
+        <BackLink href="/donations">Donations</BackLink>
         <h1 className="text-2xl font-bold">Donation #{donation.id}</h1>
       </div>
 

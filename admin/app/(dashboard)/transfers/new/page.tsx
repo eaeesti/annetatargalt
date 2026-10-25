@@ -3,7 +3,7 @@ import { strapiAdmin } from "../../../../lib/api";
 import { readJson } from "../../../../lib/read-json";
 import { fetchOrgs } from "../../../../lib/orgs";
 import { TransferBuilder } from "../_components/transfer-builder";
-import { RememberedLink } from "../../../../components/remembered-link";
+import { BackLink } from "../../../../components/back-link";
 
 export const metadata: Metadata = { title: "New transfer" };
 
@@ -36,12 +36,7 @@ export default async function NewTransferPage() {
   return (
     <div className="max-w-3xl space-y-6">
       <div className="space-y-1">
-        <RememberedLink
-          href="/transfers"
-          className="text-sm text-muted-foreground hover:text-foreground"
-        >
-          ← Transfers
-        </RememberedLink>
+        <BackLink href="/transfers">Transfers</BackLink>
         <h1 className="text-2xl font-bold">New transfer round</h1>
         <p className="text-sm text-muted-foreground">
           Pick a date range to seed the list of finalized, not-yet-transferred

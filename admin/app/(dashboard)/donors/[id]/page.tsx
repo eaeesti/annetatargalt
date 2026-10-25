@@ -12,7 +12,7 @@ import {
 } from "../../../../components/recurring-status-badge";
 import { recurringDonationHref } from "../../../../lib/entity-links";
 import { formatDate } from "../../../../lib/dates";
-import { RememberedLink } from "../../../../components/remembered-link";
+import { BackLink } from "../../../../components/back-link";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -129,12 +129,7 @@ export default async function DonorDetailPage({ params }: { params: Params }) {
     <div className="max-w-3xl space-y-6">
       {/* Header */}
       <div className="space-y-1">
-        <RememberedLink
-          href="/donors"
-          className="text-sm text-muted-foreground hover:text-foreground"
-        >
-          ← Donors
-        </RememberedLink>
+        <BackLink href="/donors">Donors</BackLink>
         <h1 className="text-2xl font-bold">{donorName(donor)}</h1>
       </div>
 
