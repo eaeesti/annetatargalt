@@ -6,7 +6,7 @@ import { useEffect, useSyncExternalStore } from "react";
 
 /*
  * A list remembers its last address (filters, sort, page) for the rest of
- * the browser tab's session, so the "← Donations" link on a donation's page
+ * the browser tab's session, so the "Donations" back link on a donation's page
  * returns to the list as it was left. The sidebar still opens a fresh list.
  */
 

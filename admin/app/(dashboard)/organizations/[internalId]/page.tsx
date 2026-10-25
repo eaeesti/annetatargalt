@@ -6,7 +6,7 @@ import { fetchOrgs } from "../../../../lib/orgs";
 import { readJson } from "../../../../lib/read-json";
 import { Badge } from "../../../../components/ui/badge";
 import { formatDate } from "../../../../lib/dates";
-import { RememberedLink } from "../../../../components/remembered-link";
+import { BackLink } from "../../../../components/back-link";
 import { MonthlyTotalsChart } from "../../_components/monthly-totals-chart";
 
 const STRAPI_URL = process.env.STRAPI_URL ?? "http://localhost:1337";
@@ -143,13 +143,8 @@ export default async function OrganizationDetailPage({
   return (
     <div className="max-w-3xl space-y-6">
       {/* Header */}
-      <div className="space-y-1">
-        <RememberedLink
-          href="/organizations"
-          className="text-sm text-muted-foreground hover:text-foreground"
-        >
-          ← Organizations
-        </RememberedLink>
+      <div className="space-y-2.5">
+        <BackLink href="/organizations">Organizations</BackLink>
         <div className="flex items-center gap-3">
           {org.logo?.file ? (
             // oxlint-disable-next-line @next/next/no-img-element

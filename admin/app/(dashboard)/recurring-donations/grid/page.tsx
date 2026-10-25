@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { strapiAdmin } from "../../../../lib/api";
 import { readJson } from "../../../../lib/read-json";
-import { RememberedLink } from "../../../../components/remembered-link";
+import { BackLink } from "../../../../components/back-link";
 
 export const metadata: Metadata = { title: "Recurring donations by month" };
 
@@ -154,12 +154,7 @@ export default async function RecurringGridPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-0.5">
           <div className="flex items-center gap-3">
-            <RememberedLink
-              href="/recurring-donations"
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              ← List view
-            </RememberedLink>
+            <BackLink href="/recurring-donations">List view</BackLink>
             <h1 className="text-2xl font-bold">Recurring Grid</h1>
           </div>
           <p className="text-sm text-muted-foreground">

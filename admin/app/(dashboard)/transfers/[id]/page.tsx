@@ -9,7 +9,7 @@ import { TransferMetaEditor } from "../_components/transfer-meta-editor";
 import { TransferDonationsEditor } from "../_components/transfer-donations-editor";
 import { CardFeeSwitch } from "../_components/card-fee-switch";
 import { formatDate } from "../../../../lib/dates";
-import { RememberedLink } from "../../../../components/remembered-link";
+import { BackLink } from "../../../../components/back-link";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -164,12 +164,7 @@ export default async function TransferDetailPage({
     <div className="max-w-3xl space-y-6">
       {/* Header */}
       <div className="space-y-1">
-        <RememberedLink
-          href="/transfers"
-          className="text-sm text-muted-foreground hover:text-foreground"
-        >
-          ← Transfers
-        </RememberedLink>
+        <BackLink href="/transfers">Transfers</BackLink>
         <h1 className="text-2xl font-bold">
           Transfer #{transfer.id} — {formatDate(transfer.datetime)}
         </h1>
