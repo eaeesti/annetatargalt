@@ -283,6 +283,7 @@ async function bootstrapDonationPermissions(
     "plugin::admin-panel.transfer.update", // write path — attach donations / link payments
     "plugin::admin-panel.transfer.remove", // write path — delete an empty transfer
     "plugin::admin-panel.organization.stats",
+    "plugin::admin-panel.organization.monthlyTotals",
     "plugin::admin-panel.dashboard.stats",
     "plugin::admin-panel.dashboard.charts",
     "plugin::admin-panel.statement.preview",

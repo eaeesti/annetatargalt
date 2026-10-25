@@ -277,4 +277,69 @@ describe("OrganizationDonationsRepository", () => {
       expect(totalSplit).toBe(1000); // Should still total to 1000
     });
   });
+
+  describe("getMonthlyTotals", () => {
+    /** Mid-month, `monthsAgo` months before this one, and its "YYYY-MM". */
+    function monthsAgo(n: number) {
+      const now = new Date();
+      const date = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - n, 15, 12),
+      );
+      return { date, month: date.toISOString().slice(0, 7) };
+    }
+
+    async function give(
+      organizationInternalId: string,
+      amount: number,
+      date: Date,
+      finalized = true,
+    ) {
+      const donation = await createTestDonation({
+        amount,
+        datetime: date,
+        finalized,
+      });
+      await createTestOrganizationDonation({
+        donationId: donation.id,
+        organizationInternalId,
+        amount,
+      });
+    }
+
+    it("sums each month from the first donation to now, empty months as 0", async () => {
+      await give("AMF", 3000, monthsAgo(3).date);
+      await give("AMF", 2000, monthsAgo(3).date);
+      await give("AMF", 500, monthsAgo(1).date);
+
+      expect(
+        await organizationDonationsRepository.getMonthlyTotals("AMF"),
+      ).toEqual([
+        { month: monthsAgo(3).month, total: 5000, count: 2 },
+        { month: monthsAgo(2).month, total: 0, count: 0 },
+        { month: monthsAgo(1).month, total: 500, count: 1 },
+        { month: monthsAgo(0).month, total: 0, count: 0 },
+      ]);
+    });
+
+    it("counts only finalized donations to that organization", async () => {
+      await give("AMF", 1000, monthsAgo(0).date);
+      await give("AMF", 7000, monthsAgo(0).date, false);
+      await give("GD", 9000, monthsAgo(0).date);
+
+      expect(
+        await organizationDonationsRepository.getMonthlyTotals("AMF"),
+      ).toEqual([{ month: monthsAgo(0).month, total: 1000, count: 1 }]);
+    });
+
+    it("is empty for an organization that got nothing", async () => {
+      await give("AMF", 7000, monthsAgo(2).date, false);
+
+      expect(
+        await organizationDonationsRepository.getMonthlyTotals("AMF"),
+      ).toEqual([]);
+      expect(
+        await organizationDonationsRepository.getMonthlyTotals("NONE"),
+      ).toEqual([]);
+    });
+  });
 });
