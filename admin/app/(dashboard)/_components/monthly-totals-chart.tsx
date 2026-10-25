@@ -19,6 +19,9 @@ import {
 } from "../../../components/ui/chart";
 import type { MonthlyTotalsRow } from "../types";
 
+/** All the bar chart needs of a month: the dashboard's or one organization's. */
+type MonthTotal = Pick<MonthlyTotalsRow, "month" | "total">;
+
 function shortMonth(yyyymm: string) {
   const [y, m] = yyyymm.split("-");
   return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString("et-EE", {
@@ -82,7 +85,7 @@ function periodLabel(key: string, granularity: Granularity): string {
 
 /** Roll monthly rows up into quarters/years by summing `total`. */
 function aggregate(
-  data: MonthlyTotalsRow[],
+  data: MonthTotal[],
   granularity: Granularity,
 ): { key: string; total: number }[] {
   if (granularity === "month") {
@@ -98,7 +101,7 @@ function aggregate(
   return [...totals.entries()].map(([key, total]) => ({ key, total }));
 }
 
-export function MonthlyTotalsChart({ data }: { data: MonthlyTotalsRow[] }) {
+export function MonthlyTotalsChart({ data }: { data: MonthTotal[] }) {
   const [granularity, setGranularity] = useState<Granularity>("month");
 
   const chartData = useMemo(() => {

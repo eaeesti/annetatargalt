@@ -127,6 +127,42 @@ export class OrganizationDonationsRepository {
   }
 
   /**
+   * What finalized donations gave an organization each month, from the month
+   * of its first one to the current month. Months it got nothing in are
+   * there too, as 0, so a chart of them has no gaps. Empty if it never got
+   * anything.
+   */
+  async getMonthlyTotals(organizationInternalId: string) {
+    const result = await this.database.execute<{
+      month: string; // "YYYY-MM"
+      total: number; // cents
+      count: number;
+    }>(sql`
+      WITH totals AS (
+        SELECT date_trunc('month', d.datetime) AS month,
+          sum(od.amount) AS total,
+          count(*) AS count
+        FROM organization_donations od
+        JOIN donations d ON d.id = od.donation_id
+        WHERE d.finalized = true
+          AND od.organization_internal_id = ${organizationInternalId}
+        GROUP BY 1
+      )
+      SELECT to_char(m.month, 'YYYY-MM') AS month,
+        cast(coalesce(t.total, 0) as int) AS total,
+        cast(coalesce(t.count, 0) as int) AS count
+      FROM generate_series(
+        (SELECT min(month) FROM totals),
+        date_trunc('month', localtimestamp),
+        interval '1 month'
+      ) AS m(month)
+      LEFT JOIN totals t ON t.month = m.month
+      ORDER BY m.month
+    `);
+    return result.rows;
+  }
+
+  /**
    * Check if an organization has any donations
    */
   async organizationHasDonations(

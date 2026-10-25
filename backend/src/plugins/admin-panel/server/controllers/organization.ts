@@ -9,4 +9,12 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
     await auditLog(ctx, "organizations.stats");
     return ctx.send({ data: rows });
   },
+
+  async monthlyTotals(ctx: Context) {
+    const internalId = String(ctx.params.internalId ?? "");
+    const data =
+      await organizationDonationsRepository.getMonthlyTotals(internalId);
+    await auditLog(ctx, "organizations.monthlyTotals", internalId);
+    return ctx.send({ data });
+  },
 });

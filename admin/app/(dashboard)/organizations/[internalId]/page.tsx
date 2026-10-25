@@ -7,6 +7,7 @@ import { readJson } from "../../../../lib/read-json";
 import { Badge } from "../../../../components/ui/badge";
 import { formatDate } from "../../../../lib/dates";
 import { RememberedLink } from "../../../../components/remembered-link";
+import { MonthlyTotalsChart } from "../../_components/monthly-totals-chart";
 
 const STRAPI_URL = process.env.STRAPI_URL ?? "http://localhost:1337";
 
@@ -18,6 +19,8 @@ type OrgStat = {
   donationCount: number;
   lastDonationDate: string | null;
 };
+
+type MonthTotal = { month: string; total: number; count: number };
 
 type DonationRow = {
   id: number;
@@ -95,10 +98,15 @@ export default async function OrganizationDetailPage({
   const { internalId: rawId } = await params;
   const internalId = decodeURIComponent(rawId);
 
-  // Fetch in parallel: all orgs (to find this one), stats, recent donations
-  const [orgs, statsRes, donationsRes] = await Promise.all([
+  // Fetch in parallel: all orgs (to find this one), stats, monthly totals,
+  // recent donations
+  const [orgs, statsRes, monthlyRes, donationsRes] = await Promise.all([
     fetchOrgs(),
     strapiAdmin("/api/admin-panel/organizations/stats", { cache: "no-store" }),
+    strapiAdmin(
+      `/api/admin-panel/organizations/${encodeURIComponent(internalId)}/monthly-totals`,
+      { cache: "no-store" },
+    ),
     strapiAdmin(
       `/api/admin-panel/donations/list?orgId=${encodeURIComponent(internalId)}&finalized=true&sortBy=datetime&sortDir=desc&pageSize=50`,
       { cache: "no-store" },
@@ -112,6 +120,11 @@ export default async function OrganizationDetailPage({
   if (statsRes.ok) {
     const { data } = await readJson<{ data: OrgStat[] }>(statsRes);
     stat = data.find((s) => s.organizationInternalId === internalId);
+  }
+
+  let monthlyTotals: MonthTotal[] = [];
+  if (monthlyRes.ok) {
+    monthlyTotals = (await readJson<{ data: MonthTotal[] }>(monthlyRes)).data;
   }
 
   let donations: DonationRow[] = [];
@@ -197,6 +210,8 @@ export default async function OrganizationDetailPage({
           )}
         </Section>
       )}
+
+      {monthlyTotals.length > 0 && <MonthlyTotalsChart data={monthlyTotals} />}
 
       {/* Recent donations */}
       {donations.length > 0 && (

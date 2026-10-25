@@ -6,5 +6,11 @@ export default {
       handler: "organization.stats",
       config: {},
     },
+    {
+      method: "GET",
+      path: "/organizations/:internalId/monthly-totals",
+      handler: "organization.monthlyTotals",
+      config: {},
+    },
   ],
 };
