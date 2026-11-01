@@ -24,7 +24,7 @@ export default function Slider({
       <div className="absolute my-auto h-2.5 w-full rounded-full bg-slate-200"></div>
       <div
         className="absolute my-auto h-2.5 rounded-full bg-primary-200"
-        style={{ width: `${value}%` }}
+        style={{ width: `${(100 * (value - min)) / (max - min)}%` }}
       ></div>
       <input
         role="slider"

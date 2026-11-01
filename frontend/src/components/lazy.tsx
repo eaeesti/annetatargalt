@@ -23,6 +23,9 @@ export const FAQSection = dynamic(() => import("./sections/FaqSection"));
 export const ForeignDonationSection = dynamic(
   () => import("./sections/ForeignDonationSection"),
 );
+export const IncomeCalculatorSection = dynamic(
+  () => import("./sections/IncomeCalculatorSection"),
+);
 export const RedirectSection = dynamic(
   () => import("./sections/RedirectSection"),
 );
