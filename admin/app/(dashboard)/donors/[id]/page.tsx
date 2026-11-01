@@ -13,6 +13,7 @@ import {
 import { recurringDonationHref } from "../../../../lib/entity-links";
 import { formatDate } from "../../../../lib/dates";
 import { BackLink } from "../../../../components/back-link";
+import { EmailPreferences } from "./_components/email-preferences";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -33,6 +34,13 @@ type DonorDetail = {
   idCode: string | null;
   recurringDonor: boolean | null;
   createdAt: string;
+  // Absent from a backend older than this page: the two deploy separately.
+  newsletter?: boolean;
+  transferEmails?: boolean;
+  yearlyEmails?: boolean;
+  newsletterSource?: string;
+  emailPreferencesUpdatedAt?: string | null;
+  emailPreferencesUrl?: string;
   donations: DonationSummary[];
   recurringDonations: {
     id: number;
@@ -52,6 +60,21 @@ type DonorDetail = {
 
 function formatAmount(cents: number): string {
   return `€${(cents / 100).toFixed(2)}`;
+}
+
+/**
+ * Who set the address's newsletter setting as it is: the donor, a donation
+ * form's choice, or no one since it was on by default.
+ */
+function newsletterSet(source: string) {
+  if (source === "settings") {
+    return "In their settings, or by the team when they asked";
+  }
+  if (source === "donation") return "With the choice on a donation form";
+  if (source === "existing-donor") {
+    return "On from the start: they had given before there was a newsletter";
+  }
+  return "On by default";
 }
 
 function donorName(donor: DonorDetail): string {
@@ -148,6 +171,44 @@ export default async function DonorDetailPage({ params }: { params: Params }) {
         </Field>
         <Field label="Member since">{formatDate(donor.createdAt)}</Field>
       </Section>
+
+      {/* Emails */}
+      {typeof donor.newsletter === "boolean" &&
+        typeof donor.transferEmails === "boolean" &&
+        typeof donor.yearlyEmails === "boolean" && (
+          <Section title="Emails">
+            <EmailPreferences
+              donorId={donor.id}
+              preferences={{
+                newsletter: donor.newsletter,
+                transferEmails: donor.transferEmails,
+                yearlyEmails: donor.yearlyEmails,
+              }}
+            />
+            {donor.newsletterSource && (
+              <Field label="Newsletter set">
+                {newsletterSet(donor.newsletterSource)}
+              </Field>
+            )}
+            {donor.emailPreferencesUpdatedAt && (
+              <Field label="Last changed">
+                {formatDate(donor.emailPreferencesUpdatedAt, true)}
+              </Field>
+            )}
+            {donor.emailPreferencesUrl && (
+              <Field label="Their settings page">
+                <a
+                  href={donor.emailPreferencesUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary underline underline-offset-2"
+                >
+                  Open as the donor
+                </a>
+              </Field>
+            )}
+          </Section>
+        )}
 
       {/* Stats */}
       <Section title="Stats">
