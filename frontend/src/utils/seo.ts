@@ -77,5 +77,8 @@ export function buildMetadata(
     openGraph,
     icons,
     ...(languages ? languageMetadata(languages) : {}),
+    // A page that's still being reviewed is reachable by its link, but asks
+    // not to be indexed; the sitemap leaves it out too.
+    ...(pageMetadata.unlisted ? { robots: { index: false } } : {}),
   };
 }

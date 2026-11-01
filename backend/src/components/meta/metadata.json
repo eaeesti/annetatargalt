@@ -16,6 +16,10 @@
       "type": "component",
       "repeatable": false,
       "component": "elements.image"
+    },
+    "unlisted": {
+      "type": "boolean",
+      "default": false
     }
   }
 }

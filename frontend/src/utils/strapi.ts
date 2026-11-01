@@ -322,8 +322,11 @@ export async function getAllSlugs(locale: Locale): Promise<string[]> {
     options,
   );
   // In Strapi v5, data is returned flat (not nested under attributes)
+  // Unlisted pages are reachable by their link only, so they're left out.
   const pageSlugs =
-    pagesResponse.data?.flatMap((page) => (page.slug ? [page.slug] : [])) || [];
+    pagesResponse.data?.flatMap((page) =>
+      page.slug && !page.metadata?.unlisted ? [page.slug] : [],
+    ) || [];
 
   const causesPath = "/causes";
   const causesResponse = await fetchAPI<{
