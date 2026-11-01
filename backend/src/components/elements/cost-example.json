@@ -1,0 +1,45 @@
+{
+  "collectionName": "components_elements_cost_examples",
+  "info": {
+    "displayName": "CostExample",
+    "icon": "heart",
+    "description": "What an amount buys. <%= amount %> is the amount and <%= count %> how many of the thing it pays for; oneText, if set, is used when that's 1. choiceText is the same as a choice in the section's choiceQuestion, with oneChoiceText for 1."
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string"
+    },
+    "cost": {
+      "type": "decimal"
+    },
+    "text": {
+      "type": "string"
+    },
+    "oneText": {
+      "type": "string"
+    },
+    "choiceText": {
+      "type": "string"
+    },
+    "oneChoiceText": {
+      "type": "string"
+    },
+    "icon": {
+      "type": "enumeration",
+      "enum": [
+        "toy",
+        "water",
+        "mosquito-net",
+        "medicine",
+        "children"
+      ]
+    },
+    "note": {
+      "type": "string"
+    },
+    "noteDetails": {
+      "type": "richtext"
+    }
+  }
+}

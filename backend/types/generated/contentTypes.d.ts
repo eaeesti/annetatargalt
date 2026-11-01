@@ -1264,6 +1264,7 @@ export interface ApiPagePage extends Struct.CollectionTypeSchema {
         'sections.partner-section',
         'sections.foreign-donation-section',
         'sections.map-section',
+        'sections.income-calculator-section',
       ]
     > &
       Schema.Attribute.SetPluginOptions<{
