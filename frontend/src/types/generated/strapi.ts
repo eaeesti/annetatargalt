@@ -152,6 +152,7 @@ export interface StrapiMetadata {
   title: string | null;
   description: string | null;
   shareImage: StrapiImage | null;
+  unlisted: boolean | null;
 }
 
 export interface StrapiNavbar {

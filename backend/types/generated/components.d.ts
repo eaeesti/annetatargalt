@@ -246,6 +246,7 @@ export interface MetaMetadata extends Struct.ComponentSchema {
     description: Schema.Attribute.Text;
     shareImage: Schema.Attribute.Component<'elements.image', false>;
     title: Schema.Attribute.String;
+    unlisted: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
   };
 }
 
