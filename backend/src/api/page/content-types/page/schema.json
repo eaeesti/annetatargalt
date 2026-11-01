@@ -65,7 +65,8 @@
         "sections.organizations-section",
         "sections.partner-section",
         "sections.foreign-donation-section",
-        "sections.map-section"
+        "sections.map-section",
+        "sections.income-calculator-section"
       ],
       "pluginOptions": {
         "i18n": {

@@ -1,0 +1,43 @@
+{
+  "collectionName": "components_elements_income_families",
+  "info": {
+    "displayName": "IncomeFamily",
+    "icon": "user",
+    "description": "A family shown on the calculator's chart, where its income places it. The income is per adult a month, in international dollars."
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "household": {
+      "type": "string"
+    },
+    "home": {
+      "type": "string"
+    },
+    "monthlyIncome": {
+      "type": "decimal"
+    },
+    "description": {
+      "type": "text"
+    },
+    "familyPhoto": {
+      "type": "component",
+      "repeatable": false,
+      "component": "elements.image"
+    },
+    "homePhoto": {
+      "type": "component",
+      "repeatable": false,
+      "component": "elements.image"
+    },
+    "sourceUrl": {
+      "type": "string"
+    },
+    "hiddenOnPhones": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}

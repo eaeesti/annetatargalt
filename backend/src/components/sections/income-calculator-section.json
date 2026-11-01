@@ -1,0 +1,174 @@
+{
+  "collectionName": "components_sections_income_calculator_sections",
+  "info": {
+    "displayName": "IncomeCalculatorSection",
+    "icon": "chartPie",
+    "description": "Compares a monthly net income in Estonia with the world's. Texts can have <%= placeholders %> and **highlights**."
+  },
+  "options": {},
+  "attributes": {
+    "incomeLabel": {
+      "type": "string"
+    },
+    "householdLabel": {
+      "type": "string"
+    },
+    "adultText": {
+      "type": "string"
+    },
+    "adultsText": {
+      "type": "string"
+    },
+    "childText": {
+      "type": "string"
+    },
+    "childrenText": {
+      "type": "string"
+    },
+    "calculateButtonText": {
+      "type": "string"
+    },
+    "privacyNote": {
+      "type": "string"
+    },
+    "summaryText": {
+      "type": "string"
+    },
+    "richerThanText": {
+      "type": "string"
+    },
+    "lowIncomeTitle": {
+      "type": "string"
+    },
+    "lowIncomeText": {
+      "type": "string"
+    },
+    "costOfLivingText": {
+      "type": "string"
+    },
+    "methodologyTitle": {
+      "type": "string"
+    },
+    "methodology": {
+      "type": "richtext"
+    },
+    "youText": {
+      "type": "string"
+    },
+    "youCardTitle": {
+      "type": "string"
+    },
+    "families": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.income-family"
+    },
+    "familyPerDayText": {
+      "type": "string"
+    },
+    "familyPerMonthText": {
+      "type": "string"
+    },
+    "familyCreditText": {
+      "type": "richtext"
+    },
+    "multipleTitle": {
+      "type": "string"
+    },
+    "multipleText": {
+      "type": "richtext"
+    },
+    "medianText": {
+      "type": "string"
+    },
+    "medianAmountText": {
+      "type": "string"
+    },
+    "methodologyLinkText": {
+      "type": "string"
+    },
+    "fairerTitle": {
+      "type": "string"
+    },
+    "fairerSubtitle": {
+      "type": "string"
+    },
+    "fairerText": {
+      "type": "string"
+    },
+    "comparisonTitle": {
+      "type": "string"
+    },
+    "comparisonQuestion": {
+      "type": "string"
+    },
+    "popularExample": {
+      "type": "component",
+      "repeatable": false,
+      "component": "elements.cost-example"
+    },
+    "effectiveExample": {
+      "type": "component",
+      "repeatable": false,
+      "component": "elements.cost-example"
+    },
+    "versusText": {
+      "type": "string"
+    },
+    "choiceQuestion": {
+      "type": "string"
+    },
+    "effectiveGivingTitle": {
+      "type": "string"
+    },
+    "effectiveGivingText": {
+      "type": "richtext"
+    },
+    "organizationsTitle": {
+      "type": "string"
+    },
+    "organizationsSubtitle": {
+      "type": "string"
+    },
+    "causes": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::cause.cause"
+    },
+    "readMoreText": {
+      "type": "string"
+    },
+    "donateText": {
+      "type": "string"
+    },
+    "ctaText": {
+      "type": "string"
+    },
+    "ctaButton": {
+      "type": "component",
+      "repeatable": false,
+      "component": "elements.button"
+    },
+    "shareText": {
+      "type": "string"
+    },
+    "shareMessage": {
+      "type": "string"
+    },
+    "facebookShareText": {
+      "type": "string"
+    },
+    "twitterShareText": {
+      "type": "string"
+    },
+    "blueskyShareText": {
+      "type": "string"
+    },
+    "linkedinShareText": {
+      "type": "string"
+    },
+    "sourcesText": {
+      "type": "richtext"
+    }
+  }
+}

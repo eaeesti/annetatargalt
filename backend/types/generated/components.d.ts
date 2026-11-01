@@ -44,6 +44,28 @@ export interface ElementsButton extends Struct.ComponentSchema {
   };
 }
 
+export interface ElementsCostExample extends Struct.ComponentSchema {
+  collectionName: 'components_elements_cost_examples';
+  info: {
+    description: "What an amount buys. <%= amount %> is the amount and <%= count %> how many of the thing it pays for; oneText, if set, is used when that's 1. choiceText is the same as a choice in the section's choiceQuestion, with oneChoiceText for 1.";
+    displayName: 'CostExample';
+    icon: 'heart';
+  };
+  attributes: {
+    choiceText: Schema.Attribute.String;
+    cost: Schema.Attribute.Decimal;
+    icon: Schema.Attribute.Enumeration<
+      ['toy', 'water', 'mosquito-net', 'medicine', 'children']
+    >;
+    label: Schema.Attribute.String;
+    note: Schema.Attribute.String;
+    noteDetails: Schema.Attribute.RichText;
+    oneChoiceText: Schema.Attribute.String;
+    oneText: Schema.Attribute.String;
+    text: Schema.Attribute.String;
+  };
+}
+
 export interface ElementsFooterColumn extends Struct.ComponentSchema {
   collectionName: 'components_elements_footer_columns';
   info: {
@@ -65,6 +87,27 @@ export interface ElementsImage extends Struct.ComponentSchema {
     alt: Schema.Attribute.Text;
     decorative: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     file: Schema.Attribute.Media<'images'> & Schema.Attribute.Required;
+  };
+}
+
+export interface ElementsIncomeFamily extends Struct.ComponentSchema {
+  collectionName: 'components_elements_income_families';
+  info: {
+    description: "A family shown on the calculator's chart, where its income places it. The income is per adult a month, in international dollars.";
+    displayName: 'IncomeFamily';
+    icon: 'user';
+  };
+  attributes: {
+    description: Schema.Attribute.Text;
+    familyPhoto: Schema.Attribute.Component<'elements.image', false>;
+    hiddenOnPhones: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
+    home: Schema.Attribute.String;
+    homePhoto: Schema.Attribute.Component<'elements.image', false>;
+    household: Schema.Attribute.String;
+    monthlyIncome: Schema.Attribute.Decimal;
+    name: Schema.Attribute.String;
+    sourceUrl: Schema.Attribute.String;
   };
 }
 
@@ -446,6 +489,72 @@ export interface SectionsHeroSection extends Struct.ComponentSchema {
   };
 }
 
+export interface SectionsIncomeCalculatorSection
+  extends Struct.ComponentSchema {
+  collectionName: 'components_sections_income_calculator_sections';
+  info: {
+    description: "Compares a monthly net income in Estonia with the world's. Texts can have <%= placeholders %> and **highlights**.";
+    displayName: 'IncomeCalculatorSection';
+    icon: 'chartPie';
+  };
+  attributes: {
+    adultsText: Schema.Attribute.String;
+    adultText: Schema.Attribute.String;
+    blueskyShareText: Schema.Attribute.String;
+    calculateButtonText: Schema.Attribute.String;
+    causes: Schema.Attribute.Relation<'oneToMany', 'api::cause.cause'>;
+    childrenText: Schema.Attribute.String;
+    childText: Schema.Attribute.String;
+    choiceQuestion: Schema.Attribute.String;
+    comparisonQuestion: Schema.Attribute.String;
+    comparisonTitle: Schema.Attribute.String;
+    costOfLivingText: Schema.Attribute.String;
+    ctaButton: Schema.Attribute.Component<'elements.button', false>;
+    ctaText: Schema.Attribute.String;
+    donateText: Schema.Attribute.String;
+    effectiveExample: Schema.Attribute.Component<
+      'elements.cost-example',
+      false
+    >;
+    effectiveGivingText: Schema.Attribute.RichText;
+    effectiveGivingTitle: Schema.Attribute.String;
+    facebookShareText: Schema.Attribute.String;
+    fairerSubtitle: Schema.Attribute.String;
+    fairerText: Schema.Attribute.String;
+    fairerTitle: Schema.Attribute.String;
+    families: Schema.Attribute.Component<'elements.income-family', true>;
+    familyCreditText: Schema.Attribute.RichText;
+    familyPerDayText: Schema.Attribute.String;
+    familyPerMonthText: Schema.Attribute.String;
+    householdLabel: Schema.Attribute.String;
+    incomeLabel: Schema.Attribute.String;
+    linkedinShareText: Schema.Attribute.String;
+    lowIncomeText: Schema.Attribute.String;
+    lowIncomeTitle: Schema.Attribute.String;
+    medianAmountText: Schema.Attribute.String;
+    medianText: Schema.Attribute.String;
+    methodology: Schema.Attribute.RichText;
+    methodologyLinkText: Schema.Attribute.String;
+    methodologyTitle: Schema.Attribute.String;
+    multipleText: Schema.Attribute.RichText;
+    multipleTitle: Schema.Attribute.String;
+    organizationsSubtitle: Schema.Attribute.String;
+    organizationsTitle: Schema.Attribute.String;
+    popularExample: Schema.Attribute.Component<'elements.cost-example', false>;
+    privacyNote: Schema.Attribute.String;
+    readMoreText: Schema.Attribute.String;
+    richerThanText: Schema.Attribute.String;
+    shareMessage: Schema.Attribute.String;
+    shareText: Schema.Attribute.String;
+    sourcesText: Schema.Attribute.RichText;
+    summaryText: Schema.Attribute.String;
+    twitterShareText: Schema.Attribute.String;
+    versusText: Schema.Attribute.String;
+    youCardTitle: Schema.Attribute.String;
+    youText: Schema.Attribute.String;
+  };
+}
+
 export interface SectionsMapSection extends Struct.ComponentSchema {
   collectionName: 'components_sections_map_sections';
   info: {
@@ -655,8 +764,10 @@ declare module '@strapi/strapi' {
       'elements.bank-icon': ElementsBankIcon;
       'elements.breadcrumb': ElementsBreadcrumb;
       'elements.button': ElementsButton;
+      'elements.cost-example': ElementsCostExample;
       'elements.footer-column': ElementsFooterColumn;
       'elements.image': ElementsImage;
+      'elements.income-family': ElementsIncomeFamily;
       'elements.link': ElementsLink;
       'elements.partner-organisation': ElementsPartnerOrganisation;
       'elements.person': ElementsPerson;
@@ -678,6 +789,7 @@ declare module '@strapi/strapi' {
       'sections.foreign-donation-section': SectionsForeignDonationSection;
       'sections.header-section': SectionsHeaderSection;
       'sections.hero-section': SectionsHeroSection;
+      'sections.income-calculator-section': SectionsIncomeCalculatorSection;
       'sections.map-section': SectionsMapSection;
       'sections.organizations-section': SectionsOrganizationsSection;
       'sections.partner-section': SectionsPartnerSection;
