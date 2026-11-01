@@ -1,0 +1,46 @@
+{
+  "collectionName": "components_sections_email_preferences_sections",
+  "info": {
+    "displayName": "EmailPreferencesSection",
+    "description": "Which emails a donor gets, for the page the link in each email leads to"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "text": {
+      "type": "richtext"
+    },
+    "newsletterLabel": {
+      "type": "string"
+    },
+    "newsletterDescription": {
+      "type": "text"
+    },
+    "transferEmailsLabel": {
+      "type": "string"
+    },
+    "transferEmailsDescription": {
+      "type": "text"
+    },
+    "yearlyEmailsLabel": {
+      "type": "string"
+    },
+    "yearlyEmailsDescription": {
+      "type": "text"
+    },
+    "saveText": {
+      "type": "string"
+    },
+    "savedText": {
+      "type": "string"
+    },
+    "invalidLinkTitle": {
+      "type": "string"
+    },
+    "invalidLinkText": {
+      "type": "richtext"
+    }
+  }
+}

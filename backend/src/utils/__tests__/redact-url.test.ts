@@ -27,6 +27,12 @@ describe("redactUrl", () => {
     );
   });
 
+  it("blanks a donor's token for choosing their emails", () => {
+    expect(redactUrl("/api/email-preferences?token=MTIz.c2ln&kind=x")).toBe(
+      "/api/email-preferences?token=[redacted]&kind=x",
+    );
+  });
+
   it("leaves a parameter that only ends in the same name alone", () => {
     expect(redactUrl("/api/x?reorder-token=keep")).toBe(
       "/api/x?reorder-token=keep",

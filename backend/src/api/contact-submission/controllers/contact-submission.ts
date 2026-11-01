@@ -1,5 +1,7 @@
 import { factories } from "@strapi/strapi";
 import type { Context } from "koa";
+import { unsubscribeHeaders } from "../../../emails";
+import { DEFAULT_LOCALE } from "../../../utils/locale";
 import {
   FixedWindowLimiter,
   isProxyAddress,
@@ -84,6 +86,8 @@ export default factories.createCoreController(
           to: recipientEmail,
           replyTo: values.email,
           ...email,
+          // or Brevo's, whose one click stops our emails to the team
+          headers: unsubscribeHeaders(strapi, DEFAULT_LOCALE, null),
         }),
       );
 

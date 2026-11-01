@@ -21,7 +21,9 @@ vi.mock("../../../../../utils/montonio", () => ({
 
 const { default: controllerFactory } = await import("../donation");
 
+// Both of the plugin's services the handler uses, the donation's and the donor's
 const service = {
+  applyNewsletterChoice: vi.fn(),
   createDonation: vi.fn(async () => ({ redirectURL: "https://pay.example" })),
   createForeignDonation: vi.fn(async () => ({
     redirectURL: "https://pay.example",
@@ -63,7 +65,12 @@ describe("payment confirmation", () => {
       externalDonation: false,
       dedicationEmail: null,
     });
-    repository.finalize.mockResolvedValue({ id: 7, finalized: true });
+    repository.finalize.mockResolvedValue({
+      id: 7,
+      donorId: 3,
+      finalized: true,
+      newsletter: true,
+    });
     repository.recordPaymentStatus.mockResolvedValue(undefined);
     for (const send of Object.values(service)) {
       send.mockResolvedValue(undefined);
@@ -123,6 +130,38 @@ describe("payment confirmation", () => {
     expect(result).toEqual({ data: null, status: 204 });
     expect(service.sendConfirmationEmail).not.toHaveBeenCalled();
     expect(service.sendDedicationEmail).not.toHaveBeenCalled();
+    expect(service.applyNewsletterChoice).not.toHaveBeenCalled();
+  });
+
+  it("applies the newsletter choice made with the donation, now that it's paid", async () => {
+    await controller.confirm(notification());
+
+    expect(service.applyNewsletterChoice).toHaveBeenCalledWith(3, true);
+  });
+
+  it("leaves a no alone when it's paid: it counted when the donation was made", async () => {
+    repository.finalize.mockResolvedValue({
+      id: 7,
+      donorId: 3,
+      finalized: true,
+      newsletter: false,
+    });
+
+    await controller.confirm(notification());
+
+    expect(service.applyNewsletterChoice).not.toHaveBeenCalled();
+  });
+
+  it("still sends the receipt when the newsletter choice can't be applied", async () => {
+    service.applyNewsletterChoice.mockRejectedValue(new Error("DB is down"));
+
+    const result = await controller.confirm(notification());
+
+    expect(result).toEqual({ data: null, status: 204 });
+    expect(service.sendConfirmationEmail).toHaveBeenCalledWith(7);
+    expect(log.error).toHaveBeenCalledWith(
+      expect.stringContaining("DB is down"),
+    );
   });
 
   it("still sends the dedication email, and answers as done, when the receipt fails", async () => {

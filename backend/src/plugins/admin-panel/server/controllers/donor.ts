@@ -5,7 +5,10 @@ import {
   type RecurringStatus,
 } from "../../../../db/repositories/donors.repository";
 import { auditLog } from "../utils/audit-log";
-import { oneOf } from "../../../../utils/narrow";
+import { idOf, isRecord, oneOf } from "../../../../utils/narrow";
+import { toLocale } from "../../../../utils/locale";
+import { emailPreferencesUrl } from "../../../../emails";
+import { preferenceChanges } from "../../../../utils/email-preferences";
 import { EXPORT_ROW_LIMIT, isExport } from "../utils/export";
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
@@ -30,7 +33,7 @@ function parseRecurringStatus(v: unknown): RecurringStatus | undefined {
   return oneOf(v, RECURRING_STATUSES);
 }
 
-export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
+export default ({ strapi }: { strapi: Core.Strapi }) => ({
   async list(ctx: Context) {
     const q = ctx.request.query;
     const exporting = isExport(q);
@@ -81,8 +84,8 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
   },
 
   async findOne(ctx: Context) {
-    const id = Number(ctx.params.id);
-    if (!id || isNaN(id)) return ctx.badRequest("Invalid donor ID");
+    const id = idOf(ctx.params.id);
+    if (!id) return ctx.badRequest("Invalid donor ID");
 
     const donor = await donorsRepository.findByIdWithDonations(id);
     if (!donor) return ctx.notFound("Donor not found");
@@ -102,6 +105,20 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
     return ctx.send({
       data: {
         ...donor,
+        // Which emails the address gets, from all its donor rows, as sending
+        // decides it, rather than this row's own settings.
+        ...(await donorsRepository.findEmailPreferences(id)),
+        // The page the links in the donor's emails lead to, in the language
+        // they last gave in: a standing order's payment is in the order's.
+        emailPreferencesUrl: emailPreferencesUrl(
+          strapi,
+          donor.id,
+          toLocale(
+            donor.recurringDonations.find(
+              (order) => order.id === finalized[0]?.recurringDonationId,
+            )?.locale ?? finalized[0]?.locale,
+          ),
+        ),
         stats: {
           totalDonated,
           donationCount,
@@ -110,5 +127,23 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
         },
       },
     });
+  },
+
+  async updateEmailPreferences(ctx: Context) {
+    const id = idOf(ctx.params.id);
+    if (!id) return ctx.badRequest("Invalid donor ID");
+
+    const parsed = preferenceChanges(
+      isRecord(ctx.request.body) ? ctx.request.body : {},
+    );
+    if ("error" in parsed) return ctx.badRequest(parsed.error);
+
+    await donorsRepository.updateEmailPreferences(id, parsed.changes);
+    const preferences = await donorsRepository.findEmailPreferences(id);
+    if (!preferences) return ctx.notFound("Donor not found");
+
+    await auditLog(ctx, "donors.updateEmailPreferences", String(id));
+
+    return ctx.send({ data: preferences });
   },
 });

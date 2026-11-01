@@ -1,4 +1,4 @@
-import { eq, and, desc, asc, sql, count, gte } from "drizzle-orm";
+import { eq, and, inArray, desc, asc, sql, count, gte } from "drizzle-orm";
 import { db, type Database } from "../client";
 import {
   recurringDonations,
@@ -8,9 +8,9 @@ import {
   type NewRecurringDonation,
 } from "../schema";
 import {
-  RECURRING_ACTIVITY_WINDOW_DAYS,
   recurringDonationStatus,
   type RecurringDonationStatus,
+  recurringActivityCutoff,
 } from "./recurring-activity";
 
 export class RecurringDonationsRepository {
@@ -26,6 +26,41 @@ export class RecurringDonationsRepository {
         donor: true,
       },
     });
+  }
+
+  /**
+   * Take the newsletter choice a standing order is keeping until its first
+   * payment, to apply it: it's cleared, so it counts once. Undefined when
+   * none is waiting. In a transaction, so two statements applied at once
+   * take it once.
+   */
+  async takeNewsletterChoice(
+    id: number,
+  ): Promise<{ donorId: number; newsletter: boolean } | undefined> {
+    const [waiting] = await this.database
+      .select({
+        donorId: recurringDonations.donorId,
+        newsletter: recurringDonations.newsletter,
+      })
+      .from(recurringDonations)
+      .where(eq(recurringDonations.id, id))
+      .for("update");
+    if (!waiting || waiting.newsletter === null) return undefined;
+    await this.database
+      .update(recurringDonations)
+      .set({ newsletter: null })
+      .where(eq(recurringDonations.id, id));
+    return { ...waiting, newsletter: waiting.newsletter };
+  }
+
+  /** The language each of these standing orders was set up in. */
+  async localesOf(ids: number[]): Promise<Map<number, string>> {
+    if (ids.length === 0) return new Map();
+    const rows = await this.database
+      .select({ id: recurringDonations.id, locale: recurringDonations.locale })
+      .from(recurringDonations)
+      .where(inArray(recurringDonations.id, [...new Set(ids)]));
+    return new Map(rows.map((row) => [row.id, row.locale]));
   }
 
   /**
@@ -85,10 +120,7 @@ export class RecurringDonationsRepository {
 
     // Subquery: recurring donations with a finalized linked donation within
     // the current activity window — the "active" half of the status column.
-    const recentCutoff = new Date();
-    recentCutoff.setDate(
-      recentCutoff.getDate() - RECURRING_ACTIVITY_WINDOW_DAYS,
-    );
+    const recentCutoff = recurringActivityCutoff();
     const recentSq = this.database
       .select({ recurringDonationId: donations.recurringDonationId })
       .from(donations)
@@ -223,6 +255,7 @@ export class RecurringDonationsRepository {
         comment: data.comment || null,
         bank: data.bank || null,
         locale: data.locale,
+        newsletter: data.newsletter ?? null,
         datetime:
           typeof data.datetime === "string"
             ? new Date(data.datetime)
@@ -277,10 +310,7 @@ export class RecurringDonationsRepository {
       recurringActive: boolean;
     }>
   > {
-    const recentCutoff = new Date();
-    recentCutoff.setDate(
-      recentCutoff.getDate() - RECURRING_ACTIVITY_WINDOW_DAYS,
-    );
+    const recentCutoff = recurringActivityCutoff();
     const result = await this.database.execute<{
       donorId: number;
       donorName: string;

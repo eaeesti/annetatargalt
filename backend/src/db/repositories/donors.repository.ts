@@ -1,4 +1,10 @@
+import {
+  EMAIL_PREFERENCES,
+  type EmailPreference,
+  type EmailPreferences,
+} from "../../utils/email-preferences";
 import { estonianDate, estonianMidnight } from "../../utils/estonian-time";
+import { addressOf, addressWants } from "../../utils/address";
 import {
   eq,
   or,
@@ -8,15 +14,32 @@ import {
   sql,
   ilike,
   gte,
+  inArray,
   lt,
   isNull,
   isNotNull,
+  type SQL,
 } from "drizzle-orm";
 import { db, type Database } from "../client";
-import { donors, donations, type Donor, type NewDonor } from "../schema";
 import {
-  RECURRING_ACTIVITY_WINDOW_DAYS,
+  donors,
+  donations,
+  recurringDonations,
+  type Donor,
+  type NewDonor,
+} from "../schema";
+
+/** Which emails an address gets, from all the donor rows that have it. */
+export interface AddressEmailPreferences {
+  newsletter: boolean;
+  transferEmails: boolean;
+  yearlyEmails: boolean;
+  newsletterSource: string;
+  emailPreferencesUpdatedAt: Date | null;
+}
+import {
   recurringDonationStatus,
+  recurringActivityCutoff,
 } from "./recurring-activity";
 
 export type RecurringStatus = "new" | "retained" | "churned" | "churnedAllTime";
@@ -97,9 +120,17 @@ export class DonorsRepository {
   }
 
   /**
-   * Create a new donor
+   * A new donor row. One with an address that has rows already gets the
+   * address's email settings, as sending decides them: the rows that gave
+   * decide once one has, so a new row with every email on would turn back
+   * on what was turned off before the address first gave.
    */
   async create(data: Partial<NewDonor> & { email: string }): Promise<Donor> {
+    const address = data.email.trim()
+      ? await this.addressPreferences(
+          sql`${addressOf(donors.email)} = ${addressOf(sql`${data.email}`)}`,
+        )
+      : undefined;
     const [donor] = await this.database
       .insert(donors)
       .values({
@@ -107,6 +138,7 @@ export class DonorsRepository {
         firstName: data.firstName || null,
         lastName: data.lastName || null,
         email: data.email,
+        ...address,
       })
       .returning();
     if (!donor) throw new Error("Failed to insert donor");
@@ -129,6 +161,174 @@ export class DonorsRepository {
       .where(eq(donors.id, id))
       .returning();
     return donor;
+  }
+
+  /**
+   * Change which of the emails besides confirmations a donor gets. Emails go
+   * to addresses, not donor rows, and one person can have more than one row
+   * (a gift without an ID code, then one with it), so the change applies to
+   * every row with the donor's address, in any letter case. Rows that
+   * already have it so are left as they are, so saving the same choices
+   * again doesn't count as the donor changing their emails.
+   *
+   * A newsletter setting given here stands over a "yes" from the donation
+   * form still waiting to count. The settings page gives only what was
+   * changed on it, so a change to other emails isn't one to the newsletter.
+   * Turning the newsletter off here is the donor's own choice even where
+   * it's off already, as from a donation, as by the unsubscribe button in
+   * a newsletter: only such a choice keeps a later donation's "yes" from
+   * turning it back on.
+   */
+  async updateEmailPreferences(
+    id: number,
+    preferences: EmailPreferences,
+  ): Promise<Donor | undefined> {
+    if (typeof preferences.newsletter === "boolean") {
+      await this.cancelWaitingNewsletterChoices(id);
+    }
+    const differs = EMAIL_PREFERENCES.flatMap((preference) => {
+      const value = preferences[preference];
+      return typeof value === "boolean"
+        ? [sql`${donors[preference]} IS DISTINCT FROM ${value}`]
+        : [];
+    });
+    if (preferences.newsletter === false) {
+      differs.push(sql`${donors.newsletterSource} IS DISTINCT FROM 'settings'`);
+    }
+    if (differs.length > 0) {
+      const now = new Date();
+      await this.database
+        .update(donors)
+        .set({
+          ...preferences,
+          ...(typeof preferences.newsletter === "boolean" && {
+            newsletterSource: "settings",
+          }),
+          emailPreferencesUpdatedAt: now,
+          updatedAt: now,
+        })
+        .where(and(or(eq(donors.id, id), sameAddressAs(id)), or(...differs)));
+    }
+    return this.findById(id);
+  }
+
+  /**
+   * Which emails a donor's address gets, as sending decides it: an email
+   * goes to an address only if every row of it that has given wants that
+   * kind, so one row with it off is enough. Rows that never gave count only
+   * when none has. Also who set the newsletter as it is, and when anything
+   * last changed. Undefined when there's no such donor.
+   */
+  async findEmailPreferences(
+    id: number,
+  ): Promise<AddressEmailPreferences | undefined> {
+    return this.addressPreferences(or(eq(donors.id, id), sameAddressAs(id)));
+  }
+
+  /** findEmailPreferences, for the donor rows `rows` picks. */
+  private async addressPreferences(
+    rows: SQL | undefined,
+  ): Promise<AddressEmailPreferences | undefined> {
+    const gave = sql`EXISTS (SELECT 1 FROM ${donations} dn
+      WHERE dn.donor_id = ${donors.id} AND dn.finalized)`;
+    const wants = (column: (typeof donors)[EmailPreference]) =>
+      addressWants(column, gave);
+    // Who set the newsletter as the address has it: if it's off, a row
+    // that's off, since that's what turns it off; the latest set of those.
+    const newsletterSource = (rows: SQL) =>
+      sql`(array_agg(${donors.newsletterSource} ORDER BY ${donors.newsletter},
+        ${donors.emailPreferencesUpdatedAt} DESC NULLS LAST, ${donors.id} DESC)
+        FILTER (WHERE ${rows}))[1]`;
+    const [row] = await this.database
+      .select({
+        rows: sql<number>`cast(count(*) as int)`,
+        newsletter: wants(donors.newsletter),
+        transferEmails: wants(donors.transferEmails),
+        yearlyEmails: wants(donors.yearlyEmails),
+        newsletterSource: sql<string>`coalesce(${newsletterSource(gave)}, ${newsletterSource(sql`true`)})`,
+        emailPreferencesUpdatedAt:
+          sql<Date | null>`max(${donors.emailPreferencesUpdatedAt})`.mapWith(
+            donors.emailPreferencesUpdatedAt,
+          ),
+      })
+      .from(donors)
+      .where(rows);
+    if (!row || row.rows === 0) return undefined;
+    const { rows: _, ...preferences } = row;
+    return preferences;
+  }
+
+  /**
+   * Cancel the "yes" to the newsletter still waiting at a donor's address for
+   * money to arrive: a standing order's, for its first payment, and an
+   * unpaid donation's. A choice made since stands over them.
+   */
+  private async cancelWaitingNewsletterChoices(id: number): Promise<void> {
+    const address = this.database
+      .select({ id: donors.id })
+      .from(donors)
+      .where(or(eq(donors.id, id), sameAddressAs(id)));
+    await this.database
+      .update(recurringDonations)
+      .set({ newsletter: null })
+      .where(
+        and(
+          inArray(recurringDonations.donorId, address),
+          eq(recurringDonations.newsletter, true),
+        ),
+      );
+    await this.database
+      .update(donations)
+      .set({ newsletter: null })
+      .where(
+        and(
+          inArray(donations.donorId, address),
+          eq(donations.finalized, false),
+          eq(donations.newsletter, true),
+        ),
+      );
+  }
+
+  /**
+   * Set whether a donor's address gets the newsletter, as chosen on the
+   * donation form. Rows that already have it so are left as they are, so a
+   * donation that changes nothing doesn't count as the donor changing their
+   * emails. How many rows changed.
+   *
+   * A "no" counts when it's made: it only ever stops emails, so it needs no
+   * payment, and it cancels any "yes" still waiting. A "yes" counts once
+   * money arrives, unless the newsletter was set since: every way of setting
+   * it cancels the "yes" waiting. And anyone can fill in the form with
+   * someone else's address, so a "yes" never turns the newsletter back on
+   * for an address where it was turned off in the settings: only the
+   * settings can.
+   */
+  async setNewsletter(id: number, newsletter: boolean): Promise<number> {
+    if (!newsletter) await this.cancelWaitingNewsletterChoices(id);
+    const now = new Date();
+    const rows = await this.database
+      .update(donors)
+      .set({
+        newsletter,
+        newsletterSource: "donation",
+        emailPreferencesUpdatedAt: now,
+        updatedAt: now,
+      })
+      .where(
+        and(
+          or(eq(donors.id, id), sameAddressAs(id)),
+          sql`${donors.newsletter} IS DISTINCT FROM ${newsletter}`,
+          // A row turned off in the settings stays off, and so does the
+          // address, since every row of it has to want the newsletter. In
+          // the update itself, so an unsubscribe landing at the same moment
+          // is seen.
+          newsletter
+            ? sql`NOT (${donors.newsletter} = false AND ${donors.newsletterSource} = 'settings')`
+            : undefined,
+        ),
+      )
+      .returning({ id: donors.id });
+    return rows.length;
   }
 
   /**
@@ -165,10 +365,7 @@ export class DonorsRepository {
       .groupBy(donations.donorId)
       .as("ds");
 
-    const recurringCutoff = new Date();
-    recurringCutoff.setDate(
-      recurringCutoff.getDate() - RECURRING_ACTIVITY_WINDOW_DAYS,
-    );
+    const recurringCutoff = recurringActivityCutoff();
     const recurringSq = this.database
       .select({ donorId: donations.donorId })
       .from(donations)
@@ -351,10 +548,7 @@ export class DonorsRepository {
     });
     if (!donor) return undefined;
 
-    const recurringCutoff = new Date();
-    recurringCutoff.setDate(
-      recurringCutoff.getDate() - RECURRING_ACTIVITY_WINDOW_DAYS,
-    );
+    const recurringCutoff = recurringActivityCutoff();
     const recurringDonor = donor.donations.some(
       (d) =>
         d.finalized &&
@@ -389,6 +583,16 @@ export class DonorsRepository {
     }
     return this.create(data);
   }
+}
+
+/**
+ * The donors with the same email address as donor `id`, in any letter case
+ * and ignoring spaces around it; none when it has no address.
+ */
+function sameAddressAs(id: number) {
+  return sql`${addressOf(donors.email)} = (
+    SELECT nullif(${addressOf(sql.raw("d.email"))}, '') FROM donors d WHERE d.id = ${id}
+  )`;
 }
 
 export const donorsRepository = new DonorsRepository();

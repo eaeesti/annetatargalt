@@ -8,6 +8,8 @@
 import { db } from "../client";
 import {
   donors,
+  emailCampaigns,
+  emailSends,
   donations,
   organizationDonations,
   recurringDonations,
@@ -39,6 +41,8 @@ import { sql } from "drizzle-orm";
  */
 export async function cleanDatabase(): Promise<void> {
   // Delete in correct order to respect foreign key constraints
+  await db.delete(emailSends); // FK → email_campaigns, donors
+  await db.delete(emailCampaigns);
   await db.delete(organizationDonations);
   await db.delete(donations); // FK → bank_transactions, donors, ...
   await db.delete(bankTransactionFiles); // FK → bank_transactions
@@ -119,6 +123,8 @@ export async function createTestDonation(
       donationTransferId: data.donationTransferId ?? null,
       transactionId: data.transactionId ?? null,
       processorFeeCents: data.processorFeeCents ?? null,
+      locale: data.locale ?? "et",
+      newsletter: data.newsletter ?? null,
     })
     .returning();
   if (!donation) throw new Error("Failed to insert test donation");
@@ -159,7 +165,9 @@ export async function createTestRecurringDonation(
       companyCode: data.companyCode ?? null,
       comment: data.comment ?? null,
       bank: data.bank ?? null,
+      locale: data.locale ?? "et",
       datetime: data.datetime ?? new Date(),
+      newsletter: data.newsletter ?? null,
     })
     .returning();
   if (!recurringDonation)

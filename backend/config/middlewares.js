@@ -3,6 +3,8 @@ module.exports = ({ env }) => [
   // order tokens included. See src/middlewares/request-logger.ts.
   "global::request-logger",
   "strapi::errors",
+  // Strapi's own upload endpoint stays shut, even to a full-access token.
+  "global::no-content-upload",
   {
     name: "strapi::security",
     config: {

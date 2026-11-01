@@ -10,6 +10,13 @@
  */
 export const RECURRING_ACTIVITY_WINDOW_DAYS = 60;
 
+/** When the activity window starts: a payment since then counts. */
+export function recurringActivityCutoff(now: Date = new Date()): Date {
+  const cutoff = new Date(now);
+  cutoff.setDate(cutoff.getDate() - RECURRING_ACTIVITY_WINDOW_DAYS);
+  return cutoff;
+}
+
 /**
  * Never started: no finalized donation has ever been linked to this
  * recurring donation (the mandate exists, but the first payment never went
@@ -27,8 +34,7 @@ export function recurringDonationStatus(
   linkedDonations: { finalized: boolean; datetime: Date }[],
   now: Date = new Date(),
 ): RecurringDonationStatus {
-  const cutoff = new Date(now);
-  cutoff.setDate(cutoff.getDate() - RECURRING_ACTIVITY_WINDOW_DAYS);
+  const cutoff = recurringActivityCutoff(now);
   const finalized = linkedDonations.filter((d) => d.finalized);
   if (finalized.some((d) => new Date(d.datetime) >= cutoff)) return "active";
   return finalized.length > 0 ? "stopped" : "neverStarted";

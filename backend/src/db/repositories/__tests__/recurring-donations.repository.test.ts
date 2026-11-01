@@ -21,6 +21,17 @@ describe("RecurringDonationsRepository", () => {
     await cleanDatabase();
   });
 
+  it("keeps a yes to the newsletter, waiting for the first payment", async () => {
+    const donor = await createTestDonor();
+    const order = await recurringDonationsRepository.create({
+      donorId: donor.id,
+      amount: 2000,
+      datetime: new Date(),
+      newsletter: true,
+    });
+    expect(order.newsletter).toBe(true);
+  });
+
   // ── findPaginated: status ────────────────────────────────────────────────────
 
   describe("findPaginated status", () => {

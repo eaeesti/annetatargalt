@@ -889,11 +889,23 @@ export interface ApiEmailConfigEmailConfig extends Struct.SingleTypeSchema {
           localized: true;
         };
       }>;
+    footerText: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::email-config.email-config'
     >;
+    preferencesLinkText: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     publishedAt: Schema.Attribute.DateTime;
     recurringConfirmationHtml: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
@@ -1265,6 +1277,7 @@ export interface ApiPagePage extends Struct.CollectionTypeSchema {
         'sections.foreign-donation-section',
         'sections.map-section',
         'sections.income-calculator-section',
+        'sections.email-preferences-section',
       ]
     > &
       Schema.Attribute.SetPluginOptions<{

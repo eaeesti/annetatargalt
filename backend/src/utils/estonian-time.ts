@@ -62,7 +62,8 @@ export function estonianMidnight(year: number, month: number, day = 1): Date {
 
 /**
  * The instants an Estonian day, written "2026-06-30", starts and ends at:
- * [start, end). Null when it isn't a date written so.
+ * [start, end). Null when it isn't a date written so, or isn't one that
+ * exists, like 31 February.
  */
 export function estonianDay(isoDate: string): [Date, Date] | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate);
@@ -72,6 +73,8 @@ export function estonianDay(isoDate: string): [Date, Date] | null {
     Number(match[2]) - 1,
     Number(match[3]),
   ];
+  const date = new Date(Date.UTC(year, month, day));
+  if (date.getUTCMonth() !== month || date.getUTCDate() !== day) return null;
   return [
     estonianMidnight(year, month, day),
     estonianMidnight(year, month, day + 1),

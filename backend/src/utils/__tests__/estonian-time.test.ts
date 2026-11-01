@@ -69,6 +69,13 @@ describe("estonianDay", () => {
     expect(estonianDay("30.06.2026")).toBeNull();
     expect(estonianDay("2026-06-30T00:00:00Z")).toBeNull();
   });
+
+  it("is null for a day that doesn't exist", () => {
+    expect(estonianDay("2026-02-31")).toBeNull();
+    expect(estonianDay("2026-13-01")).toBeNull();
+    expect(estonianDay("2026-06-00")).toBeNull();
+    expect(estonianDay("2028-02-29")).not.toBeNull();
+  });
 });
 
 describe("isoDate", () => {

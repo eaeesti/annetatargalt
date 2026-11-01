@@ -24,6 +24,15 @@ module.exports = ({ env }) => ({
           user: env("SMTP_USERNAME"),
           pass: env("SMTP_PASSWORD"),
         },
+        // Well under the two minutes after which another backend process
+        // takes over sending an email from the admin panel
+        // (HEARTBEAT_STALE_MS): a copy still on its way by then could be
+        // neither put back nor failed. Nodemailer's own wait up to 2 minutes
+        // to connect and 10 for a silent server.
+        dnsTimeout: 10 * 1000,
+        connectionTimeout: 15 * 1000,
+        greetingTimeout: 15 * 1000,
+        socketTimeout: 30 * 1000,
       },
       settings: {
         defaultFrom: env("BREVO_DEFAULT_SENDER_EMAIL"),

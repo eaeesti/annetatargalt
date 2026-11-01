@@ -252,9 +252,24 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     // emails; the others are answered as done, so Montonio stops retrying.
     if (!finalized) return ctx.send(null, 204);
 
-    // The donation is paid and recorded whatever happens to its emails, so a
-    // failure is logged rather than answered with an error: Montonio would
-    // only retry, and the retry would find the donation already finalized.
+    // The donation is paid and recorded whatever happens to its emails or
+    // the donor's newsletter choice, so a failure is logged rather than
+    // answered with an error: Montonio would only retry, and the retry would
+    // find the donation already finalized.
+    // A "no" counted when the donation was made; a "yes" counts now.
+    if (finalized.donorId && finalized.newsletter === true) {
+      try {
+        await strapi
+          .plugin("donations")
+          .service("donor")
+          .applyNewsletterChoice(finalized.donorId, true);
+      } catch (error) {
+        strapi.log.error(
+          `Donation ${id}'s newsletter choice wasn't applied: ${String(error)}`,
+        );
+      }
+    }
+
     const service = strapi.plugin("donations").service("donation");
     try {
       if (donation.externalDonation) {
