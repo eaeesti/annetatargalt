@@ -7,6 +7,7 @@ import {
   Landmark,
   LayoutDashboard,
   LogOut,
+  Mail,
   Repeat,
   Send,
   Users,
@@ -33,6 +34,7 @@ const navLinks = [
   { href: "/recurring-donations", label: "Recurring", icon: Repeat },
   { href: "/transfers", label: "Transfers", icon: Send },
   { href: "/organizations", label: "Organizations", icon: Building2 },
+  { href: "/emails", label: "Emails", icon: Mail },
   { href: "/statement", label: "Statement import", icon: FileUp },
   { href: "/transactions", label: "Transactions", icon: Landmark },
 ];

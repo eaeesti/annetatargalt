@@ -1,32 +1,11 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { cookies } from "next/headers";
-import { COOKIE_NAME } from "../../../../lib/auth";
-
-const STRAPI_URL = process.env.STRAPI_URL ?? "http://localhost:1337";
+import { relay, strapiAdmin } from "../../../../lib/api";
 
 export async function POST(request: NextRequest) {
-  const token = (await cookies()).get(COOKIE_NAME)?.value;
-  if (!token) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
-
-  const body = await request.text();
-
-  const res = await fetch(`${STRAPI_URL}/api/admin-panel/statement/apply`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body,
-  });
-
-  const text = await res.text();
-  return new NextResponse(text, {
-    status: res.status,
-    headers: {
-      "Content-Type": res.headers.get("Content-Type") ?? "application/json",
-    },
-  });
+  return relay(
+    await strapiAdmin("/api/admin-panel/statement/apply", {
+      method: "POST",
+      body: await request.text(),
+    }),
+  );
 }

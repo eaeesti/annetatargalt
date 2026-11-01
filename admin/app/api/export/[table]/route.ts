@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { cookies } from "next/headers";
-import { COOKIE_NAME } from "../../../../lib/auth";
 import { EXPORTS } from "../../../../lib/exports";
 import { currentDay } from "../../../../lib/dates";
 
@@ -10,9 +8,6 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ table: string }> },
 ) {
-  if (!(await cookies()).get(COOKIE_NAME)?.value) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
   const { table } = await params;
   const exportTable = EXPORTS.get(table);
   if (!exportTable) {

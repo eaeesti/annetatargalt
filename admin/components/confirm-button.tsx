@@ -18,13 +18,15 @@ import { CONNECTION_FAILED } from "../lib/failure-message";
  * A button for removing something, which asks first in a dialog: `title` is
  * the question, `description` what else goes with it, and `confirmLabel` the
  * button that does it. `action` gives back an error message, or null when it
- * worked; on an error the dialog stays open and says so.
+ * worked; on an error the dialog stays open and says so. `disabled` keeps
+ * that button from being pressed, as while what it does is checked again.
  */
 export function ConfirmButton({
   action,
   title,
   description,
   confirmLabel,
+  disabled = false,
   trigger,
   children,
 }: {
@@ -32,6 +34,7 @@ export function ConfirmButton({
   title: string;
   description?: string;
   confirmLabel: string;
+  disabled?: boolean;
   /** The button that opens the dialog, e.g. `<button className="…" />`. */
   trigger: React.ReactElement;
   children: React.ReactNode;
@@ -65,7 +68,7 @@ export function ConfirmButton({
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <Button
             variant="destructive"
-            disabled={pending}
+            disabled={pending || disabled}
             onClick={() =>
               startTransition(async () => {
                 try {
