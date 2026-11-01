@@ -3,7 +3,7 @@ import type { Context } from "koa";
 import { createBankTransactionService } from "../services/bank-transaction";
 import { auditLog } from "../utils/audit-log";
 import { currentUser } from "../utils/current-user";
-import { isRecord, oneOf } from "../../../../utils/narrow";
+import { dayOf, isRecord, oneOf } from "../../../../utils/narrow";
 import type { BalancedFilter } from "../../../../db/repositories/bank-transactions.repository";
 import { EXPORT_ROW_LIMIT, isExport } from "../utils/export";
 
@@ -16,17 +16,6 @@ const VALID_SORT_COLS = new Set([
   "counterpartyName",
   "importedAt",
 ]);
-
-/** Strict `YYYY-MM-DD` — anything else is dropped (never forwarded to Postgres). */
-const isoDate = (v: unknown): string | undefined => {
-  if (typeof v !== "string" && typeof v !== "number") return undefined;
-  const s = String(v).trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return undefined;
-  const d = new Date(`${s}T00:00:00Z`);
-  return Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== s
-    ? undefined
-    : s;
-};
 
 /** A euro amount from the query string, in cents; anything else is ignored. */
 function eurosToCents(value: unknown): number | undefined {
@@ -70,8 +59,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
         sortBy,
         sortDir,
         category: q.category ? String(q.category) : undefined,
-        dateFrom: isoDate(q.dateFrom),
-        dateTo: isoDate(q.dateTo),
+        dateFrom: dayOf(q.dateFrom),
+        dateTo: dayOf(q.dateTo),
         search: q.search ? String(q.search).slice(0, 128) : undefined,
         amountMin: eurosToCents(q.amountMin),
         amountMax: eurosToCents(q.amountMax),
@@ -98,8 +87,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
     async summary(ctx: Context) {
       const q = ctx.request.query;
       const result = await service.summary({
-        dateFrom: isoDate(q.dateFrom) ?? null,
-        dateTo: isoDate(q.dateTo) ?? null,
+        dateFrom: dayOf(q.dateFrom) ?? null,
+        dateTo: dayOf(q.dateTo) ?? null,
       });
       await auditLog(ctx, "bankTransactions.summary");
       return ctx.send(result);

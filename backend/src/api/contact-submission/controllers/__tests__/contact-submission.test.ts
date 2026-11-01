@@ -56,6 +56,12 @@ describe("contact submission email", () => {
       subject: 'Message from Mallory <a href="https://evil.example">',
       text: 'Mallory <a href="https://evil.example"> (mallory@example.org) wrote:\n\nClick <b>here</b> & win',
       html: "<p>Mallory &lt;a href=&quot;https://evil.example&quot;&gt; (mallory@example.org) wrote:</p>\n\n<pre>Click &lt;b&gt;here&lt;/b&gt; &amp; win</pre>",
+      // Brevo would add its own, which blocks the team's address
+      headers: {
+        "List-Unsubscribe": expect.stringMatching(
+          /\/api\/email-settings\?locale=et>$/,
+        ),
+      },
     });
   });
 });

@@ -7,6 +7,7 @@ import dashboard from "./dashboard";
 import statement from "./statement";
 import bankTransaction from "./bankTransaction";
 import bankTransactionFile from "./bankTransactionFile";
+import emailCampaign from "./emailCampaign";
 
 export default {
   "statement-router": {
@@ -44,5 +45,9 @@ export default {
   "dashboard-router": {
     type: "content-api",
     routes: dashboard.routes,
+  },
+  "email-campaign-router": {
+    type: "content-api",
+    routes: emailCampaign.routes,
   },
 };

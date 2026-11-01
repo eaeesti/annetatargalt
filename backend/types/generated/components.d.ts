@@ -393,6 +393,7 @@ export interface SectionsDonationSection extends Struct.ComponentSchema {
     lastNameText: Schema.Attribute.String;
     letExpertsChooseText: Schema.Attribute.String;
     lockText: Schema.Attribute.String;
+    newsletterText: Schema.Attribute.RichText;
     nextButtonText: Schema.Attribute.String;
     oneTimeDonationSummary: Schema.Attribute.RichText;
     otherAmountOptionText: Schema.Attribute.String;
@@ -414,6 +415,29 @@ export interface SectionsDonationSection extends Struct.ComponentSchema {
     tipText: Schema.Attribute.RichText;
     tipTitle: Schema.Attribute.String;
     title: Schema.Attribute.String;
+  };
+}
+
+export interface SectionsEmailPreferencesSection
+  extends Struct.ComponentSchema {
+  collectionName: 'components_sections_email_preferences_sections';
+  info: {
+    description: 'Which emails a donor gets, for the page the link in each email leads to';
+    displayName: 'EmailPreferencesSection';
+  };
+  attributes: {
+    invalidLinkText: Schema.Attribute.RichText;
+    invalidLinkTitle: Schema.Attribute.String;
+    newsletterDescription: Schema.Attribute.Text;
+    newsletterLabel: Schema.Attribute.String;
+    savedText: Schema.Attribute.String;
+    saveText: Schema.Attribute.String;
+    text: Schema.Attribute.RichText;
+    title: Schema.Attribute.String;
+    transferEmailsDescription: Schema.Attribute.Text;
+    transferEmailsLabel: Schema.Attribute.String;
+    yearlyEmailsDescription: Schema.Attribute.Text;
+    yearlyEmailsLabel: Schema.Attribute.String;
   };
 }
 
@@ -788,6 +812,7 @@ declare module '@strapi/strapi' {
       'sections.contact-section': SectionsContactSection;
       'sections.cta-section': SectionsCtaSection;
       'sections.donation-section': SectionsDonationSection;
+      'sections.email-preferences-section': SectionsEmailPreferencesSection;
       'sections.faq-section': SectionsFaqSection;
       'sections.foreign-donation-section': SectionsForeignDonationSection;
       'sections.header-section': SectionsHeaderSection;

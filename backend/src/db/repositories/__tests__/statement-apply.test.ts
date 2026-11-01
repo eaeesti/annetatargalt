@@ -8,7 +8,8 @@ import { describe, it, expect, beforeEach } from "vitest";
 import type { Core } from "@strapi/strapi";
 import { eq } from "drizzle-orm";
 import { db } from "../../client";
-import { donations } from "../../schema";
+import { donations, donors, recurringDonations } from "../../schema";
+import { donorsRepository } from "../donors.repository";
 import { createStatementService } from "../../../plugins/admin-panel/server/services/statement";
 import {
   cleanDatabase,
@@ -35,12 +36,13 @@ const LINE = {
 };
 
 /** A donor whose standing order LINE is a payment of; their id. */
-async function donorWithStandingOrder() {
+async function donorWithStandingOrder(newsletter: boolean | null = null) {
   const donor = await createTestDonor();
   const template = await createTestRecurringDonation({
     donorId: donor.id,
     amount: 2000,
     datetime: new Date("2026-09-01T10:00:00Z"),
+    newsletter,
   });
   await createTestOrganizationRecurringDonation({
     recurringDonationId: template.id,
@@ -82,6 +84,81 @@ describe("statement apply", () => {
     expect(await donationsOnLine()).toMatchObject([
       { donorId, amount: 2000, finalized: true },
     ]);
+  });
+
+  it("applies a standing order's yes to the newsletter with its first payment, once", async () => {
+    const donorId = await donorWithStandingOrder(true);
+    await db
+      .update(donors)
+      .set({ newsletter: false })
+      .where(eq(donors.id, donorId));
+
+    await statement.apply(importing(donorId), "team@example.org");
+
+    expect((await donorsRepository.findById(donorId))?.newsletter).toBe(true);
+    const [template] = await db
+      .select()
+      .from(recurringDonations)
+      .where(eq(recurringDonations.donorId, donorId));
+    expect(template?.newsletter).toBeNull();
+  });
+
+  it("lets a change in the settings since the order was set up stand", async () => {
+    const donorId = await donorWithStandingOrder(true);
+    await donorsRepository.updateEmailPreferences(donorId, {
+      newsletter: false,
+    });
+
+    await statement.apply(importing(donorId), "team@example.org");
+
+    expect((await donorsRepository.findById(donorId))?.newsletter).toBe(false);
+  });
+
+  it("keeps a standing order's waiting yes when only other emails change", async () => {
+    const donorId = await donorWithStandingOrder(true);
+    await db
+      .update(donors)
+      .set({ newsletter: false })
+      .where(eq(donors.id, donorId));
+    await donorsRepository.updateEmailPreferences(donorId, {
+      yearlyEmails: false,
+    });
+
+    await statement.apply(importing(donorId), "team@example.org");
+
+    expect((await donorsRepository.findById(donorId))?.newsletter).toBe(true);
+  });
+
+  it("cancels a standing order's waiting yes with a later no", async () => {
+    const donorId = await donorWithStandingOrder(true);
+
+    await donorsRepository.setNewsletter(donorId, false);
+
+    const [template] = await db
+      .select()
+      .from(recurringDonations)
+      .where(eq(recurringDonations.donorId, donorId));
+    expect(template?.newsletter).toBeNull();
+  });
+
+  it("saves a payment in its standing order's language", async () => {
+    const donor = await createTestDonor();
+    const order = await createTestRecurringDonation({
+      donorId: donor.id,
+      amount: 2000,
+      datetime: new Date("2026-09-01T10:00:00Z"),
+      locale: "en",
+    });
+    await createTestOrganizationRecurringDonation({
+      recurringDonationId: order.id,
+      organizationInternalId: "test-org",
+      amount: 2000,
+    });
+
+    await statement.apply(importing(donor.id), "team@example.org");
+
+    const [donation] = await donationsOnLine();
+    expect(donation?.locale).toBe("en");
   });
 
   it("doesn't import a line again when the statement is applied twice", async () => {

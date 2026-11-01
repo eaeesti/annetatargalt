@@ -3,8 +3,12 @@
  *
  * `order-token` is the payment provider's signed order token, which arrives
  * on /api/confirm. Its payload carries the payer's name and IBAN.
+ *
+ * `token` is a donor's token for choosing their emails: whoever has it can
+ * see their address and change what they get. Our own links don't put it in
+ * a query string the backend gets, but a request can still come with one.
  */
-const REDACTED_QUERY_PARAMS = ["order-token"];
+const REDACTED_QUERY_PARAMS = ["order-token", "token"];
 
 const REDACTED_PARAM_VALUE = new RegExp(
   `([?&](?:${REDACTED_QUERY_PARAMS.join("|")})=)[^&#]*`,

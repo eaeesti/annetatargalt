@@ -11,6 +11,8 @@ import type { Core } from "@strapi/strapi";
 import { db } from "../../../../db/client";
 import {
   DonationsRepository,
+  DonorsRepository,
+  RecurringDonationsRepository,
   OrganizationDonationsRepository,
   BankTransactionsRepository,
   SenderDonorAliasesRepository,
@@ -777,6 +779,12 @@ export function createStatementService(strapi: Core.Strapi) {
         }
       }
 
+      // A payment is in its standing order's language: its emails go out in
+      // it.
+      const locales = await recurringDonationsRepository.localesOf(
+        allImports.map((imp) => imp.templateId),
+      );
+
       await db.transaction(async (tx) => {
         const donationsRepo = new DonationsRepository(tx);
         const orgDonationsRepo = new OrganizationDonationsRepository(tx);
@@ -817,6 +825,7 @@ export function createStatementService(strapi: Core.Strapi) {
             paymentMethod: imp.paymentMethod,
             transactionId: imp.archivingCode,
             transactionMatchSource: "recurring-import",
+            locale: locales.get(imp.templateId),
           });
           await orgDonationsRepo.createMany(
             imp.orgDonations.map((o) => ({
@@ -887,6 +896,29 @@ export function createStatementService(strapi: Core.Strapi) {
           })),
         );
       });
+
+      // A standing order's newsletter choice counts once a payment of it has
+      // arrived. The donations are in by now: should this fail, the choice
+      // only waits for the order's next payment.
+      for (const id of new Set(allImports.map((imp) => imp.templateId))) {
+        try {
+          await db.transaction(async (tx) => {
+            const choice = await new RecurringDonationsRepository(
+              tx,
+            ).takeNewsletterChoice(id);
+            if (choice) {
+              await new DonorsRepository(tx).setNewsletter(
+                choice.donorId,
+                choice.newsletter,
+              );
+            }
+          });
+        } catch (error) {
+          strapi.log.error(
+            `Recurring donation ${id}'s newsletter choice wasn't applied: ${String(error)}`,
+          );
+        }
+      }
 
       return summary;
     },

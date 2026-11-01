@@ -54,6 +54,9 @@
     "termsText": {
       "type": "richtext"
     },
+    "newsletterText": {
+      "type": "richtext"
+    },
     "chooseAmountText": {
       "type": "string"
     },

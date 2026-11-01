@@ -4,7 +4,7 @@ import { donationTransfersRepository } from "../../../../db/repositories/donatio
 import { createTransferService } from "../services/transfer";
 import { tipOrganizationInternalId } from "../utils/tip-organization";
 import { auditLog } from "../utils/audit-log";
-import { isRecord } from "../../../../utils/narrow";
+import { dayOf, idOf, isRecord } from "../../../../utils/narrow";
 import { EXPORT_ROW_LIMIT, isExport } from "../utils/export";
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
@@ -14,17 +14,6 @@ const VALID_SORT_COLS = new Set([
   "donationCount",
   "totalAmount",
 ]);
-
-/** Strict `YYYY-MM-DD` — anything else is dropped. */
-const isoDate = (v: unknown): string | undefined => {
-  if (typeof v !== "string" && typeof v !== "number") return undefined;
-  const s = String(v).trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return undefined;
-  const d = new Date(`${s}T00:00:00Z`);
-  return Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== s
-    ? undefined
-    : s;
-};
 
 const intArray = (v: unknown): number[] =>
   Array.isArray(v)
@@ -72,8 +61,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
         pageSize,
         sortBy,
         sortDir,
-        dateFrom: isoDate(q.dateFrom),
-        dateTo: isoDate(q.dateTo),
+        dateFrom: dayOf(q.dateFrom),
+        dateTo: dayOf(q.dateTo),
         tipOrganizationInternalId: await tipOrganizationInternalId(strapi),
       });
 
@@ -95,8 +84,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
     },
 
     async findOne(ctx: Context) {
-      const id = Number(ctx.params.id);
-      if (!id || isNaN(id)) return ctx.badRequest("Invalid transfer ID");
+      const id = idOf(ctx.params.id);
+      if (!id) return ctx.badRequest("Invalid transfer ID");
 
       const transfer = await service.getOne(id);
       if (!transfer) return ctx.notFound("Transfer not found");
@@ -107,8 +96,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
 
     async preview(ctx: Context) {
       const q = ctx.request.query;
-      const dateFrom = isoDate(q.dateFrom);
-      const dateTo = isoDate(q.dateTo);
+      const dateFrom = dayOf(q.dateFrom);
+      const dateTo = dayOf(q.dateTo);
       if (!dateFrom || !dateTo) {
         return ctx.badRequest("dateFrom and dateTo (YYYY-MM-DD) are required");
       }
@@ -120,8 +109,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
     async unlinkedOutgoing(ctx: Context) {
       const q = ctx.request.query;
       const rows = await service.unlinkedOutgoing({
-        dateFrom: isoDate(q.dateFrom),
-        dateTo: isoDate(q.dateTo),
+        dateFrom: dayOf(q.dateFrom),
+        dateTo: dayOf(q.dateTo),
         search: q.search ? String(q.search).slice(0, 128) : undefined,
       });
       return ctx.send({ data: rows });
@@ -129,7 +118,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
 
     async create(ctx: Context) {
       const body = isRecord(ctx.request.body) ? ctx.request.body : {};
-      const datetime = isoDate(body.datetime);
+      const datetime = dayOf(body.datetime);
       if (!datetime) return ctx.badRequest("datetime (YYYY-MM-DD) is required");
       const notes =
         body.notes === null || body.notes === undefined
@@ -147,15 +136,15 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
     },
 
     async update(ctx: Context) {
-      const id = Number(ctx.params.id);
-      if (!id || isNaN(id)) return ctx.badRequest("Invalid transfer ID");
+      const id = idOf(ctx.params.id);
+      if (!id) return ctx.badRequest("Invalid transfer ID");
 
       const body = isRecord(ctx.request.body) ? ctx.request.body : {};
 
       // a datetime that's present but unparseable is an error, not a silent skip
       let datetime: string | undefined;
       if (body.datetime !== undefined) {
-        datetime = isoDate(body.datetime);
+        datetime = dayOf(body.datetime);
         if (!datetime)
           return ctx.badRequest("Invalid date (expected YYYY-MM-DD)");
       }
@@ -253,8 +242,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
     },
 
     async remove(ctx: Context) {
-      const id = Number(ctx.params.id);
-      if (!id || isNaN(id)) return ctx.badRequest("Invalid transfer ID");
+      const id = idOf(ctx.params.id);
+      if (!id) return ctx.badRequest("Invalid transfer ID");
 
       const result = await service.remove(id);
       if (!result.ok) {

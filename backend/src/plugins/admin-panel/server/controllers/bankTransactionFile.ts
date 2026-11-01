@@ -4,30 +4,11 @@ import { readFile } from "node:fs/promises";
 import { createBankTransactionFileService } from "../services/bank-transaction-file";
 import { auditLog } from "../utils/audit-log";
 import { currentUser } from "../utils/current-user";
+import { uploadedFile } from "../utils/uploaded-file";
 import { inlineDisposition, MAX_PDF_BYTES } from "../../../../utils/pdf-file";
+import { idOf } from "../../../../utils/narrow";
 
-/**
- * The one file sent as the `files` form field. Strapi deletes its temporary
- * copy once the request is done.
- */
-function uploadedFile(
-  ctx: Context,
-): { path: string; name: string | null; size: number } | null {
-  const entry = ctx.request.files?.files;
-  if (Array.isArray(entry) && entry.length !== 1) return null;
-  const file = Array.isArray(entry) ? entry[0] : entry;
-  if (!file?.filepath) return null;
-  return {
-    path: file.filepath,
-    name: file.originalFilename ?? null,
-    size: file.size,
-  };
-}
-
-const fileId = (ctx: Context): number | null => {
-  const id = Number(ctx.params.id);
-  return Number.isInteger(id) && id > 0 ? id : null;
-};
+const fileId = (ctx: Context) => idOf(ctx.params.id);
 
 const STORAGE_UNAVAILABLE = "File storage isn't set up on the server";
 const MAX_MB = MAX_PDF_BYTES / 1024 / 1024;

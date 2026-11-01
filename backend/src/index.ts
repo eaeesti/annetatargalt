@@ -10,6 +10,7 @@ import {
   strapiTable,
 } from "./strapi-internals";
 import { isRecord } from "./utils/narrow";
+import { stopSending } from "./plugins/admin-panel/server/services/email-campaign";
 import fs from "fs";
 import path from "path";
 
@@ -272,6 +273,19 @@ async function bootstrapDonationPermissions(
     "plugin::admin-panel.donation.update", // write path — move a donation between transfer rounds
     "plugin::admin-panel.donor.list",
     "plugin::admin-panel.donor.findOne",
+    "plugin::admin-panel.donor.updateEmailPreferences", // write path — which emails a donor gets
+    "plugin::admin-panel.emailCampaign.list",
+    "plugin::admin-panel.emailCampaign.options",
+    "plugin::admin-panel.emailCampaign.findOne",
+    "plugin::admin-panel.emailCampaign.check",
+    "plugin::admin-panel.emailCampaign.preview",
+    "plugin::admin-panel.emailCampaign.create", // write path — a draft email
+    "plugin::admin-panel.emailCampaign.update", // write path — edit a draft
+    "plugin::admin-panel.emailCampaign.remove", // write path — delete a draft
+    "plugin::admin-panel.emailCampaign.duplicate", // write path — copy an email into a draft
+    "plugin::admin-panel.emailCampaign.test", // sends to the signed-in admin only
+    "plugin::admin-panel.emailCampaign.send", // sends to donors
+    "plugin::admin-panel.emailCampaign.uploadImage", // write path — a picture for an email, into the media library
     "plugin::admin-panel.recurringDonation.list",
     "plugin::admin-panel.recurringDonation.findOne",
     "plugin::admin-panel.recurringDonation.grid",
@@ -410,6 +424,35 @@ async function bootstrapDonationPermissions(
       );
       strapi.log.info(
         `✅ Revoked ${stalePerms.length} stale permission(s) from 'authenticated' role`,
+      );
+    }
+  }
+}
+
+/**
+ * Keeps Strapi's own upload endpoint (/api/upload) shut for everyone outside
+ * Strapi's admin: no role and no API token may upload, whatever was ticked
+ * in the admin. Uploads from outside it go through endpoints that check what
+ * they take, such as the admin panel's pictures for emails. A "Full access"
+ * token needs no permission, so the no-content-upload middleware refuses
+ * the endpoint as well.
+ */
+async function closeContentUpload(strapi: Core.Strapi): Promise<void> {
+  const upload = { action: { $startsWith: "plugin::upload." } };
+  for (const uid of [
+    "plugin::users-permissions.permission",
+    "admin::api-token-permission",
+  ] as const) {
+    const granted = await strapiTable<{ id: number }>(strapi, uid).findMany({
+      where: upload,
+      select: ["id"],
+    });
+    if (granted.length > 0) {
+      await strapi.db.query(uid).deleteMany({
+        where: { id: { $in: granted.map((p) => p.id) } },
+      });
+      strapi.log.info(
+        `✅ Revoked ${granted.length} upload permission(s) (${uid})`,
       );
     }
   }
@@ -711,6 +754,9 @@ export default {
       bootstrapDonationPermissions(strapi),
     );
     await safely(strapi, "hardenPublicAuth", () => hardenPublicAuth(strapi));
+    await safely(strapi, "closeContentUpload", () =>
+      closeContentUpload(strapi),
+    );
     await safely(strapi, "blockOrphanedDonationAdmins", () =>
       blockOrphanedDonationAdmins(strapi),
     );
@@ -734,20 +780,27 @@ export default {
    *
    * Closing the server first means new connections are refused, which nginx
    * can safely retry elsewhere because the request never got in; the ones
-   * already inside get up to SHUTDOWN_DRAIN_MS to be answered.
+   * already inside get up to SHUTDOWN_DRAIN_MS to be answered. An email
+   * being sent finishes the copy in hand meanwhile. That wait is here, not
+   * in the plugin's own destroy, which Strapi runs before this one, while
+   * the server still takes requests.
    */
   async destroy({ strapi }: { strapi: Core.Strapi }) {
     const { httpServer } = strapi.server;
     if (httpServer.listening) httpServer.close();
-
-    const deadline = Date.now() + SHUTDOWN_DRAIN_MS;
-    while (inFlightRequests > 0 && Date.now() < deadline) {
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    }
-    if (inFlightRequests > 0) {
-      strapi.log.warn(
-        `⚠️ Shutting down with ${inFlightRequests} request(s) still unanswered after ${SHUTDOWN_DRAIN_MS / 1000}s`,
-      );
-    }
+    await Promise.all([drainRequests(strapi), stopSending()]);
   },
 };
+
+/** Wait for the requests in progress to be answered, for a while. */
+async function drainRequests(strapi: Core.Strapi): Promise<void> {
+  const deadline = Date.now() + SHUTDOWN_DRAIN_MS;
+  while (inFlightRequests > 0 && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  if (inFlightRequests > 0) {
+    strapi.log.warn(
+      `⚠️ Shutting down with ${inFlightRequests} request(s) still unanswered after ${SHUTDOWN_DRAIN_MS / 1000}s`,
+    );
+  }
+}

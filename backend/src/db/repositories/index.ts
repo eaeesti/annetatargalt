@@ -36,3 +36,11 @@ export {
   senderDonorAliasesRepository,
   SenderDonorAliasesRepository,
 } from "./sender-donor-aliases.repository";
+export {
+  emailSendsRepository,
+  EmailSendsRepository,
+} from "./email-sends.repository";
+export {
+  emailCampaignsRepository,
+  EmailCampaignsRepository,
+} from "./email-campaigns.repository";

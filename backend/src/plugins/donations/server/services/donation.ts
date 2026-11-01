@@ -6,13 +6,11 @@ import {
 } from "../../../../utils/donation";
 import { BANKS, createRecurringPaymentLink } from "../../../../utils/banks";
 import { oneOf } from "../../../../utils/narrow";
+import { normalAddress } from "../../../../utils/address";
 import montonio from "../../../../utils/montonio";
 import { formatAmount, withCurrency } from "../../../../utils/money";
-import {
-  DEFAULT_LOCALE,
-  toLocale,
-  type Locale,
-} from "../../../../utils/locale";
+import { toLocale, type Locale } from "../../../../utils/locale";
+import { findEmailConfig, inLocale, sendEmail } from "../../../../emails";
 import { format, textIntoParagraphs, sanitize } from "../../../../utils/string";
 import type { Donor } from "../../../../db/schema";
 import {
@@ -48,6 +46,8 @@ interface DonationInput {
   comment?: string | null;
   // The site language the form was in; anything else means Estonian.
   locale?: string;
+  // Whether the donor wants the newsletter; absent means they do.
+  newsletter?: boolean;
   amounts: OrgAmount[];
 }
 
@@ -61,44 +61,14 @@ interface ForeignDonationInput {
 
 type ValidationResult = { valid: true } | { valid: false; reason: string };
 
-// ─── Strapi Plugin Helpers ────────────────────────────────────────────────────
-
-type EmailRecipient = { to: string | null; replyTo?: string | null };
-type EmailTemplate = {
-  subject?: string | null;
-  text?: string | null;
-  html?: string | null;
-};
-
-/** The email plugin, which Strapi types loosely, with the one method used here. */
-function emailService(strapi: Core.Strapi) {
-  const service = strapi.plugin("email").service("email");
-  return {
-    sendTemplatedEmail: (
-      recipient: EmailRecipient,
-      template: EmailTemplate,
-      data: Record<string, unknown>,
-    ): Promise<void> => service.sendTemplatedEmail(recipient, template, data),
-  };
-}
-
-/**
- * Something from the CMS in a language, or in Estonian when it has no version
- * in that language.
- */
-async function inLocale<T>(
-  locale: Locale,
-  find: (locale: Locale) => Promise<T | null>,
-): Promise<T | null> {
-  const found = await find(locale);
-  return found || locale === DEFAULT_LOCALE ? found : find(DEFAULT_LOCALE);
-}
-
-function findEmailConfig(strapi: Core.Strapi, locale: Locale) {
-  return inLocale(locale, (l) =>
-    strapi.documents("api::email-config.email-config").findFirst({ locale: l }),
+/** Whether two email addresses are the same one, as the emails treat them. */
+function sameAddress(a: string | null, b: string | null | undefined): boolean {
+  return (
+    Boolean(a?.trim()) && normalAddress(a ?? "") === normalAddress(b ?? "")
   );
 }
+
+// ─── Email Helpers ───────────────────────────────────────────────────────────
 
 /** "Organization: 25€", one line per organization, for the emails. */
 function emailSummary(
@@ -133,6 +103,13 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   async validateDonation(donation: DonationInput): Promise<ValidationResult> {
     if (!donation) {
       return { valid: false, reason: "No donation provided" };
+    }
+
+    if (
+      donation.newsletter !== undefined &&
+      typeof donation.newsletter !== "boolean"
+    ) {
+      return { valid: false, reason: "Invalid newsletter choice" };
     }
 
     if (!donation.firstName) {
@@ -392,10 +369,32 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       ? await donorService.findOrCreateDonor(donation)
       : await donorService.findOrCreateDonorByEmail(donation);
 
+    // The newsletter choice is for the address typed on the form, so it
+    // counts only when that's the donor's own: a returning donor is found by
+    // their ID code, which someone else may know. Unticking it counts at
+    // once: it only ever stops emails, so it needs no payment. A "yes" waits
+    // for money, kept with the donation or the standing order. The donation
+    // goes ahead either way, so a failure is only logged.
+    const input = {
+      ...donation,
+      newsletter: sameAddress(donor.email, donation.email)
+        ? donation.newsletter
+        : undefined,
+    };
+    if (input.newsletter === false) {
+      try {
+        await donorService.applyNewsletterChoice(donor.id, false);
+      } catch (error) {
+        strapi.log.error(
+          `Donor ${donor.id}'s newsletter choice wasn't applied: ${String(error)}`,
+        );
+      }
+    }
+
     if (donation.type === "recurring") {
       try {
         const { redirectURL } = await this.createRecurringDonation({
-          donation,
+          donation: input,
           donor,
           externalDonation,
         });
@@ -409,7 +408,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
     try {
       const { redirectURL } = await this.createSingleDonation({
-        donation,
+        donation: input,
         donor,
         customReturnUrl,
         externalDonation,
@@ -488,6 +487,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       comment: donation.comment,
       externalDonation: externalDonation || false,
       locale: toLocale(donation.locale),
+      // A "yes" counts when the donation is paid (the confirm handler); a
+      // "no" has counted already.
+      newsletter: donation.newsletter ?? null,
     });
 
     const organizationDonationsData = donation.amounts.map(
@@ -528,6 +530,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       companyCode: donation.companyCode,
       comment: donation.comment,
       locale: toLocale(donation.locale),
+      // A "yes", waiting for the first payment; a "no" has counted already.
+      newsletter: donation.newsletter === true ? true : null,
     });
 
     const organizationRecurringDonationsData = donation.amounts.map(
@@ -624,14 +628,17 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       ),
     };
 
-    await emailService(strapi).sendTemplatedEmail(
-      {
+    await sendEmail(strapi, {
+      recipient: {
         to: donation.donor.email,
         replyTo: emailConfig.confirmationReplyTo,
       },
       template,
       data,
-    );
+      locale: donation.locale,
+      emailConfig,
+      donorId: donation.donor.id,
+    });
   },
 
   async sendExternalConfirmationEmail(donationId: number) {
@@ -671,14 +678,14 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       currency: global.currency,
     };
 
-    await emailService(strapi).sendTemplatedEmail(
-      {
-        to: donor.email,
-        replyTo: emailConfig.confirmationReplyTo,
-      },
+    await sendEmail(strapi, {
+      recipient: { to: donor.email, replyTo: emailConfig.confirmationReplyTo },
       template,
       data,
-    );
+      locale,
+      emailConfig,
+      donorId: donor.id,
+    });
   },
 
   async sendRecurringConfirmationEmail(recurringDonationId: number) {
@@ -722,14 +729,17 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       ),
     };
 
-    await emailService(strapi).sendTemplatedEmail(
-      {
+    await sendEmail(strapi, {
+      recipient: {
         to: recurringDonation.donor.email,
         replyTo: emailConfig.confirmationReplyTo,
       },
       template,
       data,
-    );
+      locale,
+      emailConfig,
+      donorId: recurringDonation.donor.id,
+    });
   },
 
   async sendExternalRecurringConfirmationEmail(recurringDonationId: number) {
@@ -766,14 +776,14 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       currency: global.currency,
     };
 
-    await emailService(strapi).sendTemplatedEmail(
-      {
-        to: donor.email,
-        replyTo: emailConfig.confirmationReplyTo,
-      },
+    await sendEmail(strapi, {
+      recipient: { to: donor.email, replyTo: emailConfig.confirmationReplyTo },
       template,
       data,
-    );
+      locale,
+      emailConfig,
+      donorId: donor.id,
+    });
   },
 
   async sendDedicationEmail(donationId: number) {
@@ -833,14 +843,18 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       summary,
     };
 
-    await emailService(strapi).sendTemplatedEmail(
-      {
+    // The person it's dedicated to isn't a donor, and has no emails to choose.
+    await sendEmail(strapi, {
+      recipient: {
         to: donation.dedicationEmail,
         replyTo: donationWithDetails.donor.email,
       },
       template,
       data,
-    );
+      locale,
+      emailConfig,
+      donorId: null,
+    });
   },
 
   async export() {

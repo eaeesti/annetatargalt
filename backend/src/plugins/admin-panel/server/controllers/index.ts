@@ -7,6 +7,7 @@ import dashboard from "./dashboard";
 import statement from "./statement";
 import bankTransaction from "./bankTransaction";
 import bankTransactionFile from "./bankTransactionFile";
+import emailCampaign from "./emailCampaign";
 
 export default {
   donation,
@@ -18,4 +19,5 @@ export default {
   statement,
   bankTransaction,
   bankTransactionFile,
+  emailCampaign,
 };

@@ -120,6 +120,27 @@
       "when": 1794058627990,
       "tag": "0016_payment_status",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1794139200000,
+      "tag": "0017_donor_emails",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794225600000,
+      "tag": "0018_email_sending",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794350391423,
+      "tag": "0019_recurring_newsletter",
+      "breakpoints": true
     }
   ]
 }

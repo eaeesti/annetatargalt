@@ -48,9 +48,7 @@ export default () => ({
   async findOrCreateDonor(donor: DonorInput) {
     const donorEntry = await this.findDonor(donor.idCode ?? "");
 
-    if (donorEntry) {
-      return donorEntry;
-    }
+    if (donorEntry) return donorEntry;
 
     return donorsRepo.create({
       firstName: donor.firstName,
@@ -70,6 +68,14 @@ export default () => ({
       lastName: donor.lastName,
       email: donor.email,
     });
+  },
+
+  // The newsletter choice from the donation form, for the donor's address:
+  // a new donor's, or a returning one's either way. Nothing when the form
+  // didn't ask; see setNewsletter for when it doesn't count.
+  async applyNewsletterChoice(donorId: number, newsletter: boolean | null) {
+    if (typeof newsletter !== "boolean") return;
+    await donorsRepo.setNewsletter(donorId, newsletter);
   },
 
   async donorsWithFinalizedDonationCount() {

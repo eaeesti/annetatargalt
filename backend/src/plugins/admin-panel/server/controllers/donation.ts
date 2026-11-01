@@ -1,9 +1,8 @@
-import { estonianDay } from "../../../../utils/estonian-time";
 import type { Core } from "@strapi/strapi";
 import type { Context } from "koa";
 import { donationsRepository } from "../../../../db/repositories/donations.repository";
 import { auditLog } from "../utils/audit-log";
-import { isRecord } from "../../../../utils/narrow";
+import { dayOf, idOf, isRecord } from "../../../../utils/narrow";
 import { EXPORT_ROW_LIMIT, isExport } from "../utils/export";
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
@@ -37,10 +36,8 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
     const finalized =
       q.finalized !== undefined ? String(q.finalized) === "true" : undefined;
     // Estonian days, written "2026-06-30"; anything else isn't a filter.
-    const day = (value: unknown) =>
-      typeof value === "string" && estonianDay(value) ? value : undefined;
-    const dateFrom = day(q.dateFrom);
-    const dateTo = day(q.dateTo);
+    const dateFrom = dayOf(q.dateFrom);
+    const dateTo = dayOf(q.dateTo);
     const donorId = q.donorId ? Number(q.donorId) : undefined;
     const transferId = q.transferId ? Number(q.transferId) : undefined;
     const hasTransfer =
@@ -102,8 +99,8 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
   },
 
   async findOne(ctx: Context) {
-    const id = Number(ctx.params.id);
-    if (!id || isNaN(id)) {
+    const id = idOf(ctx.params.id);
+    if (!id) {
       return ctx.badRequest("Invalid donation ID");
     }
 
@@ -120,8 +117,8 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
   // Move a donation between transfer rounds (or clear its round). The only
   // mutable field on this endpoint today.
   async update(ctx: Context) {
-    const id = Number(ctx.params.id);
-    if (!id || isNaN(id)) return ctx.badRequest("Invalid donation ID");
+    const id = idOf(ctx.params.id);
+    if (!id) return ctx.badRequest("Invalid donation ID");
 
     const body = isRecord(ctx.request.body) ? ctx.request.body : {};
     if (!("donationTransferId" in body)) {

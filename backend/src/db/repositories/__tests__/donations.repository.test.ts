@@ -46,6 +46,20 @@ describe("DonationsRepository", () => {
       expect(donation.paymentMethod).toBe("bank_transfer");
     });
 
+    it("keeps the donor's newsletter choice, and none when the form didn't ask", async () => {
+      const donor = await createTestDonor();
+      const made = (newsletter?: boolean) =>
+        donationsRepository.create({
+          donorId: donor.id,
+          amount: 1000,
+          newsletter,
+        });
+
+      expect((await made(false)).newsletter).toBe(false);
+      expect((await made(true)).newsletter).toBe(true);
+      expect((await made()).newsletter).toBeNull();
+    });
+
     it("should create a donation with nullable donorId", async () => {
       const donation = await donationsRepository.create({
         donorId: null,

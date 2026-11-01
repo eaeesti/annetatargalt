@@ -1,4 +1,6 @@
 import type { Core } from "@strapi/strapi";
+import type { Context } from "koa";
+import { isRecord } from "./utils/narrow";
 
 /*
  * Strapi's own tables and services, typed. Strapi types its query engine and
@@ -59,7 +61,88 @@ export function apiTokens(strapi: Core.Strapi) {
   };
 }
 
+export type EmailRecipient = {
+  to: string | null;
+  replyTo?: string | null;
+  headers?: Record<string, string>;
+};
+export type EmailTemplate = {
+  subject?: string | null;
+  text?: string | null;
+  html?: string | null;
+};
+
+/** An email as the email plugin sends it, without a template. */
+export interface MailMessage {
+  to: string;
+  replyTo?: string | null;
+  subject: string;
+  text: string;
+  html: string;
+  headers?: Record<string, string>;
+}
+
+/** The email plugin, with the methods the backend's emails use. */
+export function emailService(strapi: Core.Strapi) {
+  const service = strapi.plugin("email").service("email");
+  return {
+    sendTemplatedEmail: (
+      recipient: EmailRecipient,
+      template: EmailTemplate,
+      data: Record<string, unknown>,
+    ): Promise<void> => service.sendTemplatedEmail(recipient, template, data),
+    send: (options: MailMessage): Promise<void> => service.send(options),
+  };
+}
+
 /** A users-permissions session token for the user with this id. */
 export function issueUserJwt(strapi: Core.Strapi, id: number): Promise<string> {
   return strapi.plugin("users-permissions").service("jwt").issue({ id });
+}
+
+/**
+ * The user a request's users-permissions token is for, when it has one that
+ * this backend signed and that hasn't expired; null otherwise. Whether the
+ * user may do anything is for the route to decide.
+ */
+export async function tokenUserId(
+  strapi: Core.Strapi,
+  ctx: Context,
+): Promise<number | null> {
+  try {
+    const payload: unknown = await strapi
+      .plugin("users-permissions")
+      .service("jwt")
+      .getToken(ctx);
+    return isRecord(payload) && typeof payload.id === "number"
+      ? payload.id
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/** A file for the upload service, as koa's body parser leaves one on disk. */
+interface FileOnDisk {
+  filepath: string;
+  originalFilename: string;
+  mimetype: string;
+  /** The type found from the file's own bytes, which the service prefers. */
+  detectedMimeType: string;
+  size: number;
+}
+
+/**
+ * The media library's upload service: stores a file with the upload
+ * provider, Cloudinary, after checking that a picture is a valid one.
+ */
+export function mediaLibrary(strapi: Core.Strapi) {
+  const service = strapi.plugin("upload").service("upload");
+  return {
+    upload: (
+      file: FileOnDisk,
+      fileInfo: { name: string; alternativeText: string },
+    ): Promise<{ id: number; url: string }[]> =>
+      service.upload({ data: { fileInfo }, files: file }),
+  };
 }

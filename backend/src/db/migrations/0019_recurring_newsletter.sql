@@ -1,0 +1,1 @@
+ALTER TABLE "recurring_donations" ADD COLUMN "newsletter" boolean;

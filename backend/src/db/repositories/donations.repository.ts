@@ -302,6 +302,7 @@ export class DonationsRepository {
         externalDonation:
           data.externalDonation !== undefined ? data.externalDonation : false,
         locale: data.locale,
+        newsletter: data.newsletter ?? null,
         recurringDonationId: data.recurringDonationId || null,
         donationTransferId: data.donationTransferId || null,
         transactionId: data.transactionId || null,

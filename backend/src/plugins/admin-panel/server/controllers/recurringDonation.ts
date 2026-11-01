@@ -3,6 +3,7 @@ import type { Context } from "koa";
 import { recurringDonationsRepository } from "../../../../db/repositories/recurring-donations.repository";
 import { auditLog } from "../utils/audit-log";
 import { EXPORT_ROW_LIMIT, isExport } from "../utils/export";
+import { idOf } from "../../../../utils/narrow";
 
 const VALID_PAGE_SIZES = [25, 50, 100, 250];
 const VALID_SORT_COLS = new Set([
@@ -56,9 +57,8 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
   },
 
   async findOne(ctx: Context) {
-    const id = Number(ctx.params.id);
-    if (!id || isNaN(id))
-      return ctx.badRequest("Invalid recurring donation ID");
+    const id = idOf(ctx.params.id);
+    if (!id) return ctx.badRequest("Invalid recurring donation ID");
 
     const rd = await recurringDonationsRepository.findByIdWithFullDonations(id);
     if (!rd) return ctx.notFound("Recurring donation not found");

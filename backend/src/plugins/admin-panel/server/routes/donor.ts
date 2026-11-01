@@ -12,5 +12,11 @@ export default {
       handler: "donor.findOne",
       config: {},
     },
+    {
+      method: "PATCH",
+      path: "/donors/:id/email-preferences",
+      handler: "donor.updateEmailPreferences",
+      config: {},
+    },
   ],
 };
