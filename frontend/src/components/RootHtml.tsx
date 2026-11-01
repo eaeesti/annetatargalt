@@ -59,7 +59,9 @@ export default async function RootHtml({
                   copy served from here, so the analytics server can't change
                   what runs on the site, and it sends to the backend's domain,
                   which the content security policy already allows. The hook
-                  before it leaves query strings out of what's sent. */}
+                  before it leaves query strings and fragments out of what's
+                  sent; the tracker is told to leave fragments out too, as the
+                  settings page has a donor's token in it. */}
               <script defer src="/js/umami-before-send.js" />
               <script
                 defer
@@ -67,6 +69,7 @@ export default async function RootHtml({
                 data-website-id={umamiWebsiteId}
                 data-host-url={getStrapiURL("/u")}
                 data-before-send="umamiBeforeSend"
+                data-exclude-hash="true"
               />
             </>
           )}

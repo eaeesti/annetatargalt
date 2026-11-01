@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { format, validatePrice, validateEmail } from "../string";
+import {
+  escapeMarkdown,
+  format,
+  validatePrice,
+  validateEmail,
+} from "../string";
 
 describe("format", () => {
   it("replaces a single placeholder", () => {
@@ -63,5 +68,13 @@ describe("validateEmail", () => {
     expect(validateEmail("missing@")).toBe(false);
     expect(validateEmail("@nodomain")).toBe(false);
     expect(validateEmail("")).toBe(false);
+  });
+});
+
+describe("escapeMarkdown", () => {
+  it("keeps an address from turning into Markdown", () => {
+    expect(escapeMarkdown("mari_liis*x@example.org")).toBe(
+      "mari\\_liis\\*x@example\\.org",
+    );
   });
 });

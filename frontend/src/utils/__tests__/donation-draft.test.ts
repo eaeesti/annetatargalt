@@ -39,6 +39,8 @@ function donation(changes: Partial<DonationState> = {}): DonationState {
     proportions: Proportions.fromStrapiData(causes),
     addTip: true,
     paymentMethod: "cardPayments",
+    // not the form's default, so that keeping it shows
+    newsletter: false,
     acceptTerms: true,
     ...changes,
   };
@@ -58,6 +60,15 @@ describe("donation drafts", () => {
       stage: 3,
       donation: donation({ acceptTerms: false }),
     });
+  });
+
+  it("ticks the newsletter in a draft kept before there was a choice", () => {
+    const draft = parseDonationDraft(
+      withField("newsletter", undefined),
+      "null/null",
+      current(),
+    );
+    expect(draft?.donation.newsletter).toBe(true);
   });
 
   it("doesn't keep agreeing to the terms", () => {
