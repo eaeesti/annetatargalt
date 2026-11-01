@@ -58,6 +58,9 @@
     "youCardTitle": {
       "type": "string"
     },
+    "chartCaption": {
+      "type": "text"
+    },
     "families": {
       "type": "component",
       "repeatable": true,

@@ -116,8 +116,6 @@ export interface IncomeComparison {
   top: number;
   /** How much of the world is poorer: the rest. */
   percentile: number;
-  /** Where the income is on a scale of 0 to 100, unrounded, for charts. */
-  position: number;
   /** How many times the world's median the income is. */
   timesMedian: number;
 }
@@ -130,7 +128,6 @@ export function compareIncome(monthlyIncome: number): IncomeComparison {
   return {
     top,
     percentile: round(100 - top, 1),
-    position,
     timesMedian: internationalIncome(monthlyIncome) / WORLD_MEDIAN_INCOME,
   };
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { UserGroupIcon } from "@heroicons/react/24/solid";
 import Image from "../Image";
 import Markdown from "../Markdown";
@@ -7,6 +7,7 @@ import {
   DAYS_PER_MONTH,
   euroIncome,
   formatNumber,
+  internationalIncome,
   WORLD_PERCENTILES,
   worldPercentileOfInternational,
 } from "@/utils/income";
@@ -16,7 +17,18 @@ import { classes } from "@/utils/react";
 import { format } from "@/utils/string";
 import type { StrapiIncomeFamily } from "@/types/generated/strapi";
 
-const HIGHEST = WORLD_PERCENTILES[WORLD_PERCENTILES.length - 1].daily;
+/**
+ * A bar for each percent of the world, from the poorest to the richest, as
+ * high as the daily income its richest live on. The data stops at the 99th
+ * percentile, so the last bar, the richest percent, continues the line from
+ * the 98th, as the scale past the 99th does.
+ */
+const BARS = (() => {
+  const daily = WORLD_PERCENTILES.map((point) => point.daily);
+  const [secondLast = 0, last = 0] = daily.slice(-2);
+  return [...daily, 2 * last - secondLast];
+})();
+const HIGHEST = Math.max(...BARS);
 /** The share of the chart at each end where the visitor's marks slide in. */
 const EDGE = 0.1;
 
@@ -67,9 +79,9 @@ function barHeight(daily: number) {
   return Math.max((100 * daily) / HIGHEST, 0.8);
 }
 
-/** Where on the chart a percentile's bar is, from 0 to 1. */
+/** Where on the chart a place on the scale of 0 to 100 is, from 0 to 1. */
 function shareOf(position: number) {
-  return (position - 0.5) / 99;
+  return position / 100;
 }
 
 /** Space kept between two tiles, in pixels. */
@@ -204,8 +216,12 @@ function Family({
 }
 
 interface WorldIncomeChartProps {
-  /** Where the visitor is on a scale of 0 to 100. */
-  position: number;
+  /** How much of the world is poorer than the visitor, as the headline says. */
+  percentile: number;
+  /** The household's monthly income in euros, per person by the OECD scale. */
+  perPersonIncome: number;
+  /** The household's monthly income in euros, as it was typed. */
+  householdIncome: number;
   families: StrapiIncomeFamily[];
   youText: string | null;
   /** The heading of the visitor's card, "You in Estonia". */
@@ -218,6 +234,8 @@ interface WorldIncomeChartProps {
   perDayText: string | null;
   perMonthText: string | null;
   creditText: string | null;
+  /** Under the chart, what the bars are: they're easily read as counts. */
+  caption: string | null;
   locale: Locale;
 }
 
@@ -227,7 +245,9 @@ interface WorldIncomeChartProps {
  * under it.
  */
 export default function WorldIncomeChart({
-  position,
+  percentile,
+  perPersonIncome,
+  householdIncome,
   families,
   youText,
   youCardTitle,
@@ -237,10 +257,42 @@ export default function WorldIncomeChart({
   perDayText,
   perMonthText,
   creditText,
+  caption,
   locale,
 }: WorldIncomeChartProps) {
-  const yours = Math.min(Math.max(Math.round(position), 1), 99);
-  const share = shareOf(yours);
+  // The visitor's bar is the percent the headline puts them in: richer than
+  // 90% is the 91st bar, with 90 to its left and the top 10% from it on.
+  const yours = Math.min(Math.max(Math.floor(percentile) + 1, 1), 100);
+  const share = shareOf(yours - 0.5);
+  // The visitor's bar is as high as their own income, which the scale on
+  // the right gives in the household's terms: 0, theirs, and the line above
+  // which the richest percent lives, where the data stops.
+  const yourHeight = barHeight(
+    internationalIncome(perPersonIncome) / DAYS_PER_MONTH,
+  );
+  const perHousehold = householdIncome / perPersonIncome;
+  const richestFrom =
+    Math.round(
+      (euroIncome(BARS[BARS.length - 2] * DAYS_PER_MONTH) * perHousehold) / 100,
+    ) * 100;
+  const scale = [
+    { key: "zero", height: 0, text: withCurrency(0, "€", locale) },
+    {
+      key: "yours",
+      height: Math.min(yourHeight, 100),
+      text: income,
+      yours: true,
+    },
+    {
+      key: "richest",
+      height: 100,
+      text: withCurrency(`${formatNumber(richestFrom, locale)}+`, "€", locale),
+    },
+  ].filter(
+    // the visitor's own label wins where two would overlap
+    ({ key, height }) =>
+      key === "yours" || Math.abs(height - Math.min(yourHeight, 100)) > 10,
+  );
   // The label over the visitor's bar is centred on it, but slid inwards in
   // the outer tenths of the chart, so that at the very end its edge is at the
   // bar.
@@ -308,26 +360,27 @@ export default function WorldIncomeChart({
     return index === -1 ? null : tileShares[index];
   };
   return (
-    <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-8">
+    <div className="relative mx-auto w-full max-w-6xl pr-20 pl-4 sm:pr-24 sm:pl-8">
       <div
         ref={chartRef}
         className="relative flex h-48 items-end gap-px border-b border-slate-300 sm:h-80 sm:gap-0.5"
         aria-hidden
       >
-        {WORLD_PERCENTILES.map(({ percentile, daily }) => {
-          const isYours = percentile === yours;
+        {BARS.map((daily, index) => {
+          const bar = index + 1;
+          const isYours = bar === yours;
           return (
             <div
-              key={percentile}
+              key={bar}
               className={classes(
                 "relative flex-1 origin-bottom rounded-t-[1px] motion-safe:animate-grow-up",
                 isYours && "bg-primary-800",
               )}
               style={{
-                height: `${barHeight(daily)}%`,
+                height: `${isYours ? Math.min(yourHeight, 100) : barHeight(daily)}%`,
                 backgroundColor: isYours
                   ? undefined
-                  : barColor(percentile / 99),
+                  : barColor(index / (BARS.length - 1)),
               }}
             >
               {isYours && (
@@ -344,6 +397,20 @@ export default function WorldIncomeChart({
             </div>
           );
         })}
+        <div className="absolute inset-y-0 left-full ml-1.5 sm:ml-3">
+          {scale.map(({ key, height, text, yours: isYours }) => (
+            <span
+              key={key}
+              className={classes(
+                "absolute left-0 translate-y-1/2 text-xs whitespace-nowrap sm:text-sm",
+                isYours ? "font-semibold text-primary-800" : "text-slate-500",
+              )}
+              style={{ bottom: `${height}%` }}
+            >
+              {text}
+            </span>
+          ))}
+        </div>
       </div>
       <div className="relative h-28 sm:h-36">
         {/* From each bar down to its tile, turning sideways and down again
@@ -412,6 +479,18 @@ export default function WorldIncomeChart({
           </div>
         </HoverCard>
       </div>
+      {caption && (
+        <p className="mx-auto max-w-3xl text-center text-sm text-balance text-slate-500">
+          {/* A sentence that doesn't fit after the one before goes to the
+              next line whole, instead of breaking in the middle. */}
+          {caption.split(/(?<=\.)\s+/).map((sentence, index) => (
+            <Fragment key={index}>
+              {index > 0 && " "}
+              <span className="inline-block">{sentence}</span>
+            </Fragment>
+          ))}
+        </p>
+      )}
     </div>
   );
 }

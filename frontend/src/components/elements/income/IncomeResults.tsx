@@ -92,7 +92,9 @@ export default function IncomeResults({
       </section>
       <div className="mt-16 mb-8 sm:mt-12">
         <WorldIncomeChart
-          position={comparison.position}
+          percentile={comparison.percentile}
+          perPersonIncome={equivalisedIncome(household)}
+          householdIncome={household.income}
           families={section.families}
           youText={section.youText}
           youCardTitle={section.youCardTitle}
@@ -102,6 +104,7 @@ export default function IncomeResults({
           perDayText={section.familyPerDayText}
           perMonthText={section.familyPerMonthText}
           creditText={section.familyCreditText}
+          caption={section.chartCaption}
           locale={locale}
         />
       </div>
