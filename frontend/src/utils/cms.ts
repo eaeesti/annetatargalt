@@ -2,6 +2,7 @@ import qs from "qs";
 import { draftMode } from "next/headers";
 import { notFound } from "next/navigation";
 import type {
+  StrapiEmailPreferencesSection,
   StrapiGlobal,
   StrapiPage,
   StrapiSpecialPage,
@@ -9,7 +10,7 @@ import type {
   StrapiOrganization,
   StrapiCause,
 } from "@/types/generated/strapi";
-import type { Locale } from "./locale";
+import { DEFAULT_LOCALE, localePrefix, pagePath, type Locale } from "./locale";
 import { getStrapiURL, readStrapiJson, StrapiHttpError } from "./strapi";
 
 type SpecialPageEntity = StrapiCause | StrapiOrganization | StrapiBlogPost;
@@ -291,6 +292,58 @@ export async function fetchEntityInLocale(
   } catch {
     return null;
   }
+}
+
+const EMAIL_PREFERENCES_SECTION: StrapiEmailPreferencesSection["__component"] =
+  "sections.email-preferences-section";
+
+/** The path of the page with the email settings in a language, if any. */
+async function findEmailPreferencesPage(
+  locale: Locale,
+): Promise<string | null> {
+  const pages = await fetchAllAPI<{
+    slug: string | null;
+    sections?: { __component: string }[] | null;
+  }>(
+    "/pages",
+    {
+      locale,
+      fields: ["slug"],
+      populate: {
+        sections: {
+          on: { [EMAIL_PREFERENCES_SECTION]: { fields: ["title"] } },
+        },
+      },
+    },
+    headersWithAuthToken(),
+  );
+  const page = pages.find((p) =>
+    p.sections?.some((s) => s.__component === EMAIL_PREFERENCES_SECTION),
+  );
+  return page?.slug ? pagePath(page.slug, locale) : null;
+}
+
+/**
+ * Where donors choose which emails to get, in a language: the page that has
+ * the section for it, wherever the CMS has that page now. The links in our
+ * emails come to the site, which looks it up, so a page renamed in the CMS
+ * breaks no link already sent. The Estonian page when the language has
+ * none, and the language's front page when there's none at all or the CMS
+ * can't be read, with a line in the log.
+ */
+export async function emailPreferencesPath(locale: Locale): Promise<string> {
+  try {
+    const page = await findEmailPreferencesPage(locale);
+    if (page) return page;
+    console.error(`No page in "${locale}" has the email settings`);
+    if (locale !== DEFAULT_LOCALE) {
+      const estonian = await findEmailPreferencesPage(DEFAULT_LOCALE);
+      if (estonian) return estonian;
+    }
+  } catch (error) {
+    console.error(`The email settings page couldn't be found: ${error}`);
+  }
+  return localePrefix(locale) || "/";
 }
 
 export async function getAllSlugs(locale: Locale): Promise<string[]> {

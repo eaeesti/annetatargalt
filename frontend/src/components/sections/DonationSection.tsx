@@ -177,6 +177,7 @@ function DonationForm({
       ),
       addTip: false,
       paymentMethod: "paymentInitiation",
+      newsletter: true,
       acceptTerms: false,
     };
     const draft = keepsDraft
@@ -235,6 +236,9 @@ function DonationForm({
       idCode: donation.idCode,
       bank: donation.bank,
       paymentMethod: donation.paymentMethod,
+      // Only a choice the donor saw: a hidden box would turn the newsletter
+      // back on for a returning donor who had turned it off.
+      newsletter: props.newsletterText ? donation.newsletter : undefined,
       // Picks the language of the payment page, the thank-you page and emails.
       locale,
     };
@@ -554,6 +558,16 @@ function DonationForm({
                   label={props.paymentMethodText}
                   paymentInitiationText={props.paymentInitiationText}
                   cardPaymentsText={props.cardPaymentsText}
+                />
+              )}
+              {props.newsletterText && (
+                <CheckboxInput
+                  name="newsletter"
+                  label={props.newsletterText}
+                  value={donation.newsletter}
+                  setValue={(newsletter) =>
+                    setDonation({ ...donation, newsletter })
+                  }
                 />
               )}
               <CheckboxInput

@@ -23,6 +23,7 @@ export interface DonationState {
   proportions: Proportions;
   addTip: boolean;
   paymentMethod: string;
+  newsletter: boolean;
   acceptTerms: boolean;
 }
 
@@ -134,6 +135,7 @@ function restoreFields(
     dedicationMessage,
     addTip,
     paymentMethod,
+    newsletter,
   } = kept;
 
   if (
@@ -175,6 +177,8 @@ function restoreFields(
     dedicationMessage,
     addTip,
     paymentMethod,
+    // drafts kept before there was a choice have none: the form's default
+    newsletter: typeof newsletter === "boolean" ? newsletter : true,
   };
 }
 

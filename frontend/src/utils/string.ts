@@ -1,3 +1,8 @@
+/** Text as Markdown that shows it as it is: "mari_liis@x.ee" stays so. */
+export function escapeMarkdown(text: string): string {
+  return text.replace(/[\\`*_{}[\]()#+\-.!|~<>]/g, "\\$&");
+}
+
 /**
  * Format a string with variables in it.
  * @example

@@ -19,6 +19,12 @@ export const ContactSection = dynamic(
 export const DonationSection = dynamic(
   () => import("./sections/DonationSection"),
 );
+// Like the thank-you page's section further down, it reads a token from the
+// link, which a cached page doesn't have.
+export const EmailPreferencesSection = dynamic(
+  () => import("./sections/EmailPreferencesSection"),
+  { loading: () => <LoadingSection /> },
+);
 export const FAQSection = dynamic(() => import("./sections/FaqSection"));
 export const ForeignDonationSection = dynamic(
   () => import("./sections/ForeignDonationSection"),

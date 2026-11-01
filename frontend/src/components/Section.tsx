@@ -21,6 +21,7 @@ import {
   CampaignSection,
   ContactSection,
   DonationSection,
+  EmailPreferencesSection,
   FAQSection,
   ForeignDonationSection,
   IncomeCalculatorSection,
@@ -111,6 +112,8 @@ export default function Section({
       return <MapSection {...section} />;
     case "sections.income-calculator-section":
       return <IncomeCalculatorSection {...section} global={global} />;
+    case "sections.email-preferences-section":
+      return <EmailPreferencesSection {...section} global={global} />;
     case "special-sections.special-header-section":
       return (
         entity && (

@@ -239,6 +239,7 @@ export interface StrapiDonationSection {
   nextButtonText: string | null;
   donateButtonText: string | null;
   termsText: string | null;
+  newsletterText: string | null;
   chooseAmountText: string | null;
   otherAmountOptionText: string | null;
   donationTypeText: string | null;
@@ -272,6 +273,23 @@ export interface StrapiDonationSection {
   paymentMethodText: string | null;
   paymentInitiationText: string | null;
   cardPaymentsText: string | null;
+}
+
+export interface StrapiEmailPreferencesSection {
+  id: number;
+  __component: "sections.email-preferences-section";
+  title: string | null;
+  text: string | null;
+  newsletterLabel: string | null;
+  newsletterDescription: string | null;
+  transferEmailsLabel: string | null;
+  transferEmailsDescription: string | null;
+  yearlyEmailsLabel: string | null;
+  yearlyEmailsDescription: string | null;
+  saveText: string | null;
+  savedText: string | null;
+  invalidLinkTitle: string | null;
+  invalidLinkText: string | null;
 }
 
 export interface StrapiFAQSection {
@@ -520,6 +538,7 @@ export type StrapiSection =
   | StrapiForeignDonationSection
   | StrapiMapSection
   | StrapiIncomeCalculatorSection
+  | StrapiEmailPreferencesSection
   | StrapiSpecialHeaderSection
   | StrapiCauseOrganizationsSection
   | StrapiEntityTextSection
@@ -631,6 +650,8 @@ export interface StrapiEmailConfig {
   externalRecurringConfirmationText: string | null;
   externalRecurringConfirmationHtml: string | null;
   externalRecurringConfirmationSubject: string | null;
+  footerText: string | null;
+  preferencesLinkText: string | null;
   locale: string | null;
   localizations?: { locale: string | null; slug?: string | null }[];
   createdAt: string | null;
