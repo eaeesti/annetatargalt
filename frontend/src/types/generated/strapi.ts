@@ -337,6 +337,7 @@ export interface StrapiIncomeCalculatorSection {
   methodology: string | null;
   youText: string | null;
   youCardTitle: string | null;
+  chartCaption: string | null;
   families: StrapiIncomeFamily[];
   familyPerDayText: string | null;
   familyPerMonthText: string | null;

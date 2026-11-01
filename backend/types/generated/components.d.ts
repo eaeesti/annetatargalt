@@ -504,6 +504,7 @@ export interface SectionsIncomeCalculatorSection
     blueskyShareText: Schema.Attribute.String;
     calculateButtonText: Schema.Attribute.String;
     causes: Schema.Attribute.Relation<'oneToMany', 'api::cause.cause'>;
+    chartCaption: Schema.Attribute.Text;
     childrenText: Schema.Attribute.String;
     childText: Schema.Attribute.String;
     choiceQuestion: Schema.Attribute.String;
