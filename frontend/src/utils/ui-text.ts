@@ -9,11 +9,21 @@ const UI_TEXT = {
     openMenu: "Ava menüü",
     closeMenu: "Sulge menüü",
     breadcrumbs: "Leivapururada",
+    fewerAdults: "Vähem täiskasvanuid",
+    moreAdults: "Rohkem täiskasvanuid",
+    fewerChildren: "Vähem lapsi",
+    moreChildren: "Rohkem lapsi",
+    close: "Sulge",
   },
   en: {
     openMenu: "Open main menu",
     closeMenu: "Close menu",
     breadcrumbs: "Breadcrumbs",
+    fewerAdults: "Fewer adults",
+    moreAdults: "More adults",
+    fewerChildren: "Fewer children",
+    moreChildren: "More children",
+    close: "Close",
   },
 } satisfies Record<Locale, Record<string, string>>;
 

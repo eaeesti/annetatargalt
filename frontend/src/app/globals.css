@@ -21,6 +21,21 @@
   --color-primary-800: #065f46;
   --color-primary-900: #064e3b;
   --color-primary-950: #022c1f;
+
+  --animate-fade-in: fade-in 350ms ease;
+  --animate-grow-up: grow-up 1.2s ease-out;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes grow-up {
+    from {
+      transform: scaleY(0);
+    }
+  }
 }
 
 /*
@@ -201,6 +216,31 @@ body {
 
 .form-range::-moz-range-thumb:active {
   cursor: grabbing;
+}
+
+/* The slider on a dark background: a white circle on a white track. */
+.form-range-light {
+  @apply h-3 bg-transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+  cursor: grab;
+}
+
+.form-range-light::-webkit-slider-thumb {
+  @apply h-7 w-7 rounded-full border-2 border-primary-700 bg-white shadow-md;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: grab;
+}
+
+.form-range-light::-moz-range-thumb {
+  @apply h-7 w-7 rounded-full border-2 border-primary-700 bg-white shadow-md;
+  cursor: grab;
+}
+
+.form-range-light:focus-visible::-webkit-slider-thumb {
+  @apply ring-4 ring-white/50;
 }
 
 .form-range::-webkit-slider-thumb:active {

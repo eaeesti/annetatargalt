@@ -45,6 +45,19 @@ export interface StrapiButton {
   plausibleEvent: string | null;
 }
 
+export interface StrapiCostExample {
+  id: number;
+  label: string | null;
+  cost: number | null;
+  text: string | null;
+  oneText: string | null;
+  choiceText: string | null;
+  oneChoiceText: string | null;
+  icon: "toy" | "water" | "mosquito-net" | "medicine" | "children" | null;
+  note: string | null;
+  noteDetails: string | null;
+}
+
 export interface StrapiFooterColumn {
   id: number;
   title: string | null;
@@ -56,6 +69,19 @@ export interface StrapiImage {
   file: StrapiMedia | null;
   alt: string | null;
   decorative: boolean | null;
+}
+
+export interface StrapiIncomeFamily {
+  id: number;
+  name: string | null;
+  household: string | null;
+  home: string | null;
+  monthlyIncome: number | null;
+  description: string | null;
+  familyPhoto: StrapiImage | null;
+  homePhoto: StrapiImage | null;
+  sourceUrl: string | null;
+  hiddenOnPhones: boolean | null;
 }
 
 export interface StrapiLink {
@@ -290,6 +316,62 @@ export interface StrapiHeroSection {
   buttons: StrapiButton[];
 }
 
+export interface StrapiIncomeCalculatorSection {
+  id: number;
+  __component: "sections.income-calculator-section";
+  incomeLabel: string | null;
+  householdLabel: string | null;
+  adultText: string | null;
+  adultsText: string | null;
+  childText: string | null;
+  childrenText: string | null;
+  calculateButtonText: string | null;
+  privacyNote: string | null;
+  summaryText: string | null;
+  richerThanText: string | null;
+  lowIncomeTitle: string | null;
+  lowIncomeText: string | null;
+  costOfLivingText: string | null;
+  methodologyTitle: string | null;
+  methodology: string | null;
+  youText: string | null;
+  youCardTitle: string | null;
+  families: StrapiIncomeFamily[];
+  familyPerDayText: string | null;
+  familyPerMonthText: string | null;
+  familyCreditText: string | null;
+  multipleTitle: string | null;
+  multipleText: string | null;
+  medianText: string | null;
+  medianAmountText: string | null;
+  methodologyLinkText: string | null;
+  fairerTitle: string | null;
+  fairerSubtitle: string | null;
+  fairerText: string | null;
+  comparisonTitle: string | null;
+  comparisonQuestion: string | null;
+  popularExample: StrapiCostExample | null;
+  effectiveExample: StrapiCostExample | null;
+  versusText: string | null;
+  choiceQuestion: string | null;
+  effectiveGivingTitle: string | null;
+  effectiveGivingText: string | null;
+  organizationsTitle: string | null;
+  organizationsSubtitle: string | null;
+  causes: StrapiCause[];
+  readMoreText: string | null;
+  donateText: string | null;
+  ctaText: string | null;
+  ctaButton: StrapiButton | null;
+  shareText: string | null;
+  shareMessage: string | null;
+  facebookShareText: string | null;
+  twitterShareText: string | null;
+  blueskyShareText: string | null;
+  linkedinShareText: string | null;
+  sourcesText: string | null;
+}
+
 export interface StrapiMapSection {
   id: number;
   __component: "sections.map-section";
@@ -434,6 +516,7 @@ export type StrapiSection =
   | StrapiPartnerSection
   | StrapiForeignDonationSection
   | StrapiMapSection
+  | StrapiIncomeCalculatorSection
   | StrapiSpecialHeaderSection
   | StrapiCauseOrganizationsSection
   | StrapiEntityTextSection

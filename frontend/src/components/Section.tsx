@@ -23,6 +23,7 @@ import {
   DonationSection,
   FAQSection,
   ForeignDonationSection,
+  IncomeCalculatorSection,
   RedirectSection,
   StatsSection,
   ThankYouSection,
@@ -108,6 +109,8 @@ export default function Section({
       return <ForeignDonationSection {...section} global={global} />;
     case "sections.map-section":
       return <MapSection {...section} />;
+    case "sections.income-calculator-section":
+      return <IncomeCalculatorSection {...section} global={global} />;
     case "special-sections.special-header-section":
       return (
         entity && (
