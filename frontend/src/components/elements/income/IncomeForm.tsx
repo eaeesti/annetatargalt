@@ -44,7 +44,7 @@ function Stepper({
   const buttonClasses =
     "flex h-full w-12 shrink-0 cursor-pointer items-center justify-center rounded-md text-slate-500 hover:bg-slate-50 hover:text-primary-700 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary-600 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-500";
   return (
-    <div className="flex h-13 items-center rounded-md bg-white ring-1 ring-slate-300 ring-inset">
+    <div className="flex h-13 items-center rounded-md bg-white p-px ring-1 ring-slate-300 ring-inset">
       <button
         type="button"
         className={buttonClasses}

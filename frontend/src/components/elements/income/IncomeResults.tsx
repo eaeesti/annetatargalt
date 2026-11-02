@@ -143,7 +143,9 @@ export default function IncomeResults({
         donateLink={donateLink}
         locale={locale}
       />
-      <section className="flex flex-col items-center gap-10 px-4 py-20 text-center sm:py-28">
+      {/* On phones the buttons fill the width as an organization card's do,
+          with as much room at the sides as its contents have. */}
+      <section className="flex flex-col items-center gap-10 px-8 py-20 text-center xs:px-12 sm:px-4 sm:py-28">
         <h2 className="max-w-xl text-xl font-bold tracking-tight text-balance text-primary-700 xs:text-2xl md:text-3xl">
           {section.ctaText}
         </h2>
@@ -156,6 +158,7 @@ export default function IncomeResults({
             arrow={section.ctaButton.arrow}
             newTab={section.ctaButton.newTab}
             plausibleEvent={section.ctaButton.plausibleEvent}
+            className="w-full max-w-3xl sm:w-auto"
           />
         )}
         {section.shareText && (

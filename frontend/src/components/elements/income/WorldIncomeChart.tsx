@@ -141,12 +141,29 @@ function spread(centres: number[], width: number, tile: number): number[] {
   return result;
 }
 
+/**
+ * Tile centres moved together, as far apart as they are, so that the group
+ * is as near the middle of the width as it can be with each tile inside it.
+ */
+function centred(centres: number[], width: number, tile: number): number[] {
+  if (centres.length === 0) return centres;
+  const first = Math.min(...centres) - tile / 2;
+  const last = Math.max(...centres) + tile / 2;
+  const shift = Math.min(
+    Math.max(width / 2 - (first + last) / 2, -first),
+    width - last,
+  );
+  return centres.map((x) => x + shift);
+}
+
 interface FamilyProps {
   family: StrapiIncomeFamily;
   /** Where the family's tile is, as a CSS left. */
   left: string;
   /** The same, from 0 to 1, for where the card hangs. */
   share: number;
+  /** On phones, how far right of the tile the card is centred, in pixels. */
+  centreOffset?: number;
   perDayText: string | null;
   perMonthText: string | null;
   creditText: string | null;
@@ -157,6 +174,7 @@ function Family({
   family,
   left,
   share,
+  centreOffset,
   perDayText,
   perMonthText,
   creditText,
@@ -169,12 +187,13 @@ function Family({
     <HoverCard
       label={family.name ?? ""}
       share={share}
+      centreOffset={centreOffset}
       className={classes(
         "absolute top-6 -translate-x-1/2",
         family.hiddenOnPhones && "hidden sm:block",
       )}
       style={{ left }}
-      cardClassName="w-80"
+      cardClassName="w-80 max-sm:w-[calc(100vw-2rem)]"
       button={
         <Tile className="transition-transform group-hover:scale-105 group-focus-visible:ring-primary-600 group-data-open:ring-primary-600">
           <Image
@@ -187,7 +206,7 @@ function Family({
     >
       <Image
         data={family.homePhoto}
-        className="aspect-[4/3] w-full object-cover"
+        className="aspect-[4/3] w-full object-cover max-sm:aspect-video"
         sizes="320px"
       />
       <div className="flex flex-col gap-3 p-4">
@@ -309,44 +328,62 @@ export default function WorldIncomeChart({
     position: worldPercentileOfInternational(family.monthlyIncome ?? 0),
   }));
 
-  // The tiles under the chart start under their bars and are then moved
-  // apart where they'd cover each other, which takes the chart's width: until
-  // it's known, they stay under their bars.
+  // The tiles under the chart start under their bars and are moved apart
+  // where they'd cover each other, in a row as wide as the chart and the
+  // scale on its right together, the bars starting where it does. That takes both widths: until they're known,
+  // the tiles stay under their bars.
   const chartRef = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState<{ width: number; wide: boolean } | null>(
-    null,
-  );
+  const rowRef = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState<{
+    chart: number;
+    row: number;
+    wide: boolean;
+  } | null>(null);
   useEffect(() => {
     const chart = chartRef.current;
-    if (!chart) return;
+    const row = rowRef.current;
+    if (!chart || !row) return;
     const wide = window.matchMedia("(min-width: 640px)");
     const update = () =>
-      setSize({ width: chart.clientWidth, wide: wide.matches });
+      setSize({
+        chart: chart.clientWidth,
+        row: row.clientWidth,
+        wide: wide.matches,
+      });
     update();
     const observer = new ResizeObserver(update);
-    observer.observe(chart);
+    observer.observe(row);
     return () => observer.disconnect();
   }, []);
+  // On phones a tile's card is centred on the row, which is centred on the
+  // page, and as wide as it.
+  const centreOffset = (tileShare: number) =>
+    size && !size.wide ? size.row / 2 - tileShare * size.row : undefined;
 
   // The visitor's tile last, after the families shown at this width.
   const shown = placed.filter(
     ({ family }) => !size || size.wide || !family.hiddenOnPhones,
   );
   const shares = [...shown.map(({ position }) => shareOf(position)), share];
-  const tileShares = size
-    ? spread(
-        shares.map((x) => x * size.width),
-        size.width,
-        // The tiles are 3.5rem wide, 5rem from sm up.
-        size.wide ? 80 : 56,
-      ).map((x) => x / size.width)
-    : shares;
+  const from = shares.map((x) => x * (size?.chart ?? 0));
+  // The tiles are 3.5rem wide, 5rem from sm up.
+  const tile = size?.wide ? 80 : 56;
+  const spreadOut = size ? spread(from, size.row, tile) : from;
+  // Tiles that had to make room for each other and were pushed against an
+  // end of the row are moved, as a group, towards the middle, so that they
+  // don't bunch up at that end. Otherwise they stay as near their bars as
+  // they can.
+  const moved = spreadOut.some((x, index) => Math.abs(x - from[index]) > 0.5);
+  const atAnEnd =
+    size !== null &&
+    (Math.min(...spreadOut) <= tile / 2 + 0.5 ||
+      Math.max(...spreadOut) >= size.row - tile / 2 - 0.5);
+  const to =
+    size && moved && atAnEnd ? centred(spreadOut, size.row, tile) : spreadOut;
+  // Until the widths are known the tiles are under their bars, so the lines
+  // go straight down, but only in pixels can they turn.
+  const tileShares = size ? to.map((x) => x / size.row) : shares;
   const yourTileShare = tileShares[tileShares.length - 1];
-  // Until the width is known the tiles are under their bars, so the lines go
-  // straight down, but only in pixels can they turn.
-  const width = size?.width ?? 0;
-  const from = shares.map((x) => x * width);
-  const to = tileShares.map((x) => x * width);
   const turns = turnHeights(from, to);
   const links = shares.map((x, index) => ({
     key: index < shown.length ? String(shown[index].family.id) : "you",
@@ -361,127 +398,133 @@ export default function WorldIncomeChart({
     return index === -1 ? null : tileShares[index];
   };
   return (
-    <div className="relative mx-auto w-full max-w-6xl pr-20 pl-4 sm:pr-24 sm:pl-8">
-      <div
-        ref={chartRef}
-        className="relative flex h-48 items-end gap-px border-b border-slate-300 sm:h-80 sm:gap-0.5"
-        aria-hidden
-      >
-        {BARS.map((daily, index) => {
-          const bar = index + 1;
-          const isYours = bar === yours;
-          return (
-            <div
-              key={bar}
-              className={classes(
-                "relative flex-1 origin-bottom rounded-t-[1px] motion-safe:animate-grow-up",
-                isYours && "bg-primary-800",
-              )}
-              style={{
-                height: `${isYours ? Math.min(yourHeight, 100) : barHeight(daily)}%`,
-                backgroundColor: isYours
-                  ? undefined
-                  : barColor(index / (BARS.length - 1)),
-              }}
-            >
-              {isYours && (
-                <>
-                  <span className="absolute bottom-full left-1/2 h-6 w-0.5 -translate-x-1/2 bg-primary-800" />
-                  <span
-                    className="absolute bottom-full left-1/2 mb-6 text-lg font-semibold whitespace-nowrap text-primary-800"
-                    style={{ translate: inside }}
-                  >
-                    {youText}
-                  </span>
-                </>
-              )}
-            </div>
-          );
-        })}
-        <div className="absolute inset-y-0 left-full ml-1.5 sm:ml-3">
-          {scale.map(({ key, height, text, yours: isYours }) => (
-            <span
-              key={key}
-              className={classes(
-                "absolute left-0 translate-y-1/2 text-xs whitespace-nowrap sm:text-sm",
-                isYours ? "font-semibold text-primary-800" : "text-slate-500",
-              )}
-              style={{ bottom: `${height}%` }}
-            >
-              {text}
-            </span>
-          ))}
-        </div>
-      </div>
-      <div className="relative h-28 sm:h-36">
-        {/* From each bar down to its tile, turning sideways and down again
-            where the tile was moved. */}
-        <svg
-          className="absolute inset-x-0 top-0 h-6 w-full overflow-visible"
+    <div className="mx-auto w-full max-w-6xl">
+      <div className="relative pr-20 pl-4 sm:pr-24 sm:pl-8">
+        <div
+          ref={chartRef}
+          className="relative flex h-48 items-end gap-px border-b border-slate-300 sm:h-80 sm:gap-0.5"
           aria-hidden
         >
-          {links.map(({ key, d, x, yours: isYours }) => {
-            const stroke = {
-              className: isYours ? "stroke-primary-800" : "stroke-slate-300",
-              strokeWidth: isYours ? 2 : 1,
-            };
-            return d ? (
-              <path key={key} d={d} fill="none" {...stroke} />
-            ) : (
-              <line
+          {BARS.map((daily, index) => {
+            const bar = index + 1;
+            const isYours = bar === yours;
+            return (
+              <div
+                key={bar}
+                className={classes(
+                  "relative flex-1 origin-bottom rounded-t-[1px] motion-safe:animate-grow-up",
+                  isYours && "bg-primary-800",
+                )}
+                style={{
+                  height: `${isYours ? Math.min(yourHeight, 100) : barHeight(daily)}%`,
+                  backgroundColor: isYours
+                    ? undefined
+                    : barColor(index / (BARS.length - 1)),
+                }}
+              >
+                {isYours && (
+                  <>
+                    <span className="absolute bottom-full left-1/2 h-6 w-0.5 -translate-x-1/2 bg-primary-800" />
+                    <span
+                      className="absolute bottom-full left-1/2 mb-6 text-lg font-semibold whitespace-nowrap text-primary-800"
+                      style={{ translate: inside }}
+                    >
+                      {youText}
+                    </span>
+                  </>
+                )}
+              </div>
+            );
+          })}
+          <div className="absolute inset-y-0 left-full ml-1.5 sm:ml-3">
+            {scale.map(({ key, height, text, yours: isYours }) => (
+              <span
                 key={key}
-                x1={`${x * 100}%`}
-                y1="0"
-                x2={`${x * 100}%`}
-                y2="100%"
-                {...stroke}
+                className={classes(
+                  "absolute left-0 translate-y-1/2 text-xs whitespace-nowrap sm:text-sm",
+                  isYours ? "font-semibold text-primary-800" : "text-slate-500",
+                )}
+                style={{ bottom: `${height}%` }}
+              >
+                {text}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="px-4 sm:px-8">
+        <div ref={rowRef} className="relative h-28 sm:h-36">
+          {/* From each bar down to its tile, turning sideways and down again
+            where the tile was moved. */}
+          <svg
+            className="absolute inset-x-0 top-0 h-6 w-full overflow-visible"
+            aria-hidden
+          >
+            {links.map(({ key, d, x, yours: isYours }) => {
+              const stroke = {
+                className: isYours ? "stroke-primary-800" : "stroke-slate-300",
+                strokeWidth: isYours ? 2 : 1,
+              };
+              return d ? (
+                <path key={key} d={d} fill="none" {...stroke} />
+              ) : (
+                <line
+                  key={key}
+                  x1={`${x * 100}%`}
+                  y1="0"
+                  x2={`${x * 100}%`}
+                  y2="100%"
+                  {...stroke}
+                />
+              );
+            })}
+          </svg>
+          {placed.map(({ family, position }) => {
+            const tileShare = tileOf(family) ?? shareOf(position);
+            return (
+              <Family
+                key={family.id}
+                family={family}
+                left={`${tileShare * 100}%`}
+                share={tileShare}
+                centreOffset={centreOffset(tileShare)}
+                perDayText={perDayText}
+                perMonthText={perMonthText}
+                creditText={creditText}
+                locale={locale}
               />
             );
           })}
-        </svg>
-        {placed.map(({ family, position }) => {
-          const tileShare = tileOf(family) ?? shareOf(position);
-          return (
-            <Family
-              key={family.id}
-              family={family}
-              left={`${tileShare * 100}%`}
-              share={tileShare}
-              perDayText={perDayText}
-              perMonthText={perMonthText}
-              creditText={creditText}
-              locale={locale}
-            />
-          );
-        })}
-        <HoverCard
-          label={youText ?? ""}
-          share={yourTileShare}
-          className="absolute top-6 -translate-x-1/2"
-          style={{ left: `${yourTileShare * 100}%` }}
-          cardClassName="flex w-64 flex-col gap-3 p-4"
-          button={
-            <Tile className="bg-primary-700 transition-transform group-hover:scale-105 group-focus-visible:ring-primary-600 group-data-open:ring-primary-600">
-              <span className="flex h-full w-full items-center justify-center">
-                <UserGroupIcon className="h-6 w-6 text-white sm:h-8 sm:w-8" />
-              </span>
-            </Tile>
-          }
-        >
-          <div>
-            <p className="font-semibold text-slate-900">
-              {youCardTitle ?? youText}
-            </p>
-            <p>{household}</p>
-          </div>
-          <div>
-            <p className="text-xs">{incomeLabel}</p>
-            <p className="font-semibold text-slate-900">{income}</p>
-          </div>
-        </HoverCard>
+          <HoverCard
+            label={youText ?? ""}
+            share={yourTileShare}
+            centreOffset={centreOffset(yourTileShare)}
+            className="absolute top-6 -translate-x-1/2"
+            style={{ left: `${yourTileShare * 100}%` }}
+            cardClassName="flex w-64 flex-col gap-3 p-4 max-sm:w-[calc(100vw-2rem)]"
+            button={
+              <Tile className="bg-primary-700 transition-transform group-hover:scale-105 group-focus-visible:ring-primary-600 group-data-open:ring-primary-600">
+                <span className="flex h-full w-full items-center justify-center">
+                  <UserGroupIcon className="h-6 w-6 text-white sm:h-8 sm:w-8" />
+                </span>
+              </Tile>
+            }
+          >
+            <div>
+              <p className="font-semibold text-slate-900">
+                {youCardTitle ?? youText}
+              </p>
+              <p>{household}</p>
+            </div>
+            <div>
+              <p className="text-xs">{incomeLabel}</p>
+              <p className="font-semibold text-slate-900">{income}</p>
+            </div>
+          </HoverCard>
+        </div>
       </div>
       {caption && (
-        <p className="mx-auto max-w-3xl text-center text-sm text-balance text-slate-500">
+        <p className="mx-auto max-w-3xl px-4 text-center text-sm text-balance text-slate-500">
           {/* A sentence that doesn't fit after the one before goes to the
               next line whole, instead of breaking in the middle. */}
           {caption.split(/(?<=\.)\s+/).map((sentence, index) => (
