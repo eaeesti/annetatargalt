@@ -1,3 +1,4 @@
+import { estonianDay } from "../../../../utils/estonian-time";
 import type { Core } from "@strapi/strapi";
 import type { Context } from "koa";
 import { donationsRepository } from "../../../../db/repositories/donations.repository";
@@ -35,19 +36,11 @@ export default ({ strapi: _strapi }: { strapi: Core.Strapi }) => ({
 
     const finalized =
       q.finalized !== undefined ? String(q.finalized) === "true" : undefined;
-    const dateFromParsed = q.dateFrom
-      ? new Date(String(q.dateFrom))
-      : undefined;
-    const dateToParsed = q.dateTo ? new Date(String(q.dateTo)) : undefined;
-    const dateFrom =
-      dateFromParsed && !isNaN(dateFromParsed.getTime())
-        ? dateFromParsed
-        : undefined;
-    // `findWithFilters` treats `dateTo` as inclusive of the whole UTC day it
-    // falls on (see its doc comment) — so a bare "2026-06-30" correctly keeps
-    // donations made later that same day.
-    const dateTo =
-      dateToParsed && !isNaN(dateToParsed.getTime()) ? dateToParsed : undefined;
+    // Estonian days, written "2026-06-30"; anything else isn't a filter.
+    const day = (value: unknown) =>
+      typeof value === "string" && estonianDay(value) ? value : undefined;
+    const dateFrom = day(q.dateFrom);
+    const dateTo = day(q.dateTo);
     const donorId = q.donorId ? Number(q.donorId) : undefined;
     const transferId = q.transferId ? Number(q.transferId) : undefined;
     const hasTransfer =

@@ -598,17 +598,18 @@ describe("lastCompleteMonthRange", () => {
     const { priorStart, refStart, refEnd } = lastCompleteMonthRange(
       new Date("2026-03-17T09:00:00Z"),
     );
-    expect(iso(priorStart)).toBe("2026-01-01T00:00:00.000Z");
-    expect(iso(refStart)).toBe("2026-02-01T00:00:00.000Z");
-    expect(iso(refEnd)).toBe("2026-03-01T00:00:00.000Z");
+    // Estonian months: midnight in Tallinn is 22:00 UTC the day before
+    expect(iso(priorStart)).toBe("2025-12-31T22:00:00.000Z");
+    expect(iso(refStart)).toBe("2026-01-31T22:00:00.000Z");
+    expect(iso(refEnd)).toBe("2026-02-28T22:00:00.000Z");
   });
 
   it("crosses a year boundary", () => {
     const { priorStart, refStart, refEnd } = lastCompleteMonthRange(
       new Date("2026-01-15T09:00:00Z"),
     );
-    expect(iso(priorStart)).toBe("2025-11-01T00:00:00.000Z");
-    expect(iso(refStart)).toBe("2025-12-01T00:00:00.000Z");
-    expect(iso(refEnd)).toBe("2026-01-01T00:00:00.000Z");
+    expect(iso(priorStart)).toBe("2025-10-31T22:00:00.000Z");
+    expect(iso(refStart)).toBe("2025-11-30T22:00:00.000Z");
+    expect(iso(refEnd)).toBe("2025-12-31T22:00:00.000Z");
   });
 });

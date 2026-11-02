@@ -556,26 +556,37 @@ describe("DonationsRepository", () => {
   });
 
   describe("findWithFilters date range", () => {
-    it("dateTo includes donations later the same UTC day", async () => {
+    it("takes the days as Estonian ones, each included whole", async () => {
+      // 23:30 on 30 June in Tallinn
       const onTheDay = await createTestDonation({
-        datetime: new Date("2026-06-30T22:00:00Z"),
+        datetime: new Date("2026-06-30T20:30:00Z"),
         amount: 1000,
       });
-      await createTestDonation({
-        datetime: new Date("2026-07-01T00:00:00Z"),
+      // 00:30 on 1 July in Tallinn, though still 30 June in UTC
+      const nextDay = await createTestDonation({
+        datetime: new Date("2026-06-30T21:30:00Z"),
         amount: 2000,
       });
-
-      // A bare "to" day, as the admin date-range filter sends it — midnight
-      // UTC, same shape `new Date("2026-06-30")` produces.
-      const { data, total } = await donationsRepository.findWithFilters({
-        page: 1,
-        pageSize: 25,
-        dateTo: new Date("2026-06-30T00:00:00Z"),
+      // 23:30 on 31 May in Tallinn
+      await createTestDonation({
+        datetime: new Date("2026-05-31T20:30:00Z"),
+        amount: 3000,
       });
 
-      expect(total).toBe(1);
-      expect(data[0].id).toBe(onTheDay.id);
+      const june = await donationsRepository.findWithFilters({
+        page: 1,
+        pageSize: 25,
+        dateFrom: "2026-06-01",
+        dateTo: "2026-06-30",
+      });
+      const july = await donationsRepository.findWithFilters({
+        page: 1,
+        pageSize: 25,
+        dateFrom: "2026-07-01",
+      });
+
+      expect(june.data.map((d) => d.id)).toEqual([onTheDay.id]);
+      expect(july.data.map((d) => d.id)).toEqual([nextDay.id]);
     });
   });
 

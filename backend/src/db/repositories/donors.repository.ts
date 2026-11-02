@@ -1,3 +1,4 @@
+import { estonianDate, estonianMidnight } from "../../utils/estonian-time";
 import {
   eq,
   or,
@@ -22,7 +23,7 @@ export type RecurringStatus = "new" | "retained" | "churned" | "churnedAllTime";
 
 /**
  * [priorStart, refStart, refEnd) — the last complete calendar month (`ref`)
- * and the month immediately before it (`prior`), UTC. Fixed reference window
+ * and the month immediately before it (`prior`), in Estonian time. Fixed reference window
  * for the `recurringStatus` filter below: "new"/"retained"/"churned" as of
  * last month, the same per-donor definition
  * DashboardRepository.getRecurringChurn uses per-cohort (finalized donation
@@ -33,12 +34,11 @@ export function lastCompleteMonthRange(now: Date = new Date()): {
   refStart: Date;
   refEnd: Date;
 } {
-  const y = now.getUTCFullYear();
-  const m = now.getUTCMonth();
+  const { year, month } = estonianDate(now);
   return {
-    priorStart: new Date(Date.UTC(y, m - 2, 1)),
-    refStart: new Date(Date.UTC(y, m - 1, 1)),
-    refEnd: new Date(Date.UTC(y, m, 1)),
+    priorStart: estonianMidnight(year, month - 2),
+    refStart: estonianMidnight(year, month - 1),
+    refEnd: estonianMidnight(year, month),
   };
 }
 
