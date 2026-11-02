@@ -152,15 +152,18 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
 
       if (!result.ok) {
         if (result.reason === "has-donations") {
-          ctx.status = 409;
-          return ctx.send({
-            error: {
-              status: 409,
-              name: "ConflictError",
-              message:
-                "This code has donations linked to it — reassign or delete them first",
+          // The status goes with the body: ctx.send without one answers 200.
+          return ctx.send(
+            {
+              error: {
+                status: 409,
+                name: "ConflictError",
+                message:
+                  "This code has donations linked to it — reassign or delete them first",
+              },
             },
-          });
+            409,
+          );
         }
         if (result.reason === "not-found") {
           return ctx.notFound("Bank transaction not found");
