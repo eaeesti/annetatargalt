@@ -152,6 +152,14 @@ const nextConfig = {
         destination: "/kkk",
         permanent: false,
       },
+      // The income calculator was a site of its own, on a subdomain that now
+      // points here: all of it goes to the calculator's page.
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "kuirikassaoled.annetatargalt.ee" }],
+        destination: "https://annetatargalt.ee/kui-rikas-sa-oled",
+        permanent: true,
+      },
     ];
   },
 };
