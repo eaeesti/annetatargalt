@@ -12,7 +12,9 @@
     "node_modules/**",
     "out/**",
     "build/**",
-    "next-env.d.ts"
+    "next-env.d.ts",
+    // Umami's tracker, a pinned copy of the release's minified file, kept byte for byte.
+    "public/js/umami-[0-9]*.js"
   ],
   // The repo's TypeScript conventions (AGENTS.md): no `any` and no `!`
   // non-null assertions. Narrow the type instead.
