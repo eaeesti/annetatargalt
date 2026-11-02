@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { describeErrorResponse, getStrapiURL } from "../strapi";
+import { afterEach, describe, it, expect, vi } from "vitest";
+import { describeErrorResponse, fetchAllAPI, getStrapiURL } from "../strapi";
 
 describe("getStrapiURL", () => {
   it("returns base URL with empty path", () => {
@@ -33,5 +33,43 @@ describe("describeErrorResponse", () => {
   it("falls back to the status for JSON that isn't a Strapi error", async () => {
     const response = Response.json({ message: "nope" }, { status: 500 });
     expect(await describeErrorResponse(response)).toBe("500");
+  });
+});
+
+describe("fetchAllAPI", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("fetches every page of a collection, 100 entries at a time", async () => {
+    const asked: URLSearchParams[] = [];
+    vi.stubGlobal("fetch", async (url: string) => {
+      const params = new URL(url).searchParams;
+      asked.push(params);
+      const page = Number(params.get("pagination[page]"));
+      return Response.json({
+        data: [`entry ${page}`],
+        meta: { pagination: { page, pageSize: 100, pageCount: 3 } },
+      });
+    });
+
+    const entries = await fetchAllAPI<string>("/pages", { locale: "et" });
+
+    expect(entries).toEqual(["entry 1", "entry 2", "entry 3"]);
+    expect(asked.map((params) => params.get("pagination[pageSize]"))).toEqual([
+      "100",
+      "100",
+      "100",
+    ]);
+    expect(asked.every((params) => params.get("locale") === "et")).toBe(true);
+  });
+
+  it("stops after one page when the answer has no pagination", async () => {
+    let requests = 0;
+    vi.stubGlobal("fetch", async () => {
+      requests++;
+      return Response.json({ data: ["only"] });
+    });
+
+    expect(await fetchAllAPI<string>("/special-pages")).toEqual(["only"]);
+    expect(requests).toBe(1);
   });
 });
