@@ -41,13 +41,19 @@ export function validateIdCode(idCode: string): boolean {
 }
 
 /**
- * Validate an email string.
+ * Whether a string is an email address we send to: letters, digits and the
+ * usual symbols before the @, in parts joined by single dots, and a domain
+ * name with a top-level domain of two letters or more. Quoted local parts,
+ * comments and IP addresses as domains are valid in the standard but not
+ * from a donation form, and they're what mail libraries' address parsers
+ * have had bugs with.
  */
 export function validateEmail(string: string): boolean {
-  const emailRegex = new RegExp(
-    /^(([^<>()[\]\\.,;:\s@"]+(.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@(([[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}])|(([a-zA-Z-0-9]+.)+[a-zA-Z]{2,}))$/,
+  const local = /[^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*/.source;
+  const domain = /([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}/.source;
+  return (
+    string.length <= 254 && new RegExp(`^${local}@${domain}$`).test(string)
   );
-  return emailRegex.test(string);
 }
 
 /**
