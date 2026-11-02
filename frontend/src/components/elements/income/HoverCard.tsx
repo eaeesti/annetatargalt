@@ -12,6 +12,11 @@ interface HoverCardProps {
    * inside the chart.
    */
   share: number;
+  /**
+   * How far right of the button the card is centred instead, in pixels: on
+   * phones, where it's centred on the chart.
+   */
+  centreOffset?: number;
   className?: string;
   style?: React.CSSProperties;
   cardClassName?: string;
@@ -30,6 +35,7 @@ export default function HoverCard({
   button,
   children,
   share,
+  centreOffset,
   className,
   style,
   cardClassName,
@@ -83,7 +89,8 @@ export default function HoverCard({
   return (
     <div
       ref={ref}
-      className={classes(className, open && "z-30")}
+      // Over the rest of the chart, but under the sticky navigation bar.
+      className={classes(className, open && "z-5")}
       style={style}
       onPointerEnter={(event) => {
         if (event.pointerType === "mouse") setHovered(true);
@@ -117,7 +124,12 @@ export default function HoverCard({
         <div
           id={id}
           className="absolute bottom-full left-1/2 pb-3"
-          style={{ translate: `${-share * 100}% 0` }}
+          style={{
+            translate:
+              centreOffset === undefined
+                ? `${-share * 100}% 0`
+                : `calc(-50% + ${centreOffset}px) 0`,
+          }}
         >
           <div
             className={classes(
