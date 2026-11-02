@@ -1,3 +1,8 @@
+import {
+  estonianDate,
+  estonianMidnight,
+  isoDate,
+} from "../../utils/estonian-time";
 import { sql, type SQL } from "drizzle-orm";
 import { db, type Database } from "../client";
 
@@ -62,8 +67,8 @@ export type DashboardStats = {
    * Calendar-aligned period comparisons. Each period's `prior` is the
    * immediately preceding period of the same length (e.g. lastMonth.prior is
    * the month before last — not the same range as currentMonth.prior, which
-   * is last month). `from` (UTC, start of the period) lets the caller label
-   * the row with the actual month/quarter/year it covers.
+   * is last month). `from`, the Estonian date the period starts on, lets the
+   * caller label the row with the actual month/quarter/year it covers.
    */
   periods: {
     currentMonth: { current: PeriodStats; prior: PeriodStats; from: string };
@@ -77,24 +82,30 @@ export type DashboardStats = {
 
 type DateRange = [from: Date, to: Date];
 
-/** [start, end) of the calendar month `monthsAgo` months before `now`, UTC. */
+/** [start, end) of the Estonian calendar month `monthsAgo` months before `now`. */
 export function monthRange(now: Date, monthsAgo: number): DateRange {
-  const y = now.getUTCFullYear();
-  const m = now.getUTCMonth() - monthsAgo;
-  return [new Date(Date.UTC(y, m, 1)), new Date(Date.UTC(y, m + 1, 1))];
+  const { year, month } = estonianDate(now);
+  const m = month - monthsAgo;
+  return [estonianMidnight(year, m), estonianMidnight(year, m + 1)];
 }
 
-/** [start, end) of the calendar quarter `quartersAgo` quarters before `now`, UTC. */
+/** [start, end) of the Estonian calendar quarter `quartersAgo` quarters before `now`. */
 export function quarterRange(now: Date, quartersAgo: number): DateRange {
-  const y = now.getUTCFullYear();
-  const q = Math.floor(now.getUTCMonth() / 3) - quartersAgo;
-  return [new Date(Date.UTC(y, q * 3, 1)), new Date(Date.UTC(y, q * 3 + 3, 1))];
+  const { year, month } = estonianDate(now);
+  const q = Math.floor(month / 3) - quartersAgo;
+  return [estonianMidnight(year, q * 3), estonianMidnight(year, q * 3 + 3)];
 }
 
-/** [start, end) of the calendar year `yearsAgo` years before `now`, UTC. */
+/** [start, end) of the Estonian calendar year `yearsAgo` years before `now`. */
 export function yearRange(now: Date, yearsAgo: number): DateRange {
-  const y = now.getUTCFullYear() - yearsAgo;
-  return [new Date(Date.UTC(y, 0, 1)), new Date(Date.UTC(y + 1, 0, 1))];
+  const y = estonianDate(now).year - yearsAgo;
+  return [estonianMidnight(y, 0), estonianMidnight(y + 1, 0)];
+}
+
+/** "2026-10-01": the Estonian date a period starts on, which labels it. */
+function firstDay([from]: DateRange): string {
+  const { year, month, day } = estonianDate(from);
+  return isoDate(year, month, day);
 }
 
 /** Whether `column`, an organization's internal ID, is one of `ids`. */
@@ -479,32 +490,32 @@ export class DashboardRepository {
         currentMonth: {
           current: month0,
           prior: month1,
-          from: month0Range[0].toISOString(),
+          from: firstDay(month0Range),
         },
         lastMonth: {
           current: month1,
           prior: month2,
-          from: month1Range[0].toISOString(),
+          from: firstDay(month1Range),
         },
         currentQuarter: {
           current: quarter0,
           prior: quarter1,
-          from: quarter0Range[0].toISOString(),
+          from: firstDay(quarter0Range),
         },
         lastQuarter: {
           current: quarter1,
           prior: quarter2,
-          from: quarter1Range[0].toISOString(),
+          from: firstDay(quarter1Range),
         },
         currentYear: {
           current: year0,
           prior: year1,
-          from: year0Range[0].toISOString(),
+          from: firstDay(year0Range),
         },
         lastYear: {
           current: year1,
           prior: year2,
-          from: year1Range[0].toISOString(),
+          from: firstDay(year1Range),
         },
       },
     };

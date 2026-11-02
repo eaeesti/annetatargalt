@@ -1,8 +1,10 @@
+import { estonianDay } from "../../utils/estonian-time";
 import {
   eq,
   and,
   or,
   gte,
+  lt,
   lte,
   asc,
   desc,
@@ -120,11 +122,10 @@ export class DonationsRepository {
   /**
    * Paginated, sortable, filterable donations list for the admin panel.
    *
-   * `dateTo` is inclusive of the whole UTC day it falls on, regardless of its
-   * own time-of-day component — the admin date-range filter sends a bare day
-   * (e.g. midnight UTC for "2026-06-30"), and `donations.datetime` is a full
-   * timestamp, so a plain `<=` would silently drop anything on the 30th after
-   * midnight. Same convention as donationTransfersRepository.previewDateRange.
+   * `dateFrom` and `dateTo` are Estonian days, written "2026-06-30", and both
+   * are included whole: a gift at 23:30 on the 30th in Tallinn is on the
+   * 30th, one at 00:30 on the 1st isn't, though both are on the 30th in UTC.
+   * Same convention as donationTransfersRepository.previewDateRange.
    */
   async findWithFilters(options: {
     page: number;
@@ -132,8 +133,8 @@ export class DonationsRepository {
     sortBy?: string;
     sortDir?: "asc" | "desc";
     finalized?: boolean;
-    dateFrom?: Date;
-    dateTo?: Date;
+    dateFrom?: string;
+    dateTo?: string;
     donorId?: number;
     transferId?: number;
     hasTransfer?: boolean;
@@ -149,13 +150,10 @@ export class DonationsRepository {
     const conditions = [];
     if (options.finalized !== undefined)
       conditions.push(eq(donations.finalized, options.finalized));
-    if (options.dateFrom)
-      conditions.push(gte(donations.datetime, options.dateFrom));
-    if (options.dateTo) {
-      const dateToEndOfDay = new Date(options.dateTo);
-      dateToEndOfDay.setUTCHours(23, 59, 59, 999);
-      conditions.push(lte(donations.datetime, dateToEndOfDay));
-    }
+    const from = options.dateFrom ? estonianDay(options.dateFrom) : null;
+    if (from) conditions.push(gte(donations.datetime, from[0]));
+    const to = options.dateTo ? estonianDay(options.dateTo) : null;
+    if (to) conditions.push(lt(donations.datetime, to[1]));
     if (options.donorId !== undefined)
       conditions.push(eq(donations.donorId, options.donorId));
     if (options.transferId !== undefined)

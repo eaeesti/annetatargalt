@@ -1,4 +1,16 @@
-import { eq, desc, asc, sql, count, and, gte, lte, isNull } from "drizzle-orm";
+import { estonianDay } from "../../utils/estonian-time";
+import {
+  eq,
+  desc,
+  asc,
+  sql,
+  count,
+  and,
+  gte,
+  lt,
+  lte,
+  isNull,
+} from "drizzle-orm";
 import { db, type Database } from "../client";
 import {
   donationTransfers,
@@ -360,18 +372,22 @@ export class DonationTransfersRepository {
 
   /**
    * Finalized donations in a date window that are not yet on any transfer —
-   * the candidate list for building a new transfer round.
+   * the candidate list for building a new transfer round. The window is of
+   * Estonian days, "2026-02-01" to "2026-02-28", both included whole.
    */
   async previewDateRange(opts: { dateFrom: string; dateTo: string }) {
-    const from = new Date(opts.dateFrom);
-    const to = new Date(`${opts.dateTo}T23:59:59.999Z`);
+    const first = estonianDay(opts.dateFrom);
+    const last = estonianDay(opts.dateTo);
+    if (!first || !last) throw new Error("Dates must be written 2026-06-30");
+    const [from] = first;
+    const [, until] = last;
 
     const rows = await this.database.query.donations.findMany({
       where: and(
         eq(donations.finalized, true),
         isNull(donations.donationTransferId),
         gte(donations.datetime, from),
-        lte(donations.datetime, to),
+        lt(donations.datetime, until),
       ),
       orderBy: [asc(donations.datetime)],
       with: {

@@ -300,6 +300,28 @@ describe("DonationTransfersRepository", () => {
       ]);
     });
 
+    it("takes the window's days as Estonian ones", async () => {
+      // 00:30 on 1 February in Tallinn, still 31 January in UTC
+      const first = await createTestDonation({
+        finalized: true,
+        amount: 1000,
+        datetime: new Date("2026-01-31T22:30:00Z"),
+      });
+      // 00:30 on 1 March in Tallinn, still February in UTC
+      await createTestDonation({
+        finalized: true,
+        amount: 2000,
+        datetime: new Date("2026-02-28T22:30:00Z"),
+      });
+
+      const rows = await donationTransfersRepository.previewDateRange({
+        dateFrom: "2026-02-01",
+        dateTo: "2026-02-28",
+      });
+
+      expect(rows.map((r) => r.id)).toEqual([first.id]);
+    });
+
     it("flags reconciled donations", async () => {
       await createTestBankTransaction({
         archivingCode: "BTX",
