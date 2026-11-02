@@ -386,6 +386,16 @@ export class DonationsRepository {
     );
   }
 
+  /** Which of these bank lines (archiving codes) have a donation linked. */
+  async codesWithDonations(codes: string[]): Promise<string[]> {
+    if (codes.length === 0) return [];
+    const rows = await this.database
+      .selectDistinct({ code: donations.transactionId })
+      .from(donations)
+      .where(inArray(donations.transactionId, codes));
+    return rows.flatMap((r) => (r.code ? [r.code] : []));
+  }
+
   /**
    * Record the bank transaction ID (LHV "Arhiveerimistunnus") a donation was
    * reconciled against, and how the match was made.

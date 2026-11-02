@@ -640,6 +640,22 @@ describe("DonationsRepository", () => {
   });
 
   describe("reconciliation", () => {
+    it("codesWithDonations lists which of the given lines have a donation", async () => {
+      await createTestBankTransaction({ archivingCode: "LINE-A" });
+      await createTestBankTransaction({ archivingCode: "LINE-B" });
+      await createTestDonation({ transactionId: "LINE-A" });
+      await createTestDonation({ transactionId: "LINE-A" });
+
+      expect(
+        await donationsRepository.codesWithDonations([
+          "LINE-A",
+          "LINE-B",
+          "LINE-C",
+        ]),
+      ).toEqual(["LINE-A"]);
+      expect(await donationsRepository.codesWithDonations([])).toEqual([]);
+    });
+
     it("findForReconciliation returns finalized donations with donor ID code", async () => {
       const donor = await createTestDonor({ idCode: "39001010001" });
       await createTestDonation({
