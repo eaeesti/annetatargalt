@@ -212,9 +212,9 @@ function DonationForm({
     keptDraft.current = draft;
   }, [keepsDraft, link, stage, donation]);
 
-  const tipSize = 0.05;
+  const tipPercent = 5;
   const tipAmount = donation.addTip
-    ? Math.round(tipSize * donation.amount * 100) / 100
+    ? Math.round(tipPercent * donation.amount) / 100
     : 0;
   const totalAmount = Math.round((donation.amount + tipAmount) * 100) / 100;
 
@@ -297,7 +297,7 @@ function DonationForm({
     track("donation:submitted", {
       type: donation.type,
       amount: donation.amount,
-      tip: donation.addTip,
+      tip_percent: donation.addTip ? tipPercent : 0,
       payment_method: onetime
         ? donation.paymentMethod === "cardPayments"
           ? "card"

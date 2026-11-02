@@ -34,7 +34,8 @@ export interface Events {
     type: DonationType;
     /** Without the tip */
     amount: number;
-    tip: boolean;
+    /** The tip chosen, as a percentage of the amount: 0 without one */
+    tip_percent: number;
     /** One-off donations only */
     payment_method?: "bank" | "card";
     company: boolean;
