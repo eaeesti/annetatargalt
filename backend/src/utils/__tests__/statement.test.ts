@@ -129,6 +129,25 @@ describe("selectTemplate", () => {
   it("returns null when every template is newer than the payment", () => {
     expect(selectTemplate(templates, "2025-12-01")).toBeNull();
   });
+
+  it("prefers the newest template for the payment's amount", () => {
+    const tenEuros = template({
+      id: 4,
+      datetime: "2026-02-01T00:00:00Z",
+      amount: 1000,
+    });
+    const fiftyEuros = template({
+      id: 5,
+      datetime: "2026-03-01T00:00:00Z",
+      amount: 5000,
+    });
+    const both = [fiftyEuros, tenEuros];
+
+    expect(selectTemplate(both, "2026-04-10", 1000)?.id).toBe(4);
+    expect(selectTemplate(both, "2026-04-10", 5000)?.id).toBe(5);
+    // No template for the amount: the newest, as before
+    expect(selectTemplate(both, "2026-04-10", 2500)?.id).toBe(5);
+  });
 });
 
 // ─── planRecurringImport ─────────────────────────────────────────────────────
@@ -462,6 +481,18 @@ describe("categorizeStatement", () => {
     expect(report.reconcile).toHaveLength(0);
     expect(report.needsDecision).toHaveLength(1);
     expect(report.needsDecision[0].reason).toMatch(/matches 2 existing/);
+  });
+
+  it("a code more than one donor gives as theirs goes to needs-a-decision", () => {
+    const report = categorizeStatement(
+      baseInput({
+        transactions: [txn({ archivingCode: "CO", idOrRegCode: "10000000" })],
+        donorsByCode: new Map(),
+        contestedCodes: new Map([["10000000", 2]]),
+      }),
+    );
+    expect(report.recurringImports).toHaveLength(0);
+    expect(report.needsDecision[0].reason).toMatch(/2 donors give this code/);
   });
 
   it("recurring template with no org split → needs a decision, not a crash", () => {
