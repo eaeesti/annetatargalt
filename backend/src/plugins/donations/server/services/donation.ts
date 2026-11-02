@@ -206,7 +206,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     }
 
     for (const { organizationInternalId, amount } of donation.amounts) {
-      if (amount <= 0) {
+      if (!Number.isInteger(amount) || amount <= 0) {
         return {
           valid: false,
           reason: `Invalid organization amount: ${amount}`,

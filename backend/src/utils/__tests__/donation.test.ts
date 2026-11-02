@@ -48,6 +48,13 @@ describe("validateAmount", () => {
     expect(validateAmount(-1)).toBe(false);
   });
 
+  it("should return false for amounts that aren't whole cents", () => {
+    expect(validateAmount(19.99 * 100)).toBe(false); // 1998.9999999999998
+    expect(validateAmount(100.5)).toBe(false);
+    expect(validateAmount(Number.NaN)).toBe(false);
+    expect(validateAmount(Number.POSITIVE_INFINITY)).toBe(false);
+  });
+
   it("should return false for non-number types", () => {
     expect(validateAmount("100")).toBe(false);
     expect(validateAmount(null)).toBe(false);

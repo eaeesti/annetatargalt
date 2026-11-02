@@ -67,7 +67,8 @@ export default function ForeignDonationSection(
       email: donation.email,
       locale,
     };
-    donationData.amount = donation.amount * 100;
+    // Whole cents: 19.99 * 100 is 1998.9999999999998.
+    donationData.amount = Math.round(donation.amount * 100);
 
     const showError = (description: string) => {
       plausible("foreign-donation-error");
