@@ -285,7 +285,8 @@ export default function WorldIncomeChart({
     },
     {
       key: "richest",
-      height: 100,
+      // the visitor's own bar, when they're in the richest percent
+      height: yours === BARS.length ? Math.min(yourHeight, 100) : 100,
       text: withCurrency(`${formatNumber(richestFrom, locale)}+`, "€", locale),
     },
   ].filter(
