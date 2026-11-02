@@ -143,6 +143,31 @@ export async function fetchAPI<T>(
   }
 }
 
+/**
+ * Every entry of a collection. Strapi answers a list in pages, 25 entries
+ * long unless asked for more and at most 100, so a site with more pages,
+ * posts or organizations than that needs them all fetched.
+ */
+export async function fetchAllAPI<T>(
+  path: string,
+  urlParamsObject: Record<string, unknown> = {},
+  options: RequestInit = {},
+): Promise<T[]> {
+  const entries: T[] = [];
+  for (let page = 1; ; page++) {
+    const response = await fetchAPI<{
+      data?: T[];
+      meta?: { pagination?: { pageCount?: number } };
+    }>(
+      path,
+      { ...urlParamsObject, pagination: { page, pageSize: 100 } },
+      options,
+    );
+    entries.push(...(response.data ?? []));
+    if (page >= (response.meta?.pagination?.pageCount ?? 1)) return entries;
+  }
+}
+
 export async function getPageBySlug(
   slug: string,
   locale: Locale,
@@ -216,18 +241,14 @@ export async function getSpecialPages(
   const options = headersWithAuthToken();
   const urlParamsObject = { locale, populate: "*" };
 
-  const response = await fetchAPI<{ data: StrapiSpecialPage[] }>(
+  const specialPages = await fetchAllAPI<StrapiSpecialPage>(
     path,
     urlParamsObject,
     options,
   );
 
-  if (!response.data || response.data.length === 0) {
-    return [];
-  }
-
   // In Strapi v5, data is returned flat (not nested under attributes)
-  return response.data.filter(
+  return specialPages.filter(
     (page): page is SpecialPageWithPattern =>
       Boolean(page?.slugPattern) && Boolean(page?.collectionType),
   );
@@ -316,23 +337,22 @@ export async function getAllSlugs(locale: Locale): Promise<string[]> {
   const options = headersWithAuthToken();
   const urlParamsObject = { locale, populate: "*" };
 
-  const pagesResponse = await fetchAPI<{ data: StrapiPage[] }>(
+  const pages = await fetchAllAPI<StrapiPage>(
     pagesPath,
     urlParamsObject,
     options,
   );
   // In Strapi v5, data is returned flat (not nested under attributes)
   // Unlisted pages are reachable by their link only, so they're left out.
-  const pageSlugs =
-    pagesResponse.data?.flatMap((page) =>
-      page.slug && !page.metadata?.unlisted ? [page.slug] : [],
-    ) || [];
+  const pageSlugs = pages.flatMap((page) =>
+    page.slug && !page.metadata?.unlisted ? [page.slug] : [],
+  );
 
   const causesPath = "/causes";
-  const causesResponse = await fetchAPI<{
-    data: Array<{ slug: string; organizations?: Array<{ slug: string }> }>;
+  const causes = await fetchAllAPI<{
+    slug: string;
+    organizations?: Array<{ slug: string }>;
   }>(causesPath, urlParamsObject, options);
-  const causes = causesResponse.data || [];
   const causeSlugs = causes.map((cause) => cause.slug);
 
   const organizationSlugs = causes
@@ -364,18 +384,8 @@ export async function getBlogPosts(locale: Locale): Promise<StrapiBlogPost[]> {
   const options = headersWithAuthToken();
   const urlParamsObject = { locale, populate: "*", sort: "date:desc" };
 
-  const response = await fetchAPI<{ data: StrapiBlogPost[] }>(
-    path,
-    urlParamsObject,
-    options,
-  );
-
-  if (!response.data || response.data.length === 0) {
-    return [];
-  }
-
   // In Strapi v5, data is returned flat (not nested under attributes)
-  return response.data;
+  return fetchAllAPI<StrapiBlogPost>(path, urlParamsObject, options);
 }
 
 export async function getOrganizations(
@@ -396,16 +406,6 @@ export async function getOrganizations(
     },
   };
 
-  const response = await fetchAPI<{ data: StrapiOrganization[] }>(
-    path,
-    urlParamsObject,
-    options,
-  );
-
-  if (!response.data || response.data.length === 0) {
-    return [];
-  }
-
   // In Strapi v5, data is returned flat (already includes id)
-  return response.data;
+  return fetchAllAPI<StrapiOrganization>(path, urlParamsObject, options);
 }
