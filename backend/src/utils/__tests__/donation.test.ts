@@ -122,7 +122,19 @@ describe("validateEmail", () => {
   it("should handle edge cases", () => {
     expect(validateEmail("a@b.co")).toBe(true); // Minimal valid email (TLD must be 2+ chars)
     expect(validateEmail("a@b.c")).toBe(false); // Single-letter TLD not supported
-    expect(validateEmail("test@localhost")).toBe(true); // Localhost is actually valid per regex
+    expect(validateEmail("test@localhost")).toBe(false); // No top-level domain
+    expect(validateEmail("jüri.õun@example.ee")).toBe(true);
+  });
+
+  it("should reject what mail libraries' address parsers misread", () => {
+    expect(validateEmail('"a;b"@example.com')).toBe(false);
+    expect(validateEmail('"a>b"@example.com')).toBe(false);
+    expect(validateEmail("a(comment)@example.com")).toBe(false);
+    expect(validateEmail("a@[127.0.0.1]")).toBe(false);
+    expect(validateEmail("a..b@example.com")).toBe(false);
+    expect(validateEmail(".a@example.com")).toBe(false);
+    expect(validateEmail("a@examplexcom")).toBe(false);
+    expect(validateEmail(`${"a".repeat(250)}@example.com`)).toBe(false);
   });
 });
 
