@@ -57,6 +57,17 @@ export function proxy(request: NextRequest) {
     pathname === "/api/auth/google/callback";
 
   if (!token && !isLoginPage && !isPublicApiRoute) {
+    // A page's own request to the API is answered 401: fetch would follow a
+    // redirect to the sign-in page and get a 200, and a save would look
+    // done. Opening an API link in the browser, like an export, still goes
+    // to the sign-in page.
+    const isNavigation = request.headers.get("sec-fetch-mode") === "navigate";
+    if (pathname.startsWith("/api/") && !isNavigation) {
+      return NextResponse.json(
+        { error: "You've been signed out. Sign in again, then try once more." },
+        { status: 401 },
+      );
+    }
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
