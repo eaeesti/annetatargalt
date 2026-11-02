@@ -592,6 +592,31 @@ export function createStatementService(strapi: Core.Strapi) {
           );
         }
       }
+
+      // A line gets one donation: it can't be imported twice in one request,
+      // nor imported and also ignored or linked to an existing donation.
+      const importCodes = allImports.map((imp) => imp.archivingCode);
+      const linkedNow = new Set([
+        ...(payload.reconcile ?? []).map((r) => r.archivingCode),
+        ...(payload.cardPayoutAssignments ?? []).map((a) => a.archivingCode),
+      ]);
+      const seen = new Set<string>();
+      for (const code of importCodes) {
+        if (seen.has(code)) {
+          throw new Error(
+            `Code ${code} is imported twice — re-analyse and try again`,
+          );
+        }
+        if (ignoreByCode.has(code)) {
+          throw new Error(`Code ${code} can't be both imported and ignored`);
+        }
+        if (linkedNow.has(code)) {
+          throw new Error(
+            `Code ${code} can't both get a new donation and be linked to an existing one`,
+          );
+        }
+        seen.add(code);
+      }
       const cardPayoutByCode = new Map(
         (payload.cardPayouts ?? []).map((c) => [c.archivingCode, c]),
       );
@@ -739,6 +764,21 @@ export function createStatementService(strapi: Core.Strapi) {
         summary.directionsFilled = [...statementCodes].filter((code) =>
           undirectedCodes.has(code),
         ).length;
+
+        // A line that already has a donation isn't imported again. Without
+        // this, applying a statement twice (from a second tab, or Apply
+        // pressed again after a timeout) records its standing-order payments
+        // twice, and both copies are passed on to the organizations. It's
+        // checked here rather than with reconciledCodes above: upsertMany has
+        // just locked every line of the statement until this commits, so
+        // another Apply of it that's still running is waited for, and its
+        // donations are seen.
+        const [taken] = await donationsRepo.codesWithDonations(importCodes);
+        if (taken) {
+          throw new Error(
+            `Code ${taken} already has a donation — re-analyse and try again`,
+          );
+        }
 
         for (const imp of allImports) {
           const donation = await donationsRepo.create({
