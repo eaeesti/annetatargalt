@@ -530,15 +530,20 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
           donation.amount / 100,
         );
 
+    // Nothing waits for this email, so its failure is caught here: a
+    // rejected promise that nothing handles ends the whole Node process.
     setTimeout(
       () => {
-        if (externalDonation) {
-          this.sendExternalRecurringConfirmationEmail(
-            recurringDonationEntry.id,
+        const sending = externalDonation
+          ? this.sendExternalRecurringConfirmationEmail(
+              recurringDonationEntry.id,
+            )
+          : this.sendRecurringConfirmationEmail(recurringDonationEntry.id);
+        sending.catch((error: unknown) => {
+          strapi.log.error(
+            `Recurring donation ${recurringDonationEntry.id}'s confirmation email wasn't sent: ${String(error)}`,
           );
-        } else {
-          this.sendRecurringConfirmationEmail(recurringDonationEntry.id);
-        }
+        });
       },
       3 * 60 * 1000,
     );
