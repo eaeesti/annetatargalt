@@ -37,8 +37,8 @@ autoInstallPeers: false
 # - markdown-it: @strapi/content-manager pins 14.3.0; it is bundled into
 #   Strapi's admin panel.
 overrides:
-  markdown-it: ^14.3.1
-  nodemailer: ^10.0.13
+  markdown-it: ^14.3.3
+  nodemailer: ^10.1.4
 
 # Dependencies' install scripts run only when listed here as true; an unlisted
 # one fails the install until someone decides. All three are denied, and the
