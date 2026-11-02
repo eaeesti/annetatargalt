@@ -34,11 +34,11 @@
   },
   "dependencies": {
     "@fourlights/strapi-plugin-deep-populate": "^1.17.1",
-    "@strapi/plugin-users-permissions": "5.58.0",
-    "@strapi/provider-email-nodemailer": "5.58.0",
-    "@strapi/provider-upload-cloudinary": "5.58.0",
-    "@strapi/strapi": "5.58.0",
-    "@strapi/utils": "5.58.0",
+    "@strapi/plugin-users-permissions": "5.60.0",
+    "@strapi/provider-email-nodemailer": "5.60.0",
+    "@strapi/provider-upload-cloudinary": "5.60.0",
+    "@strapi/strapi": "5.60.0",
+    "@strapi/utils": "5.60.0",
     "csv-parse": "^7.0.3",
     "drizzle-orm": "0.45.4",
     "jose": "^6.2.12",
@@ -51,14 +51,14 @@
     "styled-components": "^6.6.0"
   },
   "devDependencies": {
-    "@strapi/typescript-utils": "5.58.0",
+    "@strapi/typescript-utils": "5.60.0",
     "@tsconfig/node18": "^18.2.7",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/koa": "^2.15.2",
     "@types/node": "^24.19.2",
     "@types/pg": "^8.23.1",
-    "@vitest/coverage-v8": "^4.1.11",
-    "@vitest/ui": "^4.1.11",
+    "@vitest/coverage-v8": "^4.1.12",
+    "@vitest/ui": "^4.1.12",
     "dotenv-cli": "^11.0.0",
     "drizzle-kit": "^0.31.11",
     "oxlint": "^1.88.0",
@@ -66,7 +66,7 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "vite": "^8.3.4",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.12"
   },
   "engines": {
     "node": ">=20.0.0 <=26.x.x"
