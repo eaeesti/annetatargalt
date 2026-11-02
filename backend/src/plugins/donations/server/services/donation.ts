@@ -116,6 +116,9 @@ function emailSummary(
 
 // ─── Service ─────────────────────────────────────────────────────────────────
 
+/** The most organizations one donation can be split between. */
+const MAX_ORGANIZATION_AMOUNTS = 50;
+
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
   async validateDonation(donation: DonationInput): Promise<ValidationResult> {
     if (!donation) {
@@ -205,6 +208,16 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       }
     }
 
+    // More than every organization there is, with the tip: a longer list
+    // isn't from the form, and each entry costs work to check.
+    if (
+      !Array.isArray(donation.amounts) ||
+      donation.amounts.length === 0 ||
+      donation.amounts.length > MAX_ORGANIZATION_AMOUNTS
+    ) {
+      return { valid: false, reason: "Invalid organization amounts" };
+    }
+
     for (const { organizationInternalId, amount } of donation.amounts) {
       if (!Number.isInteger(amount) || amount <= 0) {
         return {
@@ -213,26 +226,37 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         };
       }
 
-      if (!organizationInternalId) {
+      if (
+        !organizationInternalId ||
+        typeof organizationInternalId !== "string"
+      ) {
         return {
           valid: false,
           reason: "organizationInternalId is required",
         };
       }
+    }
 
-      const organizations = await strapi
-        .documents("api::organization.organization")
-        .findMany({
-          filters: { internalId: organizationInternalId },
-          fields: ["id", "active", "internalId"],
-          limit: 1,
-        });
-      const organization = organizations[0];
-
+    // All of them in one query, rather than one for each
+    const internalIds = [
+      ...new Set(donation.amounts.map((a) => a.organizationInternalId)),
+    ];
+    const organizations = await strapi
+      .documents("api::organization.organization")
+      .findMany({
+        filters: { internalId: { $in: internalIds } },
+        fields: ["id", "active", "internalId"],
+        // Room for an internal ID that more than one entry has by mistake
+        limit: internalIds.length * 4,
+      });
+    for (const internalId of internalIds) {
+      const organization = organizations.find(
+        (o) => o.internalId === internalId,
+      );
       if (!organization || !organization.active) {
         return {
           valid: false,
-          reason: `Not a valid organization: ${organizationInternalId}`,
+          reason: `Not a valid organization: ${internalId}`,
         };
       }
     }
