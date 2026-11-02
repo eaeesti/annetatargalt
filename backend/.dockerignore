@@ -1,0 +1,13 @@
+# Secrets, and copies of databases, never go into an image
+.env
+.env.*
+*.tar.gz
+*.log
+logs
+# Built or fetched again in the image
+node_modules
+dist
+.strapi
+.tmp
+coverage
+.DS_Store
