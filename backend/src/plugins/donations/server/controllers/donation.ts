@@ -186,13 +186,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       return ctx.badRequest("Donation not found");
     }
 
-    if (donation.finalized) {
-      return ctx.badRequest("Donation already finalized");
-    }
-
+    let finalized;
     try {
-      await donationsRepo.update(id, {
-        finalized: true,
+      finalized = await donationsRepo.finalize(id, {
         iban: decoded.customer_iban || "",
         paymentMethod: decoded.payment_method_name || "",
       });
@@ -201,23 +197,35 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       return ctx.badRequest("Failed to update donation");
     }
 
-    if (donation.externalDonation) {
-      await strapi
-        .plugin("donations")
-        .service("donation")
-        .sendExternalConfirmationEmail(id);
-    } else {
-      await strapi
-        .plugin("donations")
-        .service("donation")
-        .sendConfirmationEmail(id);
+    // Montonio can report a payment more than once, and two reports can
+    // arrive together. Only the one that finalized the donation sends its
+    // emails; the others are answered as done, so Montonio stops retrying.
+    if (!finalized) return ctx.send(null, 204);
+
+    // The donation is paid and recorded whatever happens to its emails, so a
+    // failure is logged rather than answered with an error: Montonio would
+    // only retry, and the retry would find the donation already finalized.
+    const service = strapi.plugin("donations").service("donation");
+    try {
+      if (donation.externalDonation) {
+        await service.sendExternalConfirmationEmail(id);
+      } else {
+        await service.sendConfirmationEmail(id);
+      }
+    } catch (error) {
+      strapi.log.error(
+        `Donation ${id}'s confirmation email wasn't sent: ${String(error)}`,
+      );
     }
 
     if (donation.dedicationEmail) {
-      await strapi
-        .plugin("donations")
-        .service("donation")
-        .sendDedicationEmail(id);
+      try {
+        await service.sendDedicationEmail(id);
+      } catch (error) {
+        strapi.log.error(
+          `Donation ${id}'s dedication email wasn't sent: ${String(error)}`,
+        );
+      }
     }
 
     // No content: what a bare send() already produced.

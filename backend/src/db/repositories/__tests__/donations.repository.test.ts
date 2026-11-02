@@ -159,6 +159,30 @@ describe("DonationsRepository", () => {
 
       expect(finalized.finalized).toBe(true);
     });
+
+    it("finalizes a donation once, with the payment's details", async () => {
+      const donation = await createTestDonation({ finalized: false });
+
+      const first = await donationsRepository.finalize(donation.id, {
+        iban: "EE000000000000000001",
+        paymentMethod: "Test bank",
+      });
+      const second = await donationsRepository.finalize(donation.id, {
+        iban: "EE000000000000000002",
+        paymentMethod: "Other bank",
+      });
+
+      expect(first).toMatchObject({
+        finalized: true,
+        iban: "EE000000000000000001",
+        paymentMethod: "Test bank",
+      });
+      expect(second).toBeUndefined();
+      expect(await donationsRepository.findById(donation.id)).toMatchObject({
+        iban: "EE000000000000000001",
+        paymentMethod: "Test bank",
+      });
+    });
   });
 
   describe("addToTransfer", () => {

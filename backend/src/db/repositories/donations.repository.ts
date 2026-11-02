@@ -334,10 +334,21 @@ export class DonationsRepository {
   }
 
   /**
-   * Finalize a donation (mark as completed)
+   * Mark a paid donation finalized, with what the payment says about it.
+   * Only one call can: the update matches the donation only while it isn't
+   * finalized, so of two notifications for one payment the second gets
+   * undefined back and knows the first one handled it.
    */
-  async finalize(id: number): Promise<Donation | undefined> {
-    return this.update(id, { finalized: true });
+  async finalize(
+    id: number,
+    payment: Pick<NewDonation, "iban" | "paymentMethod"> = {},
+  ): Promise<Donation | undefined> {
+    const [donation] = await this.database
+      .update(donations)
+      .set({ ...payment, finalized: true, updatedAt: new Date() })
+      .where(and(eq(donations.id, id), eq(donations.finalized, false)))
+      .returning();
+    return donation;
   }
 
   /**
