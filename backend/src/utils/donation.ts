@@ -11,12 +11,10 @@ export function amountToCents(amount: number): number {
 }
 
 /**
- * Validate donation amount (must be at least 1.00 EUR in cents).
+ * Validate a donation amount: whole cents, at least 1.00 EUR.
  */
 export function validateAmount(amount: number): boolean {
-  if (typeof amount !== "number") return false;
-
-  return amount >= 100;
+  return Number.isInteger(amount) && amount >= 100;
 }
 
 /**
