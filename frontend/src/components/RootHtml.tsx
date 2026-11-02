@@ -1,19 +1,11 @@
 import "@/app/globals.css";
-import PlausibleProvider from "next-plausible";
 // Both styles: with only the italic faces, upright text would get them too.
 // The family these declare is "Inter Variable", which --font-sans names.
 import "@fontsource-variable/inter/opsz.css";
 import "@fontsource-variable/inter/opsz-italic.css";
 import type { Locale } from "@/utils/locale";
 import { getStrapiURL } from "@/utils/strapi";
-
-// The script reads where to send events from data-api. React's types for a
-// script's props have no data-* attributes, so this is a variable: written
-// inline, the object would be rejected for having a property they don't know.
-const plausibleScriptProps = {
-  src: "/js/script.js",
-  "data-api": "/api/event",
-};
+import PlausiblePageviews from "./PlausiblePageviews";
 
 /** The document shell both languages' root layouts share. */
 export default function RootHtml({
@@ -33,9 +25,15 @@ export default function RootHtml({
         // oxlint-disable-next-line next/no-head-element
         <head>
           {plausibleDomain && (
-            <PlausibleProvider
-              domain={plausibleDomain}
-              scriptProps={plausibleScriptProps}
+            // A pinned copy of Plausible's manual script: it counts only what
+            // it's given (PlausiblePageviews, utils/analytics.ts), with the
+            // address the site gives it, which leaves out the query string.
+            // Its events go through the /api/event proxy in next.config.mjs.
+            <script
+              defer
+              src="/js/plausible-manual-37.js"
+              data-domain={plausibleDomain}
+              data-api="/api/event"
             />
           )}
           {umamiWebsiteId && (
@@ -57,7 +55,10 @@ export default function RootHtml({
           )}
         </head>
       )}
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        {plausibleDomain && <PlausiblePageviews />}
+        {children}
+      </body>
     </html>
   );
 }

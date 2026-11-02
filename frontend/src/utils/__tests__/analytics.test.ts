@@ -1,14 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { track } from "../analytics";
+import { analyticsUrl, track, trackPageview } from "../analytics";
 
 type Umami = NonNullable<Window["umami"]>;
+type Plausible = (eventName: string, options: { u: string }) => void;
 
-let plausible: ReturnType<typeof vi.fn<(eventName: string) => void>>;
+// The thank-you page, whose order token mustn't reach the analytics
+const PAGE = "https://example.org/aitah?order-token=SECRET&utm_source=mail";
+const COUNTED_AS = "https://example.org/aitah?utm_source=mail";
+
+let plausible: ReturnType<typeof vi.fn<Plausible>>;
 let umami: { track: ReturnType<typeof vi.fn<Umami["track"]>> };
 let onLoad: (() => void)[];
 
 function stubBrowser({ loaded = true, scripts = true } = {}) {
-  plausible = vi.fn<(eventName: string) => void>();
+  plausible = vi.fn<Plausible>();
   umami = { track: vi.fn<Umami["track"]>() };
   onLoad = [];
   vi.stubGlobal("window", {
@@ -18,6 +23,7 @@ function stubBrowser({ loaded = true, scripts = true } = {}) {
       onLoad.push(listener),
   });
   vi.stubGlobal("document", { readyState: loaded ? "complete" : "loading" });
+  vi.stubGlobal("location", { href: PAGE });
 }
 
 beforeEach(() => stubBrowser());
@@ -136,7 +142,7 @@ describe("track", () => {
   )("sends Plausible %s, the name it always had", (oldName, send) => {
     send();
 
-    expect(plausible.mock.calls).toEqual([[oldName]]);
+    expect(plausible.mock.calls).toEqual([[oldName, { u: COUNTED_AS }]]);
   });
 
   it("holds events from before the scripts ran until the page has loaded", () => {
@@ -146,7 +152,10 @@ describe("track", () => {
     track("page:not-found");
 
     // Plausible's queue is the one its script reads when it starts
-    expect(window.plausible?.q).toEqual([["donation-paid"], ["404"]]);
+    expect(window.plausible?.q).toEqual([
+      ["donation-paid", { u: COUNTED_AS }],
+      ["404", { u: COUNTED_AS }],
+    ]);
 
     window.umami = umami;
     for (const listener of onLoad) listener();
@@ -163,5 +172,30 @@ describe("track", () => {
     track("contact-form:sent");
 
     expect(onLoad).toHaveLength(0);
+  });
+});
+
+describe("trackPageview", () => {
+  it("counts the page in Plausible without its query string", () => {
+    trackPageview();
+
+    expect(plausible.mock.calls).toEqual([["pageview", { u: COUNTED_AS }]]);
+  });
+});
+
+describe("analyticsUrl", () => {
+  it.each([
+    [
+      "https://example.org/kui-rikas-sa-oled?income=4500&adults=2",
+      "https://example.org/kui-rikas-sa-oled",
+    ],
+    [
+      "https://example.org/?utm_source=a&utm_campaign=b&ref=c&x=1",
+      "https://example.org/?utm_source=a&utm_campaign=b&ref=c",
+    ],
+    ["https://example.org/kkk#tulumaks", "https://example.org/kkk"],
+    ["https://example.org/en", "https://example.org/en"],
+  ])("counts %s as %s", (href, counted) => {
+    expect(analyticsUrl(href)).toBe(counted);
   });
 });
