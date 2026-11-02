@@ -56,6 +56,30 @@ function allowRecurringSetup(ctx: Context, email: unknown): boolean {
   return true;
 }
 
+// A one-off donation sends no email until it's paid, but each one writes
+// rows and asks the payment provider for a payment page. A donor may try a
+// few times, with another bank or card; twenty an hour from one address is
+// more than that and far less than a script wants.
+const ONE_OFF_WINDOW_MS = 60 * 60 * 1000;
+const oneOffDonationsPerIp = new FixedWindowLimiter(20, ONE_OFF_WINDOW_MS);
+
+/**
+ * Consume one-off donation allowance for this request, or report that the
+ * caller is over it. Behind a proxy that hides donors' addresses there is no
+ * per-donor key, and nothing is limited (see isProxyAddress).
+ */
+function allowOneOffDonation(ctx: Context): boolean {
+  const ip = ctx.request.ip;
+  if (isProxyAddress(ip)) return true;
+  if (oneOffDonationsPerIp.isLimited(ip)) return false;
+  oneOffDonationsPerIp.record(ip);
+  return true;
+}
+
+const TOO_MANY_DONATIONS = {
+  error: "Too many donations from here. Try again in an hour.",
+};
+
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
   async donate(ctx: Context) {
     const donation = ctx.request.body;
@@ -70,6 +94,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         { error: "Too many recurring donation setups. Try again later." },
         429,
       );
+    }
+    if (donation?.type !== "recurring" && !allowOneOffDonation(ctx)) {
+      return ctx.send(TOO_MANY_DONATIONS, 429);
     }
 
     try {
@@ -105,6 +132,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         429,
       );
     }
+    if (ctx.request.body?.type !== "recurring" && !allowOneOffDonation(ctx)) {
+      return ctx.send(TOO_MANY_DONATIONS, 429);
+    }
 
     const globalConfig = await strapi
       .documents("api::global.global")
@@ -139,6 +169,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
   async donateForeign(ctx: Context) {
     const donation = ctx.request.body;
+    if (!allowOneOffDonation(ctx)) return ctx.send(TOO_MANY_DONATIONS, 429);
 
     try {
       const { redirectURL } = await strapi
