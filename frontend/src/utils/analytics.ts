@@ -73,9 +73,14 @@ type FailureReason = "network" | "server";
 
 type EventData = Record<string, string | number | boolean>;
 
+/** What Plausible's manual script takes with an event: the page's address */
+type PlausibleOptions = { u: string };
+
 declare global {
   interface Window {
-    plausible?: ((eventName: string) => void) & { q?: string[][] };
+    plausible?: ((eventName: string, options: PlausibleOptions) => void) & {
+      q?: [string, PlausibleOptions][];
+    };
     umami?: { track: (eventName: string, data?: EventData) => void };
   }
 }
@@ -90,15 +95,7 @@ export type EventArgs<E extends keyof Events> = Events[E] extends undefined
 
 export function track<E extends keyof Events>(name: E, ...args: EventArgs<E>) {
   if (typeof window === "undefined") return;
-  // Plausible's script is deferred, so events from a page that has only just
-  // loaded (the thank-you page, a 404) can come before it. They wait in the
-  // queue it sends when it starts.
-  const queue: string[][] = [];
-  window.plausible ??= Object.assign(
-    (eventName: string) => void queue.push([eventName]),
-    { q: queue },
-  );
-  for (const old of PLAUSIBLE_EVENTS[name](...args)) window.plausible(old);
+  for (const old of PLAUSIBLE_EVENTS[name](...args)) sendPlausible(old);
 
   // Umami's script has no queue, and won't start if window.umami is already
   // there. Deferred scripts run before the page's load event, so what comes
@@ -126,4 +123,41 @@ export function track<E extends keyof Events>(name: E, ...args: EventArgs<E>) {
     }
     umamiQueue.push([name, props]);
   }
+}
+
+/** Counts a pageview in Plausible. Umami's tracker counts its own. */
+export function trackPageview() {
+  if (typeof window === "undefined") return;
+  sendPlausible("pageview");
+}
+
+function sendPlausible(eventName: string) {
+  // Plausible's script is deferred, so events from a page that has only just
+  // loaded (the thank-you page, a 404) can come before it. They wait in the
+  // queue it sends when it starts.
+  const queue: [string, PlausibleOptions][] = [];
+  window.plausible ??= Object.assign(
+    (queued: string, options: PlausibleOptions) =>
+      void queue.push([queued, options]),
+    { q: queue },
+  );
+  window.plausible(eventName, { u: analyticsUrl(location.href) });
+}
+
+/**
+ * The address to count a page under: without its query string, which can
+ * hold what a visitor typed or a payment's order token (the thank-you page,
+ * the income calculator), except the campaign tags analytics read from it.
+ * public/js/umami-before-send.js does the same for Umami's tracker, which runs
+ * before this code has loaded.
+ */
+export function analyticsUrl(href: string) {
+  const url = new URL(href);
+  const kept = new URLSearchParams();
+  url.searchParams.forEach((value, key) => {
+    if (key.startsWith("utm_") || key === "ref") kept.append(key, value);
+  });
+  url.search = kept.toString();
+  url.hash = "";
+  return url.toString();
 }

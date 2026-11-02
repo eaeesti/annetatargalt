@@ -54,8 +54,9 @@ const contentSecurityPolicy = [
   "media-src 'self' https://res.cloudinary.com",
   "font-src 'self' data:",
   // Client components call Strapi directly (donate, donateForeign, contact,
-  // stats, decode). Plausible needs no entry: the rewrites below proxy
-  // /js/script.js and /api/event, so it is same-origin from the browser.
+  // stats, decode). Plausible needs no entry: its script is a copy served
+  // from here, and the rewrite below proxies /api/event, so it is same-origin
+  // from the browser.
   `connect-src 'self' ${strapiOrigin}${isDev ? " ws:" : ""}`,
   // The cause pages embed charts, and iframe is the one tag added to the
   // sanitiser's allowlist. The sanitiser cannot police where an iframe points,
@@ -125,10 +126,6 @@ const nextConfig = {
   },
   async rewrites() {
     return [
-      {
-        source: "/js/script.js",
-        destination: "https://plausible.io/js/script.js",
-      },
       {
         source: "/api/event",
         destination: "https://plausible.io/api/event",
