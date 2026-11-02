@@ -259,15 +259,18 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
       const result = await service.remove(id);
       if (!result.ok) {
         if (result.reason === "has-links") {
-          ctx.status = 409;
-          return ctx.send({
-            error: {
-              status: 409,
-              name: "ConflictError",
-              message:
-                "This transfer still has donations or bank payments linked — unlink them first",
+          // The status goes with the body: ctx.send without one answers 200.
+          return ctx.send(
+            {
+              error: {
+                status: 409,
+                name: "ConflictError",
+                message:
+                  "This transfer still has donations or bank payments linked — unlink them first",
+              },
             },
-          });
+            409,
+          );
         }
         return ctx.notFound("Transfer not found");
       }
