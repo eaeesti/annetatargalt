@@ -55,6 +55,11 @@ export interface StatementInput {
   undirectedCodes?: Set<string>;
   /** idCode OR company code → that donor and their templates (newest first) */
   donorsByCode: Map<string, DonorTemplates>;
+  /**
+   * Codes more than one donor gives as theirs, and how many: a company code
+   * anyone can type into the form. A payment from one is the team's to place.
+   */
+  contestedCodes?: Map<string, number>;
 }
 
 // ─── Report ──────────────────────────────────────────────────────────────────
@@ -143,14 +148,23 @@ export function parsePayoutUuidPrefix(description: string): string | null {
 
 // ─── Recurring import planning ─────────────────────────────────────────────
 
-/** First template created on/before the transaction date (+24h grace). */
+/**
+ * The template a payment is made by: of those created on or before its date
+ * (with 24h of grace), the newest for the same amount, or else the newest.
+ * A donor can have two standing orders at once, or a new amount whose
+ * standing order the bank hasn't changed yet, and the amount tells which.
+ */
 export function selectTemplate(
   templates: RecurringTemplate[],
   transactionDate: string,
+  amountCents?: number,
 ): RecurringTemplate | null {
   const limit =
     Date.parse(`${transactionDate.slice(0, 10)}T00:00:00Z`) + 86_400_000;
-  return templates.find((t) => Date.parse(t.datetime) <= limit) ?? null;
+  const predating = templates.filter((t) => Date.parse(t.datetime) <= limit);
+  return (
+    predating.find((t) => t.amount === amountCents) ?? predating[0] ?? null
+  );
 }
 
 export function planRecurringImport(
@@ -486,6 +500,16 @@ export function categorizeStatement(input: StatementInput): StatementReport {
     }
 
     // Step 3: recurring import.
+    const contested = txn.idOrRegCode
+      ? input.contestedCodes?.get(txn.idOrRegCode)
+      : undefined;
+    if (contested) {
+      report.needsDecision.push({
+        transaction: txn,
+        reason: `${contested} donors give this code as theirs — assign one manually`,
+      });
+      continue;
+    }
     const donor = txn.idOrRegCode
       ? input.donorsByCode.get(txn.idOrRegCode)
       : undefined;
@@ -497,7 +521,11 @@ export function categorizeStatement(input: StatementInput): StatementReport {
         });
         continue;
       }
-      const template = selectTemplate(donor.templates, txn.date);
+      const template = selectTemplate(
+        donor.templates,
+        txn.date,
+        txn.amountCents,
+      );
       if (!template) {
         report.needsDecision.push({
           transaction: txn,

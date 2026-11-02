@@ -319,6 +319,8 @@ export function parseApplyPayload(raw: unknown): ApplyPayload {
 interface DonorTemplateIndex {
   /** idCode / company code / learned alias → donor + templates */
   byCode: Map<string, DonorTemplates>;
+  /** codes more than one donor gives as theirs → how many */
+  contestedCodes: Map<string, number>;
   /** donor id → templates, newest first */
   byDonor: Map<number, RecurringTemplate[]>;
   /** donor id → display name */
@@ -372,22 +374,39 @@ async function loadDonorTemplates(): Promise<DonorTemplateIndex> {
       [d.firstName, d.lastName].filter(Boolean).join(" ") || `#${d.id}`,
     ]),
   );
-  const byCode = new Map<string, DonorTemplates>();
+  // Which donors give each code as theirs. A company code is whatever the
+  // form was given, so two donors can name the same one; then no payment
+  // from it is placed automatically, and the team decides.
+  const claimants = new Map<string, Set<number>>();
+  const claim = (code: string, donorId: number) => {
+    const donors = claimants.get(code) ?? new Set<number>();
+    donors.add(donorId);
+    claimants.set(code, donors);
+  };
   for (const [donorId, tmpls] of byDonor) {
     const donor = donorById.get(donorId);
-    if (donor?.idCode) byCode.set(donor.idCode, { donorId, templates: tmpls });
-    for (const t of tmpls) {
-      if (t.companyCode)
-        byCode.set(t.companyCode, { donorId, templates: tmpls });
+    if (donor?.idCode) claim(donor.idCode, donorId);
+    for (const t of tmpls) if (t.companyCode) claim(t.companyCode, donorId);
+  }
+  const byCode = new Map<string, DonorTemplates>();
+  const contestedCodes = new Map<string, number>();
+  for (const [code, donorIds] of claimants) {
+    const [donorId] = donorIds;
+    if (donorIds.size > 1) contestedCodes.set(code, donorIds.size);
+    else if (donorId !== undefined) {
+      byCode.set(code, { donorId, templates: byDonor.get(donorId) ?? [] });
     }
   }
-  // learned aliases (foreign codes etc.) — only useful if that donor has a template
+  // learned aliases (foreign codes etc.) — only useful if that donor has a
+  // template. The team set them, so they settle a contested code too.
   for (const [senderCode, donorId] of aliases) {
     const tmpls = byDonor.get(donorId);
-    if (tmpls && tmpls.length > 0)
+    if (tmpls && tmpls.length > 0) {
       byCode.set(senderCode, { donorId, templates: tmpls });
+      contestedCodes.delete(senderCode);
+    }
   }
-  return { byCode, byDonor, donorName };
+  return { byCode, contestedCodes, byDonor, donorName };
 }
 
 /**
@@ -402,7 +421,11 @@ function planFromTemplateIndex(
   preferredTemplateId?: number,
 ): RecurringImport {
   const templates = index.byDonor.get(donorId) ?? [];
-  const dated = selectTemplate(templates, transaction.date);
+  const dated = selectTemplate(
+    templates,
+    transaction.date,
+    transaction.amountCents,
+  );
   // honour the client's template choice only if it's this donor's AND it also
   // predates the payment; otherwise fall back to the date-selected one
   const preferred =
@@ -469,6 +492,7 @@ export function createStatementService(strapi: Core.Strapi) {
         unimportedCodes,
         undirectedCodes,
         donorsByCode: index.byCode,
+        contestedCodes: index.contestedCodes,
       });
 
       // ── enrichment for the review UI (no extra queries) ───────────────────
