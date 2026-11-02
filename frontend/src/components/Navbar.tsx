@@ -79,7 +79,7 @@ export default function Navbar({ global, languageSwitchHref }: NavbarProps) {
                 href={navbar.ctaButton.href}
                 arrow={navbar.ctaButton.arrow}
                 newTab={navbar.ctaButton.newTab}
-                plausibleEvent={navbar.ctaButton.plausibleEvent}
+                analyticsId={navbar.ctaButton.plausibleEvent}
               />
             )}
           </div>
@@ -116,7 +116,7 @@ export default function Navbar({ global, languageSwitchHref }: NavbarProps) {
                 href={navbar.ctaButton.href}
                 arrow={navbar.ctaButton.arrow}
                 newTab={navbar.ctaButton.newTab}
-                plausibleEvent={navbar.ctaButton.plausibleEvent}
+                analyticsId={navbar.ctaButton.plausibleEvent}
               />
             )}
             <button

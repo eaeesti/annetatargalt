@@ -2,10 +2,12 @@ import { isRecord } from "./object";
 import Proportions from "./proportions";
 import type { ProportionEntry, ProportionKey } from "./proportions";
 
+export type DonationType = "onetime" | "recurring";
+
 /** What a visitor has entered in the donation form. */
 export interface DonationState {
   amount: number;
-  type: string;
+  type: DonationType;
   firstName: string;
   lastName: string;
   email: string;

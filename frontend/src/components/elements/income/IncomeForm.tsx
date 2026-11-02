@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MinusIcon, PlusIcon } from "@heroicons/react/20/solid";
 import Button from "../Button";
+import { track } from "@/utils/analytics";
 import {
   MAX_ADULTS,
   MAX_CHILDREN,
@@ -102,7 +103,9 @@ export default function IncomeForm({
       className="flex w-full max-w-sm flex-col gap-6 sm:max-w-lg"
       onSubmit={(event) => {
         event.preventDefault();
-        if (income) onSubmit({ income, adults, children });
+        if (!income) return;
+        track("income:calculated", { adults, children });
+        onSubmit({ income, adults, children });
       }}
     >
       <fieldset>
@@ -159,7 +162,6 @@ export default function IncomeForm({
         className="w-full"
         text={section.calculateButtonText}
         disabled={!income}
-        plausibleEvent="income-calculated"
       />
       <p className="text-center text-sm text-slate-500">
         {section.privacyNote}

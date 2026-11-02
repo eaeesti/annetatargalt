@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePlausible } from "next-plausible";
+import { track } from "@/utils/analytics";
 import { fetcher } from "@/utils/react";
 import Markdown from "../elements/Markdown";
 import { useSearchParams } from "next/navigation";
@@ -63,7 +63,6 @@ export default function ThankYouSection({
   global,
 }: ThankYouSectionProps) {
   const router = useRouter();
-  const plausible = usePlausible();
   const locale = localeOf(global);
 
   const searchParams = useSearchParams();
@@ -92,8 +91,13 @@ export default function ThankYouSection({
   useEffect(() => {
     if (!decoded?.donation) return;
     clearDonationDraft();
-    if (notCountedYet(decoded.donation.id)) plausible("donation-paid");
-  }, [decoded, plausible]);
+    if (notCountedYet(decoded.donation.id)) {
+      track("donation:paid", {
+        revenue: decoded.donation.amount / 100,
+        currency: "EUR",
+      });
+    }
+  }, [decoded]);
 
   if (isLoading || !decoded?.donation) return <LoadingSection />;
 

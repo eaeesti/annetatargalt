@@ -50,7 +50,7 @@ export default function PowerSection({
                         href={column.button.href}
                         arrow={column.button.arrow}
                         newTab={column.button.newTab}
-                        plausibleEvent={column.button.plausibleEvent}
+                        analyticsId={column.button.plausibleEvent}
                       />
                     </div>
                   )}

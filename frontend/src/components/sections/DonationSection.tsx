@@ -30,7 +30,7 @@ import PaymentSummary from "../elements/forms/PaymentSummary";
 import Modal from "../Modal";
 import type { ModalData } from "../Modal";
 import CompanyInput from "../elements/forms/CompanyInput";
-import { usePlausible } from "next-plausible";
+import { track } from "@/utils/analytics";
 import DedicationInput from "../elements/forms/DedicationInput";
 import PaymentMethodChooser from "../elements/forms/PaymentMethodChooser";
 import type {
@@ -123,7 +123,6 @@ function DonationForm({
   ...props
 }: DonationFormProps) {
   const router = useRouter();
-  const plausible = usePlausible();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState<ModalData>({});
@@ -256,8 +255,8 @@ function DonationForm({
       donationData.dedicationMessage = donation.dedicationMessage;
     }
 
-    const showError = (description: string) => {
-      plausible("donation-error");
+    const showError = (reason: "network" | "server", description: string) => {
+      track("donation:failed", { type: donation.type, reason });
       showModal({
         icon: "error",
         title: props.global.errorText ?? "Error",
@@ -270,12 +269,12 @@ function DonationForm({
       response = await makeDonationRequest(donationData);
     } catch (error) {
       // Offline, or the request never got an answer.
-      showError(String(error));
+      showError("network", String(error));
       return;
     }
 
     if (!response.ok) {
-      showError(await describeErrorResponse(response));
+      showError("server", await describeErrorResponse(response));
       return;
     }
 
@@ -287,11 +286,28 @@ function DonationForm({
     } else {
       // monthly: the donation is saved and the donor gets the standing
       // order's details
-      plausible("donation-recurring-created");
+      track("recurring-donation:created", { amount: donation.amount });
       clearDonationDraft();
       setDonated(true);
     }
   };
+
+  function trackSubmitted() {
+    const onetime = donation.type === "onetime";
+    track("donation:submitted", {
+      type: donation.type,
+      amount: donation.amount,
+      tip: donation.addTip,
+      payment_method: onetime
+        ? donation.paymentMethod === "cardPayments"
+          ? "card"
+          : "bank"
+        : undefined,
+      company: donation.companyDonation,
+      dedication: onetime && donation.dedicateDonation,
+      from_link: linkType !== null || linkOrg !== null,
+    });
+  }
 
   const summaryText =
     donation.type === "recurring"
@@ -352,7 +368,10 @@ function DonationForm({
                 type="primary"
                 size="md"
                 onClick={() => {
-                  plausible("donation-info-stage");
+                  track("donation-form:step-opened", {
+                    step: "info",
+                    type: donation.type,
+                  });
                   setStage(1);
                 }}
                 disabled={!stageValidity[0]}
@@ -443,7 +462,10 @@ function DonationForm({
                 type="primary"
                 size="lg"
                 onClick={() => {
-                  plausible("donation-support-stage");
+                  track("donation-form:step-opened", {
+                    step: "support",
+                    type: donation.type,
+                  });
                   setStage(2);
                 }}
                 disabled={!stageValidity[1]}
@@ -474,7 +496,10 @@ function DonationForm({
                 type="primary"
                 size="lg"
                 onClick={() => {
-                  plausible("donation-summary-stage");
+                  track("donation-form:step-opened", {
+                    step: "summary",
+                    type: donation.type,
+                  });
                   setStage(3);
                 }}
                 buttonType="submit"
@@ -536,7 +561,7 @@ function DonationForm({
                 type="primary"
                 size="lg"
                 onClick={() => {
-                  plausible("donation-clicked");
+                  trackSubmitted();
                   donate();
                 }}
                 disabled={!stageValidity[2]}

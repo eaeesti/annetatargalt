@@ -1,8 +1,10 @@
+import type { DonationType } from "@/utils/donation-draft";
+
 interface OptionProps {
-  id: string;
+  id: DonationType;
   label: string | null;
-  donationType: string;
-  setDonationType: (type: string) => void;
+  donationType: DonationType;
+  setDonationType: (type: DonationType) => void;
 }
 
 function Option({ id, label, donationType, setDonationType }: OptionProps) {
@@ -27,8 +29,8 @@ function Option({ id, label, donationType, setDonationType }: OptionProps) {
 }
 
 interface DonationTypeChooserProps {
-  donationType: string;
-  setDonationType: (type: string) => void;
+  donationType: DonationType;
+  setDonationType: (type: DonationType) => void;
   label: string | null;
   recurringDonationText: string | null;
   singleDonationText: string | null;

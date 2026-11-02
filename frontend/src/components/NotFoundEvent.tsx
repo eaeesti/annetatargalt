@@ -1,18 +1,17 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePlausible } from "next-plausible";
+import { track } from "@/utils/analytics";
 
 /**
- * Counts the visit in Plausible's "404" goal, which lists the paths that
- * were asked for: broken links, on the site or elsewhere, show up there.
+ * Counts the visit as "page:not-found". The event carries the page's address,
+ * so its pages in the analytics list the broken links, on the site or
+ * elsewhere.
  */
 export default function NotFoundEvent() {
-  const plausible = usePlausible();
-
   useEffect(() => {
-    plausible("404");
-  }, [plausible]);
+    track("page:not-found");
+  }, []);
 
   return null;
 }
