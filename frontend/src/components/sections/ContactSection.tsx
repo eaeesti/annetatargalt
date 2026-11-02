@@ -3,7 +3,7 @@
 import { EnvelopeIcon } from "@heroicons/react/24/outline";
 import Markdown from "../elements/Markdown";
 import { useState } from "react";
-import { usePlausible } from "next-plausible";
+import { track } from "@/utils/analytics";
 import Button from "../elements/Button";
 import { describeErrorResponse, getStrapiURL } from "@/utils/strapi";
 import Modal from "../Modal";
@@ -18,7 +18,6 @@ interface ContactSectionProps extends StrapiContactSection {
 }
 
 export default function ContactSection(props: ContactSectionProps) {
-  const plausible = usePlausible();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState<ModalData>({});
 
@@ -56,7 +55,7 @@ export default function ContactSection(props: ContactSectionProps) {
     }
 
     if (response.ok) {
-      plausible("contact-form-sent");
+      track("contact-form:sent");
       setData({});
       showModal({
         icon: "success",

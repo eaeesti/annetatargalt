@@ -53,7 +53,7 @@ export default function TextWithImageSection({
                   href={button.href}
                   arrow={button.arrow}
                   newTab={button.newTab}
-                  plausibleEvent={button.plausibleEvent}
+                  analyticsId={button.plausibleEvent}
                   className={button.className}
                 />
               ))}

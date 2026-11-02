@@ -15,7 +15,7 @@ import { localeOf } from "@/utils/locale";
 import Modal from "../Modal";
 import type { ModalData } from "../Modal";
 import { useRouter } from "next/navigation";
-import { usePlausible } from "next-plausible";
+import { track } from "@/utils/analytics";
 import type {
   StrapiGlobal,
   StrapiForeignDonationSection,
@@ -29,7 +29,6 @@ export default function ForeignDonationSection(
   props: ForeignDonationSectionProps,
 ) {
   const router = useRouter();
-  const plausible = usePlausible();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState<ModalData>({});
 
@@ -70,8 +69,8 @@ export default function ForeignDonationSection(
     // Whole cents: 19.99 * 100 is 1998.9999999999998.
     donationData.amount = Math.round(donation.amount * 100);
 
-    const showError = (description: string) => {
-      plausible("foreign-donation-error");
+    const showError = (reason: "network" | "server", description: string) => {
+      track("foreign-donation:failed", { reason });
       showModal({
         icon: "error",
         title: props.global.errorText ?? "Error",
@@ -84,12 +83,12 @@ export default function ForeignDonationSection(
       response = await makeForeignDonationRequest(donationData);
     } catch (error) {
       // Offline, or the request never got an answer.
-      showError(String(error));
+      showError("network", String(error));
       return;
     }
 
     if (!response.ok) {
-      showError(await describeErrorResponse(response));
+      showError("server", await describeErrorResponse(response));
       return;
     }
 
@@ -151,7 +150,7 @@ export default function ForeignDonationSection(
             type="primary"
             size="lg"
             onClick={() => {
-              plausible("foreign-donation-clicked");
+              track("foreign-donation:submitted", { amount: donation.amount });
               donate();
             }}
             buttonType="submit"

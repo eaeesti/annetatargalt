@@ -3,7 +3,7 @@
 import { classes } from "@/utils/react";
 import { ArrowLongRightIcon } from "@heroicons/react/20/solid";
 import Anchor from "./Anchor";
-import { usePlausible } from "next-plausible";
+import { track } from "@/utils/analytics";
 
 export interface ButtonProps {
   text?: string | null;
@@ -16,7 +16,8 @@ export interface ButtonProps {
   className?: string;
   children?: React.ReactNode;
   buttonType?: "button" | "submit" | "reset";
-  plausibleEvent?: string | null;
+  /** Counts clicks as "button:clicked" with this id; from the CMS's "plausibleEvent" field */
+  analyticsId?: string | null;
   disabled?: boolean;
   noIcon?: boolean;
   title?: string | null;
@@ -33,13 +34,11 @@ export default function Button({
   className = "",
   children,
   buttonType = "button",
-  plausibleEvent,
+  analyticsId,
   disabled,
   noIcon,
   title,
 }: ButtonProps) {
-  const plausible = usePlausible();
-
   const buttons = {
     primary:
       "text-white shadow-xs bg-primary-700 hover:bg-primary-600 focus-visible:outline-primary-700 disabled:hover:bg-primary-600",
@@ -75,9 +74,7 @@ export default function Button({
         title={title ?? undefined}
         className={fullClassName}
         onClick={(event) => {
-          if (plausibleEvent) {
-            plausible(plausibleEvent);
-          }
+          if (analyticsId) track("button:clicked", { button: analyticsId });
           if (onClick) {
             onClick();
             event.preventDefault();
@@ -95,7 +92,7 @@ export default function Button({
     <button
       type={buttonType}
       onClick={(event) => {
-        if (plausibleEvent) plausible(plausibleEvent);
+        if (analyticsId) track("button:clicked", { button: analyticsId });
         if (onClick) onClick(event);
       }}
       className={fullClassName}

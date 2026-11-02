@@ -157,7 +157,7 @@ export default function IncomeResults({
             href={section.ctaButton.href}
             arrow={section.ctaButton.arrow}
             newTab={section.ctaButton.newTab}
-            plausibleEvent={section.ctaButton.plausibleEvent}
+            analyticsId={section.ctaButton.plausibleEvent}
             className="w-full max-w-3xl sm:w-auto"
           />
         )}

@@ -33,7 +33,7 @@ export default function CtaSection({
                 href={button.href}
                 arrow={button.arrow}
                 newTab={button.newTab}
-                plausibleEvent={button.plausibleEvent}
+                analyticsId={button.plausibleEvent}
               />
             ))}
           </div>

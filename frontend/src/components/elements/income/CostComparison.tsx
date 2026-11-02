@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { usePlausible } from "next-plausible";
+import { track } from "@/utils/analytics";
 import ChildrenIcon from "@/components/icons/ChildrenIcon";
 import MedicineIcon from "@/components/icons/MedicineIcon";
 import MosquitoNetIcon from "@/components/icons/MosquitoNetIcon";
@@ -143,7 +143,6 @@ export default function CostComparison({
   locale,
   closeText,
 }: CostComparisonProps) {
-  const plausible = usePlausible();
   const { popularExample, effectiveExample } = section;
   const [donation, setDonation] = useState(() =>
     Math.min(
@@ -185,8 +184,12 @@ export default function CostComparison({
               euros,
             }).replaceAll("**", "")}
             onChange={(event) => setDonation(Number(event.target.value))}
-            onMouseUp={() => plausible("income-comparison-changed")}
-            onTouchEnd={() => plausible("income-comparison-changed")}
+            onMouseUp={() =>
+              track("income-comparison:changed", { amount: donation })
+            }
+            onTouchEnd={() =>
+              track("income-comparison:changed", { amount: donation })
+            }
           />
         </div>
         <div className="relative isolate grid w-full items-center sm:grid-cols-2">

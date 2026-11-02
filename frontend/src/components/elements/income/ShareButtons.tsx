@@ -1,6 +1,6 @@
 import { icons } from "../SocialMediaIcon";
 import { classes } from "@/utils/react";
-import { usePlausible } from "next-plausible";
+import { track } from "@/utils/analytics";
 
 interface ShareButtonsProps {
   message: string | null;
@@ -35,7 +35,6 @@ export default function ShareButtons({
   blueskyText,
   linkedinText,
 }: ShareButtonsProps) {
-  const plausible = usePlausible();
   const networks = [
     { network: "facebook", text: facebookText, color: "bg-[#1877f2]" },
     { network: "twitter", text: twitterText, color: "bg-[#1da1f2]" },
@@ -57,7 +56,7 @@ export default function ShareButtons({
               "flex cursor-pointer items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold whitespace-nowrap text-white hover:opacity-90",
             )}
             onClick={() => {
-              plausible(`income-shared-${network}`);
+              track("income:shared", { network });
               window.open(
                 shareLinks(message ?? "")[network],
                 "share",

@@ -50,7 +50,7 @@ export default async function NotFoundPage({ locale }: { locale: Locale }) {
                 href={button.href}
                 arrow={button.arrow}
                 newTab={button.newTab}
-                plausibleEvent={button.plausibleEvent}
+                analyticsId={button.plausibleEvent}
               />
             ))}
           </div>
