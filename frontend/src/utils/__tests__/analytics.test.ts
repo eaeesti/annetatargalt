@@ -28,7 +28,7 @@ describe("track", () => {
     track("donation:submitted", {
       type: "recurring",
       amount: 20,
-      tip: false,
+      tip_percent: 0,
       payment_method: undefined,
       company: false,
       dedication: false,
@@ -38,7 +38,7 @@ describe("track", () => {
     expect(umami.track).toHaveBeenCalledWith("donation:submitted", {
       type: "recurring",
       amount: 20,
-      tip: false,
+      tip_percent: 0,
       company: false,
       dedication: false,
       from_link: true,
@@ -89,7 +89,7 @@ describe("track", () => {
         track("donation:submitted", {
           type: "onetime",
           amount: 20,
-          tip: true,
+          tip_percent: 5,
           payment_method: "card",
           company: false,
           dedication: false,
