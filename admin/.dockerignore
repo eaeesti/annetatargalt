@@ -1,0 +1,9 @@
+# Secrets never go into an image
+.env
+.env.*
+*.log
+# Built or fetched again in the image
+node_modules
+.next
+tsconfig.tsbuildinfo
+.DS_Store
