@@ -16,6 +16,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // A server with only the files it needs, for the Docker image
+  output: "standalone",
   poweredByHeader: false,
   async headers() {
     return [
