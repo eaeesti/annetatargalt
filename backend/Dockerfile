@@ -29,10 +29,17 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/favicon.png ./
+# Strapi takes the app for TypeScript, and so runs dist/, only when it finds
+# tsconfig.json; and it creates database/migrations unless it's there, which
+# a read-only filesystem doesn't allow.
+COPY --from=builder /app/tsconfig.json ./
+COPY --from=builder /app/database ./database
 # For dist/src/scripts/migrate.js
 COPY --from=builder /app/src/db/migrations ./src/db/migrations
 
-ENV NODE_ENV=production HOST=0.0.0.0 PORT=1337
+# The server runs this as a uid with no home directory, and Strapi's command
+# line keeps its settings in one.
+ENV NODE_ENV=production HOST=0.0.0.0 PORT=1337 HOME=/tmp
 EXPOSE 1337
 # The node image's unprivileged user; the server gives it its own uid, with
 # a read-only root filesystem and /tmp in memory.
