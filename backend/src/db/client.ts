@@ -30,6 +30,13 @@ export const pool = connectionString
   ? new Pool({ connectionString, ...poolConfig })
   : new Pool(poolConfig);
 
+// An idle connection that Postgres drops (a restart, a security update)
+// raises an error on the pool, and an error event nothing listens for ends
+// the whole process. The pool replaces the connection by itself.
+pool.on("error", (error) => {
+  console.error("[db] idle connection lost:", error.message);
+});
+
 // Create Drizzle instance with schema for relational queries
 export const db = drizzle(pool, { schema });
 
