@@ -16,7 +16,9 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
 
 COPY . .
-RUN pnpm build
+# Next copies .env files into the standalone output. There are none here
+# (.dockerignore), and none may reach the image if that ever changes.
+RUN pnpm build && rm -f .next/standalone/.env*
 
 # ---
 

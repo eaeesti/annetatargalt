@@ -82,6 +82,9 @@ const securityHeaders = [
 
 /** @type {import("next").NextConfig} */
 const nextConfig = {
+  // A server with only the files it needs, for the Docker image
+  output: "standalone",
+
   // This app sits next to a repo-root lockfile as well as its own. Turbopack,
   // which builds by default from Next 16, walks up to the outermost lockfile
   // and would take the repo root as the project root — which resolves every
