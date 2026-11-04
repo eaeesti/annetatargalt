@@ -19,9 +19,8 @@ import path from "path";
 /**
  * How long destroy() lets requests already in progress finish: twice the
  * slowest request in the production logs (2.1 s across ~50 000). It has to
- * stay below kill_timeout in ecosystem.config.js (5 s), after which PM2 kills
- * the worker. Raising that one needs more than an edit: reload.sh reloads by
- * name, which keeps the kill_timeout PM2 stored when the worker was started.
+ * stay well below the time the server gives a stopping process before it
+ * kills it (30 s).
  */
 const SHUTDOWN_DRAIN_MS = 4000;
 
@@ -714,26 +713,6 @@ export default {
       blockOrphanedDonationAdmins(strapi),
     );
     warnIfProxyUntrusted(strapi);
-
-    // Signal PM2 that this worker is ready, which is what `wait_ready` in the
-    // ecosystem config blocks on and what the deploy script polls before it
-    // touches the second worker.
-    //
-    // It has to be the httpServer's own `listening` event, not the end of
-    // bootstrap: Strapi calls listen() *after* bootstrap returns, so signalling
-    // from here directly would tell PM2 the worker is up while its socket is
-    // still closed — and PM2 would then let the deploy proceed to restart the
-    // other worker, which is the one moment both can be down at once. The
-    // already-listening branch is there in case that ordering ever changes.
-    if (process.send) {
-      const { httpServer } = strapi.server;
-      const signalReady = () => {
-        process.send?.("ready");
-        strapi.log.info("✅ PM2 ready signal sent - accepting connections");
-      };
-      if (httpServer.listening) signalReady();
-      else httpServer.once("listening", signalReady);
-    }
 
     strapi.server.httpServer.on("request", (_req, res) => {
       inFlightRequests += 1;
