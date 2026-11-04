@@ -104,11 +104,6 @@ const nextConfig = {
     // connection. Tailwind keeps the whole site's CSS small enough to repeat
     // in every page, which is the case this is meant for.
     inlineCss: true,
-    // Pages rendered after the build stay in memory rather than being
-    // written into .next/server: the server runs the image read-only, so
-    // every write failed and was logged. The build's own pages are still
-    // read from disk.
-    isrFlushToDisk: false,
   },
 
   images: {
