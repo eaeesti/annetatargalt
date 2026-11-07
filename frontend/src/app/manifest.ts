@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getGlobal } from "@/utils/strapi";
+import { getGlobal } from "@/utils/cms";
 
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
   const global = await getGlobal("et").catch(() => null);

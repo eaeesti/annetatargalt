@@ -4,19 +4,23 @@ import "@/app/globals.css";
 import "@fontsource-variable/inter/opsz.css";
 import "@fontsource-variable/inter/opsz-italic.css";
 import type { Locale } from "@/utils/locale";
+import { isPreview } from "@/utils/cms";
 import { getStrapiURL } from "@/utils/strapi";
 import PlausiblePageviews from "./PlausiblePageviews";
+import PreviewBanner from "./PreviewBanner";
 
 /** The document shell both languages' root layouts share. */
-export default function RootHtml({
+export default async function RootHtml({
   locale,
   children,
 }: {
   locale: Locale;
   children: React.ReactNode;
 }) {
-  const plausibleDomain = process.env.PLAUSIBLE_DOMAIN;
-  const umamiWebsiteId = process.env.UMAMI_WEBSITE_ID;
+  const preview = await isPreview();
+  // An editor's preview isn't a visit
+  const plausibleDomain = preview ? undefined : process.env.PLAUSIBLE_DOMAIN;
+  const umamiWebsiteId = preview ? undefined : process.env.UMAMI_WEBSITE_ID;
 
   return (
     <html lang={locale} className="h-full">
@@ -58,6 +62,7 @@ export default function RootHtml({
       <body className="flex min-h-full flex-col">
         {plausibleDomain && <PlausiblePageviews />}
         {children}
+        {preview && <PreviewBanner locale={locale} />}
       </body>
     </html>
   );
