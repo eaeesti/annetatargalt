@@ -85,6 +85,11 @@ const nextConfig = {
   // A server with only the files it needs, for the Docker image
   output: "standalone",
 
+  // Cached pages in memory, with a cap (cache-handler.mjs). Next's default
+  // would also keep each one on disk, with none.
+  cacheHandler: `${__dirname}/cache-handler.mjs`,
+  cacheMaxMemorySize: 0,
+
   // This app sits next to a repo-root lockfile as well as its own. Turbopack,
   // which builds by default from Next 16, walks up to the outermost lockfile
   // and would take the repo root as the project root — which resolves every
