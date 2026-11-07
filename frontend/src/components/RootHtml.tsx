@@ -59,7 +59,7 @@ export default async function RootHtml({
           )}
         </head>
       )}
-      <body className="flex min-h-full flex-col">
+      <body className="flex min-h-full flex-col bg-white">
         {plausibleDomain && <PlausiblePageviews />}
         {children}
         {preview && <PreviewBanner locale={locale} />}
