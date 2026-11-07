@@ -1216,7 +1216,7 @@ export interface ApiPagePage extends Struct.CollectionTypeSchema {
     singularName: 'page';
   };
   options: {
-    draftAndPublish: false;
+    draftAndPublish: true;
   };
   pluginOptions: {
     i18n: {
