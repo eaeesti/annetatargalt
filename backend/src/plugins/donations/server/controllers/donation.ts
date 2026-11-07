@@ -200,8 +200,16 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       return ctx.badRequest("Invalid payment token");
     }
 
+    // Montonio also reports payments that didn't go through, such as one the
+    // donor abandoned. There's nothing to do for those, but they're answered
+    // as received: an error would only make Montonio send the report again,
+    // for days.
     if (decoded.paymentStatus !== "PAID") {
-      return ctx.badRequest("Payment not paid");
+      const reference = decoded.merchant_reference?.split(" ").pop();
+      strapi.log.info(
+        `Donation ${reference ?? "?"}: Montonio reports ${decoded.paymentStatus ?? "no status"}`,
+      );
+      return ctx.send(null, 204);
     }
 
     if (!decoded.merchant_reference) {

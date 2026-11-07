@@ -28,7 +28,7 @@ const service = {
   sendExternalConfirmationEmail: vi.fn(),
   sendDedicationEmail: vi.fn(),
 };
-const log = { error: vi.fn() };
+const log = { error: vi.fn(), info: vi.fn() };
 const fakeStrapi = {
   plugin: () => ({ service: () => service }),
   log,
@@ -78,6 +78,22 @@ describe("payment confirmation", () => {
     expect(service.sendConfirmationEmail).toHaveBeenCalledOnce();
     expect(service.sendConfirmationEmail).toHaveBeenCalledWith(7);
     expect(service.sendDedicationEmail).not.toHaveBeenCalled();
+  });
+
+  it("answers a payment the donor abandoned as received, and changes nothing", async () => {
+    decodeOrderToken.mockReturnValue({
+      paymentStatus: "ABANDONED",
+      merchant_reference: "Donation 7",
+    });
+
+    const result = await controller.confirm(notification());
+
+    expect(result).toEqual({ data: null, status: 204 });
+    expect(repository.finalize).not.toHaveBeenCalled();
+    expect(service.sendConfirmationEmail).not.toHaveBeenCalled();
+    expect(log.info).toHaveBeenCalledWith(
+      "Donation 7: Montonio reports ABANDONED",
+    );
   });
 
   it("answers a repeated notification as done, without sending anything again", async () => {
