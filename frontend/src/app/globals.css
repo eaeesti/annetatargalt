@@ -143,6 +143,14 @@
   [aria-disabled="true"] {
     cursor: default;
   }
+
+  /*
+    Targets of in-page links in CMS content (footnotes, #anchors), whose ids
+    the sanitizer prefixes. Without the margin the sticky navbar covers them.
+  */
+  [id^="user-content-"] {
+    scroll-margin-top: 6rem;
+  }
 }
 
 /* :root {

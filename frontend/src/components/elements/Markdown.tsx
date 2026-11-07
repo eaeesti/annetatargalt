@@ -1,3 +1,5 @@
+import { ArrowUturnLeftIcon } from "@heroicons/react/20/solid";
+import type { Element, Root } from "hast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
@@ -40,6 +42,42 @@ export const schema = {
   },
 };
 
+/**
+ * The sanitizer prefixes every id (and name) with `user-content-`, so content
+ * can't clobber globals like `window.someId`. Links within the page aren't
+ * rewritten to match, so `[^1]` footnotes and hand-written `#anchor` links
+ * would point at ids that no longer exist.
+ *
+ * Footnotes are therefore generated without a prefix of their own
+ * (remarkRehypeOptions below), the sanitizer adds it to the ids exactly once,
+ * and this plugin — which must run after the sanitizer — adds it to the
+ * fragment links. A link already written as `#user-content-…` is left alone.
+ */
+const clobberPrefix = defaultSchema.clobberPrefix ?? "user-content-";
+
+export const remarkRehypeOptions = { clobberPrefix: "" };
+
+export function prefixFragmentLinks() {
+  return (tree: Root) => prefixLinksBelow(tree);
+}
+
+function prefixLinksBelow(node: Root | Element) {
+  for (const child of node.children) {
+    if (child.type !== "element") continue;
+    const href = child.properties.href;
+    if (
+      child.tagName === "a" &&
+      typeof href === "string" &&
+      href.length > 1 &&
+      href.startsWith("#") &&
+      !href.startsWith(`#${clobberPrefix}`)
+    ) {
+      child.properties.href = `#${clobberPrefix}${href.slice(1)}`;
+    }
+    prefixLinksBelow(child);
+  }
+}
+
 interface MarkdownProps {
   children: string | null | undefined;
   className?: string;
@@ -60,13 +98,23 @@ export default function Markdown({
   const markdown = (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
-      rehypePlugins={[rehypeRaw, [rehypeSanitize, schema]]}
+      remarkRehypeOptions={remarkRehypeOptions}
+      rehypePlugins={[rehypeRaw, [rehypeSanitize, schema], prefixFragmentLinks]}
       components={{
         // node is destructured to exclude it from ...rest (passing it to the DOM causes a warning)
         a({ children, href, node: _node, ...rest }) {
           return (
             <Anchor href={href ?? "#"} newTab={openInNewTab(href)} {...rest}>
-              {children ?? ""}
+              {"data-footnote-backref" in rest ? (
+                // The footnote's way back to its reference, which remark
+                // writes as a "↩" character. aria-label names the link.
+                <ArrowUturnLeftIcon
+                  aria-hidden="true"
+                  className="inline h-4 w-4 align-text-bottom"
+                />
+              ) : (
+                (children ?? "")
+              )}
             </Anchor>
           );
         },

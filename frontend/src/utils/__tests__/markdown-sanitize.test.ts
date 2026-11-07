@@ -6,7 +6,11 @@ import remarkRehype from "remark-rehype";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
 import { toHtml } from "hast-util-to-html";
-import { schema } from "../../components/elements/Markdown";
+import {
+  prefixFragmentLinks,
+  remarkRehypeOptions,
+  schema,
+} from "../../components/elements/Markdown";
 
 /**
  * Mirrors the plugin chain in Markdown.tsx. react-markdown runs the same
@@ -22,9 +26,10 @@ function render(markdown: string): string {
   const processor = unified()
     .use(remarkParse)
     .use(remarkGfm)
-    .use(remarkRehype, { allowDangerousHtml: true })
+    .use(remarkRehype, { ...remarkRehypeOptions, allowDangerousHtml: true })
     .use(rehypeRaw)
-    .use(rehypeSanitize, schema);
+    .use(rehypeSanitize, schema)
+    .use(prefixFragmentLinks);
 
   return toHtml(processor.runSync(processor.parse(markdown)));
 }
@@ -114,6 +119,23 @@ describe("Markdown sanitisation", () => {
       const out = render("| a | b |\n| - | - |\n| 1 | 2 |\n\n- one\n- two");
       expect(out).toContain("<table>");
       expect(out).toContain("<li>one</li>");
+    });
+
+    it("links footnote references and back-references to their targets", () => {
+      const out = render("Text[^1].\n\n[^1]: The note.");
+      const ids = [...out.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]);
+      const targets = [...out.matchAll(/ href="#([^"]+)"/g)].map((m) => m[1]);
+
+      expect(targets).toEqual(["user-content-fn-1", "user-content-fnref-1"]);
+      for (const target of targets) expect(ids).toContain(target);
+    });
+
+    it("links hand-written in-page anchors to their prefixed ids", () => {
+      const out = render(
+        '<h2 id="kulud">Kulud</h2>\n\n[Vaata kulusid](#kulud)',
+      );
+      expect(out).toContain('id="user-content-kulud"');
+      expect(out).toContain('href="#user-content-kulud"');
     });
 
     it("keeps images, which CMS content uses heavily", () => {
