@@ -1,6 +1,6 @@
 import Anchor from "../elements/Anchor";
 import Image from "../elements/Image";
-import { getBlogPosts } from "@/utils/strapi";
+import { getBlogPosts } from "@/utils/cms";
 import type {
   StrapiBlogPostsSection,
   StrapiGlobal,

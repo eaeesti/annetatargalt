@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { isLaunched } from "@/components/CmsRoute";
-import { findGlobal, getAllSlugs } from "@/utils/strapi";
+import { findGlobal, getAllSlugs } from "@/utils/cms";
 import { LOCALES, pagePath } from "@/utils/locale";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

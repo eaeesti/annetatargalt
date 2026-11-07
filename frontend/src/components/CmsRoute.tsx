@@ -6,7 +6,7 @@ import {
   findSpecialPage,
   getGlobal,
   getPageBySlug,
-} from "@/utils/strapi";
+} from "@/utils/cms";
 import { otherLocale, pagePath } from "@/utils/locale";
 import type { Locale } from "@/utils/locale";
 import type {

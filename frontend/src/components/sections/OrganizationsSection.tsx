@@ -1,4 +1,4 @@
-import { getOrganizations } from "@/utils/strapi";
+import { getOrganizations } from "@/utils/cms";
 import Organization from "../elements/Organization";
 import type {
   StrapiGlobal,

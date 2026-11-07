@@ -1,5 +1,6 @@
 import { afterEach, describe, it, expect, vi } from "vitest";
-import { describeErrorResponse, fetchAllAPI, getStrapiURL } from "../strapi";
+import { describeErrorResponse, getStrapiURL } from "../strapi";
+import { fetchAllAPI } from "../cms";
 
 describe("getStrapiURL", () => {
   it("returns base URL with empty path", () => {
@@ -71,5 +72,43 @@ describe("fetchAllAPI", () => {
 
     expect(await fetchAllAPI<string>("/special-pages")).toEqual(["only"]);
     expect(requests).toBe(1);
+  });
+});
+
+describe("fetchAPI in an editor's preview", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.doUnmock("next/headers");
+    vi.resetModules();
+  });
+
+  it("asks for drafts, past every cache", async () => {
+    vi.resetModules();
+    vi.doMock("next/headers", () => ({
+      draftMode: async () => ({ isEnabled: true }),
+    }));
+    const { fetchAPI } = await import("../cms");
+    let asked: { url: string; init: RequestInit } | undefined;
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      asked = { url, init };
+      return Response.json({ data: [] });
+    });
+
+    await fetchAPI("/pages", { locale: "et" });
+
+    expect(new URL(asked?.url ?? "").searchParams.get("status")).toBe("draft");
+    expect(asked?.init.cache).toBe("no-store");
+  });
+
+  it("asks for published versions otherwise", async () => {
+    let url = "";
+    vi.stubGlobal("fetch", async (asked: string) => {
+      url = asked;
+      return Response.json({ data: [] });
+    });
+
+    await fetchAllAPI("/pages", { locale: "et" });
+
+    expect(new URL(url).searchParams.has("status")).toBe(false);
   });
 });

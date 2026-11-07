@@ -3,7 +3,7 @@ import Navbar from "@/components/Navbar";
 import Button from "@/components/elements/Button";
 import Markdown from "@/components/elements/Markdown";
 import NotFoundEvent from "@/components/NotFoundEvent";
-import { getGlobal } from "@/utils/strapi";
+import { getGlobal } from "@/utils/cms";
 import type { Locale } from "@/utils/locale";
 
 export default async function NotFoundPage({ locale }: { locale: Locale }) {
