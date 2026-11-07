@@ -343,10 +343,27 @@ export class DonationsRepository {
   ): Promise<Donation | undefined> {
     const [donation] = await this.database
       .update(donations)
-      .set({ ...payment, finalized: true, updatedAt: new Date() })
+      .set({
+        ...payment,
+        finalized: true,
+        paymentStatus: "PAID",
+        updatedAt: new Date(),
+      })
       .where(and(eq(donations.id, id), eq(donations.finalized, false)))
       .returning();
     return donation;
+  }
+
+  /**
+   * Records what the payment provider reports about a payment that didn't go
+   * through, such as "ABANDONED". A paid donation keeps "PAID": a later
+   * report doesn't undo the payment.
+   */
+  async recordPaymentStatus(id: number, status: string): Promise<void> {
+    await this.database
+      .update(donations)
+      .set({ paymentStatus: status, updatedAt: new Date() })
+      .where(and(eq(donations.id, id), eq(donations.finalized, false)));
   }
 
   /**

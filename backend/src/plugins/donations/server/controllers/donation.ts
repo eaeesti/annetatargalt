@@ -201,14 +201,25 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     }
 
     // Montonio also reports payments that didn't go through, such as one the
-    // donor abandoned. There's nothing to do for those, but they're answered
-    // as received: an error would only make Montonio send the report again,
+    // donor abandoned. The donation keeps what it reports, and the report is
+    // answered as received: an error would only make Montonio send it again,
     // for days.
     if (decoded.paymentStatus !== "PAID") {
       const reference = decoded.merchant_reference?.split(" ").pop();
+      const status = decoded.paymentStatus ?? "no status";
       strapi.log.info(
-        `Donation ${reference ?? "?"}: Montonio reports ${decoded.paymentStatus ?? "no status"}`,
+        `Donation ${reference ?? "?"}: Montonio reports ${status}`,
       );
+      const id = Number(reference);
+      if (decoded.paymentStatus && Number.isInteger(id)) {
+        try {
+          await donationsRepo.recordPaymentStatus(id, decoded.paymentStatus);
+        } catch (error) {
+          strapi.log.error(
+            `Donation ${id}'s payment status wasn't recorded: ${String(error)}`,
+          );
+        }
+      }
       return ctx.send(null, 204);
     }
 

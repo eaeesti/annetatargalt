@@ -1,0 +1,1 @@
+ALTER TABLE "donations" ADD COLUMN "payment_status" varchar(32);

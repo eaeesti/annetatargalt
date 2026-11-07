@@ -754,4 +754,34 @@ describe("DonationsRepository", () => {
       expect(unreconciled.data[0].id).not.toBe(matched.id);
     });
   });
+
+  describe("payment status", () => {
+    it("is PAID once a donation is finalized", async () => {
+      const donation = await createTestDonation({ finalized: false });
+
+      const finalized = await donationsRepository.finalize(donation.id);
+
+      expect(finalized?.paymentStatus).toBe("PAID");
+    });
+
+    it("records a payment that didn't go through", async () => {
+      const donation = await createTestDonation({ finalized: false });
+
+      await donationsRepository.recordPaymentStatus(donation.id, "ABANDONED");
+
+      const saved = await donationsRepository.findById(donation.id);
+      expect(saved?.paymentStatus).toBe("ABANDONED");
+      expect(saved?.finalized).toBe(false);
+    });
+
+    it("leaves a paid donation's status alone", async () => {
+      const donation = await createTestDonation({ finalized: false });
+      await donationsRepository.finalize(donation.id);
+
+      await donationsRepository.recordPaymentStatus(donation.id, "ABANDONED");
+
+      const saved = await donationsRepository.findById(donation.id);
+      expect(saved?.paymentStatus).toBe("PAID");
+    });
+  });
 });

@@ -4,6 +4,7 @@ import type { Context } from "koa";
 const repository = vi.hoisted(() => ({
   findById: vi.fn(),
   finalize: vi.fn(),
+  recordPaymentStatus: vi.fn(),
 }));
 const decodeOrderToken = vi.hoisted(() => vi.fn());
 
@@ -11,6 +12,7 @@ vi.mock("../../../../../db/repositories/donations.repository", () => ({
   DonationsRepository: class {
     findById = repository.findById;
     finalize = repository.finalize;
+    recordPaymentStatus = repository.recordPaymentStatus;
   },
 }));
 vi.mock("../../../../../utils/montonio", () => ({
@@ -62,6 +64,7 @@ describe("payment confirmation", () => {
       dedicationEmail: null,
     });
     repository.finalize.mockResolvedValue({ id: 7, finalized: true });
+    repository.recordPaymentStatus.mockResolvedValue(undefined);
     for (const send of Object.values(service)) {
       send.mockResolvedValue(undefined);
     }
@@ -80,7 +83,7 @@ describe("payment confirmation", () => {
     expect(service.sendDedicationEmail).not.toHaveBeenCalled();
   });
 
-  it("answers a payment the donor abandoned as received, and changes nothing", async () => {
+  it("records a payment the donor abandoned, and answers it as received", async () => {
     decodeOrderToken.mockReturnValue({
       paymentStatus: "ABANDONED",
       merchant_reference: "Donation 7",
@@ -90,9 +93,25 @@ describe("payment confirmation", () => {
 
     expect(result).toEqual({ data: null, status: 204 });
     expect(repository.finalize).not.toHaveBeenCalled();
+    expect(repository.recordPaymentStatus).toHaveBeenCalledWith(7, "ABANDONED");
     expect(service.sendConfirmationEmail).not.toHaveBeenCalled();
     expect(log.info).toHaveBeenCalledWith(
       "Donation 7: Montonio reports ABANDONED",
+    );
+  });
+
+  it("answers the report as received even when it can't be recorded", async () => {
+    decodeOrderToken.mockReturnValue({
+      paymentStatus: "ABANDONED",
+      merchant_reference: "Donation 7",
+    });
+    repository.recordPaymentStatus.mockRejectedValue(new Error("DB is down"));
+
+    const result = await controller.confirm(notification());
+
+    expect(result).toEqual({ data: null, status: 204 });
+    expect(log.error).toHaveBeenCalledWith(
+      expect.stringContaining("DB is down"),
     );
   });
 

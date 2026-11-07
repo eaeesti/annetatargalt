@@ -107,6 +107,10 @@ export const donations = pgTable(
     // The site language the donor gave in: the payment page, the page they
     // return to and their emails are all in it.
     locale: varchar("locale", { length: 8 }).default("et").notNull(),
+    // What the payment provider last reported about the payment: "PAID", or
+    // one that didn't go through, such as "ABANDONED". Null when it never
+    // reported, as for donations from before this was kept.
+    paymentStatus: varchar("payment_status", { length: 32 }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
