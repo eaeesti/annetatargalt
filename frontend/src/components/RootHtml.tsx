@@ -9,6 +9,12 @@ import { getStrapiURL } from "@/utils/strapi";
 import PlausiblePageviews from "./PlausiblePageviews";
 import PreviewBanner from "./PreviewBanner";
 
+// Draft mode's cookie is the whole site's, so an editor who previewed in
+// Strapi would see drafts on every page they opened afterwards. Outside
+// Strapi's frame this ends the preview and loads the published page, before
+// anything is drawn.
+const LEAVE_PREVIEW_OUTSIDE_STRAPI = `if (window.top === window.self) location.replace("/api/preview?" + new URLSearchParams({ status: "published", path: location.pathname + location.search }));`;
+
 /** The document shell both languages' root layouts share. */
 export default async function RootHtml({
   locale,
@@ -24,10 +30,16 @@ export default async function RootHtml({
 
   return (
     <html lang={locale} className="h-full">
-      {(plausibleDomain || umamiWebsiteId) && (
+      {(plausibleDomain || umamiWebsiteId || preview) && (
         // The App Router's own <head>: next/head belongs to the Pages Router.
         // oxlint-disable-next-line next/no-head-element
         <head>
+          {preview && (
+            // oxlint-disable-next-line react/no-danger
+            <script
+              dangerouslySetInnerHTML={{ __html: LEAVE_PREVIEW_OUTSIDE_STRAPI }}
+            />
+          )}
           {plausibleDomain && (
             // A pinned copy of Plausible's manual script: it counts only what
             // it's given (PlausiblePageviews, utils/analytics.ts), with the
