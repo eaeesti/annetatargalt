@@ -358,7 +358,9 @@ export async function getOrganizations(
     locale,
     populate: "*",
     sort: "title:asc",
+    // An inactive organization takes no donations, so it isn't listed.
     filters: {
+      active: { $eq: true },
       cause: {
         id: {
           $notNull: true,

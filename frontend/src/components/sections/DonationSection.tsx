@@ -142,7 +142,15 @@ function DonationForm({
     }));
   // In Strapi v5 without v4 compatibility, relations are returned as arrays directly
   // Wrap it to maintain compatibility with components expecting { data: [...] }
-  const causes = { data: props.causes || [] };
+  // An inactive organization takes no donations, so the form leaves it out.
+  const causes = {
+    data: (props.causes || []).map((cause) => ({
+      ...cause,
+      organizations: cause.organizations.filter(
+        (organization) => organization.active,
+      ),
+    })),
+  };
 
   const link = `${linkType}/${linkOrg}`;
 

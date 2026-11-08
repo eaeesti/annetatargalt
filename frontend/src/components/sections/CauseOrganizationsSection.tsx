@@ -17,7 +17,10 @@ export default function CauseOrganizationsSection({
   entity,
   global,
 }: CauseOrganizationsSectionProps) {
-  const organizationsWithFund = entity.organizations || [];
+  // An inactive organization takes no donations, so it isn't listed.
+  const organizationsWithFund = (entity.organizations || []).filter(
+    (organization) => organization.active,
+  );
 
   const organizations = organizationsWithFund.filter(
     (organization) => !organization.fund,
