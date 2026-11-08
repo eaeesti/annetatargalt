@@ -16,7 +16,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // NOT stop an injected inline script from running. What it does do is take
 // away the places such a script could send anything: connect-src and img-src
 // deny every host except this org's own, form-action stops a rewritten form
-// posting elsewhere, and frame-ancestors blocks framing the donation page.
+// posting elsewhere, and frame-ancestors lets no one but
+// Strapi's editor frame the site.
 // Exfiltration, not execution, is what this buys.
 //
 // Every entry below was derived from what the live pages actually load.
@@ -43,49 +44,11 @@ const strapiOrigin = (() => {
 // `next build && next start` locally still exercises the real one.
 const isDev = process.env.NODE_ENV !== "production";
 
-const scriptSrc = ["'self'", "'unsafe-inline'", isDev && "'unsafe-eval'"];
-
-/** The policy, with who may show the site in a frame. */
-const contentSecurityPolicy = (frameAncestors) =>
-  [
-    "default-src 'self'",
-    `script-src ${scriptSrc.filter(Boolean).join(" ")}`,
-    "style-src 'self' 'unsafe-inline'",
-    // Cloudinary serves CMS images; placehold.co is configured in images below.
-    "img-src 'self' data: blob: https://res.cloudinary.com https://placehold.co",
-    "media-src 'self' https://res.cloudinary.com",
-    "font-src 'self' data:",
-    // Client components call Strapi directly (donate, donateForeign, contact,
-    // stats, decode), and Umami's and Plausible's trackers, copies served from
-    // here, send their events to the backend's domain too.
-    `connect-src 'self' ${strapiOrigin}${isDev ? " ws:" : ""}`,
-    // The cause pages embed charts, and iframe is the one tag added to the
-    // sanitiser's allowlist. The sanitiser cannot police where an iframe points,
-    // so this is what confines it to the chart host.
-    "frame-src https://ourworldindata.org",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    `frame-ancestors ${frameAncestors}`,
-  ].join("; ");
-
-const securityHeaders = [
-  { key: "X-Content-Type-Options", value: "nosniff" },
-  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  {
-    key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=(), payment=()",
-  },
-];
-
-// Next's draft mode cookie, which an editor's preview has (app/api/preview).
-// Strapi's Preview button shows the page in a frame in Strapi's editor, so
-// while it's set, Strapi may frame the site. Without it no one may.
-const previewCookie = { type: "cookie", key: "__prerender_bypass" };
-
-// Locally the editor may be open at localhost or at 127.0.0.1, whichever
+// Strapi's Preview button shows a page, draft or published, in a frame in
+// Strapi's editor, so Strapi may frame the site, and no one else. Locally the
+// editor may be open at localhost or at 127.0.0.1, whichever
 // NEXT_PUBLIC_STRAPI_API_URL names, and a browser counts them as two origins.
-const previewFramers = (() => {
+const frameAncestors = (() => {
   const url = new URL(strapiOrigin);
   if (!isDev || !["localhost", "127.0.0.1"].includes(url.hostname)) {
     return strapiOrigin;
@@ -95,28 +58,37 @@ const previewFramers = (() => {
     .join(" ");
 })();
 
-const framingHeaders = [
+const scriptSrc = ["'self'", "'unsafe-inline'", isDev && "'unsafe-eval'"];
+
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  `script-src ${scriptSrc.filter(Boolean).join(" ")}`,
+  "style-src 'self' 'unsafe-inline'",
+  // Cloudinary serves CMS images; placehold.co is configured in images below.
+  "img-src 'self' data: blob: https://res.cloudinary.com https://placehold.co",
+  "media-src 'self' https://res.cloudinary.com",
+  "font-src 'self' data:",
+  // Client components call Strapi directly (donate, donateForeign, contact,
+  // stats, decode), and Umami's and Plausible's trackers, copies served from
+  // here, send their events to the backend's domain too.
+  `connect-src 'self' ${strapiOrigin}${isDev ? " ws:" : ""}`,
+  // The cause pages embed charts, and iframe is the one tag added to the
+  // sanitiser's allowlist. The sanitiser cannot police where an iframe points,
+  // so this is what confines it to the chart host.
+  "frame-src https://ourworldindata.org",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  `frame-ancestors ${frameAncestors}`,
+].join("; ");
+
+const securityHeaders = [
+  { key: "Content-Security-Policy", value: contentSecurityPolicy },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
-    source: "/:path*",
-    missing: [previewCookie],
-    headers: [
-      {
-        key: "Content-Security-Policy",
-        value: contentSecurityPolicy("'none'"),
-      },
-      // Redundant next to frame-ancestors, kept for browsers that honour only this.
-      { key: "X-Frame-Options", value: "DENY" },
-    ],
-  },
-  {
-    source: "/:path*",
-    has: [previewCookie],
-    headers: [
-      {
-        key: "Content-Security-Policy",
-        value: contentSecurityPolicy(previewFramers),
-      },
-    ],
+    key: "Permissions-Policy",
+    value: "camera=(), microphone=(), geolocation=(), payment=()",
   },
 ];
 
@@ -170,7 +142,7 @@ const nextConfig = {
     ],
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }, ...framingHeaders];
+    return [{ source: "/:path*", headers: securityHeaders }];
   },
   async redirects() {
     return [
