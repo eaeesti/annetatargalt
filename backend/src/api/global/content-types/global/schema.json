@@ -248,7 +248,7 @@
         }
       }
     },
-    "languageSwitchText": {
+    "languageName": {
       "type": "string",
       "pluginOptions": {
         "i18n": {
