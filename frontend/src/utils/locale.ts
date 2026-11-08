@@ -15,8 +15,12 @@ export function localeOf(entry: { locale?: string | null } | null | undefined) {
   return isLocale(entry?.locale) ? entry.locale : DEFAULT_LOCALE;
 }
 
-export function otherLocale(locale: Locale): Locale {
-  return locale === "et" ? "en" : "et";
+/** A language the visitor can switch to, and the current page in it. */
+export interface LanguageLink {
+  locale: Locale;
+  /** The language's name in itself: "Eesti", "English". */
+  name: string;
+  href: string;
 }
 
 /** "" for Estonian, "/en" for English. */

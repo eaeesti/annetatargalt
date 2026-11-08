@@ -3,12 +3,13 @@ import Page from "./Page";
 import { buildMetadata } from "@/utils/seo";
 import {
   fetchEntityInLocale,
+  findGlobal,
   findSpecialPage,
   getGlobal,
   getPageBySlug,
 } from "@/utils/cms";
-import { otherLocale, pagePath } from "@/utils/locale";
-import type { Locale } from "@/utils/locale";
+import { isLocale, LOCALES, pagePath } from "@/utils/locale";
+import type { LanguageLink, Locale } from "@/utils/locale";
 import type {
   StrapiBlogPost,
   StrapiCause,
@@ -29,8 +30,10 @@ interface ResolvedPage {
   page: StrapiPage | StrapiSpecialPage;
   entity?: Entity;
   metadata: StrapiPage["metadata"] | undefined;
-  /** This page's path in each language that has it. */
+  /** This page's path in its language and each public one that has it. */
   paths: Partial<Record<Locale, string>>;
+  /** The languages a visitor can choose between, if any. */
+  languages: LanguageLink[];
 }
 
 function getSlug(params: PageParams): string {
@@ -65,12 +68,50 @@ function entitySlug(
   return null;
 }
 
+/**
+ * Each public language's name in itself. A language without a name is still
+ * being reviewed, so nothing links to it.
+ */
+async function languageNames(): Promise<Partial<Record<Locale, string>>> {
+  const globals = await Promise.all(
+    LOCALES.map((locale) => findGlobal(locale)),
+  );
+  return Object.fromEntries(
+    LOCALES.flatMap((locale, i) => {
+      const name = globals[i]?.languageName?.trim();
+      return name ? [[locale, name]] : [];
+    }),
+  );
+}
+
+/**
+ * The languages to choose between: none until this one is public and another
+ * is too. A page missing in a language links to that language's home page.
+ */
+function languageLinks(
+  locale: Locale,
+  names: Partial<Record<Locale, string>>,
+  paths: Partial<Record<Locale, string>>,
+): LanguageLink[] {
+  if (!names[locale]) return [];
+  const links = LOCALES.flatMap((other) => {
+    const name = names[other];
+    return name
+      ? [{ locale: other, name, href: paths[other] ?? pagePath("/", other) }]
+      : [];
+  });
+  return links.length > 1 ? links : [];
+}
+
 async function resolvePage(
   slug: string,
   locale: Locale,
 ): Promise<ResolvedPage> {
-  const global = await getGlobal(locale);
-  const other = otherLocale(locale);
+  const [global, names] = await Promise.all([
+    getGlobal(locale),
+    languageNames(),
+  ]);
+  const others = LOCALES.filter((other) => other !== locale && names[other]);
   const paths: Partial<Record<Locale, string>> = {
     [locale]: pagePath(slug, locale),
   };
@@ -78,37 +119,51 @@ async function resolvePage(
   const special = await findSpecialPage(slug, locale);
   if (special) {
     const { page, entity } = special;
-    // An organization's path in the other language needs its cause there
-    // too, which the localizations list doesn't carry, so fetch the whole
-    // translation.
-    const translation = await fetchEntityInLocale(
-      page.collectionType,
-      entity.documentId,
-      other,
+    await Promise.all(
+      others.map(async (other) => {
+        // An organization's path in another language needs its cause there
+        // too, which the localizations list doesn't carry, so fetch the whole
+        // translation.
+        const translation = await fetchEntityInLocale(
+          page.collectionType,
+          entity.documentId,
+          other,
+        );
+        const otherSlug =
+          translation &&
+          entitySlug(page.collectionType, translation, await getGlobal(other));
+        if (otherSlug) paths[other] = pagePath(otherSlug, other);
+      }),
     );
-    if (translation) {
-      const otherSlug = entitySlug(
-        page.collectionType,
-        translation,
-        await getGlobal(other),
-      );
-      if (otherSlug) paths[other] = pagePath(otherSlug, other);
-    }
-    return { global, page, entity, metadata: entity.metadata, paths };
+    return {
+      global,
+      page,
+      entity,
+      metadata: entity.metadata,
+      paths,
+      languages: languageLinks(locale, names, paths),
+    };
   }
 
   const page = await getPageBySlug(slug, locale);
   for (const localization of page.localizations ?? []) {
-    if (localization.locale === other && localization.slug) {
+    const other = localization.locale;
+    if (isLocale(other) && others.includes(other) && localization.slug) {
       paths[other] = pagePath(localization.slug, other);
     }
   }
-  return { global, page, metadata: page.metadata, paths };
+  return {
+    global,
+    page,
+    metadata: page.metadata,
+    paths,
+    languages: languageLinks(locale, names, paths),
+  };
 }
 
-/** Whether a language's version is public: its language switch is set up. */
+/** Whether a language's version is public: it has its name. */
 export function isLaunched(global: StrapiGlobal): boolean {
-  return Boolean(global.languageSwitchText?.trim());
+  return Boolean(global.languageName?.trim());
 }
 
 export async function layoutMetadata(locale: Locale): Promise<Metadata> {
@@ -161,17 +216,9 @@ export async function CmsPage({
   locale: Locale;
 }) {
   const slug = getSlug(await params);
-  const { global, page, entity, paths } = await resolvePage(slug, locale);
-  const other = otherLocale(locale);
+  const { global, page, entity, languages } = await resolvePage(slug, locale);
 
   return (
-    <Page
-      page={page}
-      entity={entity}
-      global={global}
-      languageSwitchHref={
-        isLaunched(global) ? (paths[other] ?? pagePath("/", other)) : undefined
-      }
-    />
+    <Page page={page} entity={entity} global={global} languages={languages} />
   );
 }

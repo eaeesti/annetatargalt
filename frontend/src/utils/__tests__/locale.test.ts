@@ -1,11 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  isLocale,
-  localeOf,
-  localePrefix,
-  otherLocale,
-  pagePath,
-} from "../locale";
+import { isLocale, localeOf, localePrefix, pagePath } from "../locale";
 
 describe("pagePath", () => {
   it("keeps Estonian at the root", () => {
@@ -37,9 +31,7 @@ describe("locale helpers", () => {
     expect(localeOf(undefined)).toBe("et");
   });
 
-  it("knows the other language and its prefix", () => {
-    expect(otherLocale("et")).toBe("en");
-    expect(otherLocale("en")).toBe("et");
+  it("knows each language's prefix", () => {
     expect(localePrefix("et")).toBe("");
     expect(localePrefix("en")).toBe("/en");
   });

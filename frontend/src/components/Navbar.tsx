@@ -6,28 +6,24 @@ import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import Anchor from "./elements/Anchor";
 import Button from "./elements/Button";
 import Image from "./elements/Image";
+import LanguageMenu from "./elements/LanguageMenu";
 import type { StrapiGlobal } from "@/types/generated/strapi";
-import { localeOf, otherLocale, pagePath } from "@/utils/locale";
+import { localeOf, pagePath } from "@/utils/locale";
+import type { LanguageLink } from "@/utils/locale";
 import { uiText } from "@/utils/ui-text";
 
 interface NavbarProps {
   global: StrapiGlobal;
-  /** The current page in the other language. */
-  languageSwitchHref?: string;
+  /** The languages to choose between; no choice is shown without them. */
+  languages?: LanguageLink[];
 }
 
-export default function Navbar({ global, languageSwitchHref }: NavbarProps) {
+export default function Navbar({ global, languages = [] }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const { title, navbar, languageSwitchText } = global;
+  const { title, navbar } = global;
   const locale = localeOf(global);
   const home = pagePath("/", locale);
-  const switchLanguage = languageSwitchHref &&
-    languageSwitchText && {
-      href: languageSwitchHref,
-      text: languageSwitchText,
-      lang: otherLocale(locale),
-    };
 
   if (!navbar) return;
 
@@ -59,18 +55,17 @@ export default function Navbar({ global, languageSwitchHref }: NavbarProps) {
                 newTab={link.newTab}
               />
             ))}
-            {switchLanguage && (
-              <Anchor
-                href={switchLanguage.href}
-                hrefLang={switchLanguage.lang}
-                lang={switchLanguage.lang}
-                className="flex items-center rounded-md px-4 py-2.5 font-semibold text-slate-500 hover:opacity-70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 focus-visible:outline-solid"
-              >
-                {switchLanguage.text}
-              </Anchor>
-            )}
           </div>
-          <div className="">
+          <div className="flex items-center gap-x-2">
+            {languages.length > 0 && (
+              <div className="hidden lg:block">
+                <LanguageMenu
+                  locale={locale}
+                  languages={languages}
+                  className="px-4 py-2.5 text-slate-500"
+                />
+              </div>
+            )}
             {navbar.ctaButton && (
               <Button
                 text={navbar.ctaButton.text}
@@ -139,15 +134,14 @@ export default function Navbar({ global, languageSwitchHref }: NavbarProps) {
                   {link.text}
                 </Anchor>
               ))}
-              {switchLanguage && (
-                <Anchor
-                  href={switchLanguage.href}
-                  hrefLang={switchLanguage.lang}
-                  lang={switchLanguage.lang}
-                  className="-mx-3 block rounded-lg px-3 py-2 text-base leading-7 font-semibold text-slate-500 hover:bg-primary-100"
-                >
-                  {switchLanguage.text}
-                </Anchor>
+              {languages.length > 0 && (
+                <LanguageMenu
+                  locale={locale}
+                  languages={languages}
+                  showName
+                  anchor="bottom start"
+                  className="-mx-3 px-3 py-2 text-base leading-7 text-slate-500"
+                />
               )}
             </div>
           </div>

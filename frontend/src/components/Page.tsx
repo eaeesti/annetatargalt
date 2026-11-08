@@ -10,28 +10,24 @@ import type {
   StrapiOrganization,
   StrapiBlogPost,
 } from "@/types/generated/strapi";
+import type { LanguageLink } from "@/utils/locale";
 
 interface PageProps {
   page: StrapiPage | StrapiSpecialPage;
   global: StrapiGlobal;
   entity?: StrapiCause | StrapiOrganization | StrapiBlogPost;
-  /** This page in the other language; no switch is shown without it. */
-  languageSwitchHref?: string;
+  /** The languages to choose between; no choice is shown without them. */
+  languages?: LanguageLink[];
 }
 
-export default function Page({
-  page,
-  global,
-  entity,
-  languageSwitchHref,
-}: PageProps) {
+export default function Page({ page, global, entity, languages }: PageProps) {
   return (
     <>
       <Banner
         topBannerText={global.topBannerText}
         closeText={global.closeText}
       />
-      <Navbar global={global} languageSwitchHref={languageSwitchHref} />
+      <Navbar global={global} languages={languages} />
       {page?.sections?.map((section) => (
         <Section
           key={section.id}
@@ -41,7 +37,7 @@ export default function Page({
           entity={entity}
         />
       ))}
-      <Footer global={global} />
+      <Footer global={global} languages={languages} />
     </>
   );
 }

@@ -663,7 +663,7 @@ export interface StrapiGlobal {
   tipOrganizationInternalId: string | null;
   externalOrganizationInternalId: string | null;
   topBannerText: string | null;
-  languageSwitchText: string | null;
+  languageName: string | null;
   locale: string | null;
   localizations?: { locale: string | null; slug?: string | null }[];
   createdAt: string | null;

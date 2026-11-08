@@ -1,13 +1,18 @@
 import Button from "./elements/Button";
 import Image from "./elements/Image";
+import LanguageMenu from "./elements/LanguageMenu";
 import { SocialMediaIcon } from "./elements/SocialMediaIcon";
 import type { StrapiGlobal } from "@/types/generated/strapi";
+import { localeOf } from "@/utils/locale";
+import type { LanguageLink } from "@/utils/locale";
 
 interface FooterProps {
   global: StrapiGlobal;
+  /** The languages to choose between; no choice is shown without them. */
+  languages?: LanguageLink[];
 }
 
-export default function Footer({ global }: FooterProps) {
+export default function Footer({ global, languages = [] }: FooterProps) {
   const { footer } = global;
 
   if (!footer) return;
@@ -37,6 +42,15 @@ export default function Footer({ global }: FooterProps) {
                 </Button>
               ))}
             </div>
+            {languages.length > 0 && (
+              <LanguageMenu
+                locale={localeOf(global)}
+                languages={languages}
+                showName
+                anchor="top start"
+                className="text-sm text-slate-300"
+              />
+            )}
           </div>
           <div className="grid grid-cols-1 gap-x-4 gap-y-8 py-16 xs:grid-cols-2 lg:grid-cols-4 xl:col-span-2 xl:mt-0 xl:pt-0">
             {footer.columns.map((column) => (

@@ -14,6 +14,7 @@ const UI_TEXT = {
     fewerChildren: "Vähem lapsi",
     moreChildren: "Rohkem lapsi",
     close: "Sulge",
+    language: "Keel",
   },
   en: {
     openMenu: "Open main menu",
@@ -24,6 +25,7 @@ const UI_TEXT = {
     fewerChildren: "Fewer children",
     moreChildren: "More children",
     close: "Close",
+    language: "Language",
   },
 } satisfies Record<Locale, Record<string, string>>;
 
