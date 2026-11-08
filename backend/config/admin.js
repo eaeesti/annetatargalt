@@ -1,6 +1,6 @@
 /**
- * The slug a page or blog post is shown at on the site, or null for anything
- * else: only those two have drafts to preview.
+ * The slug a page, blog post, cause or organization is shown at on the site,
+ * or null for anything else: only those have drafts to preview.
  */
 async function previewSlug(uid, { documentId, locale, status }) {
   const findSlug = async () =>
@@ -10,7 +10,23 @@ async function previewSlug(uid, { documentId, locale, status }) {
         .findOne({ documentId, locale, status, fields: ["slug"] })
     )?.slug;
 
-  if (uid === "api::page.page") return (await findSlug()) ?? null;
+  if (uid === "api::page.page" || uid === "api::cause.cause") {
+    return (await findSlug()) ?? null;
+  }
+  if (uid === "api::organization.organization") {
+    // Shown under its cause, and only once it has one.
+    const organization = await strapi.documents(uid).findOne({
+      documentId,
+      locale,
+      status,
+      fields: ["slug"],
+      populate: { cause: { fields: ["slug"] } },
+    });
+    const causeSlug = organization?.cause?.slug;
+    return organization?.slug && causeSlug
+      ? `${causeSlug}/${organization.slug}`
+      : null;
+  }
   if (uid === "api::blog-post.blog-post") {
     const slug = await findSlug();
     const global = await strapi
@@ -33,9 +49,10 @@ module.exports = ({ env }) => ({
       salt: env("TRANSFER_TOKEN_SALT"),
     },
   },
-  // The Preview button in the editor shows a page or blog post on the site,
-  // drafts and all. The site's /api/preview turns its draft mode on for a link
-  // with the secret both share, and the button is hidden without one.
+  // The Preview button in the editor shows a page, blog post, cause or
+  // organization on the site, drafts and all. The site's /api/preview turns
+  // its draft mode on for a link with the secret both share, and the button
+  // is hidden without one.
   preview: {
     enabled: Boolean(env("PREVIEW_SECRET")),
     config: {

@@ -2,6 +2,7 @@ import type { Core } from "@strapi/strapi";
 import { pool } from "./db/client";
 import { BRIDGEABLE_ADMIN_ROLE_CODES } from "./utils/admin-roles";
 import { migrateImageFields, requireImageDescriptions } from "./image-fields";
+import { guardOrganizationDeletes } from "./api/organization/delete-guard";
 import {
   apiTokens,
   i18nLocales,
@@ -566,6 +567,7 @@ function warnIfProxyUntrusted(strapi: Core.Strapi): void {
 export default {
   register({ strapi }: { strapi: Core.Strapi }) {
     requireImageDescriptions(strapi);
+    guardOrganizationDeletes(strapi);
   },
 
   async bootstrap({ strapi }: { strapi: Core.Strapi }) {

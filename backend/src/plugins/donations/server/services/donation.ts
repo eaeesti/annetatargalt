@@ -114,6 +114,16 @@ function emailSummary(
     .join("\n");
 }
 
+/**
+ * An organization as the site shows it, for what a donor reads. One taken off
+ * the site since still has its draft, which keeps its name in their emails.
+ */
+async function publishedOrDraft<T>(
+  find: (status: "published" | "draft") => Promise<T | null>,
+): Promise<T | null> {
+  return (await find("published")) ?? find("draft");
+}
+
 // ─── Service ─────────────────────────────────────────────────────────────────
 
 /** The most organizations one donation can be split between. */
@@ -246,6 +256,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       .findMany({
         filters: { internalId: { $in: internalIds } },
         fields: ["id", "active", "internalId"],
+        // Only what the site shows: not an organization still in draft
+        status: "published",
         // Room for an internal ID that more than one entry has by mistake
         limit: internalIds.length * 4,
       });
@@ -1009,12 +1021,15 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     const locale = toLocale(donation.locale);
     const organizationDonations = await Promise.all(
       donation.organizationDonations.map(async (orgDonation) => {
-        const organization = await inLocale(locale, (l) =>
-          strapi.documents("api::organization.organization").findFirst({
-            filters: { internalId: orgDonation.organizationInternalId },
-            populate: ["cause"],
-            locale: l,
-          }),
+        const organization = await publishedOrDraft((status) =>
+          inLocale(locale, (l) =>
+            strapi.documents("api::organization.organization").findFirst({
+              filters: { internalId: orgDonation.organizationInternalId },
+              populate: ["cause"],
+              locale: l,
+              status,
+            }),
+          ),
         );
 
         return {
@@ -1052,13 +1067,16 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     const locale = toLocale(recurringDonation.locale);
     const organizationRecurringDonationsWithOrgs = await Promise.all(
       organizationRecurringDonations.map(async (orgRecurringDonation) => {
-        const organization = await inLocale(locale, (l) =>
-          strapi.documents("api::organization.organization").findFirst({
-            filters: {
-              internalId: orgRecurringDonation.organizationInternalId,
-            },
-            locale: l,
-          }),
+        const organization = await publishedOrDraft((status) =>
+          inLocale(locale, (l) =>
+            strapi.documents("api::organization.organization").findFirst({
+              filters: {
+                internalId: orgRecurringDonation.organizationInternalId,
+              },
+              locale: l,
+              status,
+            }),
+          ),
         );
 
         return {

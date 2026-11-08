@@ -574,7 +574,7 @@ export interface ApiCauseCause extends Struct.CollectionTypeSchema {
     singularName: 'cause';
   };
   options: {
-    draftAndPublish: false;
+    draftAndPublish: true;
   };
   pluginOptions: {
     i18n: {
@@ -1115,7 +1115,7 @@ export interface ApiOrganizationOrganization
     singularName: 'organization';
   };
   options: {
-    draftAndPublish: false;
+    draftAndPublish: true;
   };
   pluginOptions: {
     i18n: {
