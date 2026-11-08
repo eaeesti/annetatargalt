@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogPanel } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import Anchor from "./elements/Anchor";
@@ -8,6 +8,7 @@ import Button from "./elements/Button";
 import Image from "./elements/Image";
 import LanguageMenu from "./elements/LanguageMenu";
 import type { StrapiGlobal } from "@/types/generated/strapi";
+import { restoreKeptScroll } from "@/utils/language-scroll";
 import { localeOf, pagePath } from "@/utils/locale";
 import type { LanguageLink } from "@/utils/locale";
 import { uiText } from "@/utils/ui-text";
@@ -20,6 +21,9 @@ interface NavbarProps {
 
 export default function Navbar({ global, languages = [] }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Coming from the same page in another language: as far down as it was.
+  useEffect(restoreKeptScroll, []);
 
   const { title, navbar } = global;
   const locale = localeOf(global);

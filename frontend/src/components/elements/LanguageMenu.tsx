@@ -4,6 +4,7 @@ import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { GlobeAltIcon } from "@heroicons/react/24/outline";
 import { CheckIcon, ChevronDownIcon } from "@heroicons/react/20/solid";
 import Anchor from "./Anchor";
+import { keepScrollFor } from "@/utils/language-scroll";
 import type { LanguageLink, Locale } from "@/utils/locale";
 import { classes } from "@/utils/react";
 import { uiText } from "@/utils/ui-text";
@@ -56,6 +57,9 @@ export default function LanguageMenu({
               hrefLang={language.locale}
               lang={language.locale}
               aria-current={language.locale === locale ? "true" : undefined}
+              onClick={() => {
+                if (language.locale !== locale) keepScrollFor(language.href);
+              }}
               className="flex items-center justify-between gap-4 px-4 py-2 text-slate-700 aria-[current]:font-semibold data-focus:bg-primary-100"
             >
               {language.name}
