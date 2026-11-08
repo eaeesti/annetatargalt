@@ -3,8 +3,8 @@ import { PLAUSIBLE_EVENTS } from "./plausible-events";
 
 /**
  * Every event the site sends, and what it carries. Umami gets the event with
- * its properties; Plausible, until it goes, gets the names it has always had
- * (plausible-events.ts).
+ * its properties; Plausible gets the names it has always had
+ * (plausible-events.ts), since its plan has no properties.
  *
  * - Names are `thing:action`: the thing on screen and a past-tense verb, both
  *   in kebab-case (`donation:paid`, `faq:expanded`). Names stay few and

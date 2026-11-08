@@ -2,8 +2,7 @@ import type { EventArgs, Events } from "./analytics";
 
 /**
  * The names Plausible has always had for each event, so its dashboard keeps
- * counting the same goals while it runs beside Umami. Delete this file with
- * Plausible.
+ * counting the same goals beside Umami.
  */
 export const PLAUSIBLE_EVENTS: {
   [E in keyof Events]: (...args: EventArgs<E>) => string[];

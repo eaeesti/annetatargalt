@@ -42,7 +42,8 @@ export default async function RootHtml({
           )}
           {umamiWebsiteId && (
             <>
-              {/* Umami, beside Plausible for now. Its tracker is a pinned
+              {/* Umami, beside Plausible: Umami for events and their
+                  properties, Plausible for the overview. Its tracker is a pinned
                   copy served from here, so the analytics server can't change
                   what runs on the site, and it sends to the backend's domain,
                   which the content security policy already allows. The hook
