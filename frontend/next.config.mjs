@@ -84,6 +84,18 @@ const securityHeaders = [
 // while it's set, Strapi may frame the site. Without it no one may.
 const previewCookie = { type: "cookie", key: "__prerender_bypass" };
 
+// Locally the editor may be open at localhost or at 127.0.0.1, whichever
+// NEXT_PUBLIC_STRAPI_API_URL names, and a browser counts them as two origins.
+const previewFramers = (() => {
+  const url = new URL(strapiOrigin);
+  if (!isDev || !["localhost", "127.0.0.1"].includes(url.hostname)) {
+    return strapiOrigin;
+  }
+  return ["localhost", "127.0.0.1"]
+    .map((host) => `${url.protocol}//${host}:${url.port}`)
+    .join(" ");
+})();
+
 const framingHeaders = [
   {
     source: "/:path*",
@@ -103,7 +115,7 @@ const framingHeaders = [
     headers: [
       {
         key: "Content-Security-Policy",
-        value: contentSecurityPolicy(strapiOrigin),
+        value: contentSecurityPolicy(previewFramers),
       },
     ],
   },

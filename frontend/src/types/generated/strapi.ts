@@ -575,6 +575,7 @@ export interface StrapiCause {
   localizations?: { locale: string | null; slug?: string | null }[];
   createdAt: string | null;
   updatedAt: string | null;
+  publishedAt: string | null;
 }
 
 export interface StrapiContactSubmission {
@@ -687,6 +688,7 @@ export interface StrapiOrganization {
   localizations?: { locale: string | null; slug?: string | null }[];
   createdAt: string | null;
   updatedAt: string | null;
+  publishedAt: string | null;
 }
 
 export interface StrapiPage {
