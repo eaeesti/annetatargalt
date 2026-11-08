@@ -32,12 +32,12 @@ export default async function RootHtml({
             // A pinned copy of Plausible's manual script: it counts only what
             // it's given (PlausiblePageviews, utils/analytics.ts), with the
             // address the site gives it, which leaves out the query string.
-            // Its events go through the /api/event proxy in next.config.mjs.
+            // Its events go to our own Plausible, on the backend's domain.
             <script
               defer
               src="/js/plausible-manual-37.js"
               data-domain={plausibleDomain}
-              data-api="/api/event"
+              data-api={getStrapiURL("/p/api/event")}
             />
           )}
           {umamiWebsiteId && (
