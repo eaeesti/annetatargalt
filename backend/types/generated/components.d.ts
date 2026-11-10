@@ -550,6 +550,7 @@ export interface SectionsIncomeCalculatorSection
     shareText: Schema.Attribute.String;
     sourcesText: Schema.Attribute.RichText;
     summaryText: Schema.Attribute.String;
+    threadsShareText: Schema.Attribute.String;
     twitterShareText: Schema.Attribute.String;
     versusText: Schema.Attribute.String;
     youCardTitle: Schema.Attribute.String;

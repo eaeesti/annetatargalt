@@ -167,6 +167,9 @@
     "blueskyShareText": {
       "type": "string"
     },
+    "threadsShareText": {
+      "type": "string"
+    },
     "linkedinShareText": {
       "type": "string"
     },

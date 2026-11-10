@@ -162,7 +162,7 @@ export default function IncomeResults({
           />
         )}
         {section.shareText && (
-          <div className="mt-8 flex w-full max-w-3xl flex-col items-center gap-6">
+          <div className="mt-8 flex w-full max-w-4xl flex-col items-center gap-6">
             <h2 className="text-lg text-slate-700 sm:text-xl">
               {section.shareText}
             </h2>
@@ -171,6 +171,7 @@ export default function IncomeResults({
               facebookText={section.facebookShareText}
               twitterText={section.twitterShareText}
               blueskyText={section.blueskyShareText}
+              threadsText={section.threadsShareText}
               linkedinText={section.linkedinShareText}
             />
           </div>

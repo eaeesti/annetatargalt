@@ -7,6 +7,7 @@ interface ShareButtonsProps {
   facebookText: string | null;
   twitterText: string | null;
   blueskyText: string | null;
+  threadsText: string | null;
   linkedinText: string | null;
 }
 
@@ -23,6 +24,7 @@ function shareLinks(message: string) {
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(page)}`,
     twitter: `https://twitter.com/intent/tweet?text=${post}`,
     bluesky: `https://bsky.app/intent/compose?text=${post}`,
+    threads: `https://www.threads.com/intent/post?text=${post}`,
     linkedin: `https://www.linkedin.com/feed/?shareActive=true&text=${post}`,
   };
 }
@@ -33,17 +35,19 @@ export default function ShareButtons({
   facebookText,
   twitterText,
   blueskyText,
+  threadsText,
   linkedinText,
 }: ShareButtonsProps) {
   const networks = [
     { network: "facebook", text: facebookText, color: "bg-[#1877f2]" },
     { network: "twitter", text: twitterText, color: "bg-[#1da1f2]" },
     { network: "bluesky", text: blueskyText, color: "bg-[#1185fe]" },
+    { network: "threads", text: threadsText, color: "bg-black" },
     { network: "linkedin", text: linkedinText, color: "bg-[#0a66c2]" },
   ] as const;
 
   return (
-    <div className="grid w-full gap-3 xs:grid-cols-2 sm:flex sm:flex-wrap sm:justify-center">
+    <div className="grid w-full gap-3 xs:grid-cols-2 sm:flex sm:flex-wrap sm:justify-center xs:[&>:last-child:nth-child(odd)]:col-span-2">
       {networks.map(({ network, text, color }) => {
         if (!text) return null;
         const Icon = icons[network].icon;

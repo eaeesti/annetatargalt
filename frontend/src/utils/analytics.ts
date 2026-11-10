@@ -64,7 +64,7 @@ export interface Events {
   /** The slider comparing what an amount buys, let go of */
   "income-comparison:changed": { amount: number };
   "income:shared": {
-    network: "facebook" | "twitter" | "bluesky" | "linkedin";
+    network: "facebook" | "twitter" | "bluesky" | "threads" | "linkedin";
   };
 }
 

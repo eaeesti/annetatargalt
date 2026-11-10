@@ -370,6 +370,7 @@ export interface StrapiIncomeCalculatorSection {
   facebookShareText: string | null;
   twitterShareText: string | null;
   blueskyShareText: string | null;
+  threadsShareText: string | null;
   linkedinShareText: string | null;
   sourcesText: string | null;
 }
