@@ -141,6 +141,13 @@
       "when": 1794350391423,
       "tag": "0019_recurring_newsletter",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1794429853909,
+      "tag": "0020_times_in_utc",
+      "breakpoints": true
     }
   ]
 }
