@@ -11,9 +11,13 @@ import {
   unique,
   jsonb,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { addressOf } from "../utils/address";
 import type { AudienceFilters, CampaignContent } from "../utils/email-campaign";
+
+// The default for a column's time: now, in UTC, as the app writes and reads
+// every time, whatever time zone the connection writing the row is in.
+const UTC_NOW = sql`(now() at time zone 'utc')`;
 
 // Donors table
 export const donors = pgTable(
@@ -40,8 +44,8 @@ export const donors = pgTable(
       .notNull(),
     // When the donor last changed what they get, if ever.
     emailPreferencesUpdatedAt: timestamp("email_preferences_updated_at"),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at").default(UTC_NOW).notNull(),
+    updatedAt: timestamp("updated_at").default(UTC_NOW).notNull(),
   },
   (t) => [
     // The rows of one address, as the emails find them (utils/address.ts)
@@ -71,8 +75,8 @@ export const recurringDonations = pgTable(
     // form didn't ask.
     newsletter: boolean("newsletter"),
     datetime: timestamp("datetime").notNull(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at").default(UTC_NOW).notNull(),
+    updatedAt: timestamp("updated_at").default(UTC_NOW).notNull(),
   },
   (t) => [index("recurring_donations_donor_idx").on(t.donorId)],
 );
@@ -93,8 +97,8 @@ export const donationTransfers = pgTable("donation_transfers", {
   // come off the tip organization's share instead of everyone's: everyone
   // else receives their full amount. Off for rounds from before the rule.
   deductCardFees: boolean("deduct_card_fees").default(false).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").default(UTC_NOW).notNull(),
+  updatedAt: timestamp("updated_at").default(UTC_NOW).notNull(),
 });
 
 // Donations table (one-time donations)
@@ -148,8 +152,8 @@ export const donations = pgTable(
     // one that didn't go through, such as "ABANDONED". Null when it never
     // reported, as for donations from before this was kept.
     paymentStatus: varchar("payment_status", { length: 32 }),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at").default(UTC_NOW).notNull(),
+    updatedAt: timestamp("updated_at").default(UTC_NOW).notNull(),
   },
   (table) => [
     index("donations_transaction_id_idx").on(table.transactionId),
@@ -176,8 +180,8 @@ export const organizationDonations = pgTable(
       length: 64,
     }).notNull(), // Links to Strapi organization.internalId
     amount: integer("amount").notNull(), // in cents
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at").default(UTC_NOW).notNull(),
+    updatedAt: timestamp("updated_at").default(UTC_NOW).notNull(),
   },
   // Every donations-list row pulls its org split through this FK — unindexed,
   // that lateral join seq-scans this whole table once per donation.
@@ -196,8 +200,8 @@ export const organizationRecurringDonations = pgTable(
       length: 64,
     }).notNull(), // Links to Strapi organization.internalId
     amount: integer("amount").notNull(), // in cents
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at").default(UTC_NOW).notNull(),
+    updatedAt: timestamp("updated_at").default(UTC_NOW).notNull(),
   },
   (t) => [
     index("org_recurring_donations_recurring_idx").on(t.recurringDonationId),
@@ -296,7 +300,7 @@ export const adminAuditLog = pgTable(
   "admin_audit_log",
   {
     id: serial("id").primaryKey(),
-    timestamp: timestamp("timestamp").defaultNow().notNull(),
+    timestamp: timestamp("timestamp").default(UTC_NOW).notNull(),
     userId: varchar("user_id", { length: 256 }).notNull(),
     userEmail: varchar("user_email", { length: 256 }).notNull(),
     action: varchar("action", { length: 128 }).notNull(), // e.g. "donations.list", "donors.view"
@@ -347,10 +351,10 @@ export const bankTransactions = pgTable(
     donationTransferId: integer("donation_transfer_id").references(
       () => donationTransfers.id,
     ),
-    importedAt: timestamp("imported_at").defaultNow().notNull(),
+    importedAt: timestamp("imported_at").default(UTC_NOW).notNull(),
     importedBy: varchar("imported_by", { length: 256 }),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at").default(UTC_NOW).notNull(),
+    updatedAt: timestamp("updated_at").default(UTC_NOW).notNull(),
   },
   (t) => [
     index("bank_transactions_date_idx").on(t.date),
@@ -387,7 +391,7 @@ export const bankTransactionFiles = pgTable("bank_transaction_files", {
   storageKey: varchar("storage_key", { length: 64 }).notNull().unique(),
   fileName: varchar("file_name", { length: 255 }).notNull(), // as uploaded
   sizeBytes: integer("size_bytes").notNull(),
-  uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+  uploadedAt: timestamp("uploaded_at").default(UTC_NOW).notNull(),
   uploadedBy: varchar("uploaded_by", { length: 256 }),
 });
 
@@ -415,7 +419,7 @@ export const senderDonorAliases = pgTable(
       .references(() => donors.id)
       .notNull(),
     note: varchar("note", { length: 256 }),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at").default(UTC_NOW).notNull(),
     createdBy: varchar("created_by", { length: 256 }),
   },
   (t) => [index("sender_donor_aliases_donor_idx").on(t.donorId)],
@@ -439,8 +443,8 @@ export const emailCampaigns = pgTable("email_campaigns", {
   // 'draft' | 'sending' | 'sent'. Only a draft can be changed.
   status: varchar("status", { length: 16 }).notNull().default("draft"),
   createdBy: varchar("created_by", { length: 256 }),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").default(UTC_NOW).notNull(),
+  updatedAt: timestamp("updated_at").default(UTC_NOW).notNull(),
   sentAt: timestamp("sent_at"),
   // Set while a backend process is sending the email, every few seconds. Any
   // process may be asked about it, so this, not memory, says whether sending
@@ -496,7 +500,7 @@ export const emailSends = pgTable(
     // minute later, which would use up its tries before either clears.
     retryAt: timestamp("retry_at"),
     sentAt: timestamp("sent_at"),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at").default(UTC_NOW).notNull(),
   },
   (t) => [
     unique("email_sends_campaign_donor_unique").on(t.campaignId, t.donorId),

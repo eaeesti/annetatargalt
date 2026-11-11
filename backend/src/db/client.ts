@@ -15,6 +15,10 @@ const poolConfig: PoolConfig = {
   password: process.env.DATABASE_PASSWORD || "strapi",
   min: parseInt(process.env.DATABASE_POOL_MIN || "2", 10),
   max: parseInt(process.env.DATABASE_POOL_MAX || "10", 10),
+  // Times are UTC: the app writes them so and Drizzle reads them so. This
+  // puts the database's own clock, behind now() and the columns' defaults,
+  // in UTC too, whatever time zone the database itself is set to.
+  options: "-c TimeZone=UTC",
 };
 
 // Add SSL configuration if enabled (matching Strapi's config)

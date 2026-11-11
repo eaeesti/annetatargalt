@@ -363,7 +363,7 @@ export class BankTransactionsRepository {
               feeAmount: sql`coalesce(${bankTransactions.feeAmount}, excluded."fee_amount")`,
               note: sql`coalesce(${bankTransactions.note}, excluded."note")`,
               importedBy: sql`coalesce(${bankTransactions.importedBy}, excluded."imported_by")`,
-              updatedAt: sql`now()`,
+              updatedAt: new Date(),
             },
           });
       }

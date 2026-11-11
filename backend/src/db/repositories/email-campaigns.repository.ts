@@ -69,11 +69,9 @@ export class EmailCampaignsRepository {
   }
 
   async create(data: NewEmailCampaign): Promise<EmailCampaign> {
-    // Its times are the app's, in UTC, as every time it writes.
-    const now = new Date();
     const [campaign] = await this.database
       .insert(emailCampaigns)
-      .values({ createdAt: now, updatedAt: now, ...data })
+      .values(data)
       .returning();
     if (!campaign) throw new Error("Failed to insert email");
     return campaign;
@@ -439,13 +437,11 @@ export class EmailCampaignsRepository {
     senderId: string,
     heldFor: string | null = null,
   ): Promise<void> {
-    // The time is the app's, in UTC, as every time it writes.
-    const now = new Date().toISOString();
     await this.database.execute(sql`
       UPDATE email_campaigns c SET heartbeat_at = NULL, sender_id = NULL,
         status = CASE WHEN left_over.copies THEN c.status ELSE 'sent' END,
         sent_at = CASE WHEN left_over.copies THEN c.sent_at
-          ELSE coalesce(c.sent_at, ${now}::timestamp) END,
+          ELSE coalesce(c.sent_at, now() at time zone 'utc') END,
         held_for = CASE WHEN left_over.copies THEN ${heldFor} END
       FROM (SELECT EXISTS (SELECT 1 FROM email_sends
         WHERE campaign_id = ${id} AND status IN ('queued', 'claimed')) AS copies
