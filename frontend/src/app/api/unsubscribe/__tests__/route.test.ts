@@ -8,20 +8,29 @@ vi.mock("@/utils/cms", () => ({
     locale === "en" ? "/en/notifications" : "/teavitused",
 }));
 
-const opened = async (query: string) =>
-  (
-    await GET(
-      new NextRequest(`https://annetatargalt.example/api/unsubscribe?${query}`),
-    )
-  ).headers.get("location");
+vi.mock("next/navigation", () => ({
+  redirect: (path: string) => {
+    throw new Error(path);
+  },
+}));
+
+/** Where opening the link sends the browser. */
+const opened = async (query: string) => {
+  try {
+    // Behind the proxy, a request's own address is the server's
+    await GET(new NextRequest(`https://0.0.0.0:3000/api/unsubscribe?${query}`));
+  } catch (error) {
+    return error instanceof Error ? error.message : error;
+  }
+};
 
 describe("opening the unsubscribe link", () => {
   it("goes to the settings page in the email's language, with the token kept from servers", async () => {
     expect(await opened("token=1.abc&kind=newsletter&locale=en")).toBe(
-      "https://annetatargalt.example/en/notifications#token=1.abc",
+      "/en/notifications#token=1.abc",
     );
     expect(await opened("token=1.abc&kind=newsletter&locale=xx")).toBe(
-      "https://annetatargalt.example/teavitused#token=1.abc",
+      "/teavitused#token=1.abc",
     );
   });
 });

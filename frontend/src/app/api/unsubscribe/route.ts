@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { NextResponse, type NextRequest } from "next/server";
 import { emailPreferencesPath } from "@/utils/cms";
 import { DEFAULT_LOCALE, isLocale } from "@/utils/locale";
@@ -41,8 +42,9 @@ export async function POST(request: NextRequest) {
 
 /**
  * Someone who opens the link instead goes to the page where they choose
- * which emails to get, in the email's language. The token goes in the
- * fragment, as in the emails' own links, so it isn't sent again.
+ * which emails to get, in the email's language, by path alone, as in
+ * ../email-settings. The token goes in the fragment, as in the emails' own
+ * links, so it isn't sent again.
  */
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
@@ -51,7 +53,5 @@ export async function GET(request: NextRequest) {
     isLocale(locale) ? locale : DEFAULT_LOCALE,
   );
   const token = params.get("token") ?? "";
-  return NextResponse.redirect(
-    new URL(`${page}#${new URLSearchParams({ token })}`, request.url),
-  );
+  redirect(`${page}#${new URLSearchParams({ token })}`);
 }
