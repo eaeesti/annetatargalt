@@ -33,6 +33,12 @@ describe("redactUrl", () => {
     );
   });
 
+  it("blanks the code Google sends back after a login", () => {
+    expect(
+      redactUrl("/google-login/callback?state=abc&code=4%2F0Ab&scope=email"),
+    ).toBe("/google-login/callback?state=abc&code=[redacted]&scope=email");
+  });
+
   it("leaves a parameter that only ends in the same name alone", () => {
     expect(redactUrl("/api/x?reorder-token=keep")).toBe(
       "/api/x?reorder-token=keep",

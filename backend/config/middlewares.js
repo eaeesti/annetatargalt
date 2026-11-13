@@ -65,6 +65,8 @@ module.exports = ({ env }) => [
   // statement-import `apply` posts the parsed statement back as JSON (every
   // credit + debit line); a multi-year LHV export is well under 5mb.
   { name: "strapi::body", config: { jsonLimit: "5mb", formLimit: "5mb" } },
+  // Admin login with Google instead of passwords, once it's configured.
+  "global::google-login",
   "strapi::session",
   "strapi::favicon",
   "strapi::public",

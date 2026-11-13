@@ -23,6 +23,8 @@ export function strapiTable<Row>(strapi: Core.Strapi, uid: QueryUid) {
       query.findMany(params),
     create: (params: Parameters<Query["create"]>[0]): Promise<Row> =>
       query.create(params),
+    update: (params: Parameters<Query["update"]>[0]): Promise<Row | null> =>
+      query.update(params),
   };
 }
 

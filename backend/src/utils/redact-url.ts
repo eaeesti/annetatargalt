@@ -7,8 +7,12 @@
  * `token` is a donor's token for choosing their emails: whoever has it can
  * see their address and change what they get. Our own links don't put it in
  * a query string the backend gets, but a request can still come with one.
+ *
+ * `code` is what Google sends back to /google-login/callback, to exchange
+ * for the account's ID token. It's useless without the login's PKCE
+ * verifier, but it has no business in a log either.
  */
-const REDACTED_QUERY_PARAMS = ["order-token", "token"];
+const REDACTED_QUERY_PARAMS = ["order-token", "token", "code"];
 
 const REDACTED_PARAM_VALUE = new RegExp(
   `([?&](?:${REDACTED_QUERY_PARAMS.join("|")})=)[^&#]*`,
