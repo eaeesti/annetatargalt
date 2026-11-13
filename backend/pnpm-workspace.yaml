@@ -33,12 +33,10 @@ autoInstallPeers: false
 # Strapi release has picked up yet. Each fix is a minor or patch bump within
 # the same major, so force it. Drop an entry once Strapi ships that version
 # or newer.
-# - nodemailer: @strapi/provider-email-nodemailer pins 9.0.1.
-# - markdown-it: @strapi/content-manager pins 14.3.0; it is bundled into
-#   Strapi's admin panel.
+# - zod 4: @strapi/core, admin, content-manager, types and utils pin 4.4.3.
+#   (Strapi's zod 3, for koa-body, has no fixed 3.x release.)
 overrides:
-  markdown-it: ^14.3.3
-  nodemailer: ^10.1.4
+  zod@4: ^4.6.6
 
 # Dependencies' install scripts run only when listed here as true; an unlisted
 # one fails the install until someone decides. All three are denied, and the
