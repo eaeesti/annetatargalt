@@ -40,7 +40,8 @@ export default function Page({ page, global, entity, languages }: PageProps) {
       <main id="main" className="flex flex-col">
         {page?.sections?.map((section) => (
           <Section
-            key={section.id}
+            // Ids count per kind of section, so two kinds can share one.
+            key={`${section.__component}-${section.id}`}
             section={section}
             global={global}
             page={page}
