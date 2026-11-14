@@ -2,6 +2,12 @@ import type { Metadata } from "next";
 import Page from "./Page";
 import { buildMetadata } from "@/utils/seo";
 import {
+  shareCard,
+  shareCardImage,
+  shareCardPath,
+  type ShareCard,
+} from "@/utils/share-card";
+import {
   fetchEntityInLocale,
   findGlobal,
   findSpecialPage,
@@ -188,12 +194,19 @@ export async function cmsMetadata(
 ): Promise<Metadata> {
   const slug = getSlug(await params);
   try {
-    const { global, metadata, paths } = await resolvePage(slug, locale);
-    return buildMetadata(global, metadata ?? {}, {
+    const { global, page, entity, metadata, paths } = await resolvePage(
+      slug,
       locale,
-      paths,
-      launched: isLaunched(global),
-    });
+    );
+    return buildMetadata(
+      global,
+      metadata ?? {},
+      { locale, paths, launched: isLaunched(global) },
+      shareCardImage(
+        shareCardPath(slug, locale),
+        shareCard(page, entity, global),
+      ),
+    );
   } catch (err) {
     // Let notFound()/redirect() through; swallow real fetch failures so the
     // actionable error comes from the page render (→ error.tsx), not here.
@@ -206,6 +219,17 @@ export async function cmsMetadata(
     }
     return {};
   }
+}
+
+/** A page's share card, for app/og/ to draw. */
+export async function cmsShareCard(
+  slug: string,
+  locale: Locale,
+): Promise<ShareCard> {
+  const global = await getGlobal(locale);
+  const special = await findSpecialPage(slug, locale);
+  if (special) return shareCard(special.page, special.entity, global);
+  return shareCard(await getPageBySlug(slug, locale), undefined, global);
 }
 
 export async function CmsPage({

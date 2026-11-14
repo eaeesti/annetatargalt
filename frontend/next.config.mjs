@@ -106,6 +106,16 @@ const nextConfig = {
   // advisories to try. The admin panel's config says the same.
   poweredByHeader: false,
 
+  // The share cards' fonts and logo (utils/share-card-image.tsx), which are
+  // read from disk rather than imported, so nothing would put them in the
+  // server's build otherwise.
+  outputFileTracingIncludes: {
+    "/og/**": [
+      "./node_modules/@fontsource/inter/files/inter-latin-{,ext-}{400,700}-normal.woff",
+      "./assets/share-card/logo.png",
+    ],
+  },
+
   // This app sits next to a repo-root lockfile as well as its own. Turbopack,
   // which builds by default from Next 16, walks up to the outermost lockfile
   // and would take the repo root as the project root — which resolves every
