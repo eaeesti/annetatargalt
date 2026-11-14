@@ -346,51 +346,58 @@ export async function emailPreferencesPath(locale: Locale): Promise<string> {
   return localePrefix(locale) || "/";
 }
 
-export async function getAllSlugs(locale: Locale): Promise<string[]> {
-  const pagesPath = "/pages";
+/** A page for the sitemap, and which document it is in every language. */
+export interface SitemapPage {
+  slug: string;
+  /** The same in each language a document has: its type and documentId. */
+  document: string;
+}
+
+/** Every public page in a language: CMS pages, causes, organizations, posts. */
+export async function getSitemapPages(locale: Locale): Promise<SitemapPage[]> {
   const options = headersWithAuthToken();
   const urlParamsObject = { locale, populate: "*" };
 
   const pages = await fetchAllAPI<StrapiPage>(
-    pagesPath,
+    "/pages",
     urlParamsObject,
     options,
   );
   // In Strapi v5, data is returned flat (not nested under attributes)
   // Unlisted pages are reachable by their link only, so they're left out.
-  const pageSlugs = pages.flatMap((page) =>
-    page.slug && !page.metadata?.unlisted ? [page.slug] : [],
+  const pageEntries = pages.flatMap((page) =>
+    page.slug && !page.metadata?.unlisted
+      ? [{ slug: page.slug, document: `page:${page.documentId}` }]
+      : [],
   );
 
-  const causesPath = "/causes";
   const causes = await fetchAllAPI<{
+    documentId: string;
     slug: string;
-    organizations?: Array<{ slug: string }>;
-  }>(causesPath, urlParamsObject, options);
-  const causeSlugs = causes.map((cause) => cause.slug);
-
-  const organizationSlugs = causes
-    .map((cause) =>
-      (cause.organizations || []).map(
-        (organization) => `${cause.slug}/${organization.slug}`,
-      ),
-    )
-    .flat();
+    organizations?: Array<{ documentId: string; slug: string }>;
+  }>("/causes", urlParamsObject, options);
+  const causeEntries = causes.flatMap((cause) => [
+    { slug: cause.slug, document: `cause:${cause.documentId}` },
+    ...(cause.organizations ?? []).map((organization) => ({
+      slug: `${cause.slug}/${organization.slug}`,
+      document: `organization:${organization.documentId}`,
+    })),
+  ]);
 
   const blogPosts = await getBlogPosts(locale);
   const global = await getGlobal(locale);
-  const blogPostSlugs = blogPosts.map(
-    (blogPost) => `${global?.blogSlug || "blog"}/${blogPost.slug}`,
+  const postEntries = blogPosts.flatMap((blogPost) =>
+    blogPost.slug
+      ? [
+          {
+            slug: `${global?.blogSlug || "blog"}/${blogPost.slug}`,
+            document: `post:${blogPost.documentId}`,
+          },
+        ]
+      : [],
   );
 
-  const allSlugs = [
-    ...pageSlugs,
-    ...causeSlugs,
-    ...organizationSlugs,
-    ...blogPostSlugs,
-  ];
-
-  return allSlugs;
+  return [...pageEntries, ...causeEntries, ...postEntries];
 }
 
 export async function getBlogPosts(locale: Locale): Promise<StrapiBlogPost[]> {
