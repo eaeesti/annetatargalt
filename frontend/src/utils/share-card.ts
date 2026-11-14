@@ -15,7 +15,10 @@ import type { Locale } from "./locale";
 export interface ShareCard {
   title: string;
   subtitle: string | null;
-  /** The photo behind the text; none is plain green. */
+  /**
+   * The photo behind the text; none is plain green. Never the share image in
+   * Site settings: that's a finished picture, with words of its own.
+   */
   photo: SharePhoto | null;
 }
 
@@ -42,12 +45,6 @@ const FOCUS: Record<NonNullable<StrapiHeroSection["imagePosition"]>, number> = {
   bottom: 1,
 };
 
-/** Pages without a photo of their own use the share image in Site settings. */
-function defaultPhoto(global: CardGlobal): SharePhoto | null {
-  const url = global.metadata?.shareImage?.file?.url;
-  return url ? { url, focus: 0.5 } : null;
-}
-
 /** What a card is made of: a CMS or special page, and the entity it shows. */
 type CardPage = Pick<StrapiPage | StrapiSpecialPage, "name" | "sections"> & {
   metadata?: StrapiMetadata | null;
@@ -57,7 +54,7 @@ type CardEntity = {
   metadata: StrapiMetadata | null;
   image?: StrapiImage | null;
 };
-type CardGlobal = Pick<StrapiGlobal, "title" | "metadata">;
+type CardGlobal = Pick<StrapiGlobal, "title">;
 
 /**
  * A page's card: a CMS page's hero (its title, subtitle and photo) or header,
@@ -74,7 +71,7 @@ export function shareCard(
     return {
       title: entity.title || entity.metadata?.title || site,
       subtitle: null,
-      photo: picture ? { url: picture, focus: 0.5 } : defaultPhoto(global),
+      photo: picture ? { url: picture, focus: 0.5 } : null,
     };
   }
   const title = page.metadata?.title || page.name || site;
@@ -84,19 +81,17 @@ export function shareCard(
     return {
       title: first.title || title,
       subtitle: first.subtitle || null,
-      photo: url
-        ? { url, focus: FOCUS[first.imagePosition ?? "lower"] }
-        : defaultPhoto(global),
+      photo: url ? { url, focus: FOCUS[first.imagePosition ?? "lower"] } : null,
     };
   }
   if (first?.__component === "sections.header-section") {
     return {
       title: first.title || title,
       subtitle: first.subtitle || null,
-      photo: defaultPhoto(global),
+      photo: null,
     };
   }
-  return { title, subtitle: null, photo: defaultPhoto(global) };
+  return { title, subtitle: null, photo: null };
 }
 
 /** Where a page's card is drawn: /og/et for the home page, /og/en/faq. */

@@ -46,10 +46,7 @@ function metadata(fields: Partial<StrapiMetadata>): StrapiMetadata {
   };
 }
 
-const global = {
-  title: "Site",
-  metadata: metadata({ shareImage: image(`${CLOUDINARY}/v1/default.jpg`) }),
-};
+const global = { title: "Site" };
 
 const hero: StrapiHeroSection = {
   id: 1,
@@ -80,7 +77,7 @@ describe("shareCard", () => {
     ).toBe(0.75);
   });
 
-  it("puts a header's title on the site's share image", () => {
+  it("puts a header's title on a plain card", () => {
     expect(
       shareCard(
         {
@@ -101,7 +98,7 @@ describe("shareCard", () => {
     ).toEqual({
       title: "Questions",
       subtitle: null,
-      photo: { url: `${CLOUDINARY}/v1/default.jpg`, focus: 0.5 },
+      photo: null,
     });
   });
 
@@ -136,11 +133,7 @@ describe("shareCard", () => {
       photo: { url: `${CLOUDINARY}/v1/c.jpg`, focus: 0.5 },
     });
     expect(
-      shareCard(
-        special,
-        { title: "A charity", metadata: null },
-        { title: "Site", metadata: null },
-      ).photo,
+      shareCard(special, { title: "A charity", metadata: null }, global).photo,
     ).toBeNull();
   });
 });
