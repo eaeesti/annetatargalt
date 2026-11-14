@@ -1,8 +1,9 @@
 import type { Locale } from "./locale";
 
 /**
- * Labels only screen readers announce. Everything visible comes from Strapi;
- * these are too small to be worth an editor's attention there.
+ * Labels only screen readers announce (and the skip link, which only the
+ * keyboard shows). Everything visible comes from Strapi; these are too small
+ * to be worth an editor's attention there.
  */
 const UI_TEXT = {
   et: {
@@ -15,6 +16,7 @@ const UI_TEXT = {
     moreChildren: "Rohkem lapsi",
     close: "Sulge",
     language: "Keel",
+    skipToContent: "Liigu sisu juurde",
   },
   en: {
     openMenu: "Open main menu",
@@ -26,6 +28,7 @@ const UI_TEXT = {
     moreChildren: "More children",
     close: "Close",
     language: "Language",
+    skipToContent: "Skip to content",
   },
 } satisfies Record<Locale, Record<string, string>>;
 
