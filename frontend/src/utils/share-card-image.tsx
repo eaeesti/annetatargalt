@@ -94,8 +94,9 @@ function cardElement(card: ShareCard, logo: string, photo: string | null) {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
-        padding: "112px 90px 40px",
+        // The words at the bottom, under the logo and name at the top.
+        justifyContent: "flex-end",
+        padding: "0 90px 64px",
         fontFamily: "Inter, Inter Ext",
         // primary-900, lighter in the middle where there's no photo. (Satori
         // fails on a style that is present but undefined.)
@@ -104,7 +105,7 @@ function cardElement(card: ShareCard, logo: string, photo: string | null) {
           ? {}
           : {
               backgroundImage:
-                "radial-gradient(circle at 50% 45%, #047857 0%, #064e3b 55%, #022c1f 100%)",
+                "radial-gradient(circle at 50% 30%, #047857 0%, #064e3b 55%, #022c1f 100%)",
             }),
       }}
     >
@@ -119,7 +120,8 @@ function cardElement(card: ShareCard, logo: string, photo: string | null) {
         />
       )}
       {photo && (
-        // The hero's primary-950 at 70%, a little deeper behind the words.
+        // The hero's primary-950 at 70%, deepening towards the words at the
+        // bottom.
         <div
           style={{
             position: "absolute",
@@ -130,22 +132,35 @@ function cardElement(card: ShareCard, logo: string, photo: string | null) {
             display: "flex",
             backgroundColor: "rgba(2, 44, 31, 0.72)",
             backgroundImage:
-              "radial-gradient(circle at 50% 54%, rgba(2, 28, 20, 0.45) 0%, rgba(2, 28, 20, 0) 60%)",
+              "linear-gradient(to bottom, rgba(2, 28, 20, 0) 35%, rgba(2, 28, 20, 0.55) 100%)",
           }}
         />
       )}
       <div
         style={{
           position: "absolute",
-          top: 44,
+          top: 52,
           left: 0,
           width,
           display: "flex",
+          alignItems: "center",
           justifyContent: "center",
+          gap: 22,
         }}
       >
         {/* oxlint-disable-next-line next/no-img-element -- drawn by Satori, not a page */}
-        <img src={logo} alt="" width={216} height={66} />
+        <img src={logo} alt="" width={183} height={56} />
+        <div
+          style={{
+            display: "flex",
+            fontWeight: 700,
+            fontSize: 38,
+            letterSpacing: "-0.01em",
+            color: "#ffffff",
+          }}
+        >
+          {card.site}
+        </div>
       </div>
       <div
         style={{

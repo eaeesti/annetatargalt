@@ -13,6 +13,8 @@ import type { Locale } from "./locale";
  * app/og/ (utils/share-card-image.tsx) in the style of the home page's hero.
  */
 export interface ShareCard {
+  /** The site's name, next to the logo. */
+  site: string;
   title: string;
   subtitle: string | null;
   /**
@@ -34,7 +36,7 @@ export const SHARE_CARD_SIZE = { width: 1200, height: 630 };
  * Part of every card's version: change it when the cards' design changes, so
  * sites that keep link previews fetch the new ones.
  */
-const DESIGN_VERSION = 1;
+const DESIGN_VERSION = 2;
 
 /** The hero's imagePosition, as the part of the photo it keeps in view. */
 const FOCUS: Record<NonNullable<StrapiHeroSection["imagePosition"]>, number> = {
@@ -69,6 +71,7 @@ export function shareCard(
   if (entity) {
     const picture = entity.image?.file?.url;
     return {
+      site,
       title: entity.title || entity.metadata?.title || site,
       subtitle: null,
       photo: picture ? { url: picture, focus: 0.5 } : null,
@@ -79,6 +82,7 @@ export function shareCard(
   if (first?.__component === "sections.hero-section") {
     const url = first.image?.file?.url;
     return {
+      site,
       title: first.title || title,
       subtitle: first.subtitle || null,
       photo: url ? { url, focus: FOCUS[first.imagePosition ?? "lower"] } : null,
@@ -86,12 +90,13 @@ export function shareCard(
   }
   if (first?.__component === "sections.header-section") {
     return {
+      site,
       title: first.title || title,
       subtitle: first.subtitle || null,
       photo: null,
     };
   }
-  return { title, subtitle: null, photo: null };
+  return { site, title, subtitle: null, photo: null };
 }
 
 /** Where a page's card is drawn: /og/et for the home page, /og/en/faq. */

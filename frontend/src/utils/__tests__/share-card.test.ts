@@ -63,6 +63,7 @@ describe("shareCard", () => {
     expect(
       shareCard({ name: "Home", sections: [hero] }, undefined, global),
     ).toEqual({
+      site: "Site",
       title: "Give well",
       subtitle: "Where a euro does the most",
       photo: { url: `${CLOUDINARY}/v1/hero.webp`, focus: 0.25 },
@@ -96,6 +97,7 @@ describe("shareCard", () => {
         global,
       ),
     ).toEqual({
+      site: "Site",
       title: "Questions",
       subtitle: null,
       photo: null,
@@ -128,6 +130,7 @@ describe("shareCard", () => {
         global,
       ),
     ).toEqual({
+      site: "Site",
       title: "Climate",
       subtitle: null,
       photo: { url: `${CLOUDINARY}/v1/c.jpg`, focus: 0.5 },
@@ -147,7 +150,7 @@ describe("the card's address", () => {
   });
 
   it("changes when what's on the card changes", () => {
-    const card = { title: "A", subtitle: null, photo: null };
+    const card = { site: "Site", title: "A", subtitle: null, photo: null };
     const first = shareCardImage("/og/et", card);
     expect(first).toMatchObject({ width: 1200, height: 630, alt: "A" });
     expect(first.url).toMatch(/^\/og\/et\?v=\w+$/);
