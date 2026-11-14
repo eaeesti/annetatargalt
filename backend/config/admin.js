@@ -74,25 +74,4 @@ module.exports = ({ env }) => ({
       },
     },
   },
-  // Optimize the Vite build for memory-constrained environments
-  vite: {
-    build: {
-      // Disable minification for faster builds (admin panel, not critical for performance)
-      minify: false,
-
-      // Disable source maps (not needed in production)
-      sourcemap: false,
-
-      // Reduce chunk size warnings
-      chunkSizeWarningLimit: 5000,
-
-      // Optimize rollup for lower memory usage
-      rollupOptions: {
-        output: {
-          // Reduce chunk splitting to lower memory usage
-          manualChunks: undefined,
-        },
-      },
-    },
-  },
 });

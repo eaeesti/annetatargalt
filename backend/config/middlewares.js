@@ -3,6 +3,9 @@ module.exports = ({ env }) => [
   // order tokens included. See src/middlewares/request-logger.ts.
   "global::request-logger",
   "strapi::errors",
+  // Brotli or gzip: the admin's script is several megabytes, and the site's
+  // page renders fetch content from here too.
+  "strapi::compression",
   // Strapi's own upload endpoint stays shut, even to a full-access token.
   "global::no-content-upload",
   {
