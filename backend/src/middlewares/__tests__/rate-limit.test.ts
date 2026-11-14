@@ -75,4 +75,10 @@ describe("the rate limit", () => {
     expect(await requests(1000, "198.51.100.9", "forged")).toBe(200);
     expect(await requests(1, "198.51.100.9", "forged")).toBe(429);
   });
+
+  it("doesn't count the site's server, which fetches every page's content", async () => {
+    // A container's private address, and loopback
+    expect(await requests(1100, "172.20.0.2")).toBe(200);
+    expect(await requests(1100, "::ffff:127.0.0.1")).toBe(200);
+  });
 });

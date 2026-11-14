@@ -6,7 +6,7 @@ import montonio, {
 import { DonationsRepository } from "../../../../db/repositories/donations.repository";
 import {
   FixedWindowLimiter,
-  isProxyAddress,
+  isInternalAddress,
 } from "../../../../utils/rate-limiter";
 import { isAllowedReturnUrl } from "../../../../utils/return-url";
 
@@ -43,7 +43,7 @@ function allowRecurringSetup(ctx: Context, email: unknown): boolean {
   // them — the sixth genuine donor of the hour would be turned away. The
   // per-recipient bucket doesn't depend on the address, so it keeps working
   // either way and still covers the mail-bombing case.
-  const useIp = !isProxyAddress(ip);
+  const useIp = !isInternalAddress(ip);
   const recipient = typeof email === "string" ? email.trim().toLowerCase() : "";
 
   if (useIp && recurringSetupsPerIp.isLimited(ip)) return false;
@@ -66,11 +66,11 @@ const oneOffDonationsPerIp = new FixedWindowLimiter(20, ONE_OFF_WINDOW_MS);
 /**
  * Consume one-off donation allowance for this request, or report that the
  * caller is over it. Behind a proxy that hides donors' addresses there is no
- * per-donor key, and nothing is limited (see isProxyAddress).
+ * per-donor key, and nothing is limited (see isInternalAddress).
  */
 function allowOneOffDonation(ctx: Context): boolean {
   const ip = ctx.request.ip;
-  if (isProxyAddress(ip)) return true;
+  if (isInternalAddress(ip)) return true;
   if (oneOffDonationsPerIp.isLimited(ip)) return false;
   oneOffDonationsPerIp.record(ip);
   return true;

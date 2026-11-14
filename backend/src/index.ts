@@ -10,6 +10,7 @@ import {
   strapiTable,
 } from "./strapi-internals";
 import { isRecord } from "./utils/narrow";
+import { configuredNetworks, parseNetworks } from "./utils/rate-limiter";
 import { stopSending } from "./plugins/admin-panel/server/services/email-campaign";
 import fs from "fs";
 import path from "path";
@@ -601,9 +602,21 @@ function warnIfProxyUntrusted(strapi: Core.Strapi): void {
   if (process.env.NODE_ENV !== "production") return;
   strapi.log.warn(
     "⚠️  SERVER_PROXY is off: every request will report the reverse proxy's " +
-      "address, so login lockout and rate limits share one bucket and audit " +
-      "rows cannot be attributed. Turn it on only once the proxy overwrites " +
-      "X-Forwarded-For with the real client address.",
+      "address, so rate limits are skipped wherever that address is internal " +
+      "and audit rows cannot be attributed. Turn it on only once the proxy " +
+      "overwrites X-Forwarded-For with the real client address.",
+  );
+}
+
+/** A typo in INTERNAL_NETWORKS would silently leave the site rate-limited. */
+function warnIfInternalNetworksInvalid(strapi: Core.Strapi): void {
+  const { invalid } = parseNetworks(
+    configuredNetworks(process.env.INTERNAL_NETWORKS),
+  );
+  if (invalid.length === 0) return;
+  strapi.log.warn(
+    `⚠️  INTERNAL_NETWORKS: ignoring ${invalid.join(", ")}; ` +
+      'give networks as "address/prefix", e.g. 172.41.0.0/24.',
   );
 }
 
@@ -761,6 +774,7 @@ export default {
       blockOrphanedDonationAdmins(strapi),
     );
     warnIfProxyUntrusted(strapi);
+    warnIfInternalNetworksInvalid(strapi);
 
     strapi.server.httpServer.on("request", (_req, res) => {
       inFlightRequests += 1;

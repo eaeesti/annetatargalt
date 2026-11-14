@@ -4,7 +4,7 @@ import { unsubscribeHeaders } from "../../../emails";
 import { DEFAULT_LOCALE } from "../../../utils/locale";
 import {
   FixedWindowLimiter,
-  isProxyAddress,
+  isInternalAddress,
 } from "../../../utils/rate-limiter";
 import { format, sanitize } from "../../../utils/string";
 
@@ -26,7 +26,7 @@ export default factories.createCoreController(
       // Skipped while SERVER_PROXY is off, when every visitor shares the
       // proxy's address and this would throttle the whole site at once.
       if (
-        !isProxyAddress(ctx.request.ip) &&
+        !isInternalAddress(ctx.request.ip) &&
         !contactSubmissionsPerIp.tryConsume(ctx.request.ip)
       ) {
         // Status must be passed to send() — Strapi's send(data, status = 200)

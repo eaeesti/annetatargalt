@@ -7,7 +7,7 @@ import { BRIDGEABLE_ADMIN_ROLE_CODES } from "../../../utils/admin-roles";
 import { verifyGoogleIdToken } from "../../../utils/google-id-token";
 import {
   FixedWindowLimiter,
-  isProxyAddress,
+  isInternalAddress,
 } from "../../../utils/rate-limiter";
 
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
@@ -80,7 +80,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     const normalizedEmail = email.toLowerCase();
     const emailKey = `${ctx.request.ip}|${normalizedEmail}`;
     const ipKey = ctx.request.ip;
-    const ipKeyIsReal = !isProxyAddress(ipKey);
+    const ipKeyIsReal = !isInternalAddress(ipKey);
 
     if (
       perEmailAttempts.isLimited(emailKey) ||
