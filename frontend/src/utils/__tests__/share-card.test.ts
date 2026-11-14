@@ -5,6 +5,7 @@ import type {
   StrapiMetadata,
 } from "@/types/generated/strapi";
 import {
+  cardLogoUrl,
   cardPhotoUrl,
   pageOfCard,
   shareCard,
@@ -66,6 +67,7 @@ describe("shareCard", () => {
       site: "Site",
       title: "Give well",
       subtitle: "Where a euro does the most",
+      logo: null,
       photo: { url: `${CLOUDINARY}/v1/hero.webp`, focus: 0.25 },
     });
     // The hero's own default crop
@@ -100,6 +102,7 @@ describe("shareCard", () => {
       site: "Site",
       title: "Questions",
       subtitle: null,
+      logo: null,
       photo: null,
     });
   });
@@ -133,11 +136,34 @@ describe("shareCard", () => {
       site: "Site",
       title: "Climate",
       subtitle: null,
+      logo: null,
       photo: { url: `${CLOUDINARY}/v1/c.jpg`, focus: 0.5 },
     });
     expect(
       shareCard(special, { title: "A charity", metadata: null }, global).photo,
     ).toBeNull();
+  });
+});
+
+describe("an organization's card", () => {
+  it("carries its logo, on a plain card", () => {
+    expect(
+      shareCard(
+        { name: "Organization page", sections: [] },
+        {
+          title: "A charity",
+          metadata: null,
+          logo: image(`${CLOUDINARY}/v1/logo.svg`),
+        },
+        global,
+      ),
+    ).toEqual({
+      site: "Site",
+      title: "A charity",
+      subtitle: null,
+      logo: `${CLOUDINARY}/v1/logo.svg`,
+      photo: null,
+    });
   });
 });
 
@@ -150,13 +176,27 @@ describe("the card's address", () => {
   });
 
   it("changes when what's on the card changes", () => {
-    const card = { site: "Site", title: "A", subtitle: null, photo: null };
+    const card = {
+      site: "Site",
+      title: "A",
+      subtitle: null,
+      logo: null,
+      photo: null,
+    };
     const first = shareCardImage("/og/et", card);
     expect(first).toMatchObject({ width: 1200, height: 630, alt: "A" });
     expect(first.url).toMatch(/^\/og\/et\?v=\w+$/);
     expect(shareCardImage("/og/et", card).url).toBe(first.url);
     expect(shareCardImage("/og/et", { ...card, title: "B" }).url).not.toBe(
       first.url,
+    );
+  });
+});
+
+describe("cardLogoUrl", () => {
+  it("asks Cloudinary for a PNG twice the size it's drawn, as the renderer can't read SVG", () => {
+    expect(cardLogoUrl(`${CLOUDINARY}/v1/logo.svg`)).toBe(
+      `${CLOUDINARY}/f_png,w_320,h_320,c_pad/v1/logo.svg`,
     );
   });
 });

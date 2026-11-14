@@ -3,7 +3,9 @@ import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import sharp from "sharp";
 import {
+  cardLogoUrl,
   cardPhotoUrl,
+  LOGO_SIZE,
   SHARE_CARD_SIZE,
   type ShareCard,
   type SharePhoto,
@@ -81,9 +83,43 @@ async function photoDataUrl(photo: SharePhoto | null): Promise<string | null> {
   }
 }
 
+/**
+ * An organization's logo as the site shows it: its square file, on white, as
+ * a PNG at twice the size it's drawn. Null if there's none or it can't be
+ * read: the card is drawn without it.
+ */
+async function logoDataUrl(url: string | null): Promise<string | null> {
+  if (!url) return null;
+  try {
+    // Cloudinary's addresses name a version, so the file never changes.
+    const response = await fetch(cardLogoUrl(url), { cache: "force-cache" });
+    if (!response.ok) return null;
+    const png = await sharp(Buffer.from(await response.arrayBuffer()), {
+      density: 300,
+    })
+      .resize({
+        width: LOGO_SIZE * 2,
+        height: LOGO_SIZE * 2,
+        fit: "contain",
+        background: "#ffffff",
+      })
+      .flatten({ background: "#ffffff" })
+      .png()
+      .toBuffer();
+    return `data:image/png;base64,${png.toString("base64")}`;
+  } catch {
+    return null;
+  }
+}
+
 // No textWrap: "balance": in Satori it pushes text that fits on one line
 // off centre.
-function cardElement(card: ShareCard, logo: string, photo: string | null) {
+function cardElement(
+  card: ShareCard,
+  logo: string,
+  photo: string | null,
+  organizationLogo: string | null,
+) {
   const title = shorten(card.title, 110);
   const subtitle = card.subtitle ? shorten(card.subtitle, 150) : null;
   return (
@@ -162,6 +198,21 @@ function cardElement(card: ShareCard, logo: string, photo: string | null) {
           {card.site}
         </div>
       </div>
+      {organizationLogo && (
+        // As on the organization's page: a rounded square with a shadow.
+        // oxlint-disable-next-line next/no-img-element -- drawn by Satori, not a page
+        <img
+          src={organizationLogo}
+          alt=""
+          width={LOGO_SIZE}
+          height={LOGO_SIZE}
+          style={{
+            marginBottom: 34,
+            borderRadius: 16,
+            boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.25)",
+          }}
+        />
+      )}
       <div
         style={{
           display: "flex",
@@ -202,11 +253,13 @@ function cardElement(card: ShareCard, logo: string, photo: string | null) {
  */
 export async function shareCardResponse(card: ShareCard): Promise<Response> {
   assets ??= loadAssets();
-  const [{ fonts, logo }, photo] = await Promise.all([
+  const [{ fonts, logo }, photo, organizationLogo] = await Promise.all([
     assets,
     photoDataUrl(card.photo),
+    logoDataUrl(card.logo),
   ]);
-  const png = await new ImageResponse(cardElement(card, logo, photo), {
+  const element = cardElement(card, logo, photo, organizationLogo);
+  const png = await new ImageResponse(element, {
     width,
     height,
     fonts,

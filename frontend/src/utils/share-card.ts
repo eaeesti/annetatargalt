@@ -17,6 +17,8 @@ export interface ShareCard {
   site: string;
   title: string;
   subtitle: string | null;
+  /** An organization's logo, as its page shows it, above its name. */
+  logo: string | null;
   /**
    * The photo behind the text; none is plain green. Never the share image in
    * Site settings: that's a finished picture, with words of its own.
@@ -55,6 +57,7 @@ type CardEntity = {
   title: string | null;
   metadata: StrapiMetadata | null;
   image?: StrapiImage | null;
+  logo?: StrapiImage | null;
 };
 type CardGlobal = Pick<StrapiGlobal, "title">;
 
@@ -74,6 +77,7 @@ export function shareCard(
       site,
       title: entity.title || entity.metadata?.title || site,
       subtitle: null,
+      logo: entity.logo?.file?.url ?? null,
       photo: picture ? { url: picture, focus: 0.5 } : null,
     };
   }
@@ -85,6 +89,7 @@ export function shareCard(
       site,
       title: first.title || title,
       subtitle: first.subtitle || null,
+      logo: null,
       photo: url ? { url, focus: FOCUS[first.imagePosition ?? "lower"] } : null,
     };
   }
@@ -93,10 +98,11 @@ export function shareCard(
       site,
       title: first.title || title,
       subtitle: first.subtitle || null,
+      logo: null,
       photo: null,
     };
   }
-  return { site, title, subtitle: null, photo: null };
+  return { site, title, subtitle: null, logo: null, photo: null };
 }
 
 /** Where a page's card is drawn: /og/et for the home page, /og/en/faq. */
@@ -157,8 +163,24 @@ export function titleFontSize(title: string): number {
  * are fetched as they are.
  */
 export function cardPhotoUrl(url: string): string {
+  return cloudinary(url, `f_jpg,q_85,w_${SHARE_CARD_SIZE.width},c_limit`);
+}
+
+/** How large an organization's logo is drawn: as on its page, 160 pixels. */
+export const LOGO_SIZE = 160;
+
+/**
+ * A logo as a PNG at twice the size it's drawn: the renderer can't read SVG,
+ * which most logos are.
+ */
+export function cardLogoUrl(url: string): string {
+  return cloudinary(url, `f_png,w_${LOGO_SIZE * 2},h_${LOGO_SIZE * 2},c_pad`);
+}
+
+/** A Cloudinary image's address with a transformation, others as they are. */
+function cloudinary(url: string, transformation: string): string {
   return url.replace(
     /^(https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/)/,
-    `$1f_jpg,q_85,w_${SHARE_CARD_SIZE.width},c_limit/`,
+    `$1${transformation}/`,
   );
 }
