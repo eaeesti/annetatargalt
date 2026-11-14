@@ -15,6 +15,9 @@ import {
 
 const { width, height } = SHARE_CARD_SIZE;
 
+/** primary-800, behind cards without a photo */
+const CARD_GREEN = "#065f46";
+
 type Fonts = NonNullable<
   NonNullable<ConstructorParameters<typeof ImageResponse>[1]>["fonts"]
 >;
@@ -134,15 +137,7 @@ function cardElement(
         justifyContent: "flex-end",
         padding: "0 90px 64px",
         fontFamily: "Inter, Inter Ext",
-        // primary-900, lighter in the middle where there's no photo. (Satori
-        // fails on a style that is present but undefined.)
-        backgroundColor: "#064e3b",
-        ...(photo
-          ? {}
-          : {
-              backgroundImage:
-                "radial-gradient(circle at 50% 30%, #047857 0%, #064e3b 55%, #022c1f 100%)",
-            }),
+        backgroundColor: CARD_GREEN,
       }}
     >
       {photo && (
