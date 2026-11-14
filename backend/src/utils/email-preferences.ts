@@ -4,6 +4,8 @@
  */
 
 import type { EmailKind } from "./email-campaign";
+import { LOCALES, type Locale } from "./locale";
+import { oneOf } from "./narrow";
 
 export const EMAIL_PREFERENCES = [
   "newsletter",
@@ -12,7 +14,10 @@ export const EMAIL_PREFERENCES = [
 ] as const;
 
 export type EmailPreference = (typeof EMAIL_PREFERENCES)[number];
-export type EmailPreferences = Partial<Record<EmailPreference, boolean>>;
+export type EmailPreferences = Partial<Record<EmailPreference, boolean>> & {
+  /** The language of these emails; null for the one the donor last gave in. */
+  emailLocale?: Locale | null;
+};
 
 /** The setting a donor turns off to stop getting a kind of email. */
 export const SETTING_OF_KIND = {
@@ -37,8 +42,9 @@ export function unsubscribing(kind: UnsubscribeKind): EmailPreferences {
 }
 
 /**
- * The settings a request changes: each one its body has, as true or false.
- * What's wrong instead, when one of them is anything else.
+ * The settings a request changes: each one its body has, as true or false,
+ * and the language as a locale or null. What's wrong instead, when one of
+ * them is anything else.
  */
 export function preferenceChanges(
   body: Record<string, unknown>,
@@ -50,6 +56,15 @@ export function preferenceChanges(
     else if (value !== undefined) {
       return { error: `${preference} must be true or false` };
     }
+  }
+  const locale = body.emailLocale;
+  if (locale === null) changes.emailLocale = null;
+  else if (locale !== undefined) {
+    const known = oneOf(locale, LOCALES);
+    if (!known) {
+      return { error: `emailLocale must be ${LOCALES.join(" or ")} or null` };
+    }
+    changes.emailLocale = known;
   }
   return { changes };
 }

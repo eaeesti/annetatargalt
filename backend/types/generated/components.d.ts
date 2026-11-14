@@ -426,8 +426,11 @@ export interface SectionsEmailPreferencesSection
     displayName: 'EmailPreferencesSection';
   };
   attributes: {
+    automaticLanguageText: Schema.Attribute.String;
     invalidLinkText: Schema.Attribute.RichText;
     invalidLinkTitle: Schema.Attribute.String;
+    languageDescription: Schema.Attribute.Text;
+    languageLabel: Schema.Attribute.String;
     newsletterDescription: Schema.Attribute.Text;
     newsletterLabel: Schema.Attribute.String;
     savedText: Schema.Attribute.String;

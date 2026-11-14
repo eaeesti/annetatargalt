@@ -298,6 +298,33 @@ describe("EmailCampaignsRepository", () => {
     expect(recipient?.locale).toBe("en");
   });
 
+  it("writes in the language the address chose, whatever it gave in", async () => {
+    const chose = await giver({ email: "a@example.org" }, { locale: "et" });
+    await giver({ email: "A@example.org", idCode: null }, { locale: "et" });
+    await giver({ email: "b@example.org" }, { locale: "en" });
+    await donorsRepository.updateEmailPreferences(chose.id, {
+      emailLocale: "en",
+    });
+
+    const languages = async (filters = {}) =>
+      (await emailCampaignsRepository.findRecipients("newsletter", filters))
+        .map((r) => [r.email.toLowerCase(), r.locale])
+        .sort();
+    expect(await languages()).toEqual([
+      ["a@example.org", "en"],
+      ["b@example.org", "en"],
+    ]);
+    expect(await languages({ locale: "et" })).toEqual([]);
+
+    // Back to the language it last gave in
+    await donorsRepository.updateEmailPreferences(chose.id, {
+      emailLocale: null,
+    });
+    expect(await languages({ locale: "et" })).toEqual([
+      ["a@example.org", "et"],
+    ]);
+  });
+
   describe("sending", () => {
     it("queues the group once, at the first send", async () => {
       const campaign = await draft();
@@ -832,6 +859,39 @@ describe("DonorsRepository email settings", () => {
       yearlyEmails: true,
       newsletterSource: "default",
     });
+  });
+
+  it("keeps the language chosen for a new row of the address", async () => {
+    const first = await giver({ email: "mari@example.org" });
+    await donorsRepository.updateEmailPreferences(first.id, {
+      emailLocale: "en",
+    });
+    expect(
+      (await donorsRepository.findEmailPreferences(first.id))?.emailLocale,
+    ).toBe("en");
+
+    const second = await donorsRepository.create({
+      email: "Mari@Example.org",
+      idCode: null,
+    });
+    expect(second.emailLocale).toBe("en");
+    expect(
+      (await donorsRepository.create({ email: "jaan@example.org" }))
+        .emailLocale,
+    ).toBeNull();
+  });
+
+  it("takes a language chosen again as no change", async () => {
+    const donor = await createTestDonor({ email: "a@example.org" });
+    const changed = await donorsRepository.updateEmailPreferences(donor.id, {
+      emailLocale: "en",
+    });
+    const again = await donorsRepository.updateEmailPreferences(donor.id, {
+      emailLocale: "en",
+    });
+    expect(again?.emailPreferencesUpdatedAt).toEqual(
+      changed?.emailPreferencesUpdatedAt,
+    );
   });
 
   it("tells the settings page what sending decides, address by address", async () => {

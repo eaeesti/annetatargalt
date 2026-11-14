@@ -5,6 +5,7 @@ import {
 } from "../../utils/email-preferences";
 import { estonianDate, estonianMidnight } from "../../utils/estonian-time";
 import { addressOf, addressWants } from "../../utils/address";
+import { toLocale, type Locale } from "../../utils/locale";
 import {
   eq,
   or,
@@ -34,6 +35,8 @@ export interface AddressEmailPreferences {
   newsletter: boolean;
   transferEmails: boolean;
   yearlyEmails: boolean;
+  /** The language chosen for them, or null for the one last given in. */
+  emailLocale: Locale | null;
   newsletterSource: string;
   emailPreferencesUpdatedAt: Date | null;
 }
@@ -192,6 +195,11 @@ export class DonorsRepository {
         ? [sql`${donors[preference]} IS DISTINCT FROM ${value}`]
         : [];
     });
+    if (preferences.emailLocale !== undefined) {
+      differs.push(
+        sql`${donors.emailLocale} IS DISTINCT FROM ${preferences.emailLocale}`,
+      );
+    }
     if (preferences.newsletter === false) {
       differs.push(sql`${donors.newsletterSource} IS DISTINCT FROM 'settings'`);
     }
@@ -245,6 +253,11 @@ export class DonorsRepository {
         newsletter: wants(donors.newsletter),
         transferEmails: wants(donors.transferEmails),
         yearlyEmails: wants(donors.yearlyEmails),
+        // A change sets every row of the address; should they differ, the
+        // latest choice counts.
+        emailLocale: sql<string | null>`(array_agg(${donors.emailLocale}
+          ORDER BY ${donors.emailPreferencesUpdatedAt} DESC NULLS LAST, ${donors.id} DESC)
+          FILTER (WHERE ${donors.emailLocale} IS NOT NULL))[1]`,
         newsletterSource: sql<string>`coalesce(${newsletterSource(gave)}, ${newsletterSource(sql`true`)})`,
         emailPreferencesUpdatedAt:
           sql<Date | null>`max(${donors.emailPreferencesUpdatedAt})`.mapWith(
@@ -254,8 +267,11 @@ export class DonorsRepository {
       .from(donors)
       .where(rows);
     if (!row || row.rows === 0) return undefined;
-    const { rows: _, ...preferences } = row;
-    return preferences;
+    const { rows: _, emailLocale, ...preferences } = row;
+    return {
+      ...preferences,
+      emailLocale: emailLocale ? toLocale(emailLocale) : null,
+    };
   }
 
   /**

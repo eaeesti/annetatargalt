@@ -102,22 +102,26 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
     await auditLog(ctx, "donors.findOne", String(id));
 
+    // Which emails the address gets, from all its donor rows, as sending
+    // decides it, rather than this row's own settings.
+    const preferences = await donorsRepository.findEmailPreferences(id);
+
     return ctx.send({
       data: {
         ...donor,
-        // Which emails the address gets, from all its donor rows, as sending
-        // decides it, rather than this row's own settings.
-        ...(await donorsRepository.findEmailPreferences(id)),
+        ...preferences,
         // The page the links in the donor's emails lead to, in the language
-        // they last gave in: a standing order's payment is in the order's.
+        // chosen for them or else the one they last gave in: a standing
+        // order's payment is in the order's.
         emailPreferencesUrl: emailPreferencesUrl(
           strapi,
           donor.id,
-          toLocale(
-            donor.recurringDonations.find(
-              (order) => order.id === finalized[0]?.recurringDonationId,
-            )?.locale ?? finalized[0]?.locale,
-          ),
+          preferences?.emailLocale ??
+            toLocale(
+              donor.recurringDonations.find(
+                (order) => order.id === finalized[0]?.recurringDonationId,
+              )?.locale ?? finalized[0]?.locale,
+            ),
         ),
         stats: {
           totalDonated,

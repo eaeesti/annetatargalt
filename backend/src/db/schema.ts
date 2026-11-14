@@ -42,6 +42,9 @@ export const donors = pgTable(
     newsletterSource: varchar("newsletter_source", { length: 24 })
       .default("default")
       .notNull(),
+    // The language the donor chose for these emails, "et" or "en"; null to
+    // get each in the language they last gave in.
+    emailLocale: varchar("email_locale", { length: 8 }),
     // When the donor last changed what they get, if ever.
     emailPreferencesUpdatedAt: timestamp("email_preferences_updated_at"),
     createdAt: timestamp("created_at").default(UTC_NOW).notNull(),

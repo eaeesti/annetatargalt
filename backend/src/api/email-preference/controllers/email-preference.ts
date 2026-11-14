@@ -11,7 +11,8 @@ import { donorIdFromToken } from "../../../utils/email-token";
 import { isRecord, oneOf } from "../../../utils/narrow";
 
 /**
- * What the page shows: the address the emails go to, and which ones it gets.
+ * What the page shows: the address the emails go to, which ones it gets, and
+ * in which language.
  * Those are the address's, from every donor row with it, as sending decides
  * them: one row's alone could show an email as on that the address doesn't
  * get, and saving it would turn it back on.
@@ -25,6 +26,7 @@ async function preferencesOf(donorId: number) {
     newsletter: preferences.newsletter,
     transferEmails: preferences.transferEmails,
     yearlyEmails: preferences.yearlyEmails,
+    emailLocale: preferences.emailLocale,
   };
 }
 

@@ -286,6 +286,9 @@ export interface StrapiEmailPreferencesSection {
   transferEmailsDescription: string | null;
   yearlyEmailsLabel: string | null;
   yearlyEmailsDescription: string | null;
+  languageLabel: string | null;
+  languageDescription: string | null;
+  automaticLanguageText: string | null;
   saveText: string | null;
   savedText: string | null;
   invalidLinkTitle: string | null;

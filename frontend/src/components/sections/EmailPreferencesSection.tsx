@@ -16,6 +16,7 @@ import {
   keepToken,
   type TokenPlace,
 } from "@/utils/email-settings-token";
+import { isLocale, type Locale } from "@/utils/locale";
 import { escapeMarkdown, format } from "@/utils/string";
 import type {
   StrapiEmailPreferencesSection,
@@ -27,9 +28,17 @@ interface Preferences {
   newsletter: boolean;
   transferEmails: boolean;
   yearlyEmails: boolean;
+  /** The language chosen for the emails; null for the one last given in. */
+  emailLocale: Locale | null;
 }
 
 type Choice = "newsletter" | "transferEmails" | "yearlyEmails";
+
+/** Each language by its name in itself, as language choices are shown. */
+const LANGUAGES: { locale: Locale; name: string }[] = [
+  { locale: "et", name: "Eesti" },
+  { locale: "en", name: "English" },
+];
 
 interface EmailPreferencesSectionProps extends StrapiEmailPreferencesSection {
   global: StrapiGlobal;
@@ -81,7 +90,12 @@ async function findPreferences(token: string): Promise<Preferences | null> {
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(await describeErrorResponse(response));
   const found = await readStrapiJson<Partial<Preferences>>(response);
-  return isPreferences(found) ? found : null;
+  return isPreferences(found)
+    ? {
+        ...found,
+        emailLocale: isLocale(found.emailLocale) ? found.emailLocale : null,
+      }
+    : null;
 }
 
 /**
@@ -140,7 +154,9 @@ export default function EmailPreferencesSection({
   );
 }
 
-function isPreferences(data: Partial<Preferences>): data is Preferences {
+function isPreferences(
+  data: Partial<Preferences>,
+): data is Omit<Preferences, "emailLocale"> & Partial<Preferences> {
   return (
     typeof data.newsletter === "boolean" &&
     typeof data.transferEmails === "boolean" &&
@@ -168,6 +184,9 @@ function PreferencesForm({
   transferEmailsDescription,
   yearlyEmailsLabel,
   yearlyEmailsDescription,
+  languageLabel,
+  languageDescription,
+  automaticLanguageText,
   saveText,
   savedText,
 }: PreferencesFormProps) {
@@ -206,9 +225,14 @@ function PreferencesForm({
 
   async function save() {
     const sent = preferences;
-    const changes: Partial<Record<Choice, boolean>> = {};
+    const changes: Partial<Record<Choice, boolean>> & {
+      emailLocale?: Locale | null;
+    } = {};
     for (const { name } of choices) {
       if (sent[name] !== saved[name]) changes[name] = sent[name];
+    }
+    if (sent.emailLocale !== saved.emailLocale) {
+      changes.emailLocale = sent.emailLocale;
     }
     setError(null);
     if (Object.keys(changes).length === 0) {
@@ -284,6 +308,59 @@ function PreferencesForm({
             </label>
           ))}
         </fieldset>
+        {/* Shown once Strapi has its texts */}
+        {languageLabel && automaticLanguageText && (
+          <div
+            role="radiogroup"
+            aria-labelledby="email-locale-label"
+            aria-describedby={
+              languageDescription ? "email-locale-description" : undefined
+            }
+            className="flex flex-col gap-3 rounded-xl bg-white px-5 py-4 shadow-xs ring-1 ring-slate-900/5 sm:px-6"
+          >
+            <div className="flex flex-col gap-1">
+              <span
+                id="email-locale-label"
+                className="font-semibold text-slate-900"
+              >
+                {languageLabel}
+              </span>
+              {languageDescription && (
+                <span
+                  id="email-locale-description"
+                  className="text-sm text-slate-600"
+                >
+                  {languageDescription}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
+              {[
+                { locale: null, name: automaticLanguageText },
+                ...LANGUAGES,
+              ].map(({ locale, name }) => (
+                <label
+                  key={locale ?? "automatic"}
+                  className="flex cursor-pointer items-center gap-2 text-slate-900 has-disabled:cursor-wait"
+                >
+                  <input
+                    type="radio"
+                    name="emailLocale"
+                    value={locale ?? ""}
+                    className="h-4 w-4 cursor-pointer border-slate-300 text-primary-600 focus:ring-primary-600 disabled:cursor-wait"
+                    checked={preferences.emailLocale === locale}
+                    disabled={saving}
+                    onChange={() => {
+                      setPreferences({ ...preferences, emailLocale: locale });
+                      setStatus("idle");
+                    }}
+                  />
+                  <span lang={locale ?? undefined}>{name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
           {status === "saved" && (
             <span

@@ -148,6 +148,13 @@
       "when": 1794429853909,
       "tag": "0020_times_in_utc",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1794657808957,
+      "tag": "0021_email_locale",
+      "breakpoints": true
     }
   ]
 }

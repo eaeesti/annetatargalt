@@ -1,0 +1,1 @@
+ALTER TABLE "donors" ADD COLUMN "email_locale" varchar(8);

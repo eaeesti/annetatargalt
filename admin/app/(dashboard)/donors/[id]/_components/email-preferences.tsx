@@ -12,6 +12,18 @@ export type EmailPreferenceName =
   | "transferEmails"
   | "yearlyEmails";
 
+export type EmailLocale = "et" | "en" | null;
+
+const LANGUAGES: { value: string; label: string }[] = [
+  { value: "", label: "The one they last gave in" },
+  { value: "et", label: "Estonian" },
+  { value: "en", label: "English" },
+];
+
+function emailLocaleOf(value: string): EmailLocale {
+  return value === "et" || value === "en" ? value : null;
+}
+
 const CHOICES: { name: EmailPreferenceName; label: string }[] = [
   { name: "newsletter", label: "Newsletter" },
   { name: "transferEmails", label: "Donations passed on (quarterly)" },
@@ -19,37 +31,45 @@ const CHOICES: { name: EmailPreferenceName; label: string }[] = [
 ];
 
 /**
- * Which emails the donor gets besides their confirmations, as they'd choose
- * on the page their emails link to. Each saves as soon as it's clicked, for
- * when a donor asks the team instead.
+ * Which emails the donor gets besides their confirmations, and in which
+ * language, as they'd choose on the page their emails link to. Each saves as
+ * soon as it's changed, for when a donor asks the team instead.
  */
 export function EmailPreferences({
   donorId,
   preferences,
+  emailLocale,
 }: {
   donorId: number;
   preferences: Record<EmailPreferenceName, boolean>;
+  /** Undefined from a backend older than this page. */
+  emailLocale?: EmailLocale;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [refreshing, startRefresh] = useTransition();
   const [error, setError] = useState<string | null>(null);
   // What was clicked, shown until the page is drawn again with it saved
-  const [clicked, setClicked] = useState<{
-    name: EmailPreferenceName;
-    next: boolean;
-  } | null>(null);
+  const [clicked, setClicked] = useState<
+    | { name: EmailPreferenceName; next: boolean }
+    | { name: "emailLocale"; next: EmailLocale }
+    | null
+  >(null);
   const waiting = busy || refreshing;
 
-  async function toggle(name: EmailPreferenceName, next: boolean) {
+  async function change(
+    changed:
+      | { name: EmailPreferenceName; next: boolean }
+      | { name: "emailLocale"; next: EmailLocale },
+  ) {
     setBusy(true);
     setError(null);
-    setClicked({ name, next });
+    setClicked(changed);
     try {
       const res = await fetch(`/api/donors/${donorId}/email-preferences`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ [name]: next }),
+        body: JSON.stringify({ [changed.name]: changed.next }),
       });
       if (!res.ok) {
         setClicked(null);
@@ -78,11 +98,37 @@ export function EmailPreferences({
                 : preferences[name]
             }
             disabled={waiting}
-            onChange={(e) => toggle(name, e.target.checked)}
+            onChange={(e) => change({ name, next: e.target.checked })}
           />
           <span>{label}</span>
         </label>
       ))}
+      {emailLocale !== undefined && (
+        <label className="flex flex-wrap items-center gap-2 pt-1">
+          <span>Language</span>
+          <select
+            className="h-7 rounded-md border border-input bg-transparent px-1.5 text-sm disabled:opacity-50"
+            value={
+              (waiting && clicked?.name === "emailLocale"
+                ? clicked.next
+                : emailLocale) ?? ""
+            }
+            disabled={waiting}
+            onChange={(e) =>
+              change({
+                name: "emailLocale",
+                next: emailLocaleOf(e.target.value),
+              })
+            }
+          >
+            {LANGUAGES.map(({ value, label }) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       {error && (
         <span role="alert" className="block text-xs text-destructive">
           {error}

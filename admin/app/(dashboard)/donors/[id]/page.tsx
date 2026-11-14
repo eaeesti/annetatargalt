@@ -13,7 +13,10 @@ import {
 import { recurringDonationHref } from "../../../../lib/entity-links";
 import { formatDate } from "../../../../lib/dates";
 import { BackLink } from "../../../../components/back-link";
-import { EmailPreferences } from "./_components/email-preferences";
+import {
+  EmailPreferences,
+  type EmailLocale,
+} from "./_components/email-preferences";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -38,6 +41,7 @@ type DonorDetail = {
   newsletter?: boolean;
   transferEmails?: boolean;
   yearlyEmails?: boolean;
+  emailLocale?: EmailLocale;
   newsletterSource?: string;
   emailPreferencesUpdatedAt?: string | null;
   emailPreferencesUrl?: string;
@@ -184,6 +188,7 @@ export default async function DonorDetailPage({ params }: { params: Params }) {
                 transferEmails: donor.transferEmails,
                 yearlyEmails: donor.yearlyEmails,
               }}
+              emailLocale={donor.emailLocale}
             />
             {donor.newsletterSource && (
               <Field label="Newsletter set">

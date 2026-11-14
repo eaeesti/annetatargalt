@@ -132,7 +132,8 @@ export class EmailCampaignsRepository {
    *
    * One person can have more than one donor row with the same address, in
    * different letter case too, and gets one copy. It's addressed as the row
-   * that gave last, in the language of that gift; they're recurring or have
+   * that gave last, in the language the address chose for its emails or
+   * else the language of that gift; they're recurring or have
    * an ID code if any of their rows is or has one, and want the email only
    * if every row that gave says so.
    */
@@ -283,7 +284,8 @@ export class EmailCampaignsRepository {
     }>(sql`
       SELECT * FROM (
         SELECT DISTINCT ON (g.address) g.id, g.address, g.email,
-          g.first_name, g.last_name, g.any_id_code AS id_code, g.locale,
+          g.first_name, g.last_name, g.any_id_code AS id_code,
+          coalesce(g.chosen_locale, g.locale) AS locale,
           g.any_recurring AS recurring, g.all_want AS wants, g.last_gift
         FROM (
           SELECT p.*,
@@ -291,10 +293,14 @@ export class EmailCampaignsRepository {
             bool_or(p.recurring) FILTER (WHERE p.last_gift IS NOT NULL)
               OVER address AS any_recurring,
             max(nullif(p.id_code, '')) FILTER (WHERE p.last_gift IS NOT NULL)
-              OVER address AS any_id_code
+              OVER address AS any_id_code,
+            -- The language the address chose, the latest choice should its
+            -- rows differ; null for the one it last gave in.
+            first_value(p.email_locale) OVER chosen AS chosen_locale
           FROM (
             SELECT d.id, trim(d.email) AS email, d.first_name, d.last_name,
               d.id_code, ${addressOf(sql.raw("d.email"))} AS address,
+              d.email_locale, d.email_preferences_updated_at,
               ${settingColumn(kind)} AS wants,
               -- A standing order's payments come in with bank statements:
               -- their language is the one the order was set up in.
@@ -312,7 +318,9 @@ export class EmailCampaignsRepository {
             FROM donors d
             WHERE d.email IS NOT NULL AND trim(d.email) <> ''
           ) p
-          WINDOW address AS (PARTITION BY p.address)
+          WINDOW address AS (PARTITION BY p.address),
+            chosen AS (PARTITION BY p.address ORDER BY p.email_locale IS NULL,
+              p.email_preferences_updated_at DESC NULLS LAST, p.id DESC)
         ) g
         ORDER BY g.address, g.last_gift DESC NULLS LAST, g.id DESC
       ) r

@@ -30,6 +30,15 @@
     "yearlyEmailsDescription": {
       "type": "text"
     },
+    "languageLabel": {
+      "type": "string"
+    },
+    "languageDescription": {
+      "type": "text"
+    },
+    "automaticLanguageText": {
+      "type": "string"
+    },
     "saveText": {
       "type": "string"
     },
