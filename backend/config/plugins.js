@@ -20,6 +20,10 @@ module.exports = ({ env }) => ({
         host: env("SMTP_HOST", "smtp-relay.brevo.com"),
         port: env.int("SMTP_PORT", 587),
         secure: false,
+        // Port 587 starts in plain text and upgrades with STARTTLS; without
+        // this, a server (or anyone between) that doesn't offer the upgrade
+        // would get the password and every email unencrypted.
+        requireTLS: true,
         auth: {
           user: env("SMTP_USERNAME"),
           pass: env("SMTP_PASSWORD"),
