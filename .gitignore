@@ -107,7 +107,9 @@ coverage
 ############################
 
 .env
-.env.production
+.env.*
+!.env.example
+!.env.test.example
 license.txt
 exports
 *.cache

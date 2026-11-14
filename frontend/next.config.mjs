@@ -102,6 +102,10 @@ const nextConfig = {
   cacheHandler: `${__dirname}/cache-handler.mjs`,
   cacheMaxMemorySize: 0,
 
+  // No "X-Powered-By: Next.js": nobody needs it, and it tells scanners which
+  // advisories to try. The admin panel's config says the same.
+  poweredByHeader: false,
+
   // This app sits next to a repo-root lockfile as well as its own. Turbopack,
   // which builds by default from Next 16, walks up to the outermost lockfile
   // and would take the repo root as the project root — which resolves every
