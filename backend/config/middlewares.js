@@ -53,6 +53,10 @@ module.exports = ({ env }) => [
         return [
           "https://annetatargalt.ee",
           "https://www.annetatargalt.ee", // redirects to the apex today, but costs nothing to allow in case that ever changes
+          // Its donation form posts to /api/donateExternal from the browser;
+          // the same sites src/utils/return-url.ts sends donors back to.
+          "https://efektiivnealtruism.org",
+          "https://www.efektiivnealtruism.org",
           "http://localhost:3000",
           ...configured,
         ];
