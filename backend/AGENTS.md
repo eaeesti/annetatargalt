@@ -15,6 +15,7 @@ pnpm test:integration # requires .env.test with DB credentials
 ```
 src/
 ├── index.ts                              # bootstrap
+├── admin/app.tsx                         # admin branding: logos, green, login texts (favicon: backend/favicon.png)
 ├── db/schema.ts                          # Drizzle schema + exported types
 ├── db/client.ts                          # exports `db` and `Database` type
 ├── db/repositories/                      # one class + singleton export per entity
