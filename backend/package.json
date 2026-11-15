@@ -20,6 +20,8 @@
     "db:migrate": "dotenv -e .env -- drizzle-kit migrate",
     "db:push": "dotenv -e .env -- drizzle-kit push",
     "db:studio": "dotenv -e .env -- drizzle-kit studio",
+    "snapshot:make": "dotenv -e .env -- node scripts/content-snapshot.mjs make",
+    "snapshot:load": "dotenv -e .env -- node scripts/content-snapshot.mjs load",
     "test": "pnpm test:unit",
     "test:unit": "vitest run",
     "test:integration": "dotenv -e .env.test -- vitest run repositories",

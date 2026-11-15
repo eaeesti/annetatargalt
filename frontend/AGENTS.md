@@ -16,11 +16,14 @@ See root [AGENTS.md](../AGENTS.md) for shared TypeScript conventions.
 ```
 src/
 ├── app/
-│   ├── layout.tsx                  # root layout (global nav, fonts)
-│   ├── [[...slug]]/page.tsx        # catch-all route — fetches CMS page by slug
-│   ├── manifest.ts / robots.ts / sitemap.ts
-│   └── ...
+│   ├── (et)/[[...slug]]/page.tsx   # Estonian pages: any CMS page, by its slug
+│   ├── (en)/en/[[...slug]]/        # English pages, under /en
+│   ├── (et)/layout.tsx / (en)/layout.tsx  # a root layout for each language
+│   ├── api/                        # preview, email settings and unsubscribe routes
+│   ├── og/                         # share cards (the image link previews show)
+│   └── manifest.ts / robots.ts / sitemap.ts
 ├── components/
+│   ├── CmsRoute.tsx                # what both languages' routes render: page, metadata, share card
 │   ├── Page.tsx                    # renders a page's sections dynamically
 │   ├── Navbar.tsx / Footer.tsx / Banner.tsx
 │   ├── Modal.tsx / Section.tsx
@@ -29,13 +32,14 @@ src/
 │   ├── icons/                      # SVG icon components
 │   └── sections/                   # full-page sections rendered from CMS content
 └── utils/
-    ├── strapi.ts                   # all Strapi API fetch functions
+    ├── strapi.ts                   # fetchAPI and reading Strapi's replies
+    ├── cms.ts                      # fetching pages, special pages and the global settings
+    ├── locale.ts                   # the two languages and their paths
+    ├── ui-text.ts                  # screen-reader labels, the only texts not in the CMS
     ├── donation.ts                 # donation request helpers
     ├── estonia.ts                  # Estonian ID code / amount formatting
-    ├── string.ts                   # string formatting utilities
-    ├── object.ts / array.ts        # generic helpers
-    ├── proportions.ts              # donation proportion logic
-    └── seo.ts                      # metadata builder
+    ├── seo.ts                      # metadata builder
+    └── ...                         # smaller helpers, each named for what it does
 ```
 
 ## Path Alias

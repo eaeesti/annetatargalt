@@ -2,107 +2,68 @@
 
 This is the code for the Anneta Targalt donation platform that runs at https://annetatargalt.ee/.
 
-- **Backend**: [Strapi v5](https://strapi.io/) (TypeScript) in `/backend`
-- **Frontend**: [Next.js 16](https://nextjs.org/) and [Tailwind CSS 4](https://tailwindcss.com/) in `/frontend`
-- **Admin panel**: Next.js 16 with Tailwind CSS 4 and shadcn/ui in `/admin` (port 3001)
+- **Backend**: [Strapi v5](https://strapi.io/) (TypeScript) in `/backend`, on port 1337. Besides the content, it takes donations, which it keeps in a database of their own (Drizzle ORM).
+- **Site**: [Next.js 16](https://nextjs.org/) and [Tailwind CSS 4](https://tailwindcss.com/) in `/frontend`, on port 3000
+- **Admin panel**: Next.js 16 with Tailwind CSS 4 and shadcn/ui in `/admin`, on port 3001, for the team's work with donations
+
+[AGENTS.md](AGENTS.md) and the guides it links to describe how the code is organised and the conventions it follows. They're written for coding agents, but they're the best introduction for people too.
 
 ## Setup
 
-### Getting started
+You need Node.js 24, PostgreSQL 16 or newer (with its command-line tools: `psql`, `pg_dump`, `createdb`) and pnpm. `corepack enable` provides the pnpm version pinned in `package.json`.
 
-1\. Clone the repository:
+1\. Clone the repository and install the dependencies of all three apps:
 
 ```
 git clone https://github.com/eaeesti/annetatargalt.git
 cd annetatargalt
-```
-
-2\. Install the dependencies of all three apps. You need Node.js 24 and pnpm; `corepack enable` provides the pnpm version pinned in each `package.json`.
-
-```
 pnpm install:all
 ```
 
-### Backend
+Installing also turns on a pre-commit hook (`.githooks/pre-commit`) that checks the formatting, and runs the lint, type check and tests of each app a commit changes.
 
-1\. Navigate to the backend directory:
+2\. In `backend`, copy `.env.example` to `.env` and fill it in:
+
+- `APP_KEYS`: four keys, each from `openssl rand -base64 16`, separated by commas
+- `API_TOKEN_SALT`, `ADMIN_JWT_SECRET`, `TRANSFER_TOKEN_SALT`, `JWT_SECRET`: one key each, from `openssl rand -base64 16`
+- `DATABASE_*`: how to reach your Postgres. `DATABASE_NAME` is the database for Strapi's content and `DRIZZLE_DATABASE_NAME` the one for donations; the next step creates both.
+- The Cloudinary keys are only needed to upload images. The content's images are on Cloudinary already and show without them.
+- The Montonio keys are needed to try a donation through to the bank. Use the sandbox's (`MONTONIO_URL` already points at it).
+- Leave the email (`SMTP_*`) settings as they are unless you're working on emails: with real ones, the backend really sends every email it makes, to whoever it's addressed to.
+
+3\. Create the databases, with the site's content in them. Ask a maintainer for a content snapshot: a copy of the production content without anything private (no messages, accounts or keys, and no donations). Then:
 
 ```
 cd backend
+pnpm snapshot:load ~/Downloads/content-snapshot-….sql.gz
 ```
 
-2\. Create an `.env` file for environment values. You can use the `.env.example` file as a reference.
+This creates both databases and the donations database's tables. If a database by that name already exists, it's kept under another name. You can run it again whenever you want newer content: stop Strapi first.
 
-3\. Fill them in. Here are some pointers:
+To start without content instead, create both databases (`createdb <name>`) and run `pnpm db:migrate` for the donations database's tables. The site has no pages then until you make some.
 
-#### Keys
-
-More info here: https://docs.strapi.io/dev-docs/configurations/server
-
-- `APP_KEYS`: generate four keys using `openssl rand -base64 16` and separate them with commas
-- `API_TOKEN_SALT`: generate using `openssl rand -base64 16`
-- `ADMIN_JWT_SECRET`: generate using `openssl rand -base64 16`
-- `TRANSFER_TOKEN_SALT`: generate using `openssl rand -base64 16`
-- `JWT_SECRET`: generate using `openssl rand -base64 16`
-
-#### Cloudinary
-
-Create an account at https://cloudinary.com/ and get the three keys from there.
-
-#### Database
-
-Strapi uses Postgres. This project requires **two databases**:
-
-- `DATABASE_NAME`: the main Strapi database (content, users, etc.)
-- `DRIZZLE_DATABASE_NAME`: a separate database for donations (managed by Drizzle ORM)
-
-Create both (replace the names with whatever you set in `.env`):
-
-```
-sudo -u postgres createdb <DATABASE_NAME>
-sudo -u postgres createdb <DRIZZLE_DATABASE_NAME>
-```
-
-Fill in your Postgres connection details in `.env`.
-
-4\. Build and run Strapi:
-
-```
-pnpm build
-pnpm dev
-```
-
-5\. Open `127.0.0.1:1337` and create your admin user.
-
-On first startup, the bootstrap automatically:
-
-- Creates the **Public API Token** for the frontend and writes it to `frontend/.env`
-- Creates a dedicated **DonationAdmin** role (not the built-in Authenticated role) with access to the donation admin endpoints
-
-6\. Close Strapi and seed the data if you have it:
-
-```
-pnpm strapi import -f data.tar.gz
-```
-
-Read more about data importing and exporting: https://docs.strapi.io/dev-docs/data-management/import
-
-### Frontend
-
-The `frontend/.env` file is created automatically by the Strapi bootstrap on first startup with the correct API token. If you need to create it manually, copy `frontend/.env.example` and fill in the values.
-
-### Admin panel
-
-The admin panel at `/admin` is a separate Next.js app running on port 3001. It is included in `pnpm dev` and requires no additional setup.
-
-Log in using your Strapi admin credentials. On first login, a users-permissions account is automatically provisioned for you.
-
-### Running everything
-
-From the repository root:
+4\. Start all three apps from the repository's root:
 
 ```
 pnpm dev
 ```
 
-This starts the frontend (port 3000), backend (port 1337), and admin panel (port 3001) concurrently.
+5\. Open http://localhost:1337/admin and register. The first account is a Super Admin. On its first start, Strapi writes the site's API token into `frontend/.env`, creating the file if needed, so the site at http://localhost:3000 can read the content.
+
+6\. The admin panel at http://localhost:3001 takes the email and password of your Strapi account. It needs no settings of its own locally; see [admin/README.md](admin/README.md).
+
+### While you work
+
+- `pnpm dev` reloads each app when you save a file, with one exception: the backend's two plugins (`backend/src/plugins/`) run from the built code, so a change to them, or to anything they import, takes effect only after `pnpm build` in `backend` and a restart.
+- The site's types for Strapi's content (`frontend/src/types/generated/strapi.ts`) are generated from the backend's schemas every time the backend starts or builds.
+- `pnpm check` in the root runs every check the pre-commit hook does, for all three apps, and `pnpm format` formats everything.
+
+### Making a content snapshot
+
+For maintainers. You need a plain-SQL dump of the production Strapi database, made with `pg_dump --no-owner --no-privileges` (gzipped or not). Then, in `backend`:
+
+```
+pnpm snapshot:make <dump.sql.gz>
+```
+
+This loads the dump into a scratch database next to yours, removes what's private, checks that it's gone, and writes `content-snapshot-<date>.sql.gz`. What it removes is listed at the top of `backend/scripts/content-snapshot.mjs`. Delete the dump afterwards, and share the snapshot only with people working on the site: it includes drafts that aren't published yet.

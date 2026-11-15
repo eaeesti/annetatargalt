@@ -22,9 +22,11 @@ src/
 ├── utils/                                # pure utility functions
 ├── api/donation/                         # thin proxy → donations plugin
 ├── api/organization/                     # custom service + lifecycle hook
+├── plugins/admin-panel/server/           # the admin panel's endpoints
 └── plugins/donations/server/
     ├── controllers/donation.ts           # HTTP handlers
     └── services/donation.ts             # main service (~1000 lines)
+scripts/content-snapshot.mjs              # content snapshots: make (maintainers) and load
 ```
 
 ## CRITICAL: Donations Plugin Path
@@ -78,6 +80,10 @@ See root [AGENTS.md](../AGENTS.md) for shared conventions. Backend-specific addi
 - An image on the site is an `elements.image` component (file, `alt`, `decorative`), not a bare `media` field: its description belongs to where it's used, in that language. Saving one with a file but no description and no `decorative` tick is refused (`src/image-fields.ts`), except for share images. Bare media is only for things nobody reads, like favicons.
 - **Strapi admin login with Google**: once the backend has its own Google client's ID and secret (a separate client from the donation admin panel's) and the Workspace's domain, `src/middlewares/google-login.ts` logs admin users in with their Workspace account (`/google-login`), creating the same session Strapi's own login does, and refuses the admin's password routes (`/admin/login`, `register`, `register-admin`, `reset-password`, `forgot-password`) for everyone, matched as Strapi's router matches them, ignoring case and a trailing slash. It relies on Strapi's session manager and its default admin cookie names; check it after Strapi upgrades. The login page's button, in place of the password form, is added to the DOM by `src/admin/google-login.ts`, since Strapi has no slot for it.
 - Every field of a localized content type needs its own `pluginOptions.i18n.localized` (`true`, or `false` for a field shared between languages). Strapi treats an unmarked field as shared and copies it onto every language on save.
+
+## Content Snapshots
+
+`scripts/content-snapshot.mjs` makes a copy of the production Strapi database for people working on the code, without anything private, and loads it (see the repository's README). What it removes is the `SCRUB` list at its top: contact form messages, every account and session, API and transfer tokens, audit logs, content history and webhooks. **A new content type or table that holds personal data, an account or a secret must be added to that list**, or the next snapshot hands it out. The donations database is never part of a snapshot.
 
 ## Drizzle Conventions
 

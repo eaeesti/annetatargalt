@@ -165,7 +165,7 @@ async function grantAllLocales(strapi: Core.Strapi): Promise<void> {
 
 /**
  * Creates the "Public API Token" used by the Next.js frontend if it doesn't
- * already exist, and writes its value to frontend/.env.local so developers
+ * already exist, and writes its value to frontend/.env so developers
  * don't have to do it manually. Also keeps its permissions in sync with the
  * list below on every boot — this token is meant to be read-only public
  * content access, and something manually granted through the Strapi UI
@@ -672,13 +672,13 @@ export default {
         console.error("🛑 YOU MUST MIGRATE YOUR DONATION DATA FIRST!\n");
         console.error("Migration steps:");
         console.error(
-          "  1. Review the migration guide: backend/MIGRATION_PLAN.md",
+          "  1. Review the migration guide: docs/completed-migrations/MIGRATION_PLAN.md",
         );
         console.error(
           "  2. Set up Drizzle database (DRIZZLE_DATABASE_NAME in .env)",
         );
         console.error(
-          "  3. Run: node src/db/migrations/02-migrate-to-drizzle.js",
+          "  3. Run: node docs/completed-migrations/scripts/02-migrate-to-drizzle.js",
         );
         console.error("  4. Verify migration completed successfully");
         console.error("  5. Restart Strapi\n");

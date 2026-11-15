@@ -1,8 +1,9 @@
 # Admin Panel
 
-Internal dashboard for looking at Anneta Targalt donation data. Built with
-Next.js (App Router), TypeScript and Tailwind 4. Data comes from the Strapi
-backend in `../backend`.
+The team's dashboard for Anneta Targalt's donations: the donations, donors and
+recurring donations, the transfers to organizations, the bank statement and
+the emails to donors. Built with Next.js (App Router), TypeScript and
+Tailwind 4. Data comes from the Strapi backend in `../backend`.
 
 ## Getting Started
 
@@ -16,14 +17,19 @@ starts the frontend, backend and admin in one go.
 
 ## Environment
 
-Create `.env.local`:
+Locally it needs no settings: it finds the backend at `http://localhost:1337`,
+and you sign in with the email and password of your Strapi admin account.
+Settings go in `.env.local`:
 
 | Variable                  | Purpose                                                     |
 | ------------------------- | ----------------------------------------------------------- |
-| `STRAPI_URL`              | Strapi backend URL, e.g. `http://localhost:1337`            |
+| `STRAPI_URL`              | Strapi backend URL, `http://localhost:1337` if unset        |
 | `GOOGLE_CLIENT_ID`        | Google OAuth client ID for sign-in                          |
 | `GOOGLE_CLIENT_SECRET`    | Google OAuth client secret                                  |
 | `GOOGLE_WORKSPACE_DOMAIN` | Only accounts from this Google Workspace domain can sign in |
+
+With the three Google settings, signing in is with Google only, and passwords
+are turned off.
 
 ## Layout
 
@@ -34,7 +40,7 @@ app/
   (dashboard)/    pages behind sign-in, sharing one layout and sidebar
     page.tsx      overview with summary cards and charts
     donations/  donors/  recurring-donations/  organizations/
-    transfers/  transactions/  statement/
+    transfers/  transactions/  statement/  emails/
 components/       shared components (shadcn primitives are in ui/)
 lib/              Strapi client (api.ts), auth, formatting helpers
 ```
