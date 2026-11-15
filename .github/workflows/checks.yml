@@ -1,0 +1,96 @@
+# Runs every check on each pull request's commits: the formatter, then lint,
+# type check and unit tests for each app (what `pnpm check` does locally), and
+# the backend's integration tests against a Postgres made for the run.
+# Pull requests' code can come from outside, so this has no secrets and a
+# read-only token, and nothing here connects anywhere else.
+# Actions are pinned to commit shas; the comment says which release.
+name: Checks
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+# A new push to the same pull request cancels the run for the older commit.
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      # pnpm at the version package.json's packageManager pins
+      - run: corepack enable && corepack install
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+
+  app:
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [admin, backend, frontend]
+    name: ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ${{ matrix.app }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - run: corepack enable && corepack install
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+
+  backend-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: strapi
+          POSTGRES_PASSWORD: strapi
+          POSTGRES_DB: donations_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_HOST: 127.0.0.1
+      DATABASE_PORT: 5432
+      DATABASE_USERNAME: strapi
+      DATABASE_PASSWORD: strapi
+      DRIZZLE_DATABASE_NAME: donations_test
+      INTEGRATION_TESTS: "true"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - run: corepack enable && corepack install
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec drizzle-kit migrate
+      - run: pnpm exec vitest run repositories

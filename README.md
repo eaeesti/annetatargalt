@@ -56,7 +56,7 @@ pnpm dev
 
 - `pnpm dev` reloads each app when you save a file, with one exception: the backend's two plugins (`backend/src/plugins/`) run from the built code, so a change to them, or to anything they import, takes effect only after `pnpm build` in `backend` and a restart.
 - The site's types for Strapi's content (`frontend/src/types/generated/strapi.ts`) are generated from the backend's schemas every time the backend starts or builds.
-- `pnpm check` in the root runs every check the pre-commit hook does, for all three apps, and `pnpm format` formats everything.
+- `pnpm check` in the root runs every check the pre-commit hook does, for all three apps, and `pnpm format` formats everything. Every pull request runs the same checks on GitHub, and the backend's integration tests too.
 
 ### Making a content snapshot
 
