@@ -60,10 +60,12 @@ pnpm dev
 
 ### Making a content snapshot
 
-For maintainers. You need a plain-SQL dump of the production Strapi database, made with `pg_dump --no-owner --no-privileges` (gzipped or not). Then, in `backend`:
+For maintainers. In `backend`:
 
 ```
-pnpm snapshot:make <dump.sql.gz>
+pnpm snapshot:make
 ```
 
-This loads the dump into a scratch database next to yours, removes what's private, checks that it's gone, and writes `content-snapshot-<date>.sql.gz`. What it removes is listed at the top of `backend/scripts/content-snapshot.mjs`. Delete the dump afterwards, and share the snapshot only with people working on the site: it includes drafts that aren't published yet.
+This makes one from your own Strapi database, so the content is as new as your copy of it. To make one from production's content instead, give it a plain-SQL dump of the production Strapi database, made with `pg_dump --no-owner --no-privileges` (gzipped or not): `pnpm snapshot:make <dump.sql.gz>`.
+
+Either way it loads the content into a scratch database next to yours, removes what's private, checks that it's gone, and writes `content-snapshot-<date>.sql.gz`. What it removes is listed at the top of `backend/scripts/content-snapshot.mjs`. Delete a production dump afterwards, and share the snapshot only with people working on the site: it includes drafts that aren't published yet.

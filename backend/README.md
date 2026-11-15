@@ -13,5 +13,5 @@ pnpm test:integration # the repositories' tests against a real database (see src
 pnpm db:migrate       # apply the donations database's migrations
 pnpm db:generate      # a migration from changes to src/db/schema.ts
 pnpm snapshot:load    # load a content snapshot (see the repository's README)
-pnpm snapshot:make    # make one from a production dump
+pnpm snapshot:make    # make one from your database or a production dump
 ```

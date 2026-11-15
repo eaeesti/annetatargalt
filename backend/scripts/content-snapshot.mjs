@@ -3,13 +3,13 @@
  * A copy of the site's content for working on the code locally: the Strapi
  * database with everything private taken out.
  *
- *   pnpm snapshot:make <dump.sql[.gz]> [snapshot.sql.gz]   (a maintainer)
+ *   pnpm snapshot:make [dump.sql[.gz]] [snapshot.sql.gz]   (a maintainer)
  *   pnpm snapshot:load <snapshot.sql.gz>                   (anyone)
  *
  * make takes a plain-SQL dump of the production Strapi database
- * (pg_dump --no-owner --no-privileges, gzipped or not), loads it into a
- * scratch database beside yours, removes what's private (SCRUB below) and
- * dumps what's left. The donations are in another database, which this never
+ * (pg_dump --no-owner --no-privileges, gzipped or not), or without one your
+ * own Strapi database, loads it into a scratch database beside yours, removes
+ * what's private (SCRUB below) and dumps what's left. The donations are in another database, which this never
  * touches: a snapshot has pages, organizations and texts, and no donors.
  *
  * load puts a snapshot into the database DATABASE_NAME names, keeping one
@@ -22,7 +22,16 @@
  */
 
 import { spawn } from "node:child_process";
-import { createReadStream, createWriteStream } from "node:fs";
+import {
+  accessSync,
+  constants,
+  createReadStream,
+  createWriteStream,
+  mkdtempSync,
+  rmSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { pipeline } from "node:stream/promises";
 import { Transform } from "node:stream";
 import { createGunzip, createGzip } from "node:zlib";
@@ -127,8 +136,8 @@ function postgresEnvironment() {
 
 /**
  * Runs a command and resolves with what it printed, or rejects when it
- * fails. `input` is streamed to it, and `output`, a chain of streams, takes
- * what it prints instead.
+ * fails. `input`, a chain of streams, is streamed to it, and `output`,
+ * another, takes what it prints instead.
  */
 function run(command, args, { input, output } = {}) {
   return new Promise((resolve, reject) => {
@@ -143,7 +152,7 @@ function run(command, args, { input, output } = {}) {
     // then the command's own failure is the one to report.
     const streamed = Promise.all([
       output ? pipeline(child.stdout, ...output) : undefined,
-      input ? pipeline(input, child.stdin) : undefined,
+      input ? pipeline(...input, child.stdin) : undefined,
     ]).then(
       () => null,
       (error) => error,
@@ -180,11 +189,11 @@ function sql(database, statement) {
  * left out: Postgres 17's \restrict and its transaction_timeout setting.
  */
 async function restore(database, file) {
-  const read = createReadStream(file);
-  const unzipped = file.endsWith(".gz") ? read.pipe(createGunzip()) : read;
-  const input = unzipped.pipe(
+  const input = [
+    createReadStream(file),
+    ...(file.endsWith(".gz") ? [createGunzip()] : []),
     withoutLines(/^\\(un)?restrict |^SET transaction_timeout/),
-  );
+  ];
   await run(
     "psql",
     ["-X", "-q", "-v", "ON_ERROR_STOP=1", "-d", database, "-o", "/dev/null"],
@@ -208,6 +217,37 @@ function withoutLines(drop) {
   });
 }
 
+/**
+ * Copies a database by way of a dump, which works while Strapi is connected
+ * to it, unlike Postgres's own copy (createdb --template).
+ */
+async function copy(from, to) {
+  const folder = mkdtempSync(join(tmpdir(), "content-snapshot-"));
+  try {
+    const file = join(folder, "dump.sql");
+    await run("pg_dump", [
+      "--no-owner",
+      "--no-privileges",
+      "-d",
+      from,
+      "-f",
+      file,
+    ]);
+    await restore(to, file);
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+}
+
+/** Stops before anything is made when a file isn't there to read. */
+function readable(file) {
+  try {
+    accessSync(file, constants.R_OK);
+  } catch {
+    throw new Error(`Can't read ${file}: is the path right?`);
+  }
+}
+
 async function databases() {
   const names = await sql("postgres", "SELECT datname FROM pg_database");
   return names.split("\n");
@@ -226,12 +266,18 @@ function timestamp() {
 }
 
 async function make(dump, out = `content-snapshot-${timestamp()}.sql.gz`) {
-  if (!dump) throw new Error("Which dump? pnpm snapshot:make <dump.sql.gz>");
-  const scratch = `${setting("DATABASE_NAME")}_snapshot_${timestamp()}`;
+  if (dump) readable(dump);
+  const source = setting("DATABASE_NAME");
+  const scratch = `${source}_snapshot_${timestamp()}`;
   await run("createdb", [scratch]);
   try {
-    console.log(`Loading ${dump} into ${scratch}…`);
-    await restore(scratch, dump);
+    if (dump) {
+      console.log(`Loading ${dump} into ${scratch}…`);
+      await restore(scratch, dump);
+    } else {
+      console.log(`Copying ${source} into ${scratch}…`);
+      await copy(source, scratch);
+    }
     await sql(scratch, SCRUB);
     if ((await sql(scratch, LEFT_OVER)) !== "0") {
       throw new Error("Private rows were left after scrubbing; no snapshot.");
@@ -249,6 +295,7 @@ async function load(snapshot) {
   if (!snapshot) {
     throw new Error("Which snapshot? pnpm snapshot:load <snapshot.sql.gz>");
   }
+  readable(snapshot);
   const target = setting("DATABASE_NAME");
   const donations = setting("DRIZZLE_DATABASE_NAME");
   const existing = await databases();
