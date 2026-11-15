@@ -8,12 +8,9 @@ import { DONATION_INFO } from "../../stack/content.ts";
 // lists would show: one at a time.
 test.describe.configure({ mode: "serial" });
 
-/** Today in this machine's time zone, as the bank and the admin panel see it. */
-const today = () => {
-  const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-};
+/** Today in Estonia, as the bank and the admin panel count days. */
+const today = () =>
+  new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Tallinn" });
 
 /** An LHV statement, as its Estonian export writes it. */
 function statement(lines: string[][]) {

@@ -26,12 +26,8 @@ export const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 export const STATE = join(ROOT, "e2e", ".state");
 mkdirSync(STATE, { recursive: true });
 
-/**
- * Where the backend writes the site's API token when it makes one, instead of
- * frontend/.env. The seed then gives the token this run's value, SITE_TOKEN.
- */
+/** The site's API token: the backend writes it here, the site reads it. */
 export const TOKEN_FILE = join(STATE, "frontend.env");
-export const SITE_TOKEN = "e2e-site-token-0123456789abcdef";
 /** The fake mail server's certificate, which the backend is told to trust. */
 export const CERT_FILE = join(STATE, "smtp-cert.pem");
 export const KEY_FILE = join(STATE, "smtp-key.pem");
@@ -116,7 +112,7 @@ export function backendEnv(): Record<string, string> {
     MONTONIO_PRIVATE: MONTONIO.privateKey,
     MONTONIO_RETURN_URL: `${URLS.backend}/api`,
     MONTONIO_STORE_UUID: "",
-    SMTP_HOST: "localhost",
+    SMTP_HOST: "127.0.0.1",
     SMTP_PORT: String(PORTS.smtp),
     SMTP_USERNAME: "e2e",
     SMTP_PASSWORD: "e2e",
@@ -135,10 +131,10 @@ export function backendEnv(): Record<string, string> {
   };
 }
 
-export function siteEnv(): Record<string, string> {
+export function siteEnv(token: string): Record<string, string> {
   return {
     PORT: String(PORTS.site),
-    STRAPI_API_TOKEN: SITE_TOKEN,
+    STRAPI_API_TOKEN: token,
     NEXT_PUBLIC_STRAPI_API_URL: URLS.backend,
     NEXT_PUBLIC_SITE_URL: URLS.site,
     PLAUSIBLE_DOMAIN: "",

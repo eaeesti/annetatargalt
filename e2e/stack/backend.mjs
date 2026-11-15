@@ -38,4 +38,4 @@ const strapi = spawn(
 for (const signal of ["SIGINT", "SIGTERM"]) {
   process.on(signal, () => strapi.kill(signal));
 }
-strapi.on("exit", (code) => process.exit(code ?? 0));
+strapi.on("exit", (code) => process.exit(code ?? 1)); // a signal is a failure

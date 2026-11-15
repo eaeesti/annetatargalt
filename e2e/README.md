@@ -24,7 +24,7 @@ Then, with `pnpm dev` stopped (the tests build the apps into the same folders it
 PGUSER=<you> PGPASSWORD=<password> pnpm test
 ```
 
-Leave out `PGUSER` and `PGPASSWORD` if `psql` works without them. A run takes a few minutes, most of it building. `pnpm report` shows the last run's report.
+Leave out `PGPASSWORD` only if your Postgres trusts local connections: the backend doesn't read `~/.pgpass`. A run takes a few minutes, most of it building. `pnpm report` shows the last run's report.
 
 While you work on the tests, `pnpm test:ui` opens Playwright's window, which keeps the stack running while it's open: run tests one by one and watch them, in seconds. After a build, `E2E_SKIP_BUILD=1` in front of either command starts the stack without building again.
 

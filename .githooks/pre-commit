@@ -25,6 +25,10 @@ git diff --cached --name-only --diff-filter=ACMR -z |
 
 for app in admin backend frontend e2e; do
   if printf '%s\n' "$staged" | grep -q "^$app/"; then
+    if [ ! -d "$app/node_modules" ]; then
+      echo "pre-commit: $app has no dependencies installed; run pnpm install:all." >&2
+      exit 1
+    fi
     echo "pre-commit: checking $app"
     pnpm --dir "$app" --silent check
   fi

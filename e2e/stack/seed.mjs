@@ -10,7 +10,7 @@ import {
   SPECIAL_PAGES,
   TEXT,
 } from "./content.ts";
-import { ADMINS, SITE_TOKEN, TEAM_EMAIL } from "./config.ts";
+import { ADMINS, TEAM_EMAIL } from "./config.ts";
 
 /** "nextButtonText" → "Next button text" */
 function humanize(name) {
@@ -158,14 +158,6 @@ async function seedAdmins(strapi) {
   }
 }
 
-/** The site's token, which the backend made at startup, gets a known value. */
-async function fixSiteToken(strapi) {
-  await strapi.db.query("admin::api-token").update({
-    where: { name: "Public API Token" },
-    data: { accessKey: strapi.service("admin::api-token").hash(SITE_TOKEN) },
-  });
-}
-
 /**
  * What production lets anyone do, set in its database rather than in code:
  * send the contact form. (The donation routes need no permission.)
@@ -183,7 +175,6 @@ async function grantPublic(strapi) {
 }
 
 export async function seed(strapi) {
-  await fixSiteToken(strapi);
   await grantPublic(strapi);
   await seedAdmins(strapi);
 
