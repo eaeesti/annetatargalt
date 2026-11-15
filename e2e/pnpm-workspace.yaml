@@ -1,0 +1,24 @@
+# This project is not a workspace: pnpm reads its settings from this file.
+# `packages` lists only the project itself, so that a pnpm older than 10.12
+# (which refuses a workspace file without it) can still read this one and
+# hand over to the version pinned in package.json's `packageManager`.
+packages:
+  - "."
+
+# Don't record pnpm itself in pnpm-lock.yaml. With the packageManager field,
+# pnpm 12 otherwise writes it as a separate first YAML document, and GitHub's
+# dependency graph reads only that one: it saw zero dependencies, so
+# Dependabot went blind. corepack (server, Vercel) runs the pinned version
+# regardless; this only stops pnpm 12 from switching versions on its own.
+pmOnFail: ignore
+
+# Install no version younger than a day. Most malicious releases are found and
+# pulled within hours. Setting it explicitly also makes it strict: a lockfile
+# entry younger than this fails the install instead of being let through.
+minimumReleaseAge: 1440
+
+# Fail if a release has weaker publishing provenance than an earlier one, the
+# signature of a hijacked maintainer account. Only releases from the last 30
+# days are checked: older ones predate the trust data and raise false alarms.
+trustPolicy: no-downgrade
+trustPolicyIgnoreAfter: 43200

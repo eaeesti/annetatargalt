@@ -23,7 +23,7 @@ git diff --cached --name-only --diff-filter=ACMR -z |
     exit 1
   }
 
-for app in admin backend frontend; do
+for app in admin backend frontend e2e; do
   if printf '%s\n' "$staged" | grep -q "^$app/"; then
     echo "pre-commit: checking $app"
     pnpm --dir "$app" --silent check

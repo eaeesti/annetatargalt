@@ -14,6 +14,8 @@ pnpm format           # oxfmt, every app at once (from repo root)
 
 Each app has `pnpm lint` (oxlint), which enforces the `any` and `!` rules below.
 
+`e2e/` has the end-to-end tests (Playwright), which run all three apps against databases and content of their own, with fakes for Montonio and email: see [e2e/README.md](e2e/README.md). Run them (`pnpm test:e2e`) after changing a flow they cover, and update them when a change is meant to alter what they check. The site's texts in them come from `e2e/stack/content.ts`, not from production's content.
+
 See [backend/AGENTS.md](backend/AGENTS.md) and [frontend/AGENTS.md](frontend/AGENTS.md) for subsystem-specific guidance. `admin/` doesn't have its own guide yet, see [admin/README.md](admin/README.md). Unlike `frontend/`, it has no `src/` folder (routes are in `app/`) and file names are kebab-case.
 
 ## TypeScript Conventions
