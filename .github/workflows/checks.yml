@@ -1,6 +1,8 @@
 # Runs every check on each pull request's commits: the formatter, then lint,
-# type check and unit tests for each app (what `pnpm check` does locally), and
-# the backend's integration tests against a Postgres made for the run.
+# type check and unit tests for each app (what `pnpm check` does locally), the
+# backend's integration tests against a Postgres made for the run, and the
+# end-to-end tests (e2e/), which run all three apps against that Postgres with
+# stand-ins for Montonio and email.
 # Pull requests' code can come from outside, so this has no secrets and a
 # read-only token, and nothing here connects anywhere else.
 # Actions are pinned to commit shas; the comment says which release.
@@ -38,7 +40,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [admin, backend, frontend]
+        app: [admin, backend, frontend, e2e]
     name: ${{ matrix.app }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -94,3 +96,52 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec drizzle-kit migrate
       - run: pnpm exec vitest run repositories
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: strapi
+          POSTGRES_PASSWORD: strapi
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    # The tests make their own databases on it.
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: strapi
+      PGPASSWORD: strapi
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - run: corepack enable && corepack install
+      - run: |
+          for app in backend frontend admin e2e; do
+            pnpm --dir "$app" install --frozen-lockfile
+          done
+      - run: pnpm exec playwright install --with-deps chromium
+        working-directory: e2e
+      - run: pnpm test
+        working-directory: e2e
+
+      # What failed, with a trace of each failure, for `playwright show-report`.
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-report
+          path: |
+            e2e/.state/report
+            e2e/.state/test-results
+          retention-days: 14

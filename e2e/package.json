@@ -1,0 +1,24 @@
+{
+  "name": "e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report",
+    "lint": "oxlint",
+    "type-check": "tsc --noEmit",
+    "check": "oxlint && tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.0",
+    "@types/mailparser": "^3.9.0",
+    "@types/node": "^24.19.2",
+    "@types/smtp-server": "^3.5.13",
+    "mailparser": "3.14.3",
+    "oxlint": "^1.93.0",
+    "smtp-server": "3.21.4",
+    "typescript": "^5.9.3"
+  },
+  "packageManager": "pnpm@12.11.2"
+}

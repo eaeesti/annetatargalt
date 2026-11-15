@@ -218,7 +218,9 @@ async function bootstrapApiToken(strapi: Core.Strapi): Promise<void> {
     permissions,
   });
 
-  // Write/update STRAPI_API_TOKEN in frontend/.env
+  // Write/update STRAPI_API_TOKEN in frontend/.env, or the file
+  // FRONTEND_ENV_FILE names: the end-to-end tests' backend has a database of
+  // its own and mustn't replace the token of the one in development.
   // process.cwd() is the backend directory when Strapi runs
   //
   // Deliberately not NEXT_PUBLIC_: that prefix inlines a value into the
@@ -228,7 +230,9 @@ async function bootstrapApiToken(strapi: Core.Strapi): Promise<void> {
   // component importing fetchAPI would have shipped it to every visitor with
   // nothing to warn anyone. Without the prefix that mistake fails loudly in
   // dev instead, as an undefined token.
-  const envPath = path.resolve(process.cwd(), "..", "frontend", ".env");
+  const envPath =
+    process.env.FRONTEND_ENV_FILE ||
+    path.resolve(process.cwd(), "..", "frontend", ".env");
   const key = "STRAPI_API_TOKEN";
   const newLine = `${key}=${result.accessKey}`;
 
@@ -246,7 +250,7 @@ async function bootstrapApiToken(strapi: Core.Strapi): Promise<void> {
     );
   }
 
-  strapi.log.info(`✅ Created Public API Token — written to frontend/.env`);
+  strapi.log.info(`✅ Created Public API Token — written to ${envPath}`);
 }
 
 /**

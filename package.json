@@ -12,12 +12,14 @@
     "install:frontend": "cd frontend && pnpm install",
     "install:backend": "cd backend && pnpm install",
     "install:admin": "cd admin && pnpm install",
-    "install:all": "pnpm install && pnpm install:frontend && pnpm install:backend && pnpm install:admin",
+    "install:e2e": "cd e2e && pnpm install",
+    "install:all": "pnpm install && pnpm install:frontend && pnpm install:backend && pnpm install:admin && pnpm install:e2e",
     "generate-types": "node scripts/generate-strapi-types.mjs",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "prepare": "git config core.hooksPath .githooks || true",
-    "check": "oxfmt --check && pnpm --dir admin check && pnpm --dir backend check && pnpm --dir frontend check"
+    "check": "oxfmt --check && pnpm --dir admin check && pnpm --dir backend check && pnpm --dir frontend check && pnpm --dir e2e check",
+    "test:e2e": "pnpm --dir e2e test"
   },
   "devDependencies": {
     "concurrently": "^10.0.7",
