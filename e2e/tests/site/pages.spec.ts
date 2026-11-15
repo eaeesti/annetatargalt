@@ -133,7 +133,9 @@ test("text pages render their markdown", async ({ page }) => {
 
 test("the blog lists its posts", async ({ page }) => {
   await page.goto("/blogi");
-  await page.getByRole("heading", { name: TEXT.blogPostTitle }).click();
+  // A post's card is a link named after the post, for screen readers too.
+  await page.getByRole("link", { name: TEXT.blogPostTitle }).click();
+  await page.waitForURL("**/blogi/first-post");
   await expect(
     page.getByRole("heading", { name: TEXT.blogPostTitle }),
   ).toBeVisible();

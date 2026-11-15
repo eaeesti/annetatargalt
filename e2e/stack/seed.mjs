@@ -158,24 +158,7 @@ async function seedAdmins(strapi) {
   }
 }
 
-/**
- * What production lets anyone do, set in its database rather than in code:
- * send the contact form. (The donation routes need no permission.)
- */
-async function grantPublic(strapi) {
-  const role = await strapi.db
-    .query("plugin::users-permissions.role")
-    .findOne({ where: { type: "public" } });
-  await strapi.db.query("plugin::users-permissions.permission").create({
-    data: {
-      action: "api::contact-submission.contact-submission.contact",
-      role: role.id,
-    },
-  });
-}
-
 export async function seed(strapi) {
-  await grantPublic(strapi);
   await seedAdmins(strapi);
 
   const docs = (uid) => strapi.documents(uid);

@@ -627,7 +627,10 @@ export function TransactionsTable({
                               </p>
                             )}
                             {d === "error" && (
-                              <p className="text-xs text-destructive">
+                              <p
+                                role="alert"
+                                className="text-xs text-destructive"
+                              >
                                 Failed to load linked donations.
                               </p>
                             )}

@@ -125,7 +125,11 @@ export function CandidatePicker({
         </Button>
       </div>
 
-      {loadError && <p className="text-xs text-destructive">{loadError}</p>}
+      {loadError && (
+        <p role="alert" className="text-xs text-destructive">
+          {loadError}
+        </p>
+      )}
 
       {candidates &&
         (candidates.length === 0 ? (
