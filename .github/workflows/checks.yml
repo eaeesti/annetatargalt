@@ -33,7 +33,12 @@ jobs:
 
       # pnpm at the version package.json's packageManager pins
       - run: corepack enable && corepack install
-      - run: pnpm install --frozen-lockfile
+      # The site's and the admin panel's formatter configs sort Tailwind
+      # classes from their own stylesheets, which import their Tailwind.
+      - run: |
+          for dir in . frontend admin; do
+            pnpm --dir "$dir" install --frozen-lockfile
+          done
       - run: pnpm format:check
 
   app:
@@ -98,6 +103,7 @@ jobs:
       - run: pnpm exec vitest run repositories
 
   e2e:
+    name: end-to-end tests
     runs-on: ubuntu-latest
     timeout-minutes: 30
     services:
