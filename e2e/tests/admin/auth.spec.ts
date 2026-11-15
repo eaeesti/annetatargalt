@@ -20,7 +20,10 @@ test("a wrong password is refused", async ({ page }) => {
   await page.getByLabel("Email").fill(uniqueEmail("nobody"));
   await page.getByLabel("Password").fill("not-the-password");
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByText("Invalid credentials")).toBeVisible();
+  // Announced, not only shown.
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Invalid credentials" }),
+  ).toBeVisible();
   await expect(page).toHaveURL(/\/login/);
 });
 

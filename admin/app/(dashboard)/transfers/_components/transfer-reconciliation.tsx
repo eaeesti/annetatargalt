@@ -574,7 +574,9 @@ export function TransferReconciliation({
             <p className="text-xs text-muted-foreground">Loading…</p>
           )}
           {candidates === "error" && (
-            <p className="text-xs text-destructive">Failed to load.</p>
+            <p role="alert" className="text-xs text-destructive">
+              Failed to load.
+            </p>
           )}
           {Array.isArray(candidates) && candidates.length === 0 && (
             <p className="text-xs text-muted-foreground">

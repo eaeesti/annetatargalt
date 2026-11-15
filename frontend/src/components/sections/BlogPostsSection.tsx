@@ -25,50 +25,55 @@ export default async function BlogPostsSection({
       <div className="mx-auto max-w-7xl px-0 sm:px-4 lg:px-8">
         <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-2 gap-y-12 md:mx-0 md:max-w-none md:grid-cols-2 lg:grid-cols-3">
           {blogPosts.map((post) => (
-            <Anchor
+            // The link is the title, stretched over the whole card: a link
+            // around the article would have no name for a screen reader.
+            <article
               key={post.id}
-              href={pagePath(`${page.slug}/${post.slug}`, locale)}
+              className="group relative flex flex-col items-start gap-6 p-6 hover:cursor-pointer hover:bg-slate-100 sm:rounded-3xl"
             >
-              <article className="group flex flex-col items-start gap-6 p-6 hover:cursor-pointer hover:bg-slate-100 sm:rounded-3xl">
-                <div className="relative w-full">
-                  <Image
-                    data={post.image}
-                    className="aspect-2/1 w-full rounded-2xl bg-slate-200 object-cover md:aspect-3/2"
-                  />
-                  <div className="absolute inset-0 rounded-2xl ring-1 ring-slate-900/10 ring-inset" />
-                </div>
-                {post.date && (
-                  <time dateTime={post.date} className="text-xs text-slate-500">
-                    {new Date(post.date).toLocaleDateString(
-                      global.dateLocale ?? undefined,
-                      {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      },
-                    )}
-                  </time>
-                )}
-                <div className="flex flex-col gap-4">
-                  <h3 className="text-lg leading-6 font-semibold text-slate-900">
+              <div className="relative w-full">
+                <Image
+                  data={post.image}
+                  className="aspect-2/1 w-full rounded-2xl bg-slate-200 object-cover md:aspect-3/2"
+                />
+                <div className="absolute inset-0 rounded-2xl ring-1 ring-slate-900/10 ring-inset" />
+              </div>
+              {post.date && (
+                <time dateTime={post.date} className="text-xs text-slate-500">
+                  {new Date(post.date).toLocaleDateString(
+                    global.dateLocale ?? undefined,
+                    {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    },
+                  )}
+                </time>
+              )}
+              <div className="flex flex-col gap-4">
+                <h3 className="text-lg leading-6 font-semibold text-slate-900">
+                  <Anchor
+                    href={pagePath(`${page.slug}/${post.slug}`, locale)}
+                    className="after:absolute after:inset-0 sm:after:rounded-3xl"
+                  >
                     {post.title}
-                  </h3>
-                  <p className="line-clamp-3 text-sm leading-6 text-slate-600">
-                    {post.preview}
-                  </p>
-                </div>
-                {post.author && (
-                  <div className="flex flex-col">
-                    <div className="text-sm leading-6">
-                      <div className="font-semibold text-slate-900">
-                        {post.author.name}
-                      </div>
-                      <div className="text-slate-600">{post.author.role}</div>
+                  </Anchor>
+                </h3>
+                <p className="line-clamp-3 text-sm leading-6 text-slate-600">
+                  {post.preview}
+                </p>
+              </div>
+              {post.author && (
+                <div className="flex flex-col">
+                  <div className="text-sm leading-6">
+                    <div className="font-semibold text-slate-900">
+                      {post.author.name}
                     </div>
+                    <div className="text-slate-600">{post.author.role}</div>
                   </div>
-                )}
-              </article>
-            </Anchor>
+                </div>
+              )}
+            </article>
           ))}
         </div>
       </div>

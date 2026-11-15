@@ -337,7 +337,11 @@ export function StatementImport() {
         </Button>
       </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
 
       {result && (
         <div className="rounded-md border border-green-600/30 bg-green-600/5 p-4 text-sm">

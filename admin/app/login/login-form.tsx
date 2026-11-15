@@ -51,7 +51,11 @@ function GoogleSignIn({ error }: { error: string | null }) {
       >
         Sign in with Google
       </Button>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
     </>
   );
 }
@@ -109,7 +113,11 @@ function PasswordForm() {
           required
         />
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? "Signing in…" : "Sign in"}
       </Button>
