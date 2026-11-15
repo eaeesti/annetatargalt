@@ -460,6 +460,25 @@ async function closeContentUpload(strapi: Core.Strapi): Promise<void> {
 }
 
 /**
+ * Strapi's admin shows the logos uploaded in Settings → Overview in place of
+ * the ones in src/admin/, so any uploaded there are cleared: the admin's
+ * branding is in the code. The uploaded files themselves are left where they
+ * are.
+ */
+async function useCodeLogos(strapi: Core.Strapi): Promise<void> {
+  const store = strapi.store({ type: "core", name: "admin" });
+  const settings: unknown = await store.get({ key: "project-settings" });
+  if (!isRecord(settings) || (!settings.menuLogo && !settings.authLogo)) {
+    return;
+  }
+  await store.set({
+    key: "project-settings",
+    value: { ...settings, menuLogo: null, authLogo: null },
+  });
+  strapi.log.info("✅ Cleared the logos uploaded in Settings → Overview");
+}
+
+/**
  * Closes the second login path into the admin panel. The admin panel
  * authenticates through the Strapi admin bridge (see
  * src/api/admin-auth/controllers/admin-auth.ts), which validates Strapi admin
@@ -773,6 +792,7 @@ export default {
     await safely(strapi, "blockOrphanedDonationAdmins", () =>
       blockOrphanedDonationAdmins(strapi),
     );
+    await safely(strapi, "useCodeLogos", () => useCodeLogos(strapi));
     warnIfProxyUntrusted(strapi);
     warnIfInternalNetworksInvalid(strapi);
 
