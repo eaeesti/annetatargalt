@@ -94,6 +94,7 @@ export function backendEnv(): Record<string, string> {
     ADMIN_JWT_SECRET: "e2e-admin-jwt-secret",
     TRANSFER_TOKEN_SALT: "e2e-transfer-token-salt",
     JWT_SECRET: "e2e-jwt-secret",
+    ENCRYPTION_KEY: "e2e-encryption-key",
     CLOUDINARY_NAME: "",
     CLOUDINARY_KEY: "",
     CLOUDINARY_SECRET: "",

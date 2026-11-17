@@ -49,6 +49,11 @@ module.exports = ({ env }) => ({
       salt: env("TRANSFER_TOKEN_SALT"),
     },
   },
+  // Encrypts API tokens, so the admin can show one again after it's made.
+  // Without it Strapi warns at startup and shows each token only once.
+  secrets: {
+    encryptionKey: env("ENCRYPTION_KEY"),
+  },
   // The Preview button in the editor shows a page, blog post, cause or
   // organization on the site, drafts and all. The site's /api/preview turns
   // its draft mode on for a link with the secret both share, and the button

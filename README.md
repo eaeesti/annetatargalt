@@ -10,7 +10,9 @@ This is the code for the Anneta Targalt donation platform that runs at https://a
 
 ## Setup
 
-You need Node.js 24, PostgreSQL 16 or newer (with its command-line tools: `psql`, `pg_dump`, `createdb`) and pnpm. `corepack enable` provides the pnpm version pinned in `package.json`.
+You need Node.js 24, PostgreSQL 16 or newer (with its command-line tools: `psql`, `pg_dump`, `createdb`) and pnpm. `corepack enable` provides the pnpm version pinned in `package.json`. Node.js 25 and newer don't come with corepack: install it first with `npm install -g corepack`.
+
+On macOS with Homebrew's `postgresql@17`, its command-line tools aren't on your `PATH` until you run `brew link --force postgresql@17`.
 
 1\. Clone the repository and install the dependencies of all three apps:
 
@@ -25,8 +27,8 @@ Installing also turns on a pre-commit hook (`.githooks/pre-commit`) that checks 
 2\. In `backend`, copy `.env.example` to `.env` and fill it in:
 
 - `APP_KEYS`: four keys, each from `openssl rand -base64 16`, separated by commas
-- `API_TOKEN_SALT`, `ADMIN_JWT_SECRET`, `TRANSFER_TOKEN_SALT`, `JWT_SECRET`: one key each, from `openssl rand -base64 16`
-- `DATABASE_*`: how to reach your Postgres. `DATABASE_NAME` is the database for Strapi's content and `DRIZZLE_DATABASE_NAME` the one for donations; the next step creates both.
+- `API_TOKEN_SALT`, `ADMIN_JWT_SECRET`, `TRANSFER_TOKEN_SALT`, `JWT_SECRET`, `ENCRYPTION_KEY`: one key each, from `openssl rand -base64 16`
+- `DATABASE_*`: how to reach your Postgres (with Homebrew's, `DATABASE_USERNAME` is your Mac username and `DATABASE_PASSWORD` is empty). `DATABASE_NAME` is the database for Strapi's content and `DRIZZLE_DATABASE_NAME` the one for donations; the next step creates both.
 - The Cloudinary keys are only needed to upload images. The content's images are on Cloudinary already and show without them.
 - The Montonio keys are needed to try a donation through to the bank. Use the sandbox's (`MONTONIO_URL` already points at it).
 - Leave the email (`SMTP_*`) settings as they are unless you're working on emails: with real ones, the backend really sends every email it makes, to whoever it's addressed to.
