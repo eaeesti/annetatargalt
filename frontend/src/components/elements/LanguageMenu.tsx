@@ -57,8 +57,24 @@ export default function LanguageMenu({
               hrefLang={language.locale}
               lang={language.locale}
               aria-current={language.locale === locale ? "true" : undefined}
-              onClick={() => {
-                if (language.locale !== locale) keepScrollFor(language.href);
+              onClick={(event) => {
+                if (language.locale === locale) return;
+                keepScrollFor(language.href);
+                // What the address asks for goes along: the donation form's
+                // ?type and ?org, the thank-you page's order. A switch loads
+                // the other language's page afresh anyway (its own root
+                // layout), so this is the same load with the query kept.
+                const search = window.location.search;
+                const plainClick =
+                  event.button === 0 &&
+                  !event.metaKey &&
+                  !event.ctrlKey &&
+                  !event.shiftKey &&
+                  !event.altKey;
+                if (search && plainClick && !language.href.includes("?")) {
+                  event.preventDefault();
+                  window.location.assign(`${language.href}${search}`);
+                }
               }}
               className="flex items-center justify-between gap-4 px-4 py-2 text-slate-700 aria-[current]:font-semibold data-focus:bg-primary-100"
             >

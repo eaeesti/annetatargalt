@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { donationDraftJson, parseDonationDraft } from "../donation-draft";
 import type { DonationState } from "../donation-draft";
 import Proportions from "../proportions";
+import { SUPPORT_KEY, splitChoices } from "../donation-amounts";
 
 const causes = [
   {
@@ -37,7 +38,6 @@ function donation(changes: Partial<DonationState> = {}): DonationState {
     dedicationEmail: "jaan@example.com",
     dedicationMessage: "Palju õnne!",
     proportions: Proportions.fromStrapiData(causes),
-    addTip: true,
     paymentMethod: "cardPayments",
     // not the form's default, so that keeping it shows
     newsletter: false,
@@ -77,9 +77,11 @@ describe("donation drafts", () => {
   });
 
   it("keeps the split with its locks and expert choices", () => {
+    // The donor splits cause 1 between its organizations themselves, and
+    // leaves cause 2 to the experts (ticking it: it starts unticked).
     const proportions = Proportions.fromStrapiData(causes)
-      .toggleToFund(1)
       .updateSubProportion(1, "org-b", 70)
+      .toggleToFund(2)
       .updateProportion(2, 20)
       .toggleProportionLock(2);
     const json = donationDraftJson("null/null", 0, donation({ proportions }));
@@ -89,7 +91,39 @@ describe("donation drafts", () => {
     expect(draft?.donation.proportions.getProportion(2)).toBe(20);
     expect(draft?.donation.proportions.isLocked(2)).toBe(true);
     expect(draft?.donation.proportions.goesToFund(1)).toBe(false);
+    expect(draft?.donation.proportions.goesToFund(2)).toBe(true);
     expect(draft?.donation.proportions.getSubProportion(1, "org-b")).toBe(70);
+  });
+
+  it("keeps support's share beside the causes", () => {
+    const withSupport = splitChoices({ data: causes }, "tip-org");
+    const proportions = Proportions.fromStrapiDataNoneChosen(
+      withSupport.data,
+    ).withShares([1, SUPPORT_KEY], [90, 10]);
+    const json = donationDraftJson("null/null", 1, donation({ proportions }));
+
+    const draft = parseDonationDraft(json, "null/null", {
+      proportions: Proportions.fromStrapiDataNoneChosen(withSupport.data),
+      banks,
+    });
+    expect(draft?.stage).toBe(1);
+    expect(draft?.donation.proportions.getProportion(1)).toBe(90);
+    expect(draft?.donation.proportions.getProportion(SUPPORT_KEY)).toBe(10);
+  });
+
+  it("starts at the split when support wasn't a choice yet", () => {
+    const json = donationDraftJson("null/null", 1, donation());
+    const current = Proportions.fromStrapiDataNoneChosen(
+      splitChoices({ data: causes }, "tip-org").data,
+    );
+
+    const draft = parseDonationDraft(json, "null/null", {
+      proportions: current,
+      banks,
+    });
+    expect(draft?.stage).toBe(0);
+    expect(draft?.donation.proportions).toEqual(current);
+    expect(draft?.donation.email).toBe("mari@example.com");
   });
 
   it("is only for the link it was kept for", () => {
@@ -162,9 +196,6 @@ describe("donation drafts", () => {
       parseDonationDraft(withField("type", "weekly"), "null/null", current()),
     ).toBeNull();
     expect(
-      parseDonationDraft(withField("addTip", "yes"), "null/null", current()),
-    ).toBeNull();
-    expect(
       parseDonationDraft(
         withField("paymentMethod", "cash"),
         "null/null",
@@ -181,5 +212,63 @@ describe("donation drafts", () => {
         parseDonationDraft(JSON.stringify(draft), "null/null", current()),
       ).toBeNull();
     }
+  });
+});
+
+describe("a draft across languages", () => {
+  // The same two causes, each language with ids of its own.
+  const english = [
+    {
+      id: 5,
+      organizations: [
+        { internalId: "fund-a", fund: true },
+        { internalId: "org-b", fund: false },
+      ],
+    },
+    { id: 4, organizations: [{ internalId: "fund-c", fund: true }] },
+  ];
+  const estonian = [
+    {
+      id: 2,
+      organizations: [
+        { internalId: "fund-a", fund: true },
+        { internalId: "org-b", fund: false },
+      ],
+    },
+    { id: 1, organizations: [{ internalId: "fund-c", fund: true }] },
+  ];
+  const documentIds: Record<number, string> = {
+    5: "doc-1",
+    4: "doc-2",
+    2: "doc-1",
+    1: "doc-2",
+  };
+  const toKept = (p: Proportions) =>
+    p.renameKeys((key) => documentIds[Number(key)] ?? key);
+
+  it("keeps the split when it's kept by document id", () => {
+    // In English: 70 / 30, the first cause's all to its second organization.
+    const start = Proportions.fromStrapiDataNoneChosen(english);
+    const organizations = start.get(5).proportions;
+    if (!organizations) throw new Error("no organizations");
+    const chosen = start
+      .withShares([5, 4], [70, 30])
+      .withSubProportions(5, organizations.withEvenSplit(["org-b"]));
+    const json = donationDraftJson(
+      "null/null",
+      0,
+      donation({ proportions: toKept(chosen) }),
+    );
+
+    const draft = parseDonationDraft(json, "null/null", {
+      proportions: toKept(Proportions.fromStrapiDataNoneChosen(estonian)),
+      banks,
+    });
+    const restored = draft?.donation.proportions.renameKeys(
+      (key) => ({ "doc-1": 2, "doc-2": 1 })[String(key)] ?? key,
+    );
+    expect(restored?.getProportion(2)).toBe(70);
+    expect(restored?.getProportion(1)).toBe(30);
+    expect(restored?.getSubProportion(2, "org-b")).toBe(100);
   });
 });

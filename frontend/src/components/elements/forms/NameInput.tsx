@@ -8,6 +8,10 @@ interface NameInputProps {
   setFirstName: (name: string) => void;
   setLastName: (name: string) => void;
   setValidity: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  /** Side by side on narrow screens too, to save height. */
+  sideBySide?: boolean;
+  /** Puts the cursor in the first name; off where the step starts higher up. */
+  autoFocus?: boolean;
 }
 
 export default function NameInput({
@@ -18,9 +22,17 @@ export default function NameInput({
   setFirstName,
   setLastName,
   setValidity,
+  sideBySide = false,
+  autoFocus = true,
 }: NameInputProps) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div
+      className={
+        sideBySide
+          ? "grid grid-cols-2 gap-3 sm:gap-4"
+          : "grid grid-cols-1 gap-4 sm:grid-cols-2"
+      }
+    >
       <TextInput
         name="firstName"
         value={firstName}
@@ -30,7 +42,7 @@ export default function NameInput({
         label={firstNameText}
         autoComplete="given-name"
         maxLength={128}
-        autoFocus
+        autoFocus={autoFocus}
       />
       <TextInput
         name="lastName"

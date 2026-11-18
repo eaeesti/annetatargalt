@@ -20,8 +20,8 @@ export interface DonationState {
   dedicationName: string;
   dedicationEmail: string;
   dedicationMessage: string;
+  /** The split between the causes and support for the platform. */
   proportions: Proportions;
-  addTip: boolean;
   paymentMethod: string;
   newsletter: boolean;
   acceptTerms: boolean;
@@ -133,7 +133,6 @@ function restoreFields(
     dedicationName,
     dedicationEmail,
     dedicationMessage,
-    addTip,
     paymentMethod,
     newsletter,
   } = kept;
@@ -154,7 +153,6 @@ function restoreFields(
     typeof dedicationName !== "string" ||
     typeof dedicationEmail !== "string" ||
     typeof dedicationMessage !== "string" ||
-    typeof addTip !== "boolean" ||
     (paymentMethod !== "paymentInitiation" && paymentMethod !== "cardPayments")
   ) {
     return null;
@@ -175,9 +173,7 @@ function restoreFields(
     dedicationName,
     dedicationEmail,
     dedicationMessage,
-    addTip,
     paymentMethod,
-    // drafts kept before there was a choice have none: the form's default
     newsletter: typeof newsletter === "boolean" ? newsletter : true,
   };
 }

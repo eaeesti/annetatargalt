@@ -61,7 +61,7 @@ export default function TextInput({
           className={classes(
             error
               ? "ring-red-500 focus:ring-red-500"
-              : "ring-slate-300 focus:ring-primary-600",
+              : "ring-slate-400 focus:ring-primary-600",
             "block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-xs ring-1 ring-inset placeholder:text-slate-400 focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6",
           )}
           value={value}

@@ -12,7 +12,7 @@ function Option({ id, label, paymentMethod, setPaymentMethod }: OptionProps) {
         id={id}
         name="payment-method"
         type="radio"
-        className="h-4 w-4 cursor-pointer border-slate-300 text-primary-600 checked:border-transparent focus:ring-primary-600"
+        className="h-4 w-4 cursor-pointer border-slate-400 text-primary-600 checked:border-transparent focus:ring-primary-600"
         onChange={() => setPaymentMethod(id)}
         checked={id === paymentMethod}
       />

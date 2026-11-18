@@ -1,3 +1,5 @@
+import { evenShares } from "./split";
+
 export type ProportionKey = string | number;
 
 export interface ProportionEntry {
@@ -8,8 +10,9 @@ export interface ProportionEntry {
   proportions?: Proportions;
 }
 
-interface CauseData {
-  id: number;
+/** A cause, or anything else chosen like one: support for the platform. */
+export interface CauseData {
+  id: ProportionKey;
   organizations: OrganizationData[];
 }
 
@@ -216,6 +219,53 @@ export default class Proportions {
     ]);
   }
 
+  /** The keys with a share: the causes (or organizations) chosen. */
+  chosenKeys(): ProportionKey[] {
+    return this.keys().filter((key) => this.getProportion(key) > 0);
+  }
+
+  /**
+   * `shares` given to `keys`, in that order, and 0 to every other key. Each
+   * entry keeps the rest of itself: a cause, its organizations' split.
+   */
+  withShares(keys: ProportionKey[], shares: number[]): Proportions {
+    return this.mapEntries((key, value) => {
+      const index = keys.indexOf(key);
+      return [
+        key,
+        {
+          ...value,
+          proportion: index === -1 ? 0 : (shares[index] ?? 0),
+          locked: false,
+        },
+      ];
+    });
+  }
+
+  /** Only these keys chosen, split evenly in the list's order. */
+  withEvenSplit(keys: ProportionKey[]): Proportions {
+    const chosen = this.keys().filter((key) => keys.includes(key));
+    return this.withShares(chosen, evenShares(chosen.length));
+  }
+
+  /**
+   * The same split under other keys: a cause's id differs between languages,
+   * so a kept draft names causes by something that doesn't.
+   */
+  renameKeys(rename: (key: ProportionKey) => ProportionKey): Proportions {
+    return new Proportions(
+      this.entries().map(([key, value]) => [rename(key), value]),
+    );
+  }
+
+  /** A cause's split between its organizations, replaced. */
+  withSubProportions(id: ProportionKey, proportions: Proportions): Proportions {
+    return this.mapEntries((key, value) => [
+      key,
+      key === id ? { ...value, proportions } : value,
+    ]);
+  }
+
   updateProportion(id: ProportionKey, proportion: number): Proportions {
     const newProportions = new Proportions(this.entries());
 
@@ -341,9 +391,10 @@ export default class Proportions {
       });
     });
 
-    // Avoid rounding errors
+    // Avoid rounding errors. Nothing chosen (the form's start) has nothing to
+    // correct, and nowhere to put a correction.
     const total = amounts.reduce((sum, item) => sum + item.amount, 0);
-    if (total !== totalAmount) {
+    if (total !== totalAmount && amounts.length > 0) {
       const discrepancy = Math.round((totalAmount - total) * 100) / 100;
       const timesToAdd = Math.floor(Math.abs(discrepancy) / 0.01);
       const adder = discrepancy / timesToAdd;
@@ -358,6 +409,16 @@ export default class Proportions {
     return amounts;
   }
 
+  /**
+   * No cause chosen yet, as the donation form starts: every cause at 0%, each
+   * with its fund ready at 100% for when it's chosen.
+   */
+  static fromStrapiDataNoneChosen(data: CauseData[]): Proportions {
+    return Proportions.fromStrapiDataWithEqualProportions(data).mapEntries(
+      (key, value) => [key, { ...value, proportion: 0 }],
+    );
+  }
+
   static fromStrapiDataWithEqualProportions(data: CauseData[]): Proportions {
     const equalProportions = data.map(
       (_, i) => Math.floor(100 / data.length) + (i < 100 % data.length ? 1 : 0),
@@ -369,7 +430,10 @@ export default class Proportions {
         {
           proportion: equalProportions[causeIndex],
           locked: false,
-          toFund: true,
+          // "Let the experts decide" starts unticked, so a donor who opens a
+          // cause can move its organizations' sliders straight away. The
+          // money still starts with the cause's fund (100% below).
+          toFund: false,
           proportions: new Proportions(
             cause.organizations.filter(hasInternalId).map((organization) => [
               organization.internalId,
@@ -435,7 +499,8 @@ export default class Proportions {
         {
           proportion: preChosenProportions[causeIndex],
           locked: false,
-          toFund: preChosenProportions[causeIndex] === 100 ? false : true,
+          // Unticked everywhere, as without a chosen organization.
+          toFund: false,
           proportions: new Proportions(
             cause.organizations.filter(hasInternalId).map((organization) => [
               organization.internalId,
