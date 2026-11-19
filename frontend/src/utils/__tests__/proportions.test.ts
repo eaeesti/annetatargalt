@@ -420,3 +420,72 @@ describe("fromStrapiData", () => {
     expect(p.getSubProportion(1, "org2")).toBe(0);
   });
 });
+
+describe("choosing causes", () => {
+  const causes = [
+    {
+      id: 1,
+      organizations: [
+        { internalId: "fund-a", fund: true },
+        { internalId: "org-b", fund: false },
+      ],
+    },
+    { id: 2, organizations: [{ internalId: "fund-c", fund: true }] },
+    { id: 3, organizations: [{ internalId: "fund-d", fund: true }] },
+  ];
+
+  it("starts with none chosen, each cause's fund ready at 100%", () => {
+    const p = Proportions.fromStrapiDataNoneChosen(causes);
+    expect(p.chosenKeys()).toEqual([]);
+    expect(p.getSubProportion(1, "fund-a")).toBe(100);
+    expect(p.getSubProportion(1, "org-b")).toBe(0);
+    expect(p.calculateAmounts(50, { data: causes })).toEqual([]);
+  });
+
+  it("splits the chosen ones evenly, in the list's order", () => {
+    const p = Proportions.fromStrapiDataNoneChosen(causes);
+    expect(p.withEvenSplit([3, 1]).chosenKeys()).toEqual([1, 3]);
+    expect(p.withEvenSplit([3, 1]).getProportion(1)).toBe(50);
+    expect(p.withEvenSplit([1, 2, 3]).getProportion(1)).toBe(34);
+    expect(p.withEvenSplit([1, 2, 3]).getProportion(3)).toBe(33);
+    expect(p.withEvenSplit([2]).getProportion(2)).toBe(100);
+  });
+
+  it("sets shares and keeps each cause's organizations", () => {
+    const p = Proportions.fromStrapiDataNoneChosen(causes).withShares(
+      [1, 3],
+      [70, 30],
+    );
+    expect(p.getProportion(1)).toBe(70);
+    expect(p.getProportion(2)).toBe(0);
+    expect(p.getProportion(3)).toBe(30);
+    expect(p.getSubProportion(1, "fund-a")).toBe(100);
+  });
+
+  it("replaces a cause's split between its organizations", () => {
+    const p = Proportions.fromStrapiDataNoneChosen(causes).withEvenSplit([1]);
+    const subs = p.get(1).proportions;
+    if (!subs) throw new Error("no organizations");
+    const changed = p.withSubProportions(1, subs.withEvenSplit(["org-b"]));
+    expect(changed.getSubProportion(1, "fund-a")).toBe(0);
+    expect(changed.getSubProportion(1, "org-b")).toBe(100);
+    expect(changed.calculateAmounts(50, { data: causes })).toEqual([
+      { organizationInternalId: "org-b", amount: 50 },
+    ]);
+  });
+});
+
+describe("renameKeys", () => {
+  it("keeps the split under the new keys, organizations and all", () => {
+    const p = makeWithSubs([
+      [5, 70, [["fund-a", 100]]],
+      [4, 30, [["fund-b", 100]]],
+    ]);
+    const kept = p.renameKeys((key) =>
+      key === 5 ? "doc-human" : "doc-animal",
+    );
+    expect(kept.keys()).toEqual(["doc-human", "doc-animal"]);
+    expect(kept.getProportion("doc-human")).toBe(70);
+    expect(kept.getSubProportion("doc-animal", "fund-b")).toBe(100);
+  });
+});

@@ -660,6 +660,12 @@ export interface ApiCauseCause extends Struct.CollectionTypeSchema {
       'api::organization.organization'
     >;
     publishedAt: Schema.Attribute.DateTime;
+    shortDescription: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     slug: Schema.Attribute.String &
       Schema.Attribute.Unique &
       Schema.Attribute.SetPluginOptions<{
@@ -1237,6 +1243,12 @@ export interface ApiOrganizationOrganization
         };
       }>;
     publishedAt: Schema.Attribute.DateTime;
+    shortDescription: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     slug: Schema.Attribute.String &
       Schema.Attribute.Unique &
       Schema.Attribute.SetPluginOptions<{

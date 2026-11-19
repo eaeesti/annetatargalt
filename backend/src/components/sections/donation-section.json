@@ -42,6 +42,69 @@
     "recurringDonationText": {
       "type": "string"
     },
+    "overviewTitle": {
+      "type": "string"
+    },
+    "causesHintText": {
+      "type": "string"
+    },
+    "notChosenText": {
+      "type": "string"
+    },
+    "supportOptionText": {
+      "type": "string"
+    },
+    "supportOptionDescription": {
+      "type": "text"
+    },
+    "specifyCharitiesText": {
+      "type": "string"
+    },
+    "editCharitiesText": {
+      "type": "string"
+    },
+    "learnMoreText": {
+      "type": "string"
+    },
+    "recommendedText": {
+      "type": "string"
+    },
+    "adjustSplitText": {
+      "type": "string"
+    },
+    "splitEvenlyText": {
+      "type": "string"
+    },
+    "resetSplitText": {
+      "type": "string"
+    },
+    "splitHintText": {
+      "type": "string"
+    },
+    "chooseCauseText": {
+      "type": "string"
+    },
+    "editDonationText": {
+      "type": "string"
+    },
+    "paymentTitle": {
+      "type": "string"
+    },
+    "charitiesTitle": {
+      "type": "string"
+    },
+    "charitiesText": {
+      "type": "text"
+    },
+    "chooseCharityText": {
+      "type": "string"
+    },
+    "charitiesConfirmText": {
+      "type": "string"
+    },
+    "charitiesCancelText": {
+      "type": "string"
+    },
     "amountText": {
       "type": "string"
     },

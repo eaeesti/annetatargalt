@@ -13,7 +13,7 @@ export async function clickToOpen(control: Locator, opened: Locator) {
   }).toPass({ timeout: 10_000 });
 }
 
-/** Clicks a radio button until it's chosen, for the same reason. */
+/** Clicks a radio button or a checkbox until it's chosen, for the same reason. */
 export async function choose(radio: Locator) {
   await expect(async () => {
     if (!(await radio.isChecked())) await radio.click();

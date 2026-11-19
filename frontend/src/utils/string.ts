@@ -20,6 +20,19 @@ export function format(string: string, values: Record<string, string>): string {
 }
 
 /**
+ * Markdown as plain text, for a line that shows only the start of it: links
+ * keep their words, images and formatting marks go, and lines run together.
+ */
+export function plainText(markdown: string): string {
+  return markdown
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/[*_`#>]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
  * Validate a price string.
  * Approves of "1", "1.23", "1,23", "1.2", "123" etc.
  * Disapproves of "1.", "1,", "1.234", "0.23", "0", "01", "", "hehe" etc.

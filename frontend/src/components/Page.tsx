@@ -22,6 +22,12 @@ interface PageProps {
 }
 
 export default function Page({ page, global, entity, languages }: PageProps) {
+  // The menu's Donate button would only lead back to the form on this page.
+  const hasDonationForm =
+    page?.sections?.some(
+      (section) => section.__component === "sections.donation-section",
+    ) ?? false;
+
   return (
     <>
       {/* For keyboard users: the first Tab, past the banner and the menu. */}
@@ -35,7 +41,7 @@ export default function Page({ page, global, entity, languages }: PageProps) {
         topBannerText={global.topBannerText}
         closeText={global.closeText}
       />
-      <Navbar global={global} languages={languages} />
+      <Navbar global={global} languages={languages} hideCta={hasDonationForm} />
       {/* A column, as the page's body is, so the sections sit as before. */}
       <main id="main" className="flex flex-col">
         {page?.sections?.map((section) => (

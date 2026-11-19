@@ -48,7 +48,7 @@ function AmountInput({
           id="amount"
           className={classes(
             isValidAmount
-              ? "ring-slate-300 focus:ring-primary-600"
+              ? "ring-slate-400 focus:ring-primary-600"
               : "ring-red-500 focus:ring-red-500",
             "block w-full rounded-md border-0 py-4 pl-5 pr-10 text-slate-900 ring-1 ring-inset placeholder:text-slate-400 focus:ring-2 focus:ring-inset sm:leading-6",
           )}
@@ -86,8 +86,8 @@ function AmountChooserOption({ value, label }: AmountChooserOptionProps) {
       className={({ focus, checked }) =>
         classes(
           checked
-            ? "border-primary-600 ring-1 ring-primary-600"
-            : "border-slate-300",
+            ? "border-primary-600 bg-primary-50 ring-1 ring-primary-600 ring-inset"
+            : "border-slate-400",
           focus ? "bg-primary-50" : "",
           "relative flex cursor-pointer justify-center rounded-lg border p-3 text-slate-900 shadow-xs focus:outline-hidden",
         )

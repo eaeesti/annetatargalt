@@ -17,9 +17,15 @@ interface NavbarProps {
   global: StrapiGlobal;
   /** The languages to choose between; no choice is shown without them. */
   languages?: LanguageLink[];
+  /** Leaves out the call to action, on a page that already is where it leads. */
+  hideCta?: boolean;
 }
 
-export default function Navbar({ global, languages = [] }: NavbarProps) {
+export default function Navbar({
+  global,
+  languages = [],
+  hideCta = false,
+}: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Coming from the same page in another language: as far down as it was.
@@ -70,7 +76,7 @@ export default function Navbar({ global, languages = [] }: NavbarProps) {
                 />
               </div>
             )}
-            {navbar.ctaButton && (
+            {navbar.ctaButton && !hideCta && (
               <Button
                 text={navbar.ctaButton.text}
                 type={navbar.ctaButton.type}
@@ -107,7 +113,7 @@ export default function Navbar({ global, languages = [] }: NavbarProps) {
               <span className="sr-only">{title}</span>
               <Image className="h-8 w-auto sm:hidden" data={navbar.logo} />
             </Anchor>
-            {navbar.ctaButton && (
+            {navbar.ctaButton && !hideCta && (
               <Button
                 text={navbar.ctaButton.text}
                 type={navbar.ctaButton.type}

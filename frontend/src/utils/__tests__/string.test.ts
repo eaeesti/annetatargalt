@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   escapeMarkdown,
   format,
+  plainText,
   validatePrice,
   validateEmail,
 } from "../string";
@@ -76,5 +77,15 @@ describe("escapeMarkdown", () => {
     expect(escapeMarkdown("mari_liis*x@example.org")).toBe(
       "mari\\_liis\\*x@example\\.org",
     );
+  });
+});
+
+describe("plainText", () => {
+  it("keeps the words of markdown and drops its marks", () => {
+    expect(
+      plainText(
+        "**AMF** gets [nets](https://example.org) to people.\n\n![x](y.png)More _here_.",
+      ),
+    ).toBe("AMF gets nets to people. More here.");
   });
 });

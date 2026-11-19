@@ -17,6 +17,8 @@ const UI_TEXT = {
     close: "Sulge",
     language: "Keel",
     skipToContent: "Liigu sisu juurde",
+    splitBorder: "Jaotus <%= left %> ja <%= right %> vahel",
+    opensInNewTab: "avaneb uuel vahelehel",
   },
   en: {
     openMenu: "Open main menu",
@@ -29,6 +31,8 @@ const UI_TEXT = {
     close: "Close",
     language: "Language",
     skipToContent: "Skip to content",
+    splitBorder: "Split between <%= left %> and <%= right %>",
+    opensInNewTab: "opens in a new tab",
   },
 } satisfies Record<Locale, Record<string, string>>;
 

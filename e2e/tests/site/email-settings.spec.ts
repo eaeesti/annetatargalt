@@ -1,13 +1,13 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { form, payAtBank, toConfirmation } from "../../helpers/donation.ts";
+import { form, payAtBank, toPayment } from "../../helpers/donation.ts";
 import { uniqueEmail, waitForEmail } from "../../helpers/fakes.ts";
 import { TEXT } from "../../stack/content.ts";
 
 /** Donates, and returns the email settings link from the confirmation. */
 async function settingsLink(page: Page, email: string) {
   await page.goto("/anneta");
-  await toConfirmation(page, { firstName: "Eha", lastName: "Eelistus", email });
+  await toPayment(page, { firstName: "Eha", lastName: "Eelistus", email });
   await form(page).terms.check();
   await form(page).donate.click();
   await payAtBank(page);

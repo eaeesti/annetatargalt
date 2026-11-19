@@ -362,6 +362,7 @@ export interface SectionsDonationSection extends Struct.ComponentSchema {
     displayName: 'DonationSection';
   };
   attributes: {
+    adjustSplitText: Schema.Attribute.String;
     amount1: Schema.Attribute.Integer;
     amount2: Schema.Attribute.Integer;
     amount3: Schema.Attribute.Integer;
@@ -372,7 +373,14 @@ export interface SectionsDonationSection extends Struct.ComponentSchema {
     cardPaymentsText: Schema.Attribute.String &
       Schema.Attribute.DefaultTo<'Kaardimakse'>;
     causes: Schema.Attribute.Relation<'oneToMany', 'api::cause.cause'>;
+    causesHintText: Schema.Attribute.String;
+    charitiesCancelText: Schema.Attribute.String;
+    charitiesConfirmText: Schema.Attribute.String;
+    charitiesText: Schema.Attribute.Text;
+    charitiesTitle: Schema.Attribute.String;
     chooseAmountText: Schema.Attribute.String;
+    chooseCauseText: Schema.Attribute.String;
+    chooseCharityText: Schema.Attribute.String;
     chooseOrganizationsText: Schema.Attribute.String;
     companyCodeText: Schema.Attribute.String;
     companyNameText: Schema.Attribute.String;
@@ -385,31 +393,44 @@ export interface SectionsDonationSection extends Struct.ComponentSchema {
     donateAsCompanyText: Schema.Attribute.String;
     donateButtonText: Schema.Attribute.String;
     donationTypeText: Schema.Attribute.String;
+    editCharitiesText: Schema.Attribute.String;
+    editDonationText: Schema.Attribute.String;
     emailText: Schema.Attribute.String;
     firstNameText: Schema.Attribute.String;
     idCodeDescription: Schema.Attribute.String;
     idCodeText: Schema.Attribute.String;
     informationText: Schema.Attribute.String;
     lastNameText: Schema.Attribute.String;
+    learnMoreText: Schema.Attribute.String;
     letExpertsChooseText: Schema.Attribute.String;
     lockText: Schema.Attribute.String;
     newsletterText: Schema.Attribute.RichText;
     nextButtonText: Schema.Attribute.String;
+    notChosenText: Schema.Attribute.String;
     oneTimeDonationSummary: Schema.Attribute.RichText;
     otherAmountOptionText: Schema.Attribute.String;
     otherAmountText: Schema.Attribute.String;
     otherBankText: Schema.Attribute.String;
+    overviewTitle: Schema.Attribute.String;
     paymentInitiationText: Schema.Attribute.String &
       Schema.Attribute.DefaultTo<'Pangalink'>;
     paymentMethodText: Schema.Attribute.String &
       Schema.Attribute.DefaultTo<'Makseviis'>;
     paymentProviderLogo: Schema.Attribute.Component<'elements.image', false>;
     paymentProviderText: Schema.Attribute.String;
+    paymentTitle: Schema.Attribute.String;
+    recommendedText: Schema.Attribute.String;
     recurringDonationGuide: Schema.Attribute.RichText;
     recurringDonationSummary: Schema.Attribute.RichText;
     recurringDonationText: Schema.Attribute.String;
+    resetSplitText: Schema.Attribute.String;
     singleDonationText: Schema.Attribute.String;
+    specifyCharitiesText: Schema.Attribute.String;
+    splitEvenlyText: Schema.Attribute.String;
+    splitHintText: Schema.Attribute.String;
     stepText: Schema.Attribute.String;
+    supportOptionDescription: Schema.Attribute.Text;
+    supportOptionText: Schema.Attribute.String;
     termsText: Schema.Attribute.RichText;
     tipCheckboxText: Schema.Attribute.String;
     tipText: Schema.Attribute.RichText;
