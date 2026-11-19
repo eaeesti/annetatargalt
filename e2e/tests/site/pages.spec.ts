@@ -104,6 +104,22 @@ test("the navigation bar and footer lead to their pages", async ({ page }) => {
   ).toBeVisible();
 });
 
+test("the header's donate button is left out on the donation form", async ({
+  page,
+}) => {
+  const donate = page
+    .getByRole("navigation")
+    .first()
+    .getByRole("link", { name: "Anneta", exact: true });
+  await page.goto("/kkk");
+  await expect(donate).toBeVisible();
+  await page.goto("/anneta");
+  await expect(
+    page.getByRole("heading", { name: TEXT.donateTitle }),
+  ).toBeVisible();
+  await expect(donate).toHaveCount(0);
+});
+
 test("the front page's button leads to the donation form", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("link", { name: "Donate now" }).click();
@@ -171,9 +187,15 @@ test.describe("causes and organizations", () => {
       page.getByRole("heading", { name: TEXT.donateTitle }),
     ).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`org=${ORGS.alpha.internalId}`));
+    // Its cause is chosen, all of it going to the organization.
     await expect(
-      page.getByRole("slider", { name: CAUSES.health.title }),
-    ).toHaveValue("100");
+      page
+        .locator("form")
+        .getByRole("checkbox", { name: new RegExp(`^${CAUSES.health.title}`) }),
+    ).toBeChecked();
+    await expect(
+      page.getByRole("complementary", { name: "Overview title" }),
+    ).toContainText(ORGS.alpha.title);
   });
 
   test("an organization outside its cause's address isn't found", async ({
